@@ -1,0 +1,287 @@
+{
+  "name": "Shotygames — Registrar Pedido en Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shotygames-pedido",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "shotygames-pedido"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-nombre",
+              "name": "nombre",
+              "value": "={{ $json.body.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "field-fecha",
+              "name": "fecha",
+              "value": "={{ $json.body.fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "field-mes",
+              "name": "mes",
+              "value": "={{ $json.body.mes }}",
+              "type": "string"
+            },
+            {
+              "id": "field-telefono",
+              "name": "telefono",
+              "value": "={{ $json.body.telefono }}",
+              "type": "string"
+            },
+            {
+              "id": "field-ciudad",
+              "name": "ciudad",
+              "value": "={{ $json.body.ciudad.toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-n",
+              "name": "n",
+              "value": "={{ $json.body.n || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-p",
+              "name": "p",
+              "value": "={{ $json.body.p || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-par",
+              "name": "par",
+              "value": "={{ $json.body.par || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-eng",
+              "name": "eng",
+              "value": "={{ $json.body.eng || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-dados",
+              "name": "dados",
+              "value": "={{ $json.body.dados || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-anticipo",
+              "name": "anticipo",
+              "value": "={{ $json.body.anticipo }}",
+              "type": "string"
+            },
+            {
+              "id": "field-saldo",
+              "name": "saldo",
+              "value": "={{ $json.body.saldo || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-cuenta",
+              "name": "cuenta",
+              "value": "={{ $json.body.cuenta.toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-estado",
+              "name": "estado",
+              "value": "={{ $json.body.estado.toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-transportadora",
+              "name": "transportadora",
+              "value": "={{ $json.body.transportadora || 'SERVIENTREGA' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-envio",
+              "name": "envio",
+              "value": "={{ $json.body.envio }}",
+              "type": "string"
+            },
+            {
+              "id": "field-link-whatsapp",
+              "name": "link_whatsapp",
+              "value": "=https://wa.me/593{{ $json.body.telefono.replace(/^0/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "field-direccion",
+              "name": "direccion",
+              "value": "={{ $json.body.direccion || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-productos",
+              "name": "productos",
+              "value": "={{ $json.body.productos.toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "field-notas",
+              "name": "notas",
+              "value": "={{ $json.body.notas || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-node",
+      "name": "Formatear Datos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1w6qtLfh6nwsnQWywW5Rk8cgoVxWFa54BhyemyvxquVY",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "PEDIDOS",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "NOMBRE": "={{ $json.nombre }}",
+            "FECHA": "={{ $json.fecha }}",
+            "MES": "={{ $json.mes }}",
+            "TELEFONO": "={{ $json.telefono }}",
+            "CIUDAD": "={{ $json.ciudad }}",
+            "N": "={{ $json.n }}",
+            "P": "={{ $json.p }}",
+            "PAR": "={{ $json.par }}",
+            "ENG": "={{ $json.eng }}",
+            "DADOS": "={{ $json.dados }}",
+            "ANTICIPO": "={{ $json.anticipo }}",
+            "SALDO": "={{ $json.saldo }}",
+            "CUENTA": "={{ $json.cuenta }}",
+            "ESTADO": "={{ $json.estado }}",
+            "TRANSPORTADORA": "={{ $json.transportadora }}",
+            "ENVIO": "={{ $json.envio }}",
+            "LINK WHATSAPP": "={{ $json.link_whatsapp }}",
+            "WHATSAPP": "Mandar WhatsApp",
+            "RASTREO": "Rastrear paquete",
+            "DIRECCION": "={{ $json.direccion }}",
+            "PRODUCTOS": "={{ $json.productos }}",
+            "NOTAS": "={{ $json.notas }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        }
+      },
+      "id": "sheets-node",
+      "name": "Agregar a Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [720, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REEMPLAZAR_CON_TU_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Pedido registrado correctamente', cliente: $('Formatear Datos').item.json.nombre, productos: $('Formatear Datos').item.json.productos }) }}",
+        "options": {}
+      },
+      "id": "response-node",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: false, error: $json.error }) }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "error-node",
+      "name": "Responder Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 480]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Formatear Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatear Datos": {
+      "main": [
+        [
+          {
+            "node": "Agregar a Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregar a Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["shotygames", "pedidos"],
+  "meta": {
+    "instanceId": ""
+  }
+}

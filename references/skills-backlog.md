@@ -10,7 +10,7 @@ Cada skill va en: `.claude/skills/nombre-skill/SKILL.md`
 
 | # | Skill | Descripción | Herramientas |
 |---|---|---|---|
-| 1 | `registrar-pedido` | Tomar datos de un pedido y registrarlo en Google Sheets | WhatsApp, Sheets, n8n |
+| ✅ 1 | `registrar-pedido` | Tomar datos de un pedido y registrarlo en Google Sheets | WhatsApp, Sheets, n8n |
 | 2 | `crear-guia-dropi` | Generar guía de envío en DROPI con los datos del pedido | DROPI, n8n |
 | 3 | `crm-whatsapp-shotygames` | Mini CRM: detectar pedido en WhatsApp, extraer datos, registrar y crear guía automáticamente | WhatsApp, Sheets, DROPI, n8n |
 | 4 | `seguimiento-pedidos` | Ver estado de todos los pedidos activos en DROPI (entregado, en camino, novedad) | DROPI |
