@@ -2,6 +2,13 @@ const { google } = require('googleapis');
 
 const SHEETS_ID = process.env.SHEETS_ID;
 
+// Convierte strings de monto ("$16,50", "16.5", "16,5") a número para que Sheets pueda sumar
+function parseMonto(val) {
+  if (val === '' || val === null || val === undefined) return '';
+  const num = parseFloat(String(val).replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
+  return isNaN(num) ? '' : num;
+}
+
 function getAuth() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -40,8 +47,8 @@ async function appendPedido(pedido) {
     '',                                     // col 13: (vacía)
     '',                                     // col 14: (vacía)
     '',                                     // col 15: (vacía)
-    pedido.anticipo || '',                  // col 16: ANTICIPO
-    pedido.saldo || '',                     // col 17: SALDO
+    parseMonto(pedido.anticipo),            // col 16: ANTICIPO
+    parseMonto(pedido.saldo),              // col 17: SALDO
     (pedido.cuenta || '').toUpperCase(),    // col 18: CUENTA
     (pedido.estado || 'PENDIENTE').toUpperCase(), // col 19: ESTADO
     pedido.transportadora || 'SERVIENTREGA', // col 20: TRANSPORTADORA
@@ -66,7 +73,7 @@ async function appendPedido(pedido) {
     spreadsheetId: SHEETS_ID,
     range: 'PEDIDOS!B:B'  // columna NOMBRE para detectar última fila con dato
   });
-  const lastRow = (existing.data.values || []).length + 1; // +1 por el header
+  const lastRow = (existing.data.values || []).length; // length ya incluye el header
   const nextRow = lastRow + 1;
 
   const result = await sheets.spreadsheets.values.update({
