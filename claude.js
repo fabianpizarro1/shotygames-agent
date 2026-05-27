@@ -117,7 +117,7 @@ async function chat(history, newMessage) {
   const messages = [...history, { role: 'user', content: newMessage }];
 
   let response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     tools,
@@ -144,7 +144,7 @@ async function chat(history, newMessage) {
     messages.push({ role: 'user', content: toolResults });
 
     response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       tools,
