@@ -32,7 +32,7 @@ async function appendPedido(pedido) {
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const mes = meses[new Date().getMonth()];
   const row = [
-    '',                                      // col 1:  ID
+    '1',                                     // col 1:  ID
     pedido.nombre || '',                     // col 2:  NOMBRE
     fecha,                                   // col 3:  FECHA
     pedido.mes || mes,                       // col 4:  MES
