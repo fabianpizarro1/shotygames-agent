@@ -43,7 +43,7 @@ Del texto que te mande Fabián saca:
 - Si dijo "PAGO X DE ANTICIPO A [CUENTA]":
   → anticipo = X, saldo = pvp_total - X, cuenta = [CUENTA]
 - Si dijo "PAGADO AL [CUENTA]" o "PAGO COMPLETO":
-  → anticipo = pvp_total, saldo = 0, cuenta = [CUENTA]
+  → anticipo = pvp_total, saldo = vacío, cuenta = [CUENTA]
 - Si no mencionó pago:
   → anticipo vacío, saldo = pvp_total, cuenta vacía
 
