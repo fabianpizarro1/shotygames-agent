@@ -131,7 +131,6 @@ async function actualizarGuia(telefono, guia) {
       const rowNum = i + 1;
       const updates = [
         { range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] },
-        { range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[`https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`]] },
         { range: `PEDIDOS!${idxToCol(estadoIdx)}${rowNum}`, values: [['ENVIADO']] }
       ];
       await sheets.spreadsheets.values.batchUpdate({

@@ -103,6 +103,7 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 
 ## Cuando Fabián mande una foto de guía de envío
 1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
+   - El número de guía suele aparecer entre dos asteriscos: **1234567890**
 2. Confirma lo que encontraste: "Guía [número] — [nombre/teléfono]. ¿Registro el envío?"
 3. Cuando confirme, usa actualizar_guia con el teléfono o nombre encontrado
 4. La herramienta actualizará la guía y cambiará el estado a ENVIADO automáticamente
