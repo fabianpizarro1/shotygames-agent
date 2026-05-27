@@ -17,7 +17,7 @@ try {
 } catch (e) {}
 
 const ADMIN_PHONE = process.env.ADMIN_PHONE;
-const MAX_HISTORY = 20;
+const MAX_HISTORY = 8;
 
 async function getHistory(phone) {
   try {
