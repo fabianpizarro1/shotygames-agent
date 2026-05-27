@@ -83,9 +83,15 @@ app.post('/webhook', async (req, res) => {
     if (!data?.message) { console.log('  → sin data.message'); return; }
     if (data.key?.fromMe) { console.log('  → mensaje propio'); return; }
 
-    const from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    // Soporte para nuevo formato @lid de WhatsApp
+    let from;
+    if (data.key?.remoteJid?.endsWith('@lid') && data.key?.remoteJidAlt) {
+      from = data.key.remoteJidAlt.replace('@s.whatsapp.net', '');
+    } else {
+      from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    }
     if (!from) { console.log('  → sin remoteJid'); return; }
-    console.log('  from:', from, '| ADMIN_PHONE:', ADMIN_PHONE);
+    console.log('  from (resuelto):', from, '| ADMIN_PHONE:', ADMIN_PHONE);
 
     if (ADMIN_PHONE && from !== ADMIN_PHONE) {
       console.log('  → número no autorizado:', from);
