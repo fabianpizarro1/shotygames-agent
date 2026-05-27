@@ -1,27 +1,12 @@
 require('dotenv').config();
-console.log('🚀 Iniciando agente...');
-console.log('Variables cargadas:', {
-  ANTHROPIC: !!process.env.ANTHROPIC_API_KEY,
-  EVOLUTION_URL: process.env.EVOLUTION_API_URL,
-  INSTANCE: process.env.EVOLUTION_INSTANCE,
-  GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
-  SHEETS_ID: !!process.env.SHEETS_ID,
-  PORT: process.env.PORT
-});
-
 const express = require('express');
-console.log('✅ Express cargado');
 const { chat } = require('./claude');
-console.log('✅ Claude cargado');
 const { sendText, sendReaction, markAsRead } = require('./evolution');
-console.log('✅ Evolution cargado');
 
 const app = express();
 app.use(express.json());
 
-// Historial en memoria (fallback si no hay Redis)
 const memoryStore = {};
-
 let redisClient = null;
 try {
   if (process.env.REDIS_URL) {
@@ -55,53 +40,32 @@ async function saveHistory(phone, history) {
   memoryStore[phone] = trimmed;
 }
 
-// Webhook de Evolution API
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
 
   try {
     const body = req.body;
-
-    // LOG COMPLETO para debug
-    console.log('📨 WEBHOOK RECIBIDO:');
-    console.log('  event:', body.event);
-    console.log('  type:', body.type);
-    console.log('  keys:', Object.keys(body));
-    if (body.data) {
-      console.log('  data.messageType:', body.data.messageType);
-      console.log('  data.key:', JSON.stringify(body.data.key));
-      console.log('  data.message keys:', body.data.message ? Object.keys(body.data.message) : 'null');
-    }
-
     const event = (body.event || body.type || '').toLowerCase();
-    if (!event.includes('message')) {
-      console.log('  → ignorado (no es mensaje), event:', event);
-      return;
-    }
+    if (!event.includes('message')) return;
 
     const data = body.data;
-    if (!data?.message) { console.log('  → sin data.message'); return; }
-    if (data.key?.fromMe) { console.log('  → mensaje propio'); return; }
+    if (!data?.message) return;
+    if (data.key?.fromMe) return;
 
-    // Soporte para nuevo formato @lid de WhatsApp
+    // Soporte formato @lid (nuevo WhatsApp)
     let from;
     if (data.key?.remoteJid?.endsWith('@lid') && data.key?.remoteJidAlt) {
       from = data.key.remoteJidAlt.replace('@s.whatsapp.net', '');
     } else {
       from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
     }
-    if (!from) { console.log('  → sin remoteJid'); return; }
-    console.log('  from (resuelto):', from, '| ADMIN_PHONE:', ADMIN_PHONE);
+    if (!from) return;
 
-    if (ADMIN_PHONE && from !== ADMIN_PHONE) {
-      console.log('  → número no autorizado:', from);
-      return;
-    }
+    if (ADMIN_PHONE && from !== ADMIN_PHONE) return;
 
     const messageId = data.key?.id;
     const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
-    if (!text) { console.log('  → sin texto, tipo:', JSON.stringify(data.message)); return; }
-    console.log('  texto:', text);
+    if (!text) return;
 
     await markAsRead(from, messageId);
     await sendReaction(from, messageId, '⏳');
