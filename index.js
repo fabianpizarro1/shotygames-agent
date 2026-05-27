@@ -1,7 +1,20 @@
 require('dotenv').config();
+console.log('🚀 Iniciando agente...');
+console.log('Variables cargadas:', {
+  ANTHROPIC: !!process.env.ANTHROPIC_API_KEY,
+  EVOLUTION_URL: process.env.EVOLUTION_API_URL,
+  INSTANCE: process.env.EVOLUTION_INSTANCE,
+  GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
+  SHEETS_ID: !!process.env.SHEETS_ID,
+  PORT: process.env.PORT
+});
+
 const express = require('express');
+console.log('✅ Express cargado');
 const { chat } = require('./claude');
+console.log('✅ Claude cargado');
 const { sendText, sendReaction, markAsRead } = require('./evolution');
+console.log('✅ Evolution cargado');
 
 const app = express();
 app.use(express.json());
