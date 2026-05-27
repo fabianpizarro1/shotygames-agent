@@ -16,7 +16,7 @@ try {
   }
 } catch (e) {}
 
-const ADMIN_PHONE = process.env.ADMIN_PHONE;
+const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
 const MAX_HISTORY = 8;
 
 async function getHistory(phone) {
@@ -61,7 +61,7 @@ app.post('/webhook', async (req, res) => {
     }
     if (!from) return;
 
-    if (ADMIN_PHONE && from !== ADMIN_PHONE) return;
+    if (ADMIN_PHONES.length && !ADMIN_PHONES.includes(from)) return;
 
     const messageId = data.key?.id;
     const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
@@ -79,8 +79,8 @@ app.post('/webhook', async (req, res) => {
 
   } catch (error) {
     console.error('Error:', error.message);
-    if (ADMIN_PHONE) {
-      await sendText(ADMIN_PHONE, `⚠️ Error: ${error.message}`).catch(() => {});
+    if (ADMIN_PHONES.length) {
+      await sendText(ADMIN_PHONES[0], `⚠️ Error: ${error.message}`).catch(() => {});
     }
   }
 });
