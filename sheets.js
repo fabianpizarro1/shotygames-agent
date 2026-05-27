@@ -28,36 +28,40 @@ async function appendPedido(pedido) {
   const linkWA = tel ? `https://wa.me/593${tel}` : '';
 
   const row = [
-    '',                          // ID (auto)
-    pedido.nombre || '',
-    fecha,
-    pedido.mes || mes,
-    pedido.telefono || '',
-    (pedido.ciudad || '').toUpperCase(),
-    pedido.normal || '',
-    pedido.picante || '',
-    pedido.parejas || '',
-    pedido.enganchados || '',
-    pedido.dados || '',
-    pedido.anticipo || '',
-    pedido.saldo || '',
-    (pedido.cuenta || '').toUpperCase(),
-    (pedido.estado || 'PENDIENTE').toUpperCase(),
-    pedido.transportadora || 'SERVIENTREGA',
-    pedido.envio || '',
-    '',                          // GUIA (se agrega después)
-    '',                          // LINK RASTREO
-    'Rastrear paquete',
-    linkWA,
-    'Mandar WhatsApp',
-    pedido.notas || '',
-    '',                          // FALSE
-    '',                          // LOG
-    '',                          // COSTOS
-    '',                          // UTILIDAD
-    (pedido.direccion || '').toUpperCase(),
-    (pedido.productos || '').toUpperCase(),
-    ''                           // Softr ID
+    '',                                      // col 1:  ID
+    pedido.nombre || '',                     // col 2:  NOMBRE
+    fecha,                                   // col 3:  FECHA
+    pedido.mes || mes,                       // col 4:  MES
+    pedido.telefono || '',                   // col 5:  TELEFONO
+    (pedido.ciudad || '').toUpperCase(),     // col 6:  CIUDAD
+    pedido.normal || '',                     // col 7:  N
+    pedido.picante || '',                    // col 8:  P
+    pedido.parejas || '',                    // col 9:  PAR
+    pedido.enganchados || '',               // col 10: ENG
+    pedido.dados || '',                     // col 11: DADOS
+    '',                                     // col 12: (vacía)
+    '',                                     // col 13: (vacía)
+    '',                                     // col 14: (vacía)
+    '',                                     // col 15: (vacía)
+    pedido.anticipo || '',                  // col 16: ANTICIPO
+    pedido.saldo || '',                     // col 17: SALDO
+    (pedido.cuenta || '').toUpperCase(),    // col 18: CUENTA
+    (pedido.estado || 'PENDIENTE').toUpperCase(), // col 19: ESTADO
+    pedido.transportadora || 'SERVIENTREGA', // col 20: TRANSPORTADORA
+    pedido.envio || '',                     // col 21: ENVIO
+    '',                                     // col 22: GUIA (se agrega después)
+    '',                                     // col 23: LINK RASTREO
+    'Rastrear paquete',                     // col 24: RASTREO
+    linkWA,                                 // col 25: LINK WHATSAPP
+    'Mandar WhatsApp',                      // col 26: WHATSAPP
+    pedido.notas || '',                     // col 27: NOTAS
+    '',                                     // col 28: FALSE
+    '',                                     // col 29: LOG
+    '',                                     // col 30: COSTOS
+    '',                                     // col 31: UTILIDAD
+    (pedido.direccion || '').toUpperCase(), // col 32: DIRECCION
+    (pedido.productos || '').toUpperCase(), // col 33: PRODUCTOS
+    ''                                      // col 34: Softr Record ID
   ];
 
   // Buscar la última fila con datos para escribir justo después
