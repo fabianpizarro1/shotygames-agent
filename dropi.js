@@ -56,36 +56,9 @@ function makeClient(token) {
 }
 
 async function getToken() {
-  if (_token && Date.now() < _tokenExpiry) return _token;
-
-  let res;
-  try {
-    res = await axios.post(`${BASE}/login`, {
-      email: process.env.DROPI_EMAIL,
-      password: process.env.DROPI_PASSWORD,
-      white_brand_id: 1,
-      brand: '',
-      ipAddress: '',
-      otp: null,
-      with_cdc: false
-    }, {
-      headers: {
-        'content-type': 'application/json',
-        'origin': 'https://app.dropi.ec',
-        'referer': 'https://app.dropi.ec/',
-        'x-authorization': 'Bearer undefined',
-        'x-captcha-token': ''
-      }
-    });
-  } catch (e) {
-    throw new Error(`DROPI login ${e.response?.status}: ${JSON.stringify(e.response?.data)}`);
-  }
-
-  const data = res.data;
-  _token = data.token || data.access_token || data.data?.token;
-  if (!_token) throw new Error(`DROPI login sin token. Respuesta: ${JSON.stringify(data)}`);
-  _tokenExpiry = Date.now() + (3.5 * 60 * 60 * 1000);
-  return _token;
+  // Usar token manual si está configurado (login automático bloqueado por IP de servidor)
+  if (process.env.DROPI_TOKEN) return process.env.DROPI_TOKEN;
+  throw new Error('DROPI_TOKEN no configurado. Ve a app.dropi.ec → Network → copia el valor de x-authorization → pégalo en EasyPanel como DROPI_TOKEN y redespliega.');
 }
 
 async function crearOrden(pedido) {
