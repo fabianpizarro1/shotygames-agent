@@ -106,6 +106,11 @@ async function buscarPedido(nombre) {
   });
 }
 
+function idxToCol(idx) {
+  // Convierte índice 0-based a letra de columna (0=A, 1=B, ...)
+  return String.fromCharCode(65 + idx);
+}
+
 async function actualizarGuia(telefono, guia) {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
@@ -117,21 +122,21 @@ async function actualizarGuia(telefono, guia) {
   const telIdx = headers.indexOf('TELEFONO');
   const guiaIdx = headers.indexOf('GUIA');
   const linkIdx = headers.indexOf('LINK RASTREO');
+  const estadoIdx = headers.indexOf('ESTADO');
 
   for (let i = 1; i < rows.length; i++) {
     const rowTel = rows[i][telIdx]?.replace(/^0/, '');
     const inputTel = telefono.replace(/^0/, '').replace(/^593/, '');
     if (rowTel?.endsWith(inputTel) || inputTel.endsWith(rowTel)) {
       const rowNum = i + 1;
+      const updates = [
+        { range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] },
+        { range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[`https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`]] },
+        { range: `PEDIDOS!${idxToCol(estadoIdx)}${rowNum}`, values: [['ENVIADO']] }
+      ];
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SHEETS_ID,
-        resource: {
-          valueInputOption: 'USER_ENTERED',
-          data: [
-            { range: `PEDIDOS!R${rowNum}`, values: [[guia]] },
-            { range: `PEDIDOS!S${rowNum}`, values: [[`https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`]] }
-          ]
-        }
+        resource: { valueInputOption: 'USER_ENTERED', data: updates }
       });
       return { updated: true, fila: rowNum };
     }

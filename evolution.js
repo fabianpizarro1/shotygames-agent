@@ -37,4 +37,11 @@ async function markAsRead(to, messageId) {
   } catch (e) {}
 }
 
-module.exports = { sendText, sendReaction, markAsRead };
+async function getMediaBase64(messageData) {
+  const response = await client.post(`/chat/getBase64FromMediaMessage/${INSTANCE}`, {
+    message: messageData
+  });
+  return response.data?.base64 || null;
+}
+
+module.exports = { sendText, sendReaction, markAsRead, getMediaBase64 };

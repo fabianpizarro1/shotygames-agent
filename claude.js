@@ -101,6 +101,12 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 
 **Todo en MAYÚSCULAS** al registrar.
 
+## Cuando Fabián mande una foto de guía de envío
+1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
+2. Confirma lo que encontraste: "Guía [número] — [nombre/teléfono]. ¿Registro el envío?"
+3. Cuando confirme, usa actualizar_guia con el teléfono o nombre encontrado
+4. La herramienta actualizará la guía y cambiará el estado a ENVIADO automáticamente
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -153,8 +159,17 @@ async function executeTool(toolName, input) {
   }
 }
 
-async function chat(history, newMessage) {
-  const messages = [...history, { role: 'user', content: newMessage }];
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg') {
+  let userContent;
+  if (imageBase64) {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: imageMime, data: imageBase64 } },
+      { type: 'text', text: newMessage }
+    ];
+  } else {
+    userContent = newMessage;
+  }
+  const messages = [...history, { role: 'user', content: userContent }];
 
   let response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',

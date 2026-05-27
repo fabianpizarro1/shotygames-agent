@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { chat } = require('./claude');
-const { sendText, sendReaction, markAsRead } = require('./evolution');
+const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
 
 const app = express();
 app.use(express.json());
@@ -65,13 +65,28 @@ app.post('/webhook', async (req, res) => {
 
     const messageId = data.key?.id;
     const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
-    if (!text) return;
+    const imageMsg = data.message?.imageMessage;
+
+    if (!text && !imageMsg) return;
 
     await markAsRead(from, messageId);
     await sendReaction(from, messageId, '⏳');
 
     const history = await getHistory(from);
-    const { text: reply, updatedHistory } = await chat(history, text);
+
+    let imageBase64 = null;
+    let imageMime = 'image/jpeg';
+    if (imageMsg) {
+      try {
+        imageBase64 = await getMediaBase64(data);
+        imageMime = imageMsg.mimetype || 'image/jpeg';
+      } catch (e) {
+        console.error('Error obteniendo imagen:', e.message);
+      }
+    }
+
+    const messageText = text || imageMsg?.caption || 'Te mando una imagen de la guía para que registres el envío.';
+    const { text: reply, updatedHistory } = await chat(history, messageText, imageBase64, imageMime);
 
     await saveHistory(from, updatedHistory);
     await sendText(from, reply);
