@@ -38,10 +38,9 @@ const PROVINCIAS = {
   'NUEVA LOJA': 'Sucumbíos', 'LAGO AGRIO': 'Sucumbíos',
 };
 
-let _token = null;
-let _tokenExpiry = 0;
-
-function makeClient(token) {
+function makeClient() {
+  const token = process.env.DROPI_TOKEN;
+  if (!token) throw new Error('DROPI_TOKEN no configurado en las variables de entorno');
   return axios.create({
     baseURL: BASE,
     headers: {
@@ -55,43 +54,13 @@ function makeClient(token) {
   });
 }
 
-async function getToken() {
-  if (_token && Date.now() < _tokenExpiry) return _token;
-
-  let res;
-  try {
-    res = await axios.post(`${BASE}/login`, {
-      email: process.env.DROPI_EMAIL,
-      password: process.env.DROPI_PASSWORD,
-      white_brand_id: 1,
-      brand: '',
-      ipAddress: '',
-      otp: null,
-      with_cdc: false
-    }, {
-      headers: {
-        'content-type': 'application/json',
-        'origin': 'https://app.dropi.ec',
-        'referer': 'https://app.dropi.ec/',
-        'x-authorization': 'Bearer undefined',
-        'x-captcha-token': ''
-      }
-    });
-  } catch (e) {
-    const body = e.response?.data;
-    throw new Error(`DROPI login ${e.response?.status}: ${JSON.stringify(body)}`);
-  }
-
-  const data = res.data;
-  _token = data.token || data.access_token || data.data?.token;
-  if (!_token) throw new Error(`DROPI login sin token. Respuesta: ${JSON.stringify(data)}`);
-  _tokenExpiry = Date.now() + (3.5 * 60 * 60 * 1000);
-  return _token;
-}
-
 async function crearOrden(pedido) {
-  const token = await getToken();
-  const client = makeClient(token);
+  let client;
+  try {
+    client = makeClient();
+  } catch (e) {
+    throw e;
+  }
 
   // Nombre y apellido
   const partes = (pedido.nombre || '').trim().split(' ');
@@ -162,7 +131,15 @@ async function crearOrden(pedido) {
     shipping_amount: 0
   };
 
-  const res = await client.post('/orders/myorders', body);
+  let res;
+  try {
+    res = await client.post('/orders/myorders', body);
+  } catch (e) {
+    if (e.response?.status === 401) {
+      throw new Error('El token de DROPI expiró. Copia un token nuevo desde el navegador y actualízalo en EasyPanel como DROPI_TOKEN.');
+    }
+    throw new Error(`DROPI error ${e.response?.status}: ${JSON.stringify(e.response?.data)}`);
+  }
   return res.data;
 }
 
