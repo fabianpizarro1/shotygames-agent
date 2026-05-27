@@ -24,9 +24,6 @@ async function appendPedido(pedido) {
   const fecha = pedido.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const mes = meses[new Date().getMonth()];
-  const tel = pedido.telefono?.replace(/^0/, '') || '';
-  const linkWA = tel ? `https://wa.me/593${tel}` : '';
-
   const row = [
     '',                                      // col 1:  ID
     pedido.nombre || '',                     // col 2:  NOMBRE
@@ -51,9 +48,9 @@ async function appendPedido(pedido) {
     pedido.envio || '',                     // col 21: ENVIO
     '',                                     // col 22: GUIA (se agrega después)
     '',                                     // col 23: LINK RASTREO
-    'Rastrear paquete',                     // col 24: RASTREO
-    linkWA,                                 // col 25: LINK WHATSAPP
-    'Mandar WhatsApp',                      // col 26: WHATSAPP
+    '',                                     // col 24: RASTREO (automática)
+    '',                                     // col 25: LINK WHATSAPP (automática)
+    '',                                     // col 26: WHATSAPP (automática)
     pedido.notas || '',                     // col 27: NOTAS
     '',                                     // col 28: FALSE
     '',                                     // col 29: LOG

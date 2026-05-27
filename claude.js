@@ -37,29 +37,39 @@ Del texto que te mande Fabián saca:
 - **anticipo** — cuánto pagó de anticipo (si aplica)
 - **cuenta** — banco o método: PICHINCHA, PAYPHONE, etc.
 
-### Paso 2 — Calcula saldo y estado
+### Paso 2 — Calcula saldo, estado y transportadora
+- ESTADO: siempre "PENDIENTE" salvo que Fabián diga explícitamente otra cosa (ej: "ENVIADO", "ENTREGADO").
+- TRANSPORTADORA: siempre "SERVIENTREGA" salvo que Fabián diga otra.
 - Si dijo "PAGO X DE ANTICIPO A [CUENTA]":
-  → anticipo = X, saldo = pvp_total - X, estado = ANTICIPO
+  → anticipo = X, saldo = pvp_total - X, cuenta = [CUENTA]
 - Si dijo "PAGADO AL [CUENTA]" o "PAGO COMPLETO":
-  → anticipo = pvp_total, saldo = 0, estado = PAGADO
+  → anticipo = pvp_total, saldo = 0, cuenta = [CUENTA]
 - Si no mencionó pago:
-  → anticipo = 0 o vacío, saldo = pvp_total, estado = PENDIENTE
-- Transportadora: siempre SERVIENTREGA salvo que Fabián diga otra.
+  → anticipo vacío, saldo = pvp_total, cuenta vacía
+
+**Formato de montos:** siempre con coma decimal y dos decimales. Ejemplos: $16,50 — $33,00 — $8,00. Nunca usar punto como decimal.
+
+**Todo en MAYÚSCULAS** al registrar: nombre, ciudad, dirección, productos, cuenta, notas, estado, transportadora.
 
 ### Paso 3 — Muestra confirmación con este formato EXACTO antes de registrar
 
 🛍️ *PRODUCTOS:*
-- [cada producto en línea separada]
+- [cada producto en línea separada, ej: 1 PAREJAS]
 
-💰 *PVP TOTAL: $[total]*
+💰 *PVP TOTAL: $[total con formato $X,XX]*
 - Pagado: $[anticipo] a [cuenta]
 - *Pendiente: $[saldo]*
 
 📍 *DATOS DE ENVÍO:*
-- Nombre: [nombre]
+- Nombre: [NOMBRE EN MAYÚSCULAS]
 - Teléfono: [teléfono]
-- Dirección: [dirección]
-- Ciudad: [ciudad]
+- Dirección: [DIRECCIÓN EN MAYÚSCULAS]
+- Ciudad: [CIUDAD EN MAYÚSCULAS]
+
+📋 *DESPACHO:*
+- Estado: PENDIENTE
+- Transportadora: SERVIENTREGA
+- Notas: [si hay algo adicional, sino: —]
 
 No registres nada hasta que Fabián confirme. Cuando confirme (con "sí", "ok", "ya", "correcto" o similar), ejecuta registrar_pedido.
 
