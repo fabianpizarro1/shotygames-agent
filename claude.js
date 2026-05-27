@@ -1,6 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const tools = require('./tools');
 const sheets = require('./sheets');
+const dropi = require('./dropi');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -101,6 +102,13 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 
 **Todo en MAYÚSCULAS** al registrar.
 
+## Crear guía en DROPI
+Cuando Fabián diga "crea la guía de [nombre/teléfono]" o "despacha a [nombre]":
+1. Usa buscar_pedido para obtener los datos del pedido
+2. Confirma: "¿Creo la guía en DROPI para [nombre] — [productos] — saldo $[saldo]?"
+3. Cuando confirme, usa crear_guia_dropi con todos los datos del pedido
+4. La guía se registra automáticamente en Sheets y el estado cambia a ENVIADO
+
 ## Cuando Fabián mande una foto de guía de envío
 1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
    - El número de guía suele aparecer entre dos asteriscos: **1234567890**
@@ -131,6 +139,15 @@ async function executeTool(toolName, input) {
       const upd = await sheets.actualizarGuia(input.telefono, input.guia);
       if (upd.updated) return `✅ Guía ${input.guia} actualizada en fila ${upd.fila}.`;
       return `No encontré pedido con teléfono ${input.telefono}.`;
+
+    case 'crear_guia_dropi': {
+      const orden = await dropi.crearOrden(input);
+      const guia = orden?.data?.tracking_number || orden?.tracking_number || orden?.guide_number || JSON.stringify(orden);
+      if (input.telefono && guia && !guia.startsWith('{')) {
+        await sheets.actualizarGuia(input.telefono, guia);
+      }
+      return `✅ Guía creada en DROPI: *${guia}*`;
+    }
 
     case 'registrar_gasto': {
       await sheets.registrarMovimiento('GASTOS', input);

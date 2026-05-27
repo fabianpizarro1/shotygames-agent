@@ -50,6 +50,27 @@ const tools = [
     }
   },
   {
+    name: "crear_guia_dropi",
+    description: "Crea una guía de envío en DROPI con los datos del pedido. Úsalo cuando Fabián pida crear la guía de un pedido.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre:      { type: "string", description: "Nombre completo del cliente" },
+        telefono:    { type: "string", description: "Teléfono del cliente" },
+        ciudad:      { type: "string", description: "Ciudad de destino" },
+        direccion:   { type: "string", description: "Dirección exacta de entrega" },
+        normal:      { type: "string", description: "Cantidad de Torres Normales" },
+        picante:     { type: "string", description: "Cantidad de Torres Picantes" },
+        parejas:     { type: "string", description: "Cantidad de Torres Parejas" },
+        enganchados: { type: "string", description: "Cantidad de Enganchados" },
+        dados:       { type: "string", description: "Cantidad de Dados" },
+        saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). 0 si está pagado." },
+        notas:       { type: "string", description: "Notas adicionales" }
+      },
+      required: ["nombre", "telefono", "ciudad", "direccion"]
+    }
+  },
+  {
     name: "registrar_gasto",
     description: "Registra un gasto en la hoja GASTOS del Sheet de finanzas.",
     input_schema: {
