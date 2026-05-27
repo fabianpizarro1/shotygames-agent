@@ -58,16 +58,26 @@ function makeClient(token) {
 async function getToken() {
   if (_token && Date.now() < _tokenExpiry) return _token;
 
-  const res = await axios.post(`${BASE}/auth/login`, {
+  const res = await axios.post(`${BASE}/login`, {
     email: process.env.DROPI_EMAIL,
-    password: process.env.DROPI_PASSWORD
+    password: process.env.DROPI_PASSWORD,
+    white_brand_id: 1,
+    brand: '',
+    ipAddress: '',
+    otp: null,
+    with_cdc: false
   }, {
-    headers: { 'content-type': 'application/json', 'origin': 'https://app.dropi.ec' }
+    headers: {
+      'content-type': 'application/json',
+      'origin': 'https://app.dropi.ec',
+      'referer': 'https://app.dropi.ec/',
+      'x-authorization': 'Bearer undefined'
+    }
   });
 
   const data = res.data;
   _token = data.token || data.access_token || data.data?.token;
-  if (!_token) throw new Error('DROPI: no se pudo obtener token de login');
+  if (!_token) throw new Error(`DROPI login sin token. Respuesta: ${JSON.stringify(data)}`);
   _tokenExpiry = Date.now() + (3.5 * 60 * 60 * 1000);
   return _token;
 }
