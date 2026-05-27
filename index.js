@@ -61,20 +61,41 @@ app.post('/webhook', async (req, res) => {
 
   try {
     const body = req.body;
-    if (body.event !== 'messages.upsert') return;
+
+    // LOG COMPLETO para debug
+    console.log('📨 WEBHOOK RECIBIDO:');
+    console.log('  event:', body.event);
+    console.log('  type:', body.type);
+    console.log('  keys:', Object.keys(body));
+    if (body.data) {
+      console.log('  data.messageType:', body.data.messageType);
+      console.log('  data.key:', JSON.stringify(body.data.key));
+      console.log('  data.message keys:', body.data.message ? Object.keys(body.data.message) : 'null');
+    }
+
+    const event = (body.event || body.type || '').toLowerCase();
+    if (!event.includes('message')) {
+      console.log('  → ignorado (no es mensaje), event:', event);
+      return;
+    }
 
     const data = body.data;
-    if (!data?.message) return;
-    if (data.key?.fromMe) return;
+    if (!data?.message) { console.log('  → sin data.message'); return; }
+    if (data.key?.fromMe) { console.log('  → mensaje propio'); return; }
 
-    const from = data.key?.remoteJid?.replace('@s.whatsapp.net', '');
-    if (!from) return;
+    const from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    if (!from) { console.log('  → sin remoteJid'); return; }
+    console.log('  from:', from, '| ADMIN_PHONE:', ADMIN_PHONE);
 
-    if (ADMIN_PHONE && from !== ADMIN_PHONE) return;
+    if (ADMIN_PHONE && from !== ADMIN_PHONE) {
+      console.log('  → número no autorizado:', from);
+      return;
+    }
 
     const messageId = data.key?.id;
     const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
-    if (!text) return;
+    if (!text) { console.log('  → sin texto, tipo:', JSON.stringify(data.message)); return; }
+    console.log('  texto:', text);
 
     await markAsRead(from, messageId);
     await sendReaction(from, messageId, '⏳');
