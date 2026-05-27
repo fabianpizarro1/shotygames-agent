@@ -60,9 +60,17 @@ async function appendPedido(pedido) {
     ''                           // Softr ID
   ];
 
-  const result = await sheets.spreadsheets.values.append({
+  // Buscar la última fila con datos para escribir justo después
+  const existing = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
-    range: 'PEDIDOS!A:AD',
+    range: 'PEDIDOS!B:B'  // columna NOMBRE para detectar última fila con dato
+  });
+  const lastRow = (existing.data.values || []).length + 1; // +1 por el header
+  const nextRow = lastRow + 1;
+
+  const result = await sheets.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!A${nextRow}`,
     valueInputOption: 'USER_ENTERED',
     resource: { values: [row] }
   });
