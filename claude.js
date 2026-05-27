@@ -76,6 +76,16 @@ No registres nada hasta que Fabián confirme. Cuando confirme (con "sí", "ok", 
 ### Paso 4 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
 
+## Registrar gastos, ingresos y transferencias
+
+Cuando Fabián diga algo como "gasto X en Y" / "me pagaron X por Y" / "transferí X de A a B":
+1. Extrae los datos del mensaje
+2. Confirma con una línea antes de registrar: "✅ Registrar [tipo]: $[valor] — [detalle] ([cuenta]). ¿Confirmas?"
+3. Cuando confirme, ejecuta el tool correspondiente
+
+**Cuentas válidas:** PICHINCHA, PAYPHONE, EFECTIVO (u otras que mencione Fabián)
+**Todo en MAYÚSCULAS** al registrar.
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -99,6 +109,21 @@ async function executeTool(toolName, input) {
       const upd = await sheets.actualizarGuia(input.telefono, input.guia);
       if (upd.updated) return `✅ Guía ${input.guia} actualizada en fila ${upd.fila}.`;
       return `No encontré pedido con teléfono ${input.telefono}.`;
+
+    case 'registrar_gasto': {
+      await sheets.registrarMovimiento('GASTOS', input);
+      return `✅ Gasto registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
+    }
+
+    case 'registrar_ingreso': {
+      await sheets.registrarMovimiento('INGRESOS', input);
+      return `✅ Ingreso registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
+    }
+
+    case 'registrar_transferencia': {
+      await sheets.registrarMovimiento('TRANSFERENCIAS', input);
+      return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
+    }
 
     case 'pedidos_hoy':
       const hoy = await sheets.getPedidosHoy();

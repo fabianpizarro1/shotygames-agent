@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 
 const SHEETS_ID = process.env.SHEETS_ID;
+const SHEETS_ID_FINANZAS = process.env.SHEETS_ID_FINANZAS;
 
 // Convierte strings de monto ("$16,50", "16.5", "16,5") a número para que Sheets pueda sumar
 function parseMonto(val) {
@@ -156,4 +157,47 @@ async function getPedidosHoy() {
   })};
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, getPedidosHoy };
+async function registrarMovimiento(hoja, datos) {
+  const sheets = await getSheets();
+  const fecha = datos.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+  let row;
+  if (hoja === 'TRANSFERENCIAS') {
+    row = [
+      fecha,                                        // FECHA
+      '',                                           // MES (automática)
+      (datos.sale || '').toUpperCase(),             // SALE
+      (datos.entra || '').toUpperCase(),            // ENTRA
+      (datos.motivo || '').toUpperCase(),           // MOTIVO
+      parseMonto(datos.valor)                       // VALOR
+    ];
+  } else {
+    // GASTOS e INGRESOS tienen la misma estructura
+    row = [
+      fecha,                                        // FECHA
+      '',                                           // MES (automática)
+      (datos.categoria || '').toUpperCase(),        // CATEGORIA
+      (datos.observaciones || '').toUpperCase(),    // OBSERVACIONES
+      (datos.cuenta || '').toUpperCase(),           // CUENTA
+      parseMonto(datos.valor)                       // VALOR
+    ];
+  }
+
+  const existing = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID_FINANZAS,
+    range: `${hoja}!A:A`
+  });
+  const lastRow = (existing.data.values || []).length;
+  const nextRow = lastRow + 1;
+
+  const result = await sheets.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID_FINANZAS,
+    range: `${hoja}!A${nextRow}`,
+    valueInputOption: 'USER_ENTERED',
+    resource: { values: [row] }
+  });
+
+  return result.data.updates;
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, getPedidosHoy, registrarMovimiento };
