@@ -111,36 +111,63 @@ function idxToCol(idx) {
   return String.fromCharCode(65 + idx);
 }
 
-async function actualizarGuia(telefono, guia) {
-  const sheets = await getSheets();
-  const res = await sheets.spreadsheets.values.get({
+// Actualiza la guía en el pedido MÁS RECIENTE sin guía que coincida con el teléfono
+async function actualizarGuia(telefono, guia, envio) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
-    range: 'PEDIDOS!A:AD'
+    range: 'PEDIDOS!A:AJ'
   });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
-  const telIdx = headers.indexOf('TELEFONO');
-  const guiaIdx = headers.indexOf('GUIA');
-  const linkIdx = headers.indexOf('LINK RASTREO');
-  const estadoIdx = headers.indexOf('ESTADO');
+  const telIdx    = headers.indexOf('TELEFONO');
+  const guiaIdx   = headers.indexOf('GUIA');
+  const linkIdx   = headers.indexOf('LINK RASTREO');
+  const envioIdx  = headers.indexOf('ENVIO');
 
-  for (let i = 1; i < rows.length; i++) {
-    const rowTel = rows[i][telIdx]?.replace(/^0/, '');
-    const inputTel = telefono.replace(/^0/, '').replace(/^593/, '');
-    if (rowTel?.endsWith(inputTel) || inputTel.endsWith(rowTel)) {
-      const rowNum = i + 1;
-      const updates = [
-        { range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] },
-        { range: `PEDIDOS!${idxToCol(estadoIdx)}${rowNum}`, values: [['ENVIADO']] }
-      ];
-      await sheets.spreadsheets.values.batchUpdate({
-        spreadsheetId: SHEETS_ID,
-        resource: { valueInputOption: 'USER_ENTERED', data: updates }
-      });
-      return { updated: true, fila: rowNum };
+  const inputTel = String(telefono).replace(/^0/, '').replace(/^593/, '');
+
+  // Buscar desde el final para actualizar el pedido MÁS RECIENTE
+  let foundRow = -1;
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const rowTel = String(rows[i][telIdx] || '').replace(/^0/, '').replace(/^593/, '');
+    const telMatch = rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel);
+    const sinGuia  = !rows[i][guiaIdx]; // priorizar los que no tienen guía aún
+    if (telMatch && sinGuia) { foundRow = i; break; }
+  }
+  // Si todos tienen guía, usar el más reciente que coincida
+  if (foundRow === -1) {
+    for (let i = rows.length - 1; i >= 1; i--) {
+      const rowTel = String(rows[i][telIdx] || '').replace(/^0/, '').replace(/^593/, '');
+      if (rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel)) { foundRow = i; break; }
     }
   }
-  return { updated: false };
+
+  if (foundRow === -1) return { updated: false };
+
+  const rowNum = foundRow + 1; // 1-indexed
+  const updates = [];
+
+  if (guiaIdx >= 0) {
+    updates.push({ range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] });
+  }
+  if (linkIdx >= 0) {
+    const trackingUrl = `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
+    updates.push({ range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[trackingUrl]] });
+  }
+  if (envioIdx >= 0 && envio) {
+    const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
+    updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
+  }
+
+  if (updates.length > 0) {
+    await sheetsApi.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEETS_ID,
+      resource: { valueInputOption: 'USER_ENTERED', data: updates }
+    });
+  }
+
+  return { updated: true, fila: rowNum };
 }
 
 async function getPedidosHoy() {

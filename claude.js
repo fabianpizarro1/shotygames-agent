@@ -59,7 +59,7 @@ Del texto que te mande Fabián saca:
 
 💰 *PVP TOTAL: $[total con formato $X,XX]*
 - Pagado: $[anticipo] a [cuenta]
-- *Pendiente: $[saldo]*
+- *Pendiente (CON RECAUDO): $[saldo]* — o — *SIN RECAUDO* si saldo = 0
 
 📍 *DATOS DE ENVÍO:*
 - Nombre: [NOMBRE EN MAYÚSCULAS]
@@ -72,9 +72,16 @@ Del texto que te mande Fabián saca:
 - Transportadora: SERVIENTREGA
 - Notas: [si hay algo adicional, sino: —]
 
-No registres nada hasta que Fabián confirme. Cuando confirme (con "sí", "ok", "ya", "correcto" o similar), ejecuta registrar_pedido.
+No hagas nada hasta que Fabián confirme.
 
-### Paso 4 — Si faltan datos críticos
+### Paso 4 — Cuando Fabián confirme
+Ejecuta EN ORDEN (sin preguntar nada más):
+1. `registrar_pedido` — registra el pedido en Google Sheets
+2. `crear_guia_dropi` — crea la guía en DROPI con los mismos datos
+
+Cuando ambos terminen, responde con una sola línea resumida + el link del PDF de la guía que devuelve `crear_guia_dropi`.
+
+### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
 
 ## Registrar gastos, ingresos y transferencias
@@ -102,12 +109,13 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 
 **Todo en MAYÚSCULAS** al registrar.
 
-## Crear guía en DROPI
-Cuando Fabián diga "crea la guía de [nombre/teléfono]" o "despacha a [nombre]":
-1. Usa buscar_pedido para obtener los datos del pedido
-2. Confirma: "¿Creo la guía en DROPI para [nombre] — [productos] — saldo $[saldo]?"
-3. Cuando confirme, usa crear_guia_dropi con todos los datos del pedido
-4. La guía se registra automáticamente en Sheets y el estado cambia a ENVIADO
+## Crear guía en DROPI (pedido ya existente)
+Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
+1. Usa buscar_pedido para obtener los datos
+2. Confirma: "¿Creo guía DROPI para [NOMBRE] — [productos] — saldo $[saldo]?"
+3. Cuando confirme, usa crear_guia_dropi
+4. La guía y el envío se actualizan automáticamente en Sheets
+5. Responde con el número de guía + link del PDF
 
 ## Cuando Fabián mande una foto de guía de envío
 1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
@@ -142,25 +150,24 @@ async function executeTool(toolName, input) {
 
     case 'crear_guia_dropi': {
       const orden = await dropi.crearOrden(input);
-      // sticker = número de guía (campo oficial según API docs)
-      const guia =
-        orden?.sticker ||
-        orden?.data?.sticker ||
-        orden?.tracking_number ||
-        orden?.data?.tracking_number ||
-        orden?.guide_number ||
-        orden?.data?.guide_number;
+      const guia = orden?.sticker;
+
       if (orden?._guideError) {
-        // Orden creada pero guía no generada aún
-        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero hubo un error al generar la guía: ${orden._guideError}. Intenta generar la guía manualmente en DROPI.`;
+        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero error al generar guía: ${orden._guideError}`;
       }
       if (!guia) {
-        return `⚠️ Orden creada en DROPI (ID: ${orden?._orderId || '?'}) pero no se pudo leer el número de guía. Respuesta: ${JSON.stringify(orden).slice(0, 200)}`;
+        return `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Respuesta: ${JSON.stringify(orden).slice(0, 200)}`;
       }
+
+      // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO (sin cambiar ESTADO)
       if (input.telefono) {
-        await sheets.actualizarGuia(input.telefono, guia);
+        await sheets.actualizarGuia(input.telefono, guia, orden._shipping);
       }
-      return `✅ Guía creada en DROPI: *${guia}*`;
+
+      const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
+      const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
+
+      return `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}`;
     }
 
     case 'registrar_gasto': {

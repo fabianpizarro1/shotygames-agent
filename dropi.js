@@ -137,28 +137,33 @@ async function crearOrden(pedido) {
   const saldo = parseFloat(String(pedido.saldo).replace(',', '.')) || 0;
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
-  // Productos
-  const productos = [];
+  // Productos — calcular precio por unidad para que la suma sea exactamente el saldo
+  const productosRaw = [];
   const campos = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
   for (const campo of campos) {
     const qty = parseInt(pedido[campo]) || 0;
-    if (qty > 0) {
-      productos.push({
-        ...PRODUCTS[campo],
-        stock: 999,
-        variation_id: null,
-        quantity: qty,
-        price: saldo,
-        suggested_price: '1.00',
-        sale_price: '1.00',
-        variations: [],
-        type: 'SIMPLE',
-        user_id: USER_ID
-      });
-    }
+    if (qty > 0) productosRaw.push({ ...PRODUCTS[campo], quantity: qty });
   }
 
-  if (!productos.length) throw new Error('No hay productos válidos para crear la guía');
+  if (!productosRaw.length) throw new Error('No hay productos válidos para crear la guía');
+
+  // Distribuir el saldo equitativamente entre todas las unidades
+  const totalUnidades = productosRaw.reduce((s, p) => s + p.quantity, 0);
+  const precioPorUnidad = saldo > 0
+    ? parseFloat((saldo / totalUnidades).toFixed(2))
+    : 1;
+
+  const productos = productosRaw.map(p => ({
+    ...p,
+    stock: 999,
+    variation_id: null,
+    price: precioPorUnidad,
+    suggested_price: '1.00',
+    sale_price: '1.00',
+    variations: [],
+    type: 'SIMPLE',
+    user_id: USER_ID
+  }));
 
   // Teléfono con prefijo 593
   const phone = (pedido.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
@@ -250,7 +255,15 @@ async function crearOrden(pedido) {
     orderObj?.tracking_number ||
     guideData?.tracking_number;
 
-  return { ...guideData, sticker, _orderId: orderId };
+  // Costo de envío que calculó DROPI
+  const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
+
+  // URL del PDF de la guía
+  const pdfUrl = sticker
+    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
+    : null;
+
+  return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
 module.exports = { crearOrden, setToken };
