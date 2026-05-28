@@ -9,11 +9,12 @@ const WAREHOUSE_ID = 338;
 const TOKEN_FILE = '/tmp/.dropi_token';
 
 const PRODUCTS = {
-  normal:      { id: 6007,   name: 'Torre de Shots NORMAL',  weight: '1.00' },
-  picante:     { id: 6008,   name: 'Torre de Shots PICANTE', weight: '1.00' },
-  parejas:     { id: 76998,  name: 'Torre de Shots PAREJAS', weight: '1.00' },
-  enganchados: { id: 6010,   name: 'Enganchados',            weight: '0.50' },
-  dados:       { id: 139461, name: 'Dados Digitales',        weight: '0.10' }
+  normal:      { id: 6007,   name: 'Torre de Shots NORMAL',  weight: '1.00', digital: false },
+  picante:     { id: 6008,   name: 'Torre de Shots PICANTE', weight: '1.00', digital: false },
+  parejas:     { id: 76998,  name: 'Torre de Shots PAREJAS', weight: '1.00', digital: false },
+  enganchados: { id: 6010,   name: 'Enganchados',            weight: '0.50', digital: false },
+  dados:       { id: 139461, name: 'Dados Digitales',        weight: '0.10', digital: true  }
+  // EMPAREJADOS también es digital — se entrega por WhatsApp, no va en guía DROPI
 };
 
 const PROVINCIAS = {
@@ -149,15 +150,15 @@ async function crearOrden(pedido) {
   const saldo = parseFloat(String(pedido.saldo).replace(',', '.')) || 0;
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
-  // Productos — calcular precio por unidad para que la suma sea exactamente el saldo
+  // Productos — solo físicos (los digitales se entregan por WhatsApp, no van en guía DROPI)
   const productosRaw = [];
   const campos = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
   for (const campo of campos) {
     const qty = parseInt(pedido[campo]) || 0;
-    if (qty > 0) productosRaw.push({ ...PRODUCTS[campo], quantity: qty });
+    if (qty > 0 && !PRODUCTS[campo].digital) productosRaw.push({ ...PRODUCTS[campo], quantity: qty });
   }
 
-  if (!productosRaw.length) throw new Error('No hay productos válidos para crear la guía');
+  if (!productosRaw.length) throw new Error('No hay productos físicos para crear guía. Los digitales (DADOS, EMPAREJADOS) se entregan por WhatsApp, no requieren guía DROPI.');
 
   // Distribuir el saldo equitativamente entre todas las unidades
   const totalUnidades = productosRaw.reduce((s, p) => s + p.quantity, 0);

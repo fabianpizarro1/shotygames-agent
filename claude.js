@@ -38,6 +38,11 @@ Del texto que te mande Fabián saca:
 - **anticipo** — cuánto pagó de anticipo (si aplica)
 - **cuenta** — banco o método: PICHINCHA, PAYPHONE, etc.
 
+**Cantidades individuales por producto** — extrae siempre cada una por separado:
+- normal, picante, parejas, enganchados, dados → número entero (omitir si no hay)
+
+Al llamar registrar_pedido y crear_guia_dropi SIEMPRE incluye estas cantidades como campos separados (normal, picante, parejas, enganchados, dados). Son los que llenan las columnas N, P, PAR, ENG, DADOS en Sheets. Si no vas a incluir un producto, omite el campo (no pongas 0).
+
 ### Paso 2 — Calcula saldo, estado y transportadora
 - ESTADO: siempre "PENDIENTE" salvo que Fabián diga explícitamente otra cosa (ej: "ENVIADO", "ENTREGADO").
 - TRANSPORTADORA: siempre "SERVIENTREGA" salvo que Fabián diga otra.
