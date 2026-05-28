@@ -42,6 +42,7 @@ async function saveHistory(phone, history) {
 
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
+  console.log('WEBHOOK recibido:', JSON.stringify(req.body).slice(0, 200));
 
   try {
     const body = req.body;
