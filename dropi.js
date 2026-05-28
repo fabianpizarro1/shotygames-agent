@@ -80,9 +80,44 @@ function makeClient(token) {
   });
 }
 
+// Auto-login usando credenciales del env var (para no depender de token manual)
+async function autoLogin() {
+  const email = process.env.DROPI_EMAIL;
+  const password = process.env.DROPI_PASSWORD;
+  if (!email || !password) throw new Error('Sin credenciales DROPI_EMAIL/DROPI_PASSWORD para auto-login');
+
+  console.log('DROPI: iniciando auto-login...');
+  const res = await axios.post(`${BASE}/login`, {
+    email, password, white_brand_id: 1
+  }, {
+    headers: {
+      'accept': 'application/json, text/plain, */*',
+      'accept-language': 'es-EC,es;q=0.9',
+      'content-type': 'application/json',
+      'origin': 'https://app.dropi.ec',
+      'referer': 'https://app.dropi.ec/login',
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'sec-fetch-dest': 'empty',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-site'
+    }
+  });
+
+  const token = res.data?.token;
+  if (!token) throw new Error('Auto-login falló: sin token en respuesta');
+  setToken(token);
+  console.log('DROPI: auto-login exitoso, token guardado');
+  return token;
+}
+
 async function getToken() {
   if (_token) return _token;
-  throw new Error('Token DROPI no configurado. Manda por WhatsApp: DROPI TOKEN: eyJ...');
+  // Si no hay token, intentar auto-login (requiere DROPI_EMAIL y DROPI_PASSWORD en env)
+  try {
+    return await autoLogin();
+  } catch (e) {
+    throw new Error(`Token DROPI no configurado y auto-login falló: ${e.message}`);
+  }
 }
 
 async function crearOrden(pedido) {
@@ -159,15 +194,25 @@ async function crearOrden(pedido) {
     calculate_costs_and_shiping: true   // DROPI calcula el envío automáticamente
   };
 
-  // Paso 1: crear la orden
+  // Paso 1: crear la orden (con retry automático si el token expiró)
   let res;
   try {
     res = await client.post('/orders/myorders', body);
   } catch (e) {
-    if (e.response?.status === 401) {
-      throw new Error('El token de DROPI expiró. Mandame por WhatsApp: DROPI TOKEN: eyJ...');
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      // Token expirado — intentar auto-login y reintentar UNA vez
+      console.log(`DROPI 401/403 — intentando auto-login y reintento...`);
+      try {
+        const newToken = await autoLogin();
+        const newClient = makeClient(newToken);
+        res = await newClient.post('/orders/myorders', body);
+      } catch (e2) {
+        throw new Error(`DROPI error ${status} y auto-login falló: ${e2.message}`);
+      }
+    } else {
+      throw new Error(`DROPI error ${status}: ${JSON.stringify(e.response?.data)}`);
     }
-    throw new Error(`DROPI error ${e.response?.status}: ${JSON.stringify(e.response?.data)}`);
   }
 
   const orderData = res.data;
