@@ -21,6 +21,7 @@ const PROVINCIAS = {
   'CUENCA': 'Azuay', 'GUALACEO': 'Azuay', 'SIGSIG': 'Azuay',
   'QUITO': 'Pichincha', 'SANGOLQUI': 'Pichincha', 'CAYAMBE': 'Pichincha', 'MEJIA': 'Pichincha',
   'MACHALA': 'El Oro', 'PASAJE': 'El Oro', 'HUAQUILLAS': 'El Oro', 'SANTA ROSA': 'El Oro', 'ARENILLAS': 'El Oro', 'ZARUMA': 'El Oro',
+  'PONCE ENRIQUEZ': 'El Oro', 'CAMILO PONCE ENRIQUEZ': 'El Oro',
   'PORTOVIEJO': 'Manabí', 'MANTA': 'Manabí', 'CHONE': 'Manabí', 'BAHIA DE CARAQUEZ': 'Manabí', 'PEDERNALES': 'Manabí', 'EL CARMEN': 'Manabí', 'JIPIJAPA': 'Manabí', 'MONTECRISTI': 'Manabí',
   'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos',
   'AMBATO': 'Tungurahua', 'BANOS': 'Tungurahua', 'PELILEO': 'Tungurahua',
@@ -40,6 +41,16 @@ const PROVINCIAS = {
   'MACAS': 'Morona Santiago',
   'ZAMORA': 'Zamora Chinchipe',
   'NUEVA LOJA': 'Sucumbíos', 'LAGO AGRIO': 'Sucumbíos',
+};
+
+// Ciudades con nombre diferente en DROPI para que Servientrega quede habilitado.
+// Cuando el cliente diga una ciudad que tenga variante en DROPI, se usa el nombre correcto aquí.
+// Agregar más según se vayan descubriendo.
+const CIUDAD_DROPI = {
+  'SALINAS':               'SALINAS (SANTA ELENA)',  // evitar la SALINAS de Guayas
+  'CAMILO PONCE ENRIQUEZ': 'PONCE ENRIQUEZ',          // en DROPI funciona sin "Camilo"
+  // Agrega más abajo cuando encuentres casos nuevos:
+  // 'NOMBRE_QUE_LLEGA': 'NOMBRE_EN_DROPI',
 };
 
 // Orden de prioridad: archivo (más reciente) > env var (deploy) > null
@@ -129,8 +140,9 @@ async function crearOrden(pedido) {
   const nombre = partes[0] || '';
   const apellido = partes.slice(1).join(' ') || nombre;
 
-  // Provincia
-  const ciudadUpper = (pedido.ciudad || '').toUpperCase();
+  // Ciudad y provincia — normalizar nombre de ciudad para DROPI
+  const ciudadUpper = (pedido.ciudad || '').toUpperCase().trim();
+  const cityForDropi = CIUDAD_DROPI[ciudadUpper] || pedido.ciudad;  // nombre exacto que espera DROPI
   const state = PROVINCIAS[ciudadUpper] || pedido.ciudad;
 
   // Saldo a cobrar
@@ -176,7 +188,7 @@ async function crearOrden(pedido) {
     dir: (pedido.direccion || '').toUpperCase(),
     country: 'ECUADOR',
     state,
-    city: pedido.ciudad,
+    city: cityForDropi,
     phone,
     client_email: '',
     payment_method_id: 1,
