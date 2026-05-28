@@ -142,8 +142,22 @@ async function executeTool(toolName, input) {
 
     case 'crear_guia_dropi': {
       const orden = await dropi.crearOrden(input);
-      const guia = orden?.data?.tracking_number || orden?.tracking_number || orden?.guide_number || JSON.stringify(orden);
-      if (input.telefono && guia && !guia.startsWith('{')) {
+      // sticker = número de guía (campo oficial según API docs)
+      const guia =
+        orden?.sticker ||
+        orden?.data?.sticker ||
+        orden?.tracking_number ||
+        orden?.data?.tracking_number ||
+        orden?.guide_number ||
+        orden?.data?.guide_number;
+      if (orden?._guideError) {
+        // Orden creada pero guía no generada aún
+        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero hubo un error al generar la guía: ${orden._guideError}. Intenta generar la guía manualmente en DROPI.`;
+      }
+      if (!guia) {
+        return `⚠️ Orden creada en DROPI (ID: ${orden?._orderId || '?'}) pero no se pudo leer el número de guía. Respuesta: ${JSON.stringify(orden).slice(0, 200)}`;
+      }
+      if (input.telefono) {
         await sheets.actualizarGuia(input.telefono, guia);
       }
       return `✅ Guía creada en DROPI: *${guia}*`;

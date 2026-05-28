@@ -109,7 +109,7 @@ async function crearOrden(pedido) {
   const phone = (pedido.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
 
   const body = {
-    total_order: saldo,
+    total_order: Math.round(saldo),   // entero requerido por la API
     notes: pedido.notas || '',
     name: nombre,
     surname: apellido,
@@ -135,19 +135,54 @@ async function crearOrden(pedido) {
     insurance: false,
     shalom_data: null,
     warehouses_selected_id: WAREHOUSE_ID,
-    shipping_amount: 0
+    shipping_amount: 0,
+    calculate_costs_and_shiping: true   // DROPI calcula el envío automáticamente
   };
 
+  // Paso 1: crear la orden
   let res;
   try {
     res = await client.post('/orders/myorders', body);
   } catch (e) {
     if (e.response?.status === 401) {
-      throw new Error('El token de DROPI expiró. Copia un token nuevo desde el navegador y actualízalo en EasyPanel como DROPI_TOKEN.');
+      throw new Error('El token de DROPI expiró. Mandame por WhatsApp: DROPI TOKEN: eyJ...');
     }
     throw new Error(`DROPI error ${e.response?.status}: ${JSON.stringify(e.response?.data)}`);
   }
-  return res.data;
+
+  const orderData = res.data;
+  const orderId = orderData?.id || orderData?.data?.id || orderData?.order?.id;
+
+  if (!orderId) {
+    console.log('DROPI create response (sin id):', JSON.stringify(orderData));
+    return orderData;
+  }
+
+  console.log(`Orden DROPI creada. ID: ${orderId} — generando guía...`);
+
+  // Paso 2: generar la guía (paso separado según la API)
+  let guideRes;
+  try {
+    guideRes = await client.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
+  } catch (e) {
+    console.error('Error generando guía:', e.response?.status, JSON.stringify(e.response?.data));
+    // La orden existe, pero la guía no se pudo generar aún — devolver lo que hay
+    return { ...orderData, _orderId: orderId, _guideError: `${e.response?.status}: ${JSON.stringify(e.response?.data)}` };
+  }
+
+  const guideData = guideRes.data;
+  console.log('DROPI guide response:', JSON.stringify(guideData));
+
+  // El número de guía viene en el campo sticker
+  const sticker =
+    guideData?.sticker ||
+    guideData?.data?.sticker ||
+    guideData?.guide_number ||
+    guideData?.data?.guide_number ||
+    guideData?.tracking_number ||
+    guideData?.data?.tracking_number;
+
+  return { ...guideData, sticker, _orderId: orderId };
 }
 
 module.exports = { crearOrden, setToken };
