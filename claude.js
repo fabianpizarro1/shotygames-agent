@@ -33,15 +33,18 @@ Del texto que te mande Fabián saca:
 - **telefono** — número del cliente (como venga, con o sin 0)
 - **ciudad** — ciudad de destino
 - **direccion** — dirección completa de entrega
-- **productos** — lista de productos (ej: "1 PAREJAS, 1 DADOS")
 - **pvp_total** — precio total del pedido (lo que diga "POR X" o suma de productos)
 - **anticipo** — cuánto pagó de anticipo (si aplica)
 - **cuenta** — banco o método: PICHINCHA, PAYPHONE, etc.
 
-**Cantidades individuales por producto** — extrae siempre cada una por separado:
-- normal, picante, parejas, enganchados, dados → número entero (omitir si no hay)
+**Cantidades por producto** — extrae siempre cada una como campo separado (número entero; omitir si no hay):
+- **normal** → Torres Normales
+- **picante** → Torres Picantes
+- **parejas** → Torres Parejas
+- **enganchados** → Enganchados
+- **dados** → Dados
 
-Al llamar registrar_pedido y crear_guia_dropi SIEMPRE incluye estas cantidades como campos separados (normal, picante, parejas, enganchados, dados). Son los que llenan las columnas N, P, PAR, ENG, DADOS en Sheets. Si no vas a incluir un producto, omite el campo (no pongas 0).
+Al llamar registrar_pedido y crear_guia_dropi SIEMPRE pasa los campos individuales de cantidad (normal/picante/parejas/enganchados/dados). NO incluyas el campo `productos` — esa columna es automática en Sheets.
 
 ### Paso 2 — Calcula saldo, estado y transportadora
 - ESTADO: siempre "PENDIENTE" salvo que Fabián diga explícitamente otra cosa (ej: "ENVIADO", "ENTREGADO").
@@ -83,6 +86,9 @@ No hagas nada hasta que Fabián confirme.
 Ejecuta EN ORDEN (sin preguntar nada más):
 1. registrar_pedido — registra el pedido en Google Sheets
 2. crear_guia_dropi — crea la guía en DROPI con los mismos datos
+   - Incluye siempre pvp_total (precio de venta total) y saldo
+   - Si saldo > 0: pedido CON RECAUDO, DROPI cobra al entregar
+   - Si saldo = 0: pedido SIN RECAUDO, pvp_total se usa para calcular precio por unidad
 
 Cuando ambos terminen, responde con una sola línea resumida + el link del PDF de la guía que devuelve crear_guia_dropi.
 

@@ -23,7 +23,7 @@ const tools = [
         transportadora: { type: "string", description: "SERVIENTREGA u otra transportadora" },
         notas: { type: "string", description: "Notas adicionales del pedido" }
       },
-      required: ["nombre", "telefono", "ciudad", "productos", "anticipo", "cuenta", "estado"]
+      required: ["nombre", "telefono", "ciudad", "anticipo", "cuenta", "estado"]
     }
   },
   {
@@ -64,7 +64,8 @@ const tools = [
         parejas:     { type: "string", description: "Cantidad de Torres Parejas" },
         enganchados: { type: "string", description: "Cantidad de Enganchados" },
         dados:       { type: "string", description: "Cantidad de Dados" },
-        saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). 0 si está pagado." },
+        saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). Vacío o 0 si pagado." },
+        pvp_total:   { type: "string", description: "Precio de venta total del pedido. Requerido para SIN RECAUDO." },
         notas:       { type: "string", description: "Notas adicionales" }
       },
       required: ["nombre", "telefono", "ciudad", "direccion"]

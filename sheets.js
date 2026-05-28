@@ -65,7 +65,7 @@ async function appendPedido(pedido) {
     '',                                     // col 30: COSTOS
     '',                                     // col 31: UTILIDAD
     (pedido.direccion || '').toUpperCase(), // col 32: DIRECCION
-    (pedido.productos || '').toUpperCase(), // col 33: PRODUCTOS
+    '',                                     // col 33: PRODUCTOS (automática)
     ''                                      // col 34: Softr Record ID
   ];
 
