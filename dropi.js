@@ -38,8 +38,13 @@ const PROVINCIAS = {
   'NUEVA LOJA': 'Sucumbíos', 'LAGO AGRIO': 'Sucumbíos',
 };
 
-let _token = null;
-let _tokenExpiry = 0;
+let _token = process.env.DROPI_TOKEN || null;
+
+// Permite actualizar el token en memoria sin redeploy (vía WhatsApp)
+function setToken(token) {
+  _token = token.replace(/^Bearer\s+/i, '').trim();
+  console.log('DROPI token actualizado en memoria');
+}
 
 function makeClient(token) {
   return axios.create({
@@ -56,9 +61,8 @@ function makeClient(token) {
 }
 
 async function getToken() {
-  // Usar token manual si está configurado (login automático bloqueado por IP de servidor)
-  if (process.env.DROPI_TOKEN) return process.env.DROPI_TOKEN;
-  throw new Error('DROPI_TOKEN no configurado. Ve a app.dropi.ec → Network → copia el valor de x-authorization → pégalo en EasyPanel como DROPI_TOKEN y redespliega.');
+  if (_token) return _token;
+  throw new Error('Token DROPI no configurado. Manda por WhatsApp: DROPI TOKEN: eyJ...');
 }
 
 async function crearOrden(pedido) {
@@ -146,4 +150,4 @@ async function crearOrden(pedido) {
   return res.data;
 }
 
-module.exports = { crearOrden };
+module.exports = { crearOrden, setToken };

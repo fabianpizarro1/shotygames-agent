@@ -18,6 +18,7 @@ try {
 
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
 const MAX_HISTORY = 8;
+const dropi = require('./dropi');
 
 async function getHistory(phone) {
   try {
@@ -69,6 +70,15 @@ app.post('/webhook', async (req, res) => {
     const imageMsg = data.message?.imageMessage;
 
     if (!text && !imageMsg) return;
+
+    // Comando especial para actualizar token DROPI sin redeploy
+    if (text && text.toUpperCase().startsWith('DROPI TOKEN:')) {
+      const token = text.slice('DROPI TOKEN:'.length).trim();
+      dropi.setToken(token);
+      await markAsRead(from, messageId);
+      await sendText(from, '✅ Token DROPI actualizado en memoria.');
+      return;
+    }
 
     await markAsRead(from, messageId);
     await sendReaction(from, messageId, '⏳');
