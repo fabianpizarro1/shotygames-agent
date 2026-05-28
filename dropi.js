@@ -171,10 +171,12 @@ async function crearOrden(pedido) {
   }
 
   const orderData = res.data;
-  const orderId = orderData?.id || orderData?.data?.id || orderData?.order?.id;
+  // La API devuelve el ID dentro de "objects.id"
+  const orderId = orderData?.id || orderData?.objects?.id
+    || orderData?.data?.id || orderData?.order?.id;
 
   if (!orderId) {
-    console.log('DROPI create response (sin id):', JSON.stringify(orderData));
+    console.log('DROPI create response (sin id):', JSON.stringify(orderData).substring(0, 500));
     return orderData;
   }
 
@@ -191,16 +193,17 @@ async function crearOrden(pedido) {
   }
 
   const guideData = guideRes.data;
-  console.log('DROPI guide response:', JSON.stringify(guideData));
+  console.log('DROPI guide response keys:', Object.keys(guideData));
 
-  // El número de guía viene en el campo sticker
+  // El número de guía real está en shipping_guide; el campo sticker es el nombre del PDF
+  const orderObj = guideData?.order || guideData?.objects || guideData?.data || {};
   const sticker =
-    guideData?.sticker ||
-    guideData?.data?.sticker ||
+    orderObj?.shipping_guide ||
+    guideData?.shipping_guide ||
+    orderObj?.guide_number ||
     guideData?.guide_number ||
-    guideData?.data?.guide_number ||
-    guideData?.tracking_number ||
-    guideData?.data?.tracking_number;
+    orderObj?.tracking_number ||
+    guideData?.tracking_number;
 
   return { ...guideData, sticker, _orderId: orderId };
 }
