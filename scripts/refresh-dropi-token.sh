@@ -10,10 +10,10 @@ DROPI_PASSWORD="Nereashirley96"
 
 # ⚠️ CAMBIA ESTO: URL de tu agente en EasyPanel
 # La encuentras en EasyPanel > tu servicio > Domain/Ports
-AGENT_URL="https://TU_AGENTE.easypanel.host"
+AGENT_URL="https://agent.hetaxg.easypanel.host"
 
 # ⚠️ CAMBIA ESTO: debe ser igual a ADMIN_KEY en EasyPanel
-ADMIN_KEY="TU_CLAVE_ADMIN_AQUI"
+ADMIN_KEY="ShotyGames2024Dropi"
 
 LOG="$HOME/dropi-refresh.log"
 
