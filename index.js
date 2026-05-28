@@ -111,6 +111,20 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// Endpoint para que el script del Mac actualice el token automáticamente
+app.post('/admin/token', (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  const providedKey = req.headers['x-admin-key'] || '';
+  if (!adminKey || providedKey !== adminKey) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Falta token' });
+  dropi.setToken(token);
+  console.log('DROPI token actualizado via /admin/token');
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });

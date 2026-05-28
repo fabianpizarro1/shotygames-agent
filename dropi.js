@@ -1,8 +1,12 @@
 const axios = require('axios');
+const fs = require('fs');
 
 const BASE = 'https://api.dropi.ec/api';
 const USER_ID = 11362;
 const WAREHOUSE_ID = 338;
+
+// Archivo donde se persiste el token (sobrevive reinicios del contenedor)
+const TOKEN_FILE = '/tmp/.dropi_token';
 
 const PRODUCTS = {
   normal:      { id: 6007,   name: 'Torre de Shots NORMAL',  weight: '1.00' },
@@ -38,12 +42,21 @@ const PROVINCIAS = {
   'NUEVA LOJA': 'Sucumbíos', 'LAGO AGRIO': 'Sucumbíos',
 };
 
-let _token = process.env.DROPI_TOKEN || null;
+// Orden de prioridad: archivo (más reciente) > env var (deploy) > null
+let _token = (() => {
+  try {
+    const saved = fs.readFileSync(TOKEN_FILE, 'utf8').trim();
+    if (saved) { console.log('DROPI token cargado desde archivo'); return saved; }
+  } catch (_) {}
+  if (process.env.DROPI_TOKEN) { console.log('DROPI token cargado desde env'); return process.env.DROPI_TOKEN; }
+  return null;
+})();
 
-// Permite actualizar el token en memoria sin redeploy (vía WhatsApp)
+// Actualiza el token en memoria y en archivo (sobrevive reinicios)
 function setToken(token) {
   _token = token.replace(/^Bearer\s+/i, '').trim();
-  console.log('DROPI token actualizado en memoria');
+  try { fs.writeFileSync(TOKEN_FILE, _token, 'utf8'); } catch (e) { console.error('No se pudo guardar token en archivo:', e.message); }
+  console.log('DROPI token actualizado');
 }
 
 function makeClient(token) {
