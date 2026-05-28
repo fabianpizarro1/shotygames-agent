@@ -76,10 +76,10 @@ No hagas nada hasta que Fabián confirme.
 
 ### Paso 4 — Cuando Fabián confirme
 Ejecuta EN ORDEN (sin preguntar nada más):
-1. `registrar_pedido` — registra el pedido en Google Sheets
-2. `crear_guia_dropi` — crea la guía en DROPI con los mismos datos
+1. registrar_pedido — registra el pedido en Google Sheets
+2. crear_guia_dropi — crea la guía en DROPI con los mismos datos
 
-Cuando ambos terminen, responde con una sola línea resumida + el link del PDF de la guía que devuelve `crear_guia_dropi`.
+Cuando ambos terminen, responde con una sola línea resumida + el link del PDF de la guía que devuelve crear_guia_dropi.
 
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
