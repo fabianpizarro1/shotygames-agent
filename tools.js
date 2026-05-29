@@ -138,6 +138,17 @@ const tools = [
     }
   },
   {
+    name: "obtener_guia_pedido",
+    description: "Busca el número de guía y el link del PDF de envío de un pedido en Sheets. Úsalo cuando Fabián pregunte la guía de un cliente: 'dame la guía de X', 'qué guía tiene X', 'cuál es la guía de X'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: { type: "string", description: "Nombre del cliente (o parte del nombre)" }
+      },
+      required: ["nombre"]
+    }
+  },
+  {
     name: "notificar_guia_clientes",
     description: "Activa la casilla AB en Sheets para que el sistema envíe automáticamente la notificación de guía por WhatsApp al cliente. Con nombre: marca solo ese pedido. Sin nombre (o 'todos'): marca todos los pedidos de hoy que tengan guía y aún no hayan sido notificados.",
     input_schema: {

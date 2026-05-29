@@ -150,6 +150,12 @@ Los tools buscan por nombre ignorando tildes, de forma parcial y con tolerancia 
 - "FABIANO PIZARRO" (typo) puede devolver candidatos
 - Si hay varios posibles → el tool te devuelve la lista y pregunta cuál es
 
+## Consultar guía de un pedido
+Cuando Fabián diga "dame la guía de [nombre]", "qué guía tiene [nombre]", "cuál es la guía de [nombre]", "el número de guía de [nombre]":
+→ USA obtener_guia_pedido con el nombre.
+→ Devuelve el número de guía y el link del PDF directo.
+→ Si el pedido no tiene guía aún, díselo.
+
 ## Notificar guía a clientes
 Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a todos", "avísales a todos", "manda la guía a [nombre]":
 → USA INMEDIATAMENTE notificar_guia_clientes.
@@ -270,6 +276,22 @@ async function executeTool(toolName, input) {
     case 'registrar_transferencia': {
       await sheets.registrarMovimiento('TRANSFERENCIAS', input);
       return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
+    }
+
+    case 'obtener_guia_pedido': {
+      const res = await sheets.obtenerGuiaPedido(input.nombre);
+      if (!res) return `No encontré ningún pedido para "${input.nombre}".`;
+      if (res.candidatos) {
+        const lista = res.candidatos.map((c, i) =>
+          `${i + 1}. ${c.nombre} — ${c.fecha}${c.guia ? ' — Guía: ' + c.guia : ' — sin guía'}`
+        ).join('\n');
+        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿De cuál quieres la guía?`;
+      }
+      if (!res.guia) {
+        return `El pedido de ${res.nombre} (${res.fecha}) aún no tiene guía generada.`;
+      }
+      const pdfPart = res.pdfUrl ? `\n\n📄 ${res.pdfUrl}` : '';
+      return `📦 *${res.nombre}* — ${res.fecha}\nGuía: *${res.guia}*${pdfPart}`;
     }
 
     case 'notificar_guia_clientes': {

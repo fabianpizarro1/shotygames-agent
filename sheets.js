@@ -401,6 +401,37 @@ async function marcarNotificacionWA(nombre) {
   return { marcados: updates.length, nombres };
 }
 
+// Devuelve número de guía + PDF link de un pedido buscando por nombre (fuzzy).
+async function obtenerGuiaPedido(nombre) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const matches = buscarFilasPorNombre(rows, headers, nombre);
+
+  if (matches.length === 0) return null;
+
+  if (matches.length > 1) {
+    return {
+      candidatos: matches.map(m => ({
+        nombre: m.nombre,
+        fecha:  m.fecha,
+        guia:   m.guia
+      }))
+    };
+  }
+
+  const m = matches[0];
+  const pdfUrl = (m.guia && m.dropiId)
+    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${m.dropiId}-GUIA-${m.guia}.pdf`
+    : null;
+
+  return { nombre: m.nombre, fecha: m.fecha, guia: m.guia || null, pdfUrl };
+}
+
 async function getPedidosHoy() {
   const sheets = await getSheets();
   const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
@@ -462,4 +493,4 @@ async function registrarMovimiento(hoja, datos) {
   return result.data.updates;
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido };
