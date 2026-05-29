@@ -136,6 +136,12 @@ Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheet
 3. Cuando confirme, usa actualizar_guia con el teléfono o nombre encontrado
 4. La herramienta actualizará la guía y cambiará el estado a ENVIADO automáticamente
 
+## Sincronizar guía desde DROPI (pedido ya existe, sin guía en Sheets)
+Si Fabián dice "ponle la guía al pedido de [nombre]" o "sincroniza la guía de [nombre]":
+1. Usa sincronizar_guia_dropi con el nombre y teléfono del cliente
+2. El tool busca en DROPI, saca guía y envío, y actualiza Sheets automáticamente
+3. Responde con el número de guía y costo de envío
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -186,6 +192,20 @@ async function executeTool(toolName, input) {
       const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
 
       return `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}`;
+    }
+
+    case 'sincronizar_guia_dropi': {
+      const found = await dropi.buscarOrden(input.nombre);
+      if (!found || !found.guia) {
+        return `No encontré ninguna orden con guía en DROPI para "${input.nombre}". Verifica que la guía ya fue generada en DROPI.`;
+      }
+      const upd = await sheets.actualizarGuia(input.telefono, found.guia, found.shipping);
+      if (!upd.updated) {
+        return `Encontré guía *${found.guia}* en DROPI pero no localicé el pedido en Sheets con teléfono ${input.telefono}.`;
+      }
+      const envioStr = found.shipping ? ` | Envío: $${parseFloat(found.shipping).toFixed(2)}` : '';
+      const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
+      return `✅ Guía *${found.guia}*${envioStr} → actualizado en fila ${upd.fila}${pdfStr}`;
     }
 
     case 'registrar_gasto': {

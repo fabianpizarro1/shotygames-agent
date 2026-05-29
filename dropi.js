@@ -300,4 +300,45 @@ async function crearOrden(pedido) {
   return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
-module.exports = { crearOrden, setToken };
+// Busca órdenes en DROPI por nombre o teléfono y devuelve guía + envío
+async function buscarOrden(query) {
+  const token = await getToken();
+  let client = makeClient(token);
+
+  const params = `page=1&perPage=20&search=${encodeURIComponent(query)}&user_id=${USER_ID}&supplier_id=${USER_ID}`;
+
+  let res;
+  try {
+    res = await client.get(`/orders/myorders?${params}`);
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      res = await client.get(`/orders/myorders?${params}`);
+    } else {
+      throw new Error(`DROPI buscar error ${status}: ${JSON.stringify(e.response?.data)}`);
+    }
+  }
+
+  const data = res.data;
+  // La API devuelve { objects: [...] } o { data: [...] } o array directo
+  const orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+
+  if (!orders.length) return null;
+
+  // Tomar la orden más reciente con guía generada
+  const conGuia = orders.find(o => o.shipping_guide || o.guide_number || o.tracking_number);
+  const orden = conGuia || orders[0];
+
+  const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+  const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+  const orderId = orden?.id;
+  const pdfUrl = guia && orderId
+    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+    : null;
+
+  return { guia, shipping, orderId, pdfUrl, nombre: `${orden?.name || ''} ${orden?.surname || ''}`.trim() };
+}
+
+module.exports = { crearOrden, buscarOrden, setToken };
