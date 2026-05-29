@@ -387,9 +387,10 @@ async function marcarNotificacionWA(nombre) {
 
   if (updates.length === 0) return { marcados: 0, nombres: [] };
 
+  // RAW escribe el booleano puro al checkbox (más correcto que USER_ENTERED para triggers)
   await sheetsApi.spreadsheets.values.batchUpdate({
     spreadsheetId: SHEETS_ID,
-    resource: { valueInputOption: 'USER_ENTERED', data: updates }
+    resource: { valueInputOption: 'RAW', data: updates }
   });
 
   // Recopilar nombres marcados para el mensaje de confirmación
