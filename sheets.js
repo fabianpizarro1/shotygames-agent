@@ -7,7 +7,8 @@ const SHEETS_ID_FINANZAS = process.env.SHEETS_ID_FINANZAS;
 function parseMonto(val) {
   if (val === '' || val === null || val === undefined) return '';
   const num = parseFloat(String(val).replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
-  return isNaN(num) ? '' : num;
+  if (isNaN(num) || num === 0) return '';
+  return num;
 }
 
 function getAuth() {
