@@ -53,8 +53,8 @@ Al llamar registrar_pedido y crear_guia_dropi SIEMPRE pasa los campos individual
   → anticipo = X, saldo = pvp_total - X, cuenta = [CUENTA]
 - Si dijo "PAGADO AL [CUENTA]" o "PAGO COMPLETO":
   → anticipo = pvp_total, saldo = vacío, cuenta = [CUENTA]
-- Si no mencionó pago:
-  → anticipo vacío, saldo = pvp_total, cuenta vacía
+- Si no mencionó pago (pedido 100% contraentrega):
+  → anticipo vacío, saldo = pvp_total, cuenta = DROPI
 
 **Formato de montos:** siempre con coma decimal y dos decimales. Ejemplos: $16,50 — $33,00 — $8,00. Nunca usar punto como decimal.
 
