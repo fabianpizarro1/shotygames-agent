@@ -89,6 +89,7 @@ Ejecuta EN ORDEN (sin preguntar nada más):
    - Incluye siempre pvp_total (precio de venta total) y saldo
    - Si saldo > 0: pedido CON RECAUDO, DROPI cobra al entregar
    - Si saldo = 0: pedido SIN RECAUDO, pvp_total se usa para calcular precio por unidad
+   - Incluye siempre el campo "provincia" usando tu conocimiento de geografía de Ecuador. Ejemplo: Ricaurte → Los Ríos, Milagro → Guayas, Naranjito → Guayas, Daule → Guayas, etc. Nunca preguntes la provincia — deducirla tú mismo.
 
 Cuando ambos terminen, responde con una sola línea resumida + el link del PDF de la guía que devuelve crear_guia_dropi.
 

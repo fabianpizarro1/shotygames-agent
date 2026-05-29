@@ -64,6 +64,7 @@ const tools = [
         parejas:     { type: "string", description: "Cantidad de Torres Parejas" },
         enganchados: { type: "string", description: "Cantidad de Enganchados" },
         dados:       { type: "string", description: "Cantidad de Dados" },
+        provincia:   { type: "string", description: "Provincia de Ecuador del destino. Deducirla del conocimiento geográfico si no se indica explícitamente." },
         saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). Vacío o 0 si pagado." },
         pvp_total:   { type: "string", description: "Precio de venta total del pedido. Requerido para SIN RECAUDO." },
         notas:       { type: "string", description: "Notas adicionales" }

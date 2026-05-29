@@ -23,7 +23,7 @@ const PROVINCIAS = {
   'MACHALA': 'El Oro', 'PASAJE': 'El Oro', 'HUAQUILLAS': 'El Oro', 'SANTA ROSA': 'El Oro', 'ARENILLAS': 'El Oro', 'ZARUMA': 'El Oro',
   'PONCE ENRIQUEZ': 'El Oro', 'CAMILO PONCE ENRIQUEZ': 'El Oro',
   'PORTOVIEJO': 'Manabí', 'MANTA': 'Manabí', 'CHONE': 'Manabí', 'BAHIA DE CARAQUEZ': 'Manabí', 'PEDERNALES': 'Manabí', 'EL CARMEN': 'Manabí', 'JIPIJAPA': 'Manabí', 'MONTECRISTI': 'Manabí',
-  'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos',
+  'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos', 'RICAURTE': 'Los Ríos', 'PUEBLO VIEJO': 'Los Ríos', 'URDANETA': 'Los Ríos', 'BABA': 'Los Ríos', 'MOCACHE': 'Los Ríos', 'MONTALVO': 'Los Ríos', 'PALENQUE': 'Los Ríos',
   'AMBATO': 'Tungurahua', 'BANOS': 'Tungurahua', 'PELILEO': 'Tungurahua',
   'RIOBAMBA': 'Chimborazo', 'ALAUSÍ': 'Chimborazo',
   'IBARRA': 'Imbabura', 'OTAVALO': 'Imbabura', 'COTACACHI': 'Imbabura', 'ANTONIO ANTE': 'Imbabura',
@@ -143,7 +143,8 @@ async function crearOrden(pedido) {
   // Ciudad y provincia — normalizar nombre de ciudad para DROPI
   const ciudadUpper = (pedido.ciudad || '').toUpperCase().trim();
   const cityForDropi = CIUDAD_DROPI[ciudadUpper] || pedido.ciudad;  // nombre exacto que espera DROPI
-  const state = PROVINCIAS[ciudadUpper] || pedido.ciudad;
+  // Provincia: mapa local → provincia enviada por el agente → ciudad como último recurso
+  const state = PROVINCIAS[ciudadUpper] || pedido.provincia || pedido.ciudad;
 
   // Saldo a cobrar
   const saldo = parseFloat(String(pedido.saldo).replace(',', '.')) || 0;
