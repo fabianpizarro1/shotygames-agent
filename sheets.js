@@ -127,6 +127,9 @@ async function actualizarGuia(telefono, guia, envio) {
   const linkIdx   = headers.indexOf('LINK RASTREO');
   const envioIdx  = headers.indexOf('ENVIO');
 
+  console.log(`actualizarGuia: tel="${telefono}" guia="${guia}" envio="${envio}"`);
+  console.log(`actualizarGuia: col indices — tel:${telIdx} guia:${guiaIdx} link:${linkIdx} envio:${envioIdx}`);
+
   const inputTel = String(telefono).replace(/^0/, '').replace(/^593/, '');
 
   // Buscar desde el final para actualizar el pedido MÁS RECIENTE
@@ -145,6 +148,7 @@ async function actualizarGuia(telefono, guia, envio) {
     }
   }
 
+  console.log(`actualizarGuia: foundRow=${foundRow} (fila ${foundRow + 1})`);
   if (foundRow === -1) return { updated: false };
 
   const rowNum = foundRow + 1; // 1-indexed

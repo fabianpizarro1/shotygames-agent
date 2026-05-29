@@ -161,6 +161,7 @@ async function executeTool(toolName, input) {
       return `No encontré pedido con teléfono ${input.telefono}.`;
 
     case 'crear_guia_dropi': {
+      console.log('crear_guia_dropi input:', JSON.stringify(input));
       const orden = await dropi.crearOrden(input);
       const guia = orden?.sticker;
 
@@ -171,9 +172,14 @@ async function executeTool(toolName, input) {
         return `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Respuesta: ${JSON.stringify(orden).slice(0, 200)}`;
       }
 
+      console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
+
       // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO (sin cambiar ESTADO)
       if (input.telefono) {
-        await sheets.actualizarGuia(input.telefono, guia, orden._shipping);
+        const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping);
+        console.log('actualizarGuia result:', JSON.stringify(updResult));
+      } else {
+        console.log('ADVERTENCIA: crear_guia_dropi sin telefono — no se puede actualizar Sheets');
       }
 
       const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
