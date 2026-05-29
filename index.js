@@ -3,6 +3,8 @@ const express = require('express');
 const { chat } = require('./claude');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
 
+const { transcribeBase64 } = require('./transcribe');
+
 const app = express();
 app.use(express.json());
 
@@ -68,8 +70,9 @@ app.post('/webhook', async (req, res) => {
     const messageId = data.key?.id;
     const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
     const imageMsg = data.message?.imageMessage;
+    const audioMsg = data.message?.audioMessage || data.message?.pttMessage;
 
-    if (!text && !imageMsg) return;
+    if (!text && !imageMsg && !audioMsg) return;
 
     // Comando especial para actualizar token DROPI sin redeploy
     if (text && text.toUpperCase().startsWith('DROPI TOKEN:')) {
@@ -96,7 +99,34 @@ app.post('/webhook', async (req, res) => {
       }
     }
 
-    const messageText = text || imageMsg?.caption || 'Te mando una imagen de la guía para que registres el envío.';
+    // Transcribir audio si viene nota de voz o audio
+    let transcribedAudio = null;
+    if (audioMsg) {
+      try {
+        const audioBase64 = await getMediaBase64(data);
+        if (audioBase64) {
+          const mime = audioMsg.mimetype || 'audio/ogg';
+          console.log(`Transcribiendo audio (${mime})...`);
+          transcribedAudio = await transcribeBase64(audioBase64, mime);
+          console.log('Transcripción:', transcribedAudio);
+        }
+      } catch (e) {
+        console.error('Error transcribiendo audio:', e.message);
+        transcribedAudio = null;
+      }
+    }
+
+    // Determinar texto final a enviar a Claude
+    let messageText;
+    if (transcribedAudio) {
+      messageText = transcribedAudio;
+    } else if (text) {
+      messageText = text;
+    } else if (imageMsg?.caption) {
+      messageText = imageMsg.caption;
+    } else {
+      messageText = 'Te mando una imagen de la guía para que registres el envío.';
+    }
     const { text: reply, updatedHistory } = await chat(history, messageText, imageBase64, imageMime);
 
     await saveHistory(from, updatedHistory);
