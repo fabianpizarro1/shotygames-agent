@@ -140,7 +140,15 @@ Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheet
 Cuando Fabián diga cualquier variante de "ponle la guía a [nombre]", "sincroniza la guía de [nombre]", "saca la guía de [nombre]", "actualiza la guía de [nombre]":
 → USA INMEDIATAMENTE sincronizar_guia_dropi con solo el nombre.
 → NUNCA pidas teléfono, número de guía ni costo de envío — el tool los busca solo.
-→ NO hagas preguntas. Ejecuta el tool y listo.
+→ Si el tool devuelve una lista de candidatos (varios pedidos con ese nombre), muéstrasela a Fabián y pregunta cuál es.
+→ Cuando Fabián responda con el nombre completo, llama de nuevo al tool con ese nombre exacto.
+
+## Búsqueda de nombres — cómo funciona
+Los tools buscan por nombre ignorando tildes, de forma parcial y con tolerancia a typos.
+- "FABIAN" encuentra "FABIÁN PIZARRO MONTENEGRO"
+- "FABIAN PIZARRO" también lo encuentra
+- "FABIANO PIZARRO" (typo) puede devolver candidatos
+- Si hay varios posibles → el tool te devuelve la lista y pregunta cuál es
 
 ## Notificar guía a clientes
 Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a todos", "avísales a todos", "manda la guía a [nombre]":
@@ -207,6 +215,13 @@ async function executeTool(toolName, input) {
       if (!sheetData) {
         return `No encontré ningún pedido para "${input.nombre}" en Sheets.`;
       }
+      // Si hay múltiples coincidencias, preguntar cuál es
+      if (sheetData.candidatos) {
+        const lista = sheetData.candidatos.map((c, i) =>
+          `${i + 1}. ${c.nombre} — ${c.fecha}${c.guia ? ' — Guía: ' + c.guia : ''}`
+        ).join('\n');
+        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿Cuál es? Dime el nombre completo.`;
+      }
       const { dropiOrderId, telefono, nombre: nombreReal } = sheetData;
       console.log(`sincronizar_guia: ${nombreReal} | tel:${telefono} | dropiId:${dropiOrderId}`);
 
@@ -259,13 +274,23 @@ async function executeTool(toolName, input) {
 
     case 'notificar_guia_clientes': {
       const res = await sheets.marcarNotificacionWA(input.nombre || null);
+      // Múltiples coincidencias → preguntar cuál
+      if (res.candidatos) {
+        const lista = res.candidatos.map((c, i) =>
+          `${i + 1}. ${c.nombre} — ${c.fecha}`
+        ).join('\n');
+        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿A cuál le mando la notificación? Dime el nombre completo.`;
+      }
+      if (res.yaNotificado) {
+        return `El pedido de ${res.yaNotificado} ya fue notificado antes (casilla ya marcada).`;
+      }
       if (res.marcados === 0) {
         return input.nombre
-          ? `El pedido de "${input.nombre}" ya fue notificado antes (casilla ya marcada).`
+          ? `No encontré pedido para "${input.nombre}".`
           : `No hay pedidos de hoy con guía pendientes de notificar (todos ya están marcados o sin guía).`;
       }
       const lista = res.nombres.join(', ');
-      return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje de guía automáticamente.`;
+      return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje automáticamente.`;
     }
 
     case 'pedidos_hoy':

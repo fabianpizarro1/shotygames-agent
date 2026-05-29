@@ -31,6 +31,84 @@ function parseMonto(val) {
   return num;
 }
 
+// ─── Motor de búsqueda fuzzy por nombre ───────────────────────────────────────
+
+// Quita tildes y pasa a minúsculas: "FABIÁN" → "fabian"
+function normalizar(str) {
+  return String(str || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().trim();
+}
+
+// Distancia de edición (Levenshtein) entre dos strings cortos
+function distanciaEdicion(a, b) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 3) return 99;
+  const dp = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[a.length][b.length];
+}
+
+// ¿Query coincide (aprox) con target?
+// Acepta: sin tildes, parcial, palabras en cualquier orden, typos ≤ 2 chars
+function coincideNombre(query, target) {
+  const q = normalizar(query);
+  const t = normalizar(target);
+  if (!q || !t) return false;
+  // 1. Substring exacto (ya normalizado)
+  if (t.includes(q) || q.includes(t)) return true;
+  // 2. Todas las palabras del query aparecen (aprox) en el target
+  const qWords = q.split(/\s+/).filter(w => w.length > 1);
+  const tWords = t.split(/\s+/).filter(w => w.length > 1);
+  const todasPresentes = qWords.length > 0 && qWords.every(qw =>
+    tWords.some(tw =>
+      tw.includes(qw) || qw.includes(tw) ||
+      (qw.length > 3 && tw.length > 3 && distanciaEdicion(qw, tw) <= 1)
+    )
+  );
+  if (todasPresentes) return true;
+  // 3. Typos mayores: al menos una palabra con distancia ≤ 2 (ej: "FABIANO" → "FABIAN")
+  return qWords.some(qw =>
+    tWords.some(tw => qw.length > 3 && tw.length > 3 && distanciaEdicion(qw, tw) <= 2)
+  );
+}
+
+// Busca filas por nombre (fuzzy). Devuelve array con los más recientes primero.
+function buscarFilasPorNombre(rows, headers, query) {
+  const nombreIdx  = headers.indexOf('NOMBRE');
+  const telIdx     = headers.indexOf('TELEFONO');
+  const guiaIdx    = headers.indexOf('GUIA');
+  const fechaIdx   = headers.indexOf('FECHA');
+  let   dropiColIdx = headers.indexOf('Softr Record ID');
+  if (dropiColIdx === -1) dropiColIdx = 33;
+
+  const matches = [];
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const rowNombre = rows[i][nombreIdx] || '';
+    if (coincideNombre(query, rowNombre)) {
+      const colVal = String(rows[i][dropiColIdx] || '');
+      matches.push({
+        idx: i,
+        rowNum: i + 1,
+        nombre:   rowNombre,
+        telefono: rows[i][telIdx]  || '',
+        guia:     rows[i][guiaIdx] || '',
+        fecha:    rows[i][fechaIdx] || '',
+        dropiId:  colVal.startsWith('DROPI:') ? colVal.replace('DROPI:', '') : null
+      });
+    }
+  }
+  return matches; // ya ordenado del más reciente al más antiguo
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 function getAuth() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -117,11 +195,9 @@ async function buscarPedido(nombre) {
   });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
-  const nombreIdx = headers.indexOf('NOMBRE');
-  const matches = rows.slice(1).filter(r =>
-    r[nombreIdx]?.toLowerCase().includes(nombre.toLowerCase())
-  );
-  return matches.slice(0, 5).map(r => {
+  const matches = buscarFilasPorNombre(rows, headers, nombre);
+  return matches.slice(0, 5).map(m => {
+    const r = rows[m.idx];
     const obj = {};
     headers.forEach((h, i) => { if (r[i]) obj[h] = r[i]; });
     return obj;
@@ -207,7 +283,8 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
   return { updated: true, fila: rowNum };
 }
 
-// Lee el DROPI order ID guardado en col AH ("Softr Record ID") por nombre de cliente
+// Lee el DROPI order ID guardado en col AH ("Softr Record ID") por nombre de cliente.
+// Si hay múltiples coincidencias devuelve { candidatos: [...] } para que el agente pregunte.
 async function getDropiOrderId(nombre) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
@@ -216,25 +293,28 @@ async function getDropiOrderId(nombre) {
   });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
-  const nombreIdx  = headers.indexOf('NOMBRE');
-  const telIdx     = headers.indexOf('TELEFONO');
-  // Col AH (índice 33) = "Softr Record ID" — donde guardamos el DROPI order ID
-  let dropiColIdx  = headers.indexOf('Softr Record ID');
-  if (dropiColIdx === -1) dropiColIdx = 33; // fallback posicional
 
-  const query = (nombre || '').toLowerCase();
-  // Buscar desde el final (más reciente primero)
-  for (let i = rows.length - 1; i >= 1; i--) {
-    const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
-    if (rowNombre.includes(query)) {
-      const tel     = rows[i][telIdx] || '';
-      const colVal  = String(rows[i][dropiColIdx] || '');
-      const dropiId = colVal.startsWith('DROPI:') ? colVal.replace('DROPI:', '') : null;
-      console.log(`getDropiOrderId: encontrado "${rows[i][nombreIdx]}" | tel=${tel} | dropiId=${dropiId}`);
-      return { dropiOrderId: dropiId, telefono: tel, nombre: rows[i][nombreIdx] };
-    }
+  const matches = buscarFilasPorNombre(rows, headers, nombre);
+  console.log(`getDropiOrderId: query="${nombre}" → ${matches.length} coincidencias`);
+
+  if (matches.length === 0) return null;
+
+  if (matches.length > 1) {
+    // Ambiguo — devolver candidatos para que el agente pregunte
+    return {
+      candidatos: matches.map(m => ({
+        nombre:   m.nombre,
+        telefono: m.telefono,
+        fecha:    m.fecha,
+        guia:     m.guia
+      }))
+    };
   }
-  return null;
+
+  // Coincidencia única
+  const m = matches[0];
+  console.log(`getDropiOrderId: encontrado "${m.nombre}" | tel=${m.telefono} | dropiId=${m.dropiId}`);
+  return { dropiOrderId: m.dropiId, telefono: m.telefono, nombre: m.nombre };
 }
 
 // Marca la casilla AB (índice 27) como TRUE para disparar la notificación WA automática de Sheets.
@@ -258,25 +338,36 @@ async function marcarNotificacionWA(nombre) {
   const updates = [];
 
   if (nombre) {
-    // Modo individual: marcar el pedido más reciente que coincida con el nombre (solo si aún no está marcado)
-    const query = nombre.toLowerCase();
-    for (let i = rows.length - 1; i >= 1; i--) {
-      const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
-      if (rowNombre.includes(query)) {
-        const yaNotif = rows[i][abColIdx] === 'TRUE' || rows[i][abColIdx] === true;
-        if (yaNotif) {
-          console.log(`marcarNotificacionWA: fila ${i+1} ya notificada — omitiendo`);
-          break; // encontró el pedido pero ya estaba marcado
-        }
-        const rowNum = i + 1;
-        updates.push({
-          range: `PEDIDOS!${idxToCol(abColIdx)}${rowNum}`,
-          values: [[true]]
-        });
-        console.log(`marcarNotificacionWA: marcando fila ${rowNum} — ${rows[i][nombreIdx]}`);
-        break;
-      }
+    // Modo individual: usar búsqueda fuzzy
+    const matches = buscarFilasPorNombre(rows, headers, nombre);
+
+    if (matches.length === 0) {
+      return { marcados: 0, nombres: [] };
     }
+
+    if (matches.length > 1) {
+      // Ambiguo — devolver candidatos para que el agente pregunte
+      return {
+        candidatos: matches.map(m => ({
+          nombre:   m.nombre,
+          telefono: m.telefono,
+          fecha:    m.fecha
+        }))
+      };
+    }
+
+    // Coincidencia única
+    const m = matches[0];
+    const yaNotif = rows[m.idx][abColIdx] === 'TRUE' || rows[m.idx][abColIdx] === true;
+    if (yaNotif) {
+      console.log(`marcarNotificacionWA: fila ${m.rowNum} ya notificada — omitiendo`);
+      return { marcados: 0, nombres: [], yaNotificado: m.nombre };
+    }
+    updates.push({
+      range: `PEDIDOS!${idxToCol(abColIdx)}${m.rowNum}`,
+      values: [[true]]
+    });
+    console.log(`marcarNotificacionWA: marcando fila ${m.rowNum} — ${m.nombre}`);
   } else {
     // Modo batch: marcar todos los de HOY con guía y sin notificar aún
     for (let i = 1; i < rows.length; i++) {
