@@ -156,7 +156,7 @@ async function executeTool(toolName, input) {
       ).join('\n');
 
     case 'actualizar_guia':
-      const upd = await sheets.actualizarGuia(input.telefono, input.guia);
+      const upd = await sheets.actualizarGuia(input.telefono, input.guia, input.envio);
       if (upd.updated) return `✅ Guía ${input.guia} actualizada en fila ${upd.fila}.`;
       return `No encontré pedido con teléfono ${input.telefono}.`;
 

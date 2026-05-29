@@ -39,12 +39,13 @@ const tools = [
   },
   {
     name: "actualizar_guia",
-    description: "Actualiza el número de guía de envío de un pedido en Google Sheets.",
+    description: "Actualiza el número de guía y/o costo de envío de un pedido en Google Sheets. Úsalo cuando Fabián diga el número de guía y/o envío de un pedido existente.",
     input_schema: {
       type: "object",
       properties: {
         telefono: { type: "string", description: "Teléfono del cliente para identificar el pedido" },
-        guia: { type: "string", description: "Número de guía de envío de Servientrega u otra transportadora" }
+        guia: { type: "string", description: "Número de guía de envío de Servientrega u otra transportadora" },
+        envio: { type: "string", description: "Costo del envío en dólares, ej: 5.50" }
       },
       required: ["telefono", "guia"]
     }
