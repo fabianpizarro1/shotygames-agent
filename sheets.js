@@ -29,9 +29,10 @@ async function getSheets() {
 
 async function appendPedido(pedido) {
   const sheets = await getSheets();
-  const fecha = pedido.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const TZ = { timeZone: 'America/Guayaquil' };
+  const fecha = pedido.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', ...TZ });
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const mes = meses[new Date().getMonth()];
+  const mes = meses[new Date().toLocaleString('es-EC', { month: 'numeric', ...TZ }) - 1];
   const row = [
     '1',                                     // col 1:  ID
     pedido.nombre || '',                     // col 2:  NOMBRE
@@ -172,7 +173,7 @@ async function actualizarGuia(telefono, guia, envio) {
 
 async function getPedidosHoy() {
   const sheets = await getSheets();
-  const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
     range: 'PEDIDOS!A:AD'
@@ -190,7 +191,7 @@ async function getPedidosHoy() {
 
 async function registrarMovimiento(hoja, datos) {
   const sheets = await getSheets();
-  const fecha = datos.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const fecha = datos.fecha || new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
 
   let row;
   if (hoja === 'TRANSFERENCIAS') {
