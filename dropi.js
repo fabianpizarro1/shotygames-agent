@@ -300,58 +300,100 @@ async function crearOrden(pedido) {
   return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
-// Busca órdenes en DROPI por nombre y devuelve guía + envío
-async function buscarOrden(query) {
+// Busca órdenes en DROPI por nombre o teléfono y devuelve guía + envío
+async function buscarOrden(query, telefono) {
   const token = await getToken();
   let client = makeClient(token);
 
-  async function doSearch(searchQuery) {
-    const params = `page=1&perPage=20&search=${encodeURIComponent(searchQuery)}&user_id=${USER_ID}&supplier_id=${USER_ID}`;
-    console.log(`DROPI buscarOrden: GET /orders/myorders?${params}`);
+  function extractOrders(data) {
+    if (!data) return [];
+    return data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+  }
+
+  async function doGet(url) {
+    console.log(`DROPI buscarOrden: GET ${url}`);
     try {
-      const res = await client.get(`/orders/myorders?${params}`);
+      const res = await client.get(url);
       return res.data;
     } catch (e) {
       const status = e.response?.status;
       if (status === 401 || status === 403) {
         const newToken = await autoLogin();
         client = makeClient(newToken);
-        const res = await client.get(`/orders/myorders?${params}`);
+        const res = await client.get(url);
         return res.data;
       }
-      console.error(`DROPI buscar error ${status}:`, JSON.stringify(e.response?.data));
+      console.error(`DROPI buscar error ${status}:`, JSON.stringify(e.response?.data)?.slice(0, 200));
       return null;
     }
   }
 
-  // Intentar con el nombre completo, luego solo el primer apellido si no hay resultados
-  let data = await doSearch(query);
-  let orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
-  console.log(`DROPI buscarOrden "${query}": ${orders.length} resultados`);
+  // Estrategias de búsqueda en orden de prioridad
+  const strategies = [];
 
-  // Si no hay resultados, intentar con solo la primera palabra del query
-  if (!orders.length && query.includes(' ')) {
-    const primeraPalabra = query.split(' ')[0];
-    data = await doSearch(primeraPalabra);
-    orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
-    console.log(`DROPI buscarOrden "${primeraPalabra}": ${orders.length} resultados`);
+  // Por teléfono (más confiable) — probar con y sin prefijo 593
+  if (telefono) {
+    const tel = String(telefono).replace(/^0/, '593').replace(/^\+/, '');
+    const tel2 = String(telefono).replace(/^593/, '0');
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel2)}&user_id=${USER_ID}`);
+    strategies.push(`/orders/myorders?page=1&perPage=10&q=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
   }
 
-  if (!orders.length) return null;
+  // Por nombre completo
+  strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(query)}&user_id=${USER_ID}`);
 
-  // Tomar la orden más reciente con guía generada
-  const conGuia = orders.find(o => o.shipping_guide || o.guide_number || o.tracking_number);
-  const orden = conGuia || orders[0];
+  // Por primera palabra del nombre (primer nombre)
+  const primerNombre = query.split(' ')[0];
+  if (primerNombre !== query) {
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(primerNombre)}&user_id=${USER_ID}`);
+  }
 
-  const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
-  const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
-  const orderId = orden?.id;
+  // Por apellido (última palabra)
+  const palabras = query.split(' ');
+  const apellido = palabras[palabras.length - 1];
+  if (apellido !== primerNombre) {
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(apellido)}&user_id=${USER_ID}`);
+  }
+
+  let orders = [];
+  for (const url of strategies) {
+    const data = await doGet(url);
+    orders = extractOrders(data);
+    console.log(`  → ${orders.length} resultados`);
+    if (orders.length) break;
+  }
+
+  if (!orders.length) {
+    console.log('DROPI buscarOrden: ninguna estrategia encontró resultados');
+    return null;
+  }
+
+  // Filtrar por teléfono si tenemos uno
+  let ordenFinal = null;
+  if (telefono) {
+    const telNorm = String(telefono).replace(/^0/, '').replace(/^593/, '');
+    const match = orders.find(o => {
+      const oTel = String(o.phone || '').replace(/^0/, '').replace(/^593/, '').replace(/^\+593/, '');
+      return oTel.endsWith(telNorm) || telNorm.endsWith(oTel);
+    });
+    if (match) ordenFinal = match;
+  }
+
+  // Si no hay match por teléfono, buscar la más reciente con guía
+  if (!ordenFinal) {
+    ordenFinal = orders.find(o => o.shipping_guide || o.guide_number || o.tracking_number) || orders[0];
+  }
+
+  const guia = ordenFinal?.shipping_guide || ordenFinal?.guide_number || ordenFinal?.tracking_number;
+  const shipping = ordenFinal?.shipping_amount || ordenFinal?.discounted_amount || 0;
+  const orderId = ordenFinal?.id;
   const pdfUrl = guia && orderId
     ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
     : null;
 
   console.log(`DROPI buscarOrden resultado: guia=${guia} shipping=${shipping} orderId=${orderId}`);
-  return { guia, shipping, orderId, pdfUrl, nombre: `${orden?.name || ''} ${orden?.surname || ''}`.trim() };
+  return { guia, shipping, orderId, pdfUrl, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
 }
 
 module.exports = { crearOrden, buscarOrden, setToken };

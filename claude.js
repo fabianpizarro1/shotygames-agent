@@ -204,8 +204,8 @@ async function executeTool(toolName, input) {
       const telefono = pedido.TELEFONO;
       console.log(`sincronizar_guia: pedido encontrado — ${pedido.NOMBRE} | tel: ${telefono}`);
 
-      // Paso 2: buscar la orden en DROPI
-      const found = await dropi.buscarOrden(input.nombre);
+      // Paso 2: buscar la orden en DROPI (pasar teléfono para mejor match)
+      const found = await dropi.buscarOrden(input.nombre, telefono);
       console.log(`sincronizar_guia: DROPI result — ${JSON.stringify(found)}`);
 
       if (!found || !found.guia) {
