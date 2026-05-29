@@ -136,7 +136,7 @@ async function actualizarGuia(telefono, guia, envio) {
   let foundRow = -1;
   for (let i = rows.length - 1; i >= 1; i--) {
     const rowTel = String(rows[i][telIdx] || '').replace(/^0/, '').replace(/^593/, '');
-    const telMatch = rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel);
+    const telMatch = rowTel.length > 0 && (rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel));
     const sinGuia  = !rows[i][guiaIdx]; // priorizar los que no tienen guía aún
     if (telMatch && sinGuia) { foundRow = i; break; }
   }
@@ -144,7 +144,7 @@ async function actualizarGuia(telefono, guia, envio) {
   if (foundRow === -1) {
     for (let i = rows.length - 1; i >= 1; i--) {
       const rowTel = String(rows[i][telIdx] || '').replace(/^0/, '').replace(/^593/, '');
-      if (rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel)) { foundRow = i; break; }
+      if (rowTel.length > 0 && (rowTel.endsWith(inputTel) || inputTel.endsWith(rowTel))) { foundRow = i; break; }
     }
   }
 
