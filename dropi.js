@@ -248,14 +248,31 @@ async function crearOrden(pedido) {
 
   console.log(`Orden DROPI creada. ID: ${orderId} — generando guía...`);
 
-  // Paso 2: generar la guía (paso separado según la API)
+  // Paso 2: generar la guía (con retry automático si el token expiró)
   let guideRes;
+  let activeClient = client; // puede ser reemplazado si hay auto-login
   try {
-    guideRes = await client.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
+    guideRes = await activeClient.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
   } catch (e) {
-    console.error('Error generando guía:', e.response?.status, JSON.stringify(e.response?.data));
-    // La orden existe, pero la guía no se pudo generar aún — devolver lo que hay
-    return { ...orderData, _orderId: orderId, _guideError: `${e.response?.status}: ${JSON.stringify(e.response?.data)}` };
+    const status = e.response?.status;
+    const errData = JSON.stringify(e.response?.data);
+    console.error(`Error generando guía (${status}):`, errData);
+
+    if (status === 401 || status === 403) {
+      // Token expirado — intentar auto-login y reintentar UNA vez
+      console.log(`DROPI PUT 401/403 — auto-login y reintento guía...`);
+      try {
+        const newToken = await autoLogin();
+        activeClient = makeClient(newToken);
+        guideRes = await activeClient.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
+      } catch (e2) {
+        const err2 = e2.response ? `${e2.response.status}: ${JSON.stringify(e2.response.data)}` : e2.message;
+        return { ...orderData, _orderId: orderId, _guideError: `PUT ${status} + retry falló: ${err2}` };
+      }
+    } else {
+      // La orden existe pero la guía no se generó — devolver error detallado
+      return { ...orderData, _orderId: orderId, _guideError: `PUT ${status}: ${errData}` };
+    }
   }
 
   const guideData = guideRes.data;
