@@ -258,11 +258,16 @@ async function marcarNotificacionWA(nombre) {
   const updates = [];
 
   if (nombre) {
-    // Modo individual: marcar el pedido más reciente que coincida con el nombre
+    // Modo individual: marcar el pedido más reciente que coincida con el nombre (solo si aún no está marcado)
     const query = nombre.toLowerCase();
     for (let i = rows.length - 1; i >= 1; i--) {
       const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
       if (rowNombre.includes(query)) {
+        const yaNotif = rows[i][abColIdx] === 'TRUE' || rows[i][abColIdx] === true;
+        if (yaNotif) {
+          console.log(`marcarNotificacionWA: fila ${i+1} ya notificada — omitiendo`);
+          break; // encontró el pedido pero ya estaba marcado
+        }
         const rowNum = i + 1;
         updates.push({
           range: `PEDIDOS!${idxToCol(abColIdx)}${rowNum}`,

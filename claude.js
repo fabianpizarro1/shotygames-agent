@@ -261,8 +261,8 @@ async function executeTool(toolName, input) {
       const res = await sheets.marcarNotificacionWA(input.nombre || null);
       if (res.marcados === 0) {
         return input.nombre
-          ? `No encontré pedido con guía para "${input.nombre}" que no haya sido notificado ya.`
-          : `No hay pedidos de hoy con guía pendientes de notificar.`;
+          ? `El pedido de "${input.nombre}" ya fue notificado antes (casilla ya marcada).`
+          : `No hay pedidos de hoy con guía pendientes de notificar (todos ya están marcados o sin guía).`;
       }
       const lista = res.nombres.join(', ');
       return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje de guía automáticamente.`;
