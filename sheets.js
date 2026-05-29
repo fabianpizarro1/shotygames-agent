@@ -3,10 +3,30 @@ const { google } = require('googleapis');
 const SHEETS_ID = process.env.SHEETS_ID;
 const SHEETS_ID_FINANZAS = process.env.SHEETS_ID_FINANZAS;
 
-// Convierte strings de monto ("$16,50", "16.5", "16,5") a número para que Sheets pueda sumar
+// Convierte strings de monto a número para que Sheets pueda sumar
+// Soporta: "45,00" / "45.00" / "$16,50" / "1.234,56" / "1,234.56"
 function parseMonto(val) {
   if (val === '' || val === null || val === undefined) return '';
-  const num = parseFloat(String(val).replace(/\$/g, '').replace(/\./g, '').replace(',', '.').trim());
+  let str = String(val).replace(/\$/g, '').trim();
+
+  if (str.includes(',') && str.includes('.')) {
+    // Ambos separadores: determinar cuál es decimal (el último)
+    const lastComma = str.lastIndexOf(',');
+    const lastDot   = str.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // "1.234,56" → coma es decimal
+      str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+      // "1,234.56" → punto es decimal
+      str = str.replace(/,/g, '');
+    }
+  } else if (str.includes(',')) {
+    // Solo coma: "45,00" → decimal
+    str = str.replace(',', '.');
+  }
+  // Solo punto o ninguno: "45.00" / "45" → ya está bien
+
+  const num = parseFloat(str);
   if (isNaN(num) || num === 0) return '';
   return num;
 }
@@ -109,12 +129,15 @@ async function buscarPedido(nombre) {
 }
 
 function idxToCol(idx) {
-  // Convierte índice 0-based a letra de columna (0=A, 1=B, ...)
-  return String.fromCharCode(65 + idx);
+  // Convierte índice 0-based a letra(s) de columna: 0=A, 25=Z, 26=AA, 27=AB, 28=AC...
+  if (idx < 26) return String.fromCharCode(65 + idx);
+  const first  = Math.floor(idx / 26) - 1;
+  const second = idx % 26;
+  return String.fromCharCode(65 + first) + String.fromCharCode(65 + second);
 }
 
 // Actualiza la guía en el pedido MÁS RECIENTE sin guía que coincida con el teléfono
-async function actualizarGuia(telefono, guia, envio, dropiOrderId) {
+async function actualizarGuia(telefono, guia, envio) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
@@ -126,7 +149,6 @@ async function actualizarGuia(telefono, guia, envio, dropiOrderId) {
   const guiaIdx   = headers.indexOf('GUIA');
   const linkIdx   = headers.indexOf('LINK RASTREO');
   const envioIdx  = headers.indexOf('ENVIO');
-  const logIdx    = headers.indexOf('LOG');
 
   console.log(`actualizarGuia: tel="${telefono}" guia="${guia}" envio="${envio}"`);
   console.log(`actualizarGuia: col indices — tel:${telIdx} guia:${guiaIdx} link:${linkIdx} envio:${envioIdx}`);
@@ -166,11 +188,6 @@ async function actualizarGuia(telefono, guia, envio, dropiOrderId) {
     const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
     updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
   }
-  // Guardar DROPI order ID en columna LOG para poder consultarlo después
-  if (logIdx >= 0 && dropiOrderId) {
-    updates.push({ range: `PEDIDOS!${idxToCol(logIdx)}${rowNum}`, values: [[`DROPI:${dropiOrderId}`]] });
-  }
-
   if (updates.length > 0) {
     await sheetsApi.spreadsheets.values.batchUpdate({
       spreadsheetId: SHEETS_ID,
