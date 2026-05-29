@@ -137,7 +137,8 @@ function idxToCol(idx) {
 }
 
 // Actualiza la guía en el pedido MÁS RECIENTE sin guía que coincida con el teléfono
-async function actualizarGuia(telefono, guia, envio) {
+// dropiId: si se pasa, se guarda en col AH ("Softr Record ID") para poder sincronizar después
+async function actualizarGuia(telefono, guia, envio, dropiId) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
@@ -188,6 +189,14 @@ async function actualizarGuia(telefono, guia, envio) {
     const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
     updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
   }
+  // Guardar DROPI order ID en col AH (índice 33, "Softr Record ID") para poder sincronizar después
+  if (dropiId) {
+    // Intentar encontrar la columna por nombre de header; fallback a índice 33 (AH)
+    let dropiColIdx = headers.indexOf('Softr Record ID');
+    if (dropiColIdx === -1) dropiColIdx = 33;
+    updates.push({ range: `PEDIDOS!${idxToCol(dropiColIdx)}${rowNum}`, values: [[`DROPI:${dropiId}`]] });
+    console.log(`actualizarGuia: guardando DROPI ID ${dropiId} en col ${idxToCol(dropiColIdx)}${rowNum}`);
+  }
   if (updates.length > 0) {
     await sheetsApi.spreadsheets.values.batchUpdate({
       spreadsheetId: SHEETS_ID,
@@ -198,7 +207,7 @@ async function actualizarGuia(telefono, guia, envio) {
   return { updated: true, fila: rowNum };
 }
 
-// Lee el DROPI order ID guardado en la columna LOG de un pedido
+// Lee el DROPI order ID guardado en col AH ("Softr Record ID") por nombre de cliente
 async function getDropiOrderId(nombre) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
@@ -207,18 +216,21 @@ async function getDropiOrderId(nombre) {
   });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
-  const nombreIdx = headers.indexOf('NOMBRE');
-  const logIdx    = headers.indexOf('LOG');
-  const telIdx    = headers.indexOf('TELEFONO');
+  const nombreIdx  = headers.indexOf('NOMBRE');
+  const telIdx     = headers.indexOf('TELEFONO');
+  // Col AH (índice 33) = "Softr Record ID" — donde guardamos el DROPI order ID
+  let dropiColIdx  = headers.indexOf('Softr Record ID');
+  if (dropiColIdx === -1) dropiColIdx = 33; // fallback posicional
 
   const query = (nombre || '').toLowerCase();
   // Buscar desde el final (más reciente primero)
   for (let i = rows.length - 1; i >= 1; i--) {
     const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
     if (rowNombre.includes(query)) {
-      const log = String(rows[i][logIdx] || '');
-      const tel = rows[i][telIdx] || '';
-      const dropiId = log.startsWith('DROPI:') ? log.replace('DROPI:', '') : null;
+      const tel     = rows[i][telIdx] || '';
+      const colVal  = String(rows[i][dropiColIdx] || '');
+      const dropiId = colVal.startsWith('DROPI:') ? colVal.replace('DROPI:', '') : null;
+      console.log(`getDropiOrderId: encontrado "${rows[i][nombreIdx]}" | tel=${tel} | dropiId=${dropiId}`);
       return { dropiOrderId: dropiId, telefono: tel, nombre: rows[i][nombreIdx] };
     }
   }
