@@ -300,30 +300,42 @@ async function crearOrden(pedido) {
   return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
-// Busca órdenes en DROPI por nombre o teléfono y devuelve guía + envío
+// Busca órdenes en DROPI por nombre y devuelve guía + envío
 async function buscarOrden(query) {
   const token = await getToken();
   let client = makeClient(token);
 
-  const params = `page=1&perPage=20&search=${encodeURIComponent(query)}&user_id=${USER_ID}&supplier_id=${USER_ID}`;
-
-  let res;
-  try {
-    res = await client.get(`/orders/myorders?${params}`);
-  } catch (e) {
-    const status = e.response?.status;
-    if (status === 401 || status === 403) {
-      const newToken = await autoLogin();
-      client = makeClient(newToken);
-      res = await client.get(`/orders/myorders?${params}`);
-    } else {
-      throw new Error(`DROPI buscar error ${status}: ${JSON.stringify(e.response?.data)}`);
+  async function doSearch(searchQuery) {
+    const params = `page=1&perPage=20&search=${encodeURIComponent(searchQuery)}&user_id=${USER_ID}&supplier_id=${USER_ID}`;
+    console.log(`DROPI buscarOrden: GET /orders/myorders?${params}`);
+    try {
+      const res = await client.get(`/orders/myorders?${params}`);
+      return res.data;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 401 || status === 403) {
+        const newToken = await autoLogin();
+        client = makeClient(newToken);
+        const res = await client.get(`/orders/myorders?${params}`);
+        return res.data;
+      }
+      console.error(`DROPI buscar error ${status}:`, JSON.stringify(e.response?.data));
+      return null;
     }
   }
 
-  const data = res.data;
-  // La API devuelve { objects: [...] } o { data: [...] } o array directo
-  const orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+  // Intentar con el nombre completo, luego solo el primer apellido si no hay resultados
+  let data = await doSearch(query);
+  let orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+  console.log(`DROPI buscarOrden "${query}": ${orders.length} resultados`);
+
+  // Si no hay resultados, intentar con solo la primera palabra del query
+  if (!orders.length && query.includes(' ')) {
+    const primeraPalabra = query.split(' ')[0];
+    data = await doSearch(primeraPalabra);
+    orders = data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+    console.log(`DROPI buscarOrden "${primeraPalabra}": ${orders.length} resultados`);
+  }
 
   if (!orders.length) return null;
 
@@ -338,6 +350,7 @@ async function buscarOrden(query) {
     ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
     : null;
 
+  console.log(`DROPI buscarOrden resultado: guia=${guia} shipping=${shipping} orderId=${orderId}`);
   return { guia, shipping, orderId, pdfUrl, nombre: `${orden?.name || ''} ${orden?.surname || ''}`.trim() };
 }
 

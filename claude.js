@@ -195,17 +195,31 @@ async function executeTool(toolName, input) {
     }
 
     case 'sincronizar_guia_dropi': {
-      const found = await dropi.buscarOrden(input.nombre);
-      if (!found || !found.guia) {
-        return `No encontré ninguna orden con guía en DROPI para "${input.nombre}". Verifica que la guía ya fue generada en DROPI.`;
+      // Paso 1: buscar el pedido en Sheets para obtener el teléfono
+      const pedidos = await sheets.buscarPedido(input.nombre);
+      if (!pedidos.length) {
+        return `No encontré ningún pedido para "${input.nombre}" en Sheets.`;
       }
-      const upd = await sheets.actualizarGuia(input.telefono, found.guia, found.shipping);
+      const pedido = pedidos[0];
+      const telefono = pedido.TELEFONO;
+      console.log(`sincronizar_guia: pedido encontrado — ${pedido.NOMBRE} | tel: ${telefono}`);
+
+      // Paso 2: buscar la orden en DROPI
+      const found = await dropi.buscarOrden(input.nombre);
+      console.log(`sincronizar_guia: DROPI result — ${JSON.stringify(found)}`);
+
+      if (!found || !found.guia) {
+        return `Encontré el pedido de ${pedido.NOMBRE} en Sheets (tel: ${telefono}) pero no tiene guía generada en DROPI todavía. Primero hay que generar la guía desde DROPI.`;
+      }
+
+      // Paso 3: actualizar Sheets
+      const upd = await sheets.actualizarGuia(telefono, found.guia, found.shipping);
       if (!upd.updated) {
-        return `Encontré guía *${found.guia}* en DROPI pero no localicé el pedido en Sheets con teléfono ${input.telefono}.`;
+        return `Guía *${found.guia}* encontrada en DROPI pero no se pudo actualizar Sheets. Intenta con el teléfono ${telefono}.`;
       }
       const envioStr = found.shipping ? ` | Envío: $${parseFloat(found.shipping).toFixed(2)}` : '';
       const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
-      return `✅ Guía *${found.guia}*${envioStr} → actualizado en fila ${upd.fila}${pdfStr}`;
+      return `✅ ${pedido.NOMBRE} — Guía *${found.guia}*${envioStr}${pdfStr}`;
     }
 
     case 'registrar_gasto': {

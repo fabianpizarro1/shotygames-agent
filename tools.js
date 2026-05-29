@@ -120,14 +120,13 @@ const tools = [
   },
   {
     name: "sincronizar_guia_dropi",
-    description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Úsalo cuando Fabián pida poner la guía de un pedido que ya está en Sheets.",
+    description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
     input_schema: {
       type: "object",
       properties: {
-        nombre: { type: "string", description: "Nombre del cliente tal como está en Sheets/DROPI" },
-        telefono: { type: "string", description: "Teléfono del cliente para actualizar la fila correcta en Sheets" }
+        nombre: { type: "string", description: "Nombre del cliente (o parte del nombre)" }
       },
-      required: ["nombre", "telefono"]
+      required: ["nombre"]
     }
   },
   {
