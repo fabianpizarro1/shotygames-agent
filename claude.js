@@ -136,11 +136,11 @@ Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheet
 3. Cuando confirme, usa actualizar_guia con el teléfono o nombre encontrado
 4. La herramienta actualizará la guía y cambiará el estado a ENVIADO automáticamente
 
-## Sincronizar guía desde DROPI (pedido ya existe, sin guía en Sheets)
-Si Fabián dice "ponle la guía al pedido de [nombre]" o "sincroniza la guía de [nombre]":
-1. Usa sincronizar_guia_dropi con el nombre y teléfono del cliente
-2. El tool busca en DROPI, saca guía y envío, y actualiza Sheets automáticamente
-3. Responde con el número de guía y costo de envío
+## REGLA CRÍTICA — Guía de pedido existente
+Cuando Fabián diga cualquier variante de "ponle la guía a [nombre]", "sincroniza la guía de [nombre]", "saca la guía de [nombre]", "actualiza la guía de [nombre]":
+→ USA INMEDIATAMENTE sincronizar_guia_dropi con solo el nombre.
+→ NUNCA pidas teléfono, número de guía ni costo de envío — el tool los busca solo.
+→ NO hagas preguntas. Ejecuta el tool y listo.
 
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
