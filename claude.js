@@ -142,6 +142,13 @@ Cuando Fabián diga cualquier variante de "ponle la guía a [nombre]", "sincroni
 → NUNCA pidas teléfono, número de guía ni costo de envío — el tool los busca solo.
 → NO hagas preguntas. Ejecuta el tool y listo.
 
+## Notificar guía a clientes
+Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a todos", "avísales a todos", "manda la guía a [nombre]":
+→ USA INMEDIATAMENTE notificar_guia_clientes.
+→ Con nombre específico: pasa el nombre. Sin nombre o "todos": no pases nombre (batch automático).
+→ NUNCA pidas confirmación para esto — ejecuta directo.
+→ Sheets se encarga de enviar el WhatsApp automáticamente al marcar la casilla.
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -248,6 +255,17 @@ async function executeTool(toolName, input) {
     case 'registrar_transferencia': {
       await sheets.registrarMovimiento('TRANSFERENCIAS', input);
       return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
+    }
+
+    case 'notificar_guia_clientes': {
+      const res = await sheets.marcarNotificacionWA(input.nombre || null);
+      if (res.marcados === 0) {
+        return input.nombre
+          ? `No encontré pedido con guía para "${input.nombre}" que no haya sido notificado ya.`
+          : `No hay pedidos de hoy con guía pendientes de notificar.`;
+      }
+      const lista = res.nombres.join(', ');
+      return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje de guía automáticamente.`;
     }
 
     case 'pedidos_hoy':

@@ -237,6 +237,74 @@ async function getDropiOrderId(nombre) {
   return null;
 }
 
+// Marca la casilla AB (índice 27) como TRUE para disparar la notificación WA automática de Sheets.
+// - Con nombre: marca solo el pedido más reciente de ese cliente.
+// - Sin nombre: marca TODOS los pedidos de hoy que tengan guía generada y la casilla aún no marcada.
+async function marcarNotificacionWA(nombre) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const nombreIdx = headers.indexOf('NOMBRE');
+  const fechaIdx  = headers.indexOf('FECHA');
+  const guiaIdx   = headers.indexOf('GUIA');
+  // Col AB = índice 27 siempre (posición fija en el modelo de datos)
+  const abColIdx  = 27;
+
+  const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
+  const updates = [];
+
+  if (nombre) {
+    // Modo individual: marcar el pedido más reciente que coincida con el nombre
+    const query = nombre.toLowerCase();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
+      if (rowNombre.includes(query)) {
+        const rowNum = i + 1;
+        updates.push({
+          range: `PEDIDOS!${idxToCol(abColIdx)}${rowNum}`,
+          values: [[true]]
+        });
+        console.log(`marcarNotificacionWA: marcando fila ${rowNum} — ${rows[i][nombreIdx]}`);
+        break;
+      }
+    }
+  } else {
+    // Modo batch: marcar todos los de HOY con guía y sin notificar aún
+    for (let i = 1; i < rows.length; i++) {
+      const esFechaHoy = rows[i][fechaIdx] === hoy;
+      const tieneGuia  = !!rows[i][guiaIdx];
+      const yaNotif    = rows[i][abColIdx] === 'TRUE' || rows[i][abColIdx] === true;
+      if (esFechaHoy && tieneGuia && !yaNotif) {
+        const rowNum = i + 1;
+        updates.push({
+          range: `PEDIDOS!${idxToCol(abColIdx)}${rowNum}`,
+          values: [[true]]
+        });
+        console.log(`marcarNotificacionWA batch: marcando fila ${rowNum} — ${rows[i][nombreIdx]}`);
+      }
+    }
+  }
+
+  if (updates.length === 0) return { marcados: 0, nombres: [] };
+
+  await sheetsApi.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEETS_ID,
+    resource: { valueInputOption: 'USER_ENTERED', data: updates }
+  });
+
+  // Recopilar nombres marcados para el mensaje de confirmación
+  const nombres = updates.map(u => {
+    const rowNum = parseInt(u.range.replace(/[^0-9]/g, '')) - 1; // índice de rows[]
+    return rows[rowNum][nombreIdx] || '(sin nombre)';
+  });
+
+  return { marcados: updates.length, nombres };
+}
+
 async function getPedidosHoy() {
   const sheets = await getSheets();
   const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
@@ -298,4 +366,4 @@ async function registrarMovimiento(hoja, datos) {
   return result.data.updates;
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA };

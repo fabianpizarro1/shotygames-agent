@@ -136,6 +136,20 @@ const tools = [
       type: "object",
       properties: {}
     }
+  },
+  {
+    name: "notificar_guia_clientes",
+    description: "Activa la casilla AB en Sheets para que el sistema envíe automáticamente la notificación de guía por WhatsApp al cliente. Con nombre: marca solo ese pedido. Sin nombre (o 'todos'): marca todos los pedidos de hoy que tengan guía y aún no hayan sido notificados.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: {
+          type: "string",
+          description: "Nombre del cliente. Dejar vacío para notificar a todos los pedidos de hoy con guía."
+        }
+      },
+      required: []
+    }
   }
 ];
 
