@@ -44,7 +44,7 @@ Del texto que te mande Fabián saca:
 - **enganchados** → Enganchados
 - **dados** → Dados
 
-Al llamar registrar_pedido y crear_guia_dropi SIEMPRE pasa los campos individuales de cantidad (normal/picante/parejas/enganchados/dados). NO incluyas el campo `productos` — esa columna es automática en Sheets.
+Al llamar registrar_pedido y crear_guia_dropi SIEMPRE pasa los campos individuales de cantidad (normal/picante/parejas/enganchados/dados). NO incluyas el campo "productos" — esa columna es automática en Sheets.
 
 ### Paso 2 — Calcula saldo, estado y transportadora
 - ESTADO: siempre "PENDIENTE" salvo que Fabián diga explícitamente otra cosa (ej: "ENVIADO", "ENTREGADO").
