@@ -114,7 +114,7 @@ function idxToCol(idx) {
 }
 
 // Actualiza la guía en el pedido MÁS RECIENTE sin guía que coincida con el teléfono
-async function actualizarGuia(telefono, guia, envio) {
+async function actualizarGuia(telefono, guia, envio, dropiOrderId) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
@@ -126,6 +126,7 @@ async function actualizarGuia(telefono, guia, envio) {
   const guiaIdx   = headers.indexOf('GUIA');
   const linkIdx   = headers.indexOf('LINK RASTREO');
   const envioIdx  = headers.indexOf('ENVIO');
+  const logIdx    = headers.indexOf('LOG');
 
   console.log(`actualizarGuia: tel="${telefono}" guia="${guia}" envio="${envio}"`);
   console.log(`actualizarGuia: col indices — tel:${telIdx} guia:${guiaIdx} link:${linkIdx} envio:${envioIdx}`);
@@ -165,6 +166,10 @@ async function actualizarGuia(telefono, guia, envio) {
     const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
     updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
   }
+  // Guardar DROPI order ID en columna LOG para poder consultarlo después
+  if (logIdx >= 0 && dropiOrderId) {
+    updates.push({ range: `PEDIDOS!${idxToCol(logIdx)}${rowNum}`, values: [[`DROPI:${dropiOrderId}`]] });
+  }
 
   if (updates.length > 0) {
     await sheetsApi.spreadsheets.values.batchUpdate({
@@ -174,6 +179,33 @@ async function actualizarGuia(telefono, guia, envio) {
   }
 
   return { updated: true, fila: rowNum };
+}
+
+// Lee el DROPI order ID guardado en la columna LOG de un pedido
+async function getDropiOrderId(nombre) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const nombreIdx = headers.indexOf('NOMBRE');
+  const logIdx    = headers.indexOf('LOG');
+  const telIdx    = headers.indexOf('TELEFONO');
+
+  const query = (nombre || '').toLowerCase();
+  // Buscar desde el final (más reciente primero)
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const rowNombre = String(rows[i][nombreIdx] || '').toLowerCase();
+    if (rowNombre.includes(query)) {
+      const log = String(rows[i][logIdx] || '');
+      const tel = rows[i][telIdx] || '';
+      const dropiId = log.startsWith('DROPI:') ? log.replace('DROPI:', '') : null;
+      return { dropiOrderId: dropiId, telefono: tel, nombre: rows[i][nombreIdx] };
+    }
+  }
+  return null;
 }
 
 async function getPedidosHoy() {
@@ -237,4 +269,4 @@ async function registrarMovimiento(hoja, datos) {
   return result.data.updates;
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, getPedidosHoy, registrarMovimiento };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento };

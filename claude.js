@@ -180,9 +180,9 @@ async function executeTool(toolName, input) {
 
       console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
 
-      // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO (sin cambiar ESTADO)
+      // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO + DROPI order ID
       if (input.telefono) {
-        const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping);
+        const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping, orden._orderId);
         console.log('actualizarGuia result:', JSON.stringify(updResult));
       } else {
         console.log('ADVERTENCIA: crear_guia_dropi sin telefono — no se puede actualizar Sheets');
@@ -195,31 +195,44 @@ async function executeTool(toolName, input) {
     }
 
     case 'sincronizar_guia_dropi': {
-      // Paso 1: buscar el pedido en Sheets para obtener el teléfono
-      const pedidos = await sheets.buscarPedido(input.nombre);
-      if (!pedidos.length) {
+      // Paso 1: buscar el pedido en Sheets (obtiene teléfono + DROPI order ID guardado)
+      const sheetData = await sheets.getDropiOrderId(input.nombre);
+      if (!sheetData) {
         return `No encontré ningún pedido para "${input.nombre}" en Sheets.`;
       }
-      const pedido = pedidos[0];
-      const telefono = pedido.TELEFONO;
-      console.log(`sincronizar_guia: pedido encontrado — ${pedido.NOMBRE} | tel: ${telefono}`);
+      const { dropiOrderId, telefono, nombre: nombreReal } = sheetData;
+      console.log(`sincronizar_guia: ${nombreReal} | tel:${telefono} | dropiId:${dropiOrderId}`);
 
-      // Paso 2: buscar la orden en DROPI (pasar teléfono para mejor match)
-      const found = await dropi.buscarOrden(input.nombre, telefono);
-      console.log(`sincronizar_guia: DROPI result — ${JSON.stringify(found)}`);
+      let found = null;
+
+      // Paso 2a: si tenemos el order ID, buscar directamente por ID (más confiable)
+      if (dropiOrderId) {
+        try {
+          found = await dropi.getOrdenPorId(dropiOrderId);
+          console.log(`sincronizar_guia: obtenida por ID — guia=${found?.guia}`);
+        } catch (e) {
+          console.error('Error obteniendo por ID:', e.message);
+        }
+      }
+
+      // Paso 2b: fallback — búsqueda por nombre/teléfono
+      if (!found || !found.guia) {
+        found = await dropi.buscarOrden(input.nombre, telefono);
+        console.log(`sincronizar_guia: búsqueda fallback — ${JSON.stringify(found)}`);
+      }
 
       if (!found || !found.guia) {
-        return `Encontré el pedido de ${pedido.NOMBRE} en Sheets (tel: ${telefono}) pero no tiene guía generada en DROPI todavía. Primero hay que generar la guía desde DROPI.`;
+        return `El pedido de ${nombreReal} existe en Sheets pero no tiene guía generada en DROPI aún. Primero genera la guía desde el panel de DROPI o usa "crea la guía de ${nombreReal}".`;
       }
 
       // Paso 3: actualizar Sheets
-      const upd = await sheets.actualizarGuia(telefono, found.guia, found.shipping);
+      const upd = await sheets.actualizarGuia(telefono, found.guia, found.shipping, found.orderId);
       if (!upd.updated) {
-        return `Guía *${found.guia}* encontrada en DROPI pero no se pudo actualizar Sheets. Intenta con el teléfono ${telefono}.`;
+        return `Guía *${found.guia}* encontrada en DROPI (envío: $${parseFloat(found.shipping||0).toFixed(2)}) pero no pude actualizar Sheets para ${nombreReal}. Tel: ${telefono}`;
       }
       const envioStr = found.shipping ? ` | Envío: $${parseFloat(found.shipping).toFixed(2)}` : '';
       const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
-      return `✅ ${pedido.NOMBRE} — Guía *${found.guia}*${envioStr}${pdfStr}`;
+      return `✅ ${nombreReal} — Guía *${found.guia}*${envioStr}${pdfStr}`;
     }
 
     case 'registrar_gasto': {

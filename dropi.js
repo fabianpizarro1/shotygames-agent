@@ -300,6 +300,41 @@ async function crearOrden(pedido) {
   return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
+// Obtiene una orden de DROPI por su ID y devuelve guía + envío
+async function getOrdenPorId(orderId) {
+  const token = await getToken();
+  let client = makeClient(token);
+  console.log(`DROPI getOrdenPorId: GET /orders/myorders/${orderId}`);
+  try {
+    const res = await client.get(`/orders/myorders/${orderId}`);
+    const data = res.data;
+    const orden = data?.order || data?.objects || data?.data || data;
+    const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+    const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+    const pdfUrl = guia
+      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+      : null;
+    console.log(`DROPI getOrdenPorId: guia=${guia} shipping=${shipping}`);
+    return { guia, shipping, orderId, pdfUrl };
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      const res = await client.get(`/orders/myorders/${orderId}`);
+      const data = res.data;
+      const orden = data?.order || data?.objects || data?.data || data;
+      const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+      const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+      const pdfUrl = guia
+        ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+        : null;
+      return { guia, shipping, orderId, pdfUrl };
+    }
+    throw new Error(`DROPI getOrdenPorId ${status}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
+  }
+}
+
 // Busca órdenes en DROPI por nombre o teléfono y devuelve guía + envío
 async function buscarOrden(query, telefono) {
   const token = await getToken();
@@ -396,4 +431,4 @@ async function buscarOrden(query, telefono) {
   return { guia, shipping, orderId, pdfUrl, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
 }
 
-module.exports = { crearOrden, buscarOrden, setToken };
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, setToken };
