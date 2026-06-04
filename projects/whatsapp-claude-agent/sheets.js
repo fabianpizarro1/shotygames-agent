@@ -153,7 +153,7 @@ async function appendPedido(pedido) {
     (pedido.cuenta || '').toUpperCase(),    // col 18: CUENTA
     (pedido.estado || 'PENDIENTE').toUpperCase(), // col 19: ESTADO
     pedido.transportadora || 'SERVIENTREGA', // col 20: TRANSPORTADORA
-    pedido.envio || '',                     // col 21: ENVIO
+    parseMonto(pedido.envio),              // col 21: ENVIO
     '',                                     // col 22: GUIA (se agrega después)
     '',                                     // col 23: LINK RASTREO
     '',                                     // col 24: RASTREO (automática)
@@ -262,8 +262,10 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
     updates.push({ range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[trackingUrl]] });
   }
   if (envioIdx >= 0 && envio) {
-    const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
-    updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
+    const envioNum = parseMonto(envio);
+    if (envioNum !== '') {
+      updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioNum]] });
+    }
   }
   // Guardar DROPI order ID en col AH (índice 33, "Softr Record ID") para poder sincronizar después
   if (dropiId) {
