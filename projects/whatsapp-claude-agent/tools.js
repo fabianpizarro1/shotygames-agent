@@ -131,7 +131,7 @@ const tools = [
   },
   {
     name: "pedidos_hoy",
-    description: "Obtiene todos los pedidos registrados hoy en Google Sheets.",
+    description: "Obtiene ÚNICAMENTE los pedidos registrados HOY. NO usar para consultas sobre pedidos pendientes, totales o de otras fechas — para eso usar reporte_pedidos.",
     input_schema: {
       type: "object",
       properties: {}
@@ -191,7 +191,7 @@ const tools = [
   },
   {
     name: "reporte_pedidos",
-    description: "Consultas y reportes sobre pedidos. Úsalo cuando Fabián pregunte cuántos pedidos hay pendientes, qué productos faltan enviar, resumen de estados, pedidos enviados, etc.",
+    description: "Consultas y reportes sobre pedidos de TODAS las fechas (no solo hoy). Lee el historial completo de Sheets. Úsalo cuando Fabián pregunte cuántos pedidos hay pendientes en total, qué productos faltan enviar, resumen general de estados, pedidos enviados, etc.",
     input_schema: {
       type: "object",
       properties: {
