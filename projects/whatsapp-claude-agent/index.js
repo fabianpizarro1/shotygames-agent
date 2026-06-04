@@ -26,14 +26,47 @@ async function getHistory(phone) {
   try {
     if (redisClient) {
       const raw = await redisClient.get(`chat:${phone}`);
-      return raw ? JSON.parse(raw) : [];
+      const parsed = raw ? JSON.parse(raw) : [];
+      return sanitizeHistory(parsed);
     }
   } catch (e) {}
-  return memoryStore[phone] || [];
+  return sanitizeHistory(memoryStore[phone] || []);
+}
+
+function sanitizeHistory(history) {
+  // Recortar al máximo permitido
+  let h = history.slice(-MAX_HISTORY);
+
+  // Nunca empezar con un mensaje de assistant (Claude espera user primero)
+  while (h.length > 0 && h[0].role === 'assistant') h = h.slice(1);
+
+  // Eliminar tool_results huérfanos al principio:
+  // Si el primer mensaje user contiene tool_result sin tool_use previo, quitarlo.
+  while (h.length > 0 && h[0].role === 'user') {
+    const content = Array.isArray(h[0].content) ? h[0].content : [];
+    const hasOrphanResult = content.some(b => b.type === 'tool_result');
+    if (hasOrphanResult) h = h.slice(2); // quita ese user + el assistant previo (si queda)
+    else break;
+  }
+
+  // Nunca terminar con un assistant que tiene tool_use sin su tool_result
+  while (h.length > 0) {
+    const last = h[h.length - 1];
+    if (last.role === 'assistant') {
+      const content = Array.isArray(last.content) ? last.content : [];
+      if (content.some(b => b.type === 'tool_use')) {
+        h = h.slice(0, -1); // quita el assistant incompleto
+        continue;
+      }
+    }
+    break;
+  }
+
+  return h;
 }
 
 async function saveHistory(phone, history) {
-  const trimmed = history.slice(-MAX_HISTORY);
+  const trimmed = sanitizeHistory(history);
   try {
     if (redisClient) {
       await redisClient.set(`chat:${phone}`, JSON.stringify(trimmed), 'EX', 86400);

@@ -23,7 +23,7 @@ const PROVINCIAS = {
   'MACHALA': 'El Oro', 'PASAJE': 'El Oro', 'HUAQUILLAS': 'El Oro', 'SANTA ROSA': 'El Oro', 'ARENILLAS': 'El Oro', 'ZARUMA': 'El Oro',
   'PONCE ENRIQUEZ': 'El Oro', 'CAMILO PONCE ENRIQUEZ': 'El Oro',
   'PORTOVIEJO': 'Manabí', 'MANTA': 'Manabí', 'CHONE': 'Manabí', 'BAHIA DE CARAQUEZ': 'Manabí', 'PEDERNALES': 'Manabí', 'EL CARMEN': 'Manabí', 'JIPIJAPA': 'Manabí', 'MONTECRISTI': 'Manabí',
-  'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos',
+  'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos', 'RICAURTE': 'Los Ríos', 'PUEBLO VIEJO': 'Los Ríos', 'URDANETA': 'Los Ríos', 'BABA': 'Los Ríos', 'MOCACHE': 'Los Ríos', 'MONTALVO': 'Los Ríos', 'PALENQUE': 'Los Ríos',
   'AMBATO': 'Tungurahua', 'BANOS': 'Tungurahua', 'PELILEO': 'Tungurahua',
   'RIOBAMBA': 'Chimborazo', 'ALAUSÍ': 'Chimborazo',
   'IBARRA': 'Imbabura', 'OTAVALO': 'Imbabura', 'COTACACHI': 'Imbabura', 'ANTONIO ANTE': 'Imbabura',
@@ -143,7 +143,8 @@ async function crearOrden(pedido) {
   // Ciudad y provincia — normalizar nombre de ciudad para DROPI
   const ciudadUpper = (pedido.ciudad || '').toUpperCase().trim();
   const cityForDropi = CIUDAD_DROPI[ciudadUpper] || pedido.ciudad;  // nombre exacto que espera DROPI
-  const state = PROVINCIAS[ciudadUpper] || pedido.ciudad;
+  // Provincia: mapa local → provincia enviada por el agente → ciudad como último recurso
+  const state = PROVINCIAS[ciudadUpper] || pedido.provincia || pedido.ciudad;
 
   // Saldo a cobrar
   const saldo = parseFloat(String(pedido.saldo).replace(',', '.')) || 0;
@@ -299,4 +300,172 @@ async function crearOrden(pedido) {
   return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
 }
 
-module.exports = { crearOrden, setToken };
+// Obtiene una orden de DROPI por su ID y devuelve guía + envío
+async function getOrdenPorId(orderId) {
+  const token = await getToken();
+  let client = makeClient(token);
+  console.log(`DROPI getOrdenPorId: GET /orders/myorders/${orderId}`);
+  try {
+    const res = await client.get(`/orders/myorders/${orderId}`);
+    const data = res.data;
+    const orden = data?.order || data?.objects || data?.data || data;
+    const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+    const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+    const pdfUrl = guia
+      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+      : null;
+    console.log(`DROPI getOrdenPorId: guia=${guia} shipping=${shipping}`);
+    return { guia, shipping, orderId, pdfUrl };
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      const res = await client.get(`/orders/myorders/${orderId}`);
+      const data = res.data;
+      const orden = data?.order || data?.objects || data?.data || data;
+      const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+      const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+      const pdfUrl = guia
+        ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+        : null;
+      return { guia, shipping, orderId, pdfUrl };
+    }
+    throw new Error(`DROPI getOrdenPorId ${status}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
+  }
+}
+
+// Busca órdenes en DROPI por nombre o teléfono y devuelve guía + envío
+async function buscarOrden(query, telefono) {
+  const token = await getToken();
+  let client = makeClient(token);
+
+  function extractOrders(data) {
+    if (!data) return [];
+    return data?.objects || data?.data || data?.orders || (Array.isArray(data) ? data : []);
+  }
+
+  async function doGet(url) {
+    console.log(`DROPI buscarOrden: GET ${url}`);
+    try {
+      const res = await client.get(url);
+      return res.data;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 401 || status === 403) {
+        const newToken = await autoLogin();
+        client = makeClient(newToken);
+        const res = await client.get(url);
+        return res.data;
+      }
+      console.error(`DROPI buscar error ${status}:`, JSON.stringify(e.response?.data)?.slice(0, 200));
+      return null;
+    }
+  }
+
+  // Estrategias de búsqueda en orden de prioridad
+  const strategies = [];
+
+  // Por teléfono (más confiable) — probar con y sin prefijo 593
+  if (telefono) {
+    const tel = String(telefono).replace(/^0/, '593').replace(/^\+/, '');
+    const tel2 = String(telefono).replace(/^593/, '0');
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel2)}&user_id=${USER_ID}`);
+    strategies.push(`/orders/myorders?page=1&perPage=10&q=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
+  }
+
+  // Por nombre completo
+  strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(query)}&user_id=${USER_ID}`);
+
+  // Por primera palabra del nombre (primer nombre)
+  const primerNombre = query.split(' ')[0];
+  if (primerNombre !== query) {
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(primerNombre)}&user_id=${USER_ID}`);
+  }
+
+  // Por apellido (última palabra)
+  const palabras = query.split(' ');
+  const apellido = palabras[palabras.length - 1];
+  if (apellido !== primerNombre) {
+    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(apellido)}&user_id=${USER_ID}`);
+  }
+
+  let orders = [];
+  for (const url of strategies) {
+    const data = await doGet(url);
+    orders = extractOrders(data);
+    console.log(`  → ${orders.length} resultados`);
+    if (orders.length) break;
+  }
+
+  if (!orders.length) {
+    console.log('DROPI buscarOrden: ninguna estrategia encontró resultados');
+    return null;
+  }
+
+  // Filtrar por teléfono si tenemos uno
+  let ordenFinal = null;
+  if (telefono) {
+    const telNorm = String(telefono).replace(/^0/, '').replace(/^593/, '');
+    const match = orders.find(o => {
+      const oTel = String(o.phone || '').replace(/^0/, '').replace(/^593/, '').replace(/^\+593/, '');
+      return oTel.endsWith(telNorm) || telNorm.endsWith(oTel);
+    });
+    if (match) ordenFinal = match;
+  }
+
+  // Si no hay match por teléfono, buscar la más reciente con guía
+  if (!ordenFinal) {
+    ordenFinal = orders.find(o => o.shipping_guide || o.guide_number || o.tracking_number) || orders[0];
+  }
+
+  const guia = ordenFinal?.shipping_guide || ordenFinal?.guide_number || ordenFinal?.tracking_number;
+  const shipping = ordenFinal?.shipping_amount || ordenFinal?.discounted_amount || 0;
+  const orderId = ordenFinal?.id;
+  const pdfUrl = guia && orderId
+    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+    : null;
+
+  console.log(`DROPI buscarOrden resultado: guia=${guia} shipping=${shipping} orderId=${orderId}`);
+  return { guia, shipping, orderId, pdfUrl, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
+}
+
+// Genera la guía de una orden DROPI ya existente (sin crear nueva orden).
+// Útil para reintentar cuando la guía falló en el primer intento.
+async function generarGuia(orderId) {
+  const token = await getToken();
+  let client = makeClient(token);
+  console.log(`DROPI generarGuia: PUT /orders/myorders/${orderId}`);
+
+  async function doGenerate(c) {
+    const guideRes = await c.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
+    const guideData = guideRes.data;
+    const orderObj = guideData?.order || guideData?.objects || guideData?.data || {};
+    const sticker =
+      orderObj?.shipping_guide || guideData?.shipping_guide ||
+      orderObj?.guide_number   || guideData?.guide_number   ||
+      orderObj?.tracking_number || guideData?.tracking_number;
+    const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
+    const pdfUrl = sticker
+      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
+      : null;
+    console.log(`generarGuia: guia=${sticker} shipping=${shippingAmt}`);
+    return { guia: sticker, shipping: shippingAmt, orderId, pdfUrl };
+  }
+
+  try {
+    return await doGenerate(client);
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      return await doGenerate(client);
+    }
+    const errData = JSON.stringify(e.response?.data)?.slice(0, 200);
+    throw new Error(`DROPI generarGuia ${status}: ${errData}`);
+  }
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken };

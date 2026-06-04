@@ -39,12 +39,13 @@ const tools = [
   },
   {
     name: "actualizar_guia",
-    description: "Actualiza el número de guía de envío de un pedido en Google Sheets.",
+    description: "Actualiza el número de guía y/o costo de envío de un pedido en Google Sheets. Úsalo cuando Fabián diga el número de guía y/o envío de un pedido existente.",
     input_schema: {
       type: "object",
       properties: {
         telefono: { type: "string", description: "Teléfono del cliente para identificar el pedido" },
-        guia: { type: "string", description: "Número de guía de envío de Servientrega u otra transportadora" }
+        guia: { type: "string", description: "Número de guía de envío de Servientrega u otra transportadora" },
+        envio: { type: "string", description: "Costo del envío en dólares, ej: 5.50" }
       },
       required: ["telefono", "guia"]
     }
@@ -64,6 +65,7 @@ const tools = [
         parejas:     { type: "string", description: "Cantidad de Torres Parejas" },
         enganchados: { type: "string", description: "Cantidad de Enganchados" },
         dados:       { type: "string", description: "Cantidad de Dados" },
+        provincia:   { type: "string", description: "Provincia de Ecuador del destino. Deducirla del conocimiento geográfico si no se indica explícitamente." },
         saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). Vacío o 0 si pagado." },
         pvp_total:   { type: "string", description: "Precio de venta total del pedido. Requerido para SIN RECAUDO." },
         notas:       { type: "string", description: "Notas adicionales" }
@@ -117,11 +119,47 @@ const tools = [
     }
   },
   {
+    name: "sincronizar_guia_dropi",
+    description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: { type: "string", description: "Nombre del cliente (o parte del nombre)" }
+      },
+      required: ["nombre"]
+    }
+  },
+  {
     name: "pedidos_hoy",
     description: "Obtiene todos los pedidos registrados hoy en Google Sheets.",
     input_schema: {
       type: "object",
       properties: {}
+    }
+  },
+  {
+    name: "obtener_guia_pedido",
+    description: "Busca el número de guía y el link del PDF de envío de un pedido en Sheets. Úsalo cuando Fabián pregunte la guía de un cliente: 'dame la guía de X', 'qué guía tiene X', 'cuál es la guía de X'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: { type: "string", description: "Nombre del cliente (o parte del nombre)" }
+      },
+      required: ["nombre"]
+    }
+  },
+  {
+    name: "notificar_guia_clientes",
+    description: "Activa la casilla AB en Sheets para que el sistema envíe automáticamente la notificación de guía por WhatsApp al cliente. Con nombre: marca solo ese pedido. Sin nombre (o 'todos'): marca todos los pedidos de hoy que tengan guía y aún no hayan sido notificados.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: {
+          type: "string",
+          description: "Nombre del cliente. Dejar vacío para notificar a todos los pedidos de hoy con guía."
+        }
+      },
+      required: []
     }
   }
 ];
