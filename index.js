@@ -1,12 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const { chat } = require('./claude');
+const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
 
 const { transcribeBase64 } = require('./transcribe');
 
 const app = express();
 app.use(express.json());
+
+const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
 
 const memoryStore = {};
 let redisClient = null;
@@ -22,15 +25,15 @@ const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim(
 const MAX_HISTORY = 8;
 const dropi = require('./dropi');
 
-async function getHistory(phone) {
+async function getHistory(phone, prefix = 'chat') {
   try {
     if (redisClient) {
-      const raw = await redisClient.get(`chat:${phone}`);
+      const raw = await redisClient.get(`${prefix}:${phone}`);
       const parsed = raw ? JSON.parse(raw) : [];
       return sanitizeHistory(parsed);
     }
   } catch (e) {}
-  return sanitizeHistory(memoryStore[phone] || []);
+  return sanitizeHistory(memoryStore[`${prefix}:${phone}`] || []);
 }
 
 function sanitizeHistory(history) {
@@ -65,15 +68,15 @@ function sanitizeHistory(history) {
   return h;
 }
 
-async function saveHistory(phone, history) {
+async function saveHistory(phone, history, prefix = 'chat') {
   const trimmed = sanitizeHistory(history);
   try {
     if (redisClient) {
-      await redisClient.set(`chat:${phone}`, JSON.stringify(trimmed), 'EX', 86400);
+      await redisClient.set(`${prefix}:${phone}`, JSON.stringify(trimmed), 'EX', 86400);
       return;
     }
   } catch (e) {}
-  memoryStore[phone] = trimmed;
+  memoryStore[`${prefix}:${phone}`] = trimmed;
 }
 
 app.post('/webhook', async (req, res) => {
@@ -171,6 +174,88 @@ app.post('/webhook', async (req, res) => {
     if (ADMIN_PHONES.length) {
       await sendText(ADMIN_PHONES[0], `⚠️ Error: ${error.message}`).catch(() => {});
     }
+  }
+});
+
+app.post('/webhook/ventas', async (req, res) => {
+  res.sendStatus(200);
+  console.log('WEBHOOK VENTAS recibido:', JSON.stringify(req.body).slice(0, 200));
+
+  try {
+    const body = req.body;
+    const event = (body.event || body.type || '').toLowerCase();
+    if (!event.includes('message')) return;
+
+    const data = body.data;
+    if (!data?.message) return;
+    if (data.key?.fromMe) return;
+
+    let from;
+    if (data.key?.remoteJid?.endsWith('@lid') && data.key?.remoteJidAlt) {
+      from = data.key.remoteJidAlt.replace('@s.whatsapp.net', '');
+    } else {
+      from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    }
+    if (!from) return;
+
+    const messageId = data.key?.id;
+    const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
+    const imageMsg = data.message?.imageMessage;
+    const audioMsg = data.message?.audioMessage || data.message?.pttMessage;
+
+    if (!text && !imageMsg && !audioMsg) return;
+
+    await markAsRead(from, messageId, INSTANCE_VENTAS);
+    await sendReaction(from, messageId, '⏳', INSTANCE_VENTAS);
+
+    const history = await getHistory(from, 'ventas');
+
+    let imageBase64 = null;
+    let imageMime = 'image/jpeg';
+    if (imageMsg) {
+      try {
+        imageBase64 = await getMediaBase64(data, INSTANCE_VENTAS);
+        imageMime = imageMsg.mimetype || 'image/jpeg';
+      } catch (e) {
+        console.error('Ventas - error obteniendo imagen:', e.message);
+      }
+    }
+
+    let transcribedAudio = null;
+    if (audioMsg) {
+      try {
+        const { transcribeBase64 } = require('./transcribe');
+        const audioBase64 = await getMediaBase64(data, INSTANCE_VENTAS);
+        if (audioBase64) {
+          const mime = audioMsg.mimetype || 'audio/ogg';
+          transcribedAudio = await transcribeBase64(audioBase64, mime);
+        }
+      } catch (e) {
+        console.error('Ventas - error transcribiendo audio:', e.message);
+      }
+    }
+
+    let messageText;
+    if (transcribedAudio) {
+      messageText = transcribedAudio;
+    } else if (text) {
+      messageText = text;
+    } else if (imageMsg?.caption) {
+      messageText = imageMsg.caption;
+    } else if (imageMsg) {
+      messageText = 'Te mando una imagen.';
+    } else {
+      messageText = 'Hola';
+    }
+
+    const { text: reply, updatedHistory } = await chatVentas(history, messageText, imageBase64, imageMime);
+
+    await saveHistory(from, updatedHistory, 'ventas');
+    await sendText(from, reply, INSTANCE_VENTAS);
+    await sendReaction(from, messageId, '✅', INSTANCE_VENTAS);
+
+  } catch (error) {
+    console.error('Ventas error:', error.message);
   }
 });
 

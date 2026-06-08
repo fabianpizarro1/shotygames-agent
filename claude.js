@@ -14,10 +14,10 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 
 ## Productos y precios
 **Físicos:**
-- NORMAL (N) — $20
-- PICANTE (P) — $20
-- PAREJAS (PAR) — $25
-- ENGANCHADOS (ENG) — $15
+- NORMAL (N) — $23
+- PICANTE (P) — $23
+- PAREJAS (PAR) — $23
+- ENGANCHADOS (ENG) — $28
 
 **Digitales:**
 - EMPAREJADOS
@@ -129,7 +129,15 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 
 ## Crear guía en DROPI (pedido ya existente)
 Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
-1. Usa buscar_pedido para obtener los datos
+
+**Paso 1 — Intenta sincronizar primero:**
+→ USA sincronizar_guia_dropi con el nombre.
+- Si el pedido ya tiene una orden en DROPI (aunque sea sin guía), el tool la intentará generar y actualizar Sheets automáticamente.
+- Si sale exitoso: responde con guía + link + envío. No hagas nada más.
+
+**Paso 2 — Solo si sincronizar_guia_dropi dice "No existe una orden en DROPI":**
+→ Ahí sí crea la orden desde cero:
+1. Usa buscar_pedido para obtener los datos del pedido
 2. Confirma: "¿Creo guía DROPI para [NOMBRE] — [productos] — saldo $[saldo]?"
 3. Cuando confirme, usa crear_guia_dropi
 4. La guía y el envío se actualizan automáticamente en Sheets
@@ -169,6 +177,32 @@ Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a tod
 → NUNCA pidas confirmación para esto — ejecuta directo.
 → Sheets se encarga de enviar el WhatsApp automáticamente al marcar la casilla.
 
+## Editar pedidos
+Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
+→ USA actualizar_pedido con el nombre y los cambios.
+→ Para cambios de ESTADO (ENVIADO, ENTREGADO, PENDIENTE): ejecuta directo sin pedir confirmación — es rápido y reversible.
+→ Para otros campos (dirección, teléfono, etc.): confirma primero: "¿Cambio [CAMPO] de [NOMBRE] a [VALOR]?" y espera confirmación.
+→ ESTADO válidos: PENDIENTE (sin enviar) | ENVIADO (despachado) | ENTREGADO (recibido por cliente).
+→ Puedes cambiar varios campos a la vez pasando múltiples keys en cambios.
+
+## Consultas y reportes de pedidos
+Cuando Fabián haga preguntas sobre el estado general de los pedidos:
+→ USA reporte_pedidos. No pidas confirmación — es solo lectura.
+→ reporte_pedidos lee TODOS los pedidos de TODAS las fechas — no tiene límite de fecha.
+→ NUNCA uses pedidos_hoy para responder consultas generales. pedidos_hoy es SOLO para "qué pedidos entraron hoy".
+→ NUNCA digas que no puedes ver pedidos de otras fechas o que necesitas acceder directamente a Sheets — reporte_pedidos ya lo hace.
+
+| Lo que dice Fabián | tipo | filtro_estado |
+|---|---|---|
+| "cuántos pedidos pendientes hay" / "qué falta enviar" | PENDIENTES | PENDIENTE |
+| "qué productos faltan enviar" / "qué tengo que armar" | PRODUCTOS_PENDIENTES | PENDIENTE |
+| "resumen de pedidos" / "cómo van los pedidos" | RESUMEN | — |
+| "pedidos enviados" / "qué está en camino" | POR_ESTADO | ENVIADO |
+| "pedidos entregados" | POR_ESTADO | ENTREGADO |
+
+Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
+Al responder PENDIENTES o POR_ESTADO, lista nombre, ciudad, productos y fecha.
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -199,10 +233,22 @@ async function executeTool(toolName, input) {
       const guia = orden?.sticker;
 
       if (orden?._guideError) {
-        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero error al generar guía: ${orden._guideError}`;
+        // Guardar el order ID en Sheets aunque la guía haya fallado — permite reintentar después
+        if (input.telefono && orden._orderId) {
+          try {
+            await sheets.actualizarGuia(input.telefono, null, null, orden._orderId);
+            console.log(`crear_guia_dropi: DROPI order ID ${orden._orderId} guardado en Sheets para reintento`);
+          } catch (e) {
+            console.error('Error guardando DROPI ID en Sheets:', e.message);
+          }
+        }
+        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero DROPI no generó la guía: ${orden._guideError}\n\nEl ID de la orden quedó guardado en Sheets. Cuando DROPI esté disponible, di *"ponle la guía a ${input.nombre}"* para reintentarlo.`;
       }
       if (!guia) {
-        return `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Respuesta: ${JSON.stringify(orden).slice(0, 200)}`;
+        if (input.telefono && orden?._orderId) {
+          try { await sheets.actualizarGuia(input.telefono, null, null, orden._orderId); } catch (_) {}
+        }
+        return `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Di *"ponle la guía a ${input.nombre}"* para reintentarlo.`;
       }
 
       console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
@@ -239,13 +285,27 @@ async function executeTool(toolName, input) {
 
       let found = null;
 
-      // Paso 2a: si tenemos el order ID, buscar directamente por ID (más confiable)
+      // Paso 2a: si tenemos el order ID, buscar directamente (más confiable)
       if (dropiOrderId) {
         try {
           found = await dropi.getOrdenPorId(dropiOrderId);
           console.log(`sincronizar_guia: obtenida por ID — guia=${found?.guia}`);
         } catch (e) {
           console.error('Error obteniendo por ID:', e.message);
+        }
+
+        // La orden existe en DROPI pero la guía nunca se generó → intentar generarla ahora
+        if (!found?.guia) {
+          console.log(`sincronizar_guia: sin guía, intentando generarla para orden ${dropiOrderId}...`);
+          try {
+            const generated = await dropi.generarGuia(dropiOrderId);
+            if (generated?.guia) {
+              found = generated;
+              console.log(`sincronizar_guia: guía generada en reintento — ${found.guia}`);
+            }
+          } catch (e) {
+            console.error('Error generando guía en reintento:', e.message);
+          }
         }
       }
 
@@ -256,7 +316,10 @@ async function executeTool(toolName, input) {
       }
 
       if (!found || !found.guia) {
-        return `El pedido de ${nombreReal} existe en Sheets pero no tiene guía generada en DROPI aún. Primero genera la guía desde el panel de DROPI o usa "crea la guía de ${nombreReal}".`;
+        const noOrderMsg = dropiOrderId
+          ? `La orden de ${nombreReal} existe en DROPI (ID: ${dropiOrderId}) pero DROPI sigue sin generar la guía. Intenta de nuevo más tarde o revisa el panel de DROPI.`
+          : `No existe una orden en DROPI para ${nombreReal}. Usa "crea la guía de ${nombreReal}" para crear la orden completa.`;
+        return noOrderMsg;
       }
 
       // Paso 3: actualizar Sheets
@@ -319,6 +382,57 @@ async function executeTool(toolName, input) {
       }
       const lista = res.nombres.join(', ');
       return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje automáticamente.`;
+    }
+
+    case 'actualizar_pedido': {
+      const res = await sheets.actualizarPedido(input.nombre, input.cambios);
+      if (!res.found) return `No encontré ningún pedido para "${input.nombre}".`;
+      if (res.candidatos) {
+        const lista = res.candidatos.map((c, i) =>
+          `${i + 1}. ${c.nombre} — ${c.fecha}${c.estado ? ' — ' + c.estado : ''}`
+        ).join('\n');
+        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿Cuál quieres actualizar? Dime el nombre completo.`;
+      }
+      if (!res.updated) return `No hay campos válidos para actualizar en el pedido de ${res.nombre}.`;
+      const camposStr = Object.entries(input.cambios)
+        .map(([k, v]) => `${k.toUpperCase()}: ${String(v).toUpperCase()}`)
+        .join(' | ');
+      return `✅ Pedido de *${res.nombre}* (${res.fecha}) actualizado — ${camposStr}.`;
+    }
+
+    case 'reporte_pedidos': {
+      const res = await sheets.reportePedidos(input.tipo, input.filtro_estado);
+      if (res.error) return res.error;
+
+      const tipoBig = (input.tipo || '').toUpperCase();
+
+      if (tipoBig === 'PRODUCTOS_PENDIENTES') {
+        const p = res.productos;
+        const lineas = [];
+        if (p.normal > 0)       lineas.push(`• ${p.normal} NORMAL`);
+        if (p.picante > 0)      lineas.push(`• ${p.picante} PICANTE`);
+        if (p.parejas > 0)      lineas.push(`• ${p.parejas} PAREJAS`);
+        if (p.enganchados > 0)  lineas.push(`• ${p.enganchados} ENGANCHADOS`);
+        if (p.dados > 0)        lineas.push(`• ${p.dados} DADOS`);
+        if (lineas.length === 0) return `No hay productos pendientes de envío.`;
+        const total = p.normal + p.picante + p.parejas + p.enganchados + p.dados;
+        return `📦 Productos por enviar — ${res.totalPedidos} pedido(s) pendiente(s):\n\n${lineas.join('\n')}\n\nTotal: *${total} unidades*`;
+      }
+
+      if (tipoBig === 'RESUMEN') {
+        const lineas = Object.entries(res.resumen)
+          .sort((a, b) => b[1] - a[1])
+          .map(([e, c]) => `• ${e}: ${c}`)
+          .join('\n');
+        return `📊 Resumen de pedidos (${res.total} en total):\n\n${lineas}`;
+      }
+
+      // PENDIENTES / POR_ESTADO
+      if (!res.total) return `No hay pedidos en estado ${res.estado}.`;
+      const lista = res.pedidos.map(p =>
+        `• *${p.nombre}* — ${p.ciudad} — ${p.productos} — ${p.fecha}`
+      ).join('\n');
+      return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
     }
 
     case 'pedidos_hoy':

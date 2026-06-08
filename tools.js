@@ -131,7 +131,7 @@ const tools = [
   },
   {
     name: "pedidos_hoy",
-    description: "Obtiene todos los pedidos registrados hoy en Google Sheets.",
+    description: "Obtiene ÚNICAMENTE los pedidos registrados HOY. NO usar para consultas sobre pedidos pendientes, totales o de otras fechas — para eso usar reporte_pedidos.",
     input_schema: {
       type: "object",
       properties: {}
@@ -160,6 +160,51 @@ const tools = [
         }
       },
       required: []
+    }
+  },
+  {
+    name: "actualizar_pedido",
+    description: "Actualiza uno o más campos de un pedido existente en Google Sheets buscando por nombre del cliente. Úsalo cuando Fabián pida cambiar estado (ENVIADO, ENTREGADO, PENDIENTE), dirección, ciudad, teléfono, notas, transportadora u otros datos de un pedido.",
+    input_schema: {
+      type: "object",
+      properties: {
+        nombre: { type: "string", description: "Nombre del cliente (búsqueda fuzzy)" },
+        cambios: {
+          type: "object",
+          description: "Campos a cambiar. Keys válidos: estado, direccion, ciudad, telefono, notas, transportadora, anticipo, saldo, cuenta, envio",
+          properties: {
+            estado:         { type: "string", description: "Nuevo estado: PENDIENTE, ENVIADO, ENTREGADO" },
+            direccion:      { type: "string", description: "Nueva dirección de entrega" },
+            ciudad:         { type: "string", description: "Nueva ciudad" },
+            telefono:       { type: "string", description: "Nuevo teléfono" },
+            notas:          { type: "string", description: "Nuevas notas" },
+            transportadora: { type: "string", description: "Nueva transportadora" },
+            anticipo:       { type: "string", description: "Nuevo monto de anticipo" },
+            saldo:          { type: "string", description: "Nuevo saldo pendiente" },
+            cuenta:         { type: "string", description: "Nueva cuenta de pago" },
+            envio:          { type: "string", description: "Nuevo costo de envío" }
+          }
+        }
+      },
+      required: ["nombre", "cambios"]
+    }
+  },
+  {
+    name: "reporte_pedidos",
+    description: "Consultas y reportes sobre pedidos de TODAS las fechas (no solo hoy). Lee el historial completo de Sheets. Úsalo cuando Fabián pregunte cuántos pedidos hay pendientes en total, qué productos faltan enviar, resumen general de estados, pedidos enviados, etc.",
+    input_schema: {
+      type: "object",
+      properties: {
+        tipo: {
+          type: "string",
+          description: "Tipo de consulta: PENDIENTES (lista pedidos de un estado), PRODUCTOS_PENDIENTES (suma de unidades por tipo pendientes de envío), RESUMEN (conteo total por estado), POR_ESTADO (pedidos filtrando por estado específico)"
+        },
+        filtro_estado: {
+          type: "string",
+          description: "Estado a filtrar. Por defecto: PENDIENTE. Opciones: PENDIENTE, ENVIADO, ENTREGADO"
+        }
+      },
+      required: ["tipo"]
     }
   }
 ];

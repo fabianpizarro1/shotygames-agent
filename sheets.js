@@ -153,7 +153,7 @@ async function appendPedido(pedido) {
     (pedido.cuenta || '').toUpperCase(),    // col 18: CUENTA
     (pedido.estado || 'PENDIENTE').toUpperCase(), // col 19: ESTADO
     pedido.transportadora || 'SERVIENTREGA', // col 20: TRANSPORTADORA
-    pedido.envio || '',                     // col 21: ENVIO
+    parseMonto(pedido.envio),              // col 21: ENVIO
     '',                                     // col 22: GUIA (se agrega después)
     '',                                     // col 23: LINK RASTREO
     '',                                     // col 24: RASTREO (automática)
@@ -254,16 +254,18 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
   const rowNum = foundRow + 1; // 1-indexed
   const updates = [];
 
-  if (guiaIdx >= 0) {
+  if (guiaIdx >= 0 && guia) {
     updates.push({ range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] });
   }
-  if (linkIdx >= 0) {
+  if (linkIdx >= 0 && guia) {
     const trackingUrl = `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
     updates.push({ range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[trackingUrl]] });
   }
   if (envioIdx >= 0 && envio) {
-    const envioStr = `$${parseFloat(envio).toFixed(2).replace('.', ',')}`;
-    updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioStr]] });
+    const envioNum = parseMonto(envio);
+    if (envioNum !== '') {
+      updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioNum]] });
+    }
   }
   // Guardar DROPI order ID en col AH (índice 33, "Softr Record ID") para poder sincronizar después
   if (dropiId) {
@@ -494,4 +496,142 @@ async function registrarMovimiento(hoja, datos) {
   return result.data.updates;
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido };
+// Actualiza uno o más campos de un pedido existente buscando por nombre (fuzzy).
+// cambios = objeto { estado: 'ENVIADO', direccion: 'nueva dir', ... }
+async function actualizarPedido(nombre, cambios) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const matches = buscarFilasPorNombre(rows, headers, nombre);
+  if (matches.length === 0) return { found: false };
+  if (matches.length > 1) {
+    return {
+      candidatos: matches.map(m => ({
+        nombre: m.nombre,
+        fecha:  m.fecha,
+        estado: rows[m.idx][headers.indexOf('ESTADO')] || ''
+      }))
+    };
+  }
+
+  const m = matches[0];
+  const rowNum = m.rowNum;
+
+  // Mapa campo amigable → header real en la hoja
+  const CAMPOS = {
+    estado:         'ESTADO',
+    direccion:      'DIRECCION',
+    ciudad:         'CIUDAD',
+    telefono:       'TELEFONO',
+    notas:          'NOTAS',
+    transportadora: 'TRANSPORTADORA',
+    anticipo:       'ANTICIPO',
+    saldo:          'SALDO',
+    cuenta:         'CUENTA',
+    envio:          'ENVIO',
+  };
+  const MONTOS = ['anticipo', 'saldo', 'envio'];
+
+  const updates = [];
+  for (const [campo, valor] of Object.entries(cambios)) {
+    const headerName = CAMPOS[campo.toLowerCase()];
+    if (!headerName) continue;
+    const colIdx = headers.indexOf(headerName);
+    if (colIdx < 0) { console.log(`actualizarPedido: col "${headerName}" no encontrada en headers`); continue; }
+    const finalValor = MONTOS.includes(campo.toLowerCase())
+      ? parseMonto(valor)
+      : String(valor).toUpperCase();
+    updates.push({ range: `PEDIDOS!${idxToCol(colIdx)}${rowNum}`, values: [[finalValor]] });
+    console.log(`actualizarPedido: fila ${rowNum} — ${headerName} = "${finalValor}"`);
+  }
+
+  if (updates.length === 0) return { found: true, updated: false, nombre: m.nombre, fecha: m.fecha };
+
+  await sheetsApi.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEETS_ID,
+    resource: { valueInputOption: 'USER_ENTERED', data: updates }
+  });
+
+  return { found: true, updated: true, nombre: m.nombre, fecha: m.fecha, rowNum };
+}
+
+// Genera reportes/consultas sobre pedidos.
+// tipo: PENDIENTES | PRODUCTOS_PENDIENTES | RESUMEN | POR_ESTADO
+// filtroEstado: estado a filtrar (por defecto PENDIENTE)
+async function reportePedidos(tipo, filtroEstado) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const idxOf = h => headers.indexOf(h);
+  const nombreIdx = idxOf('NOMBRE');
+  const estadoIdx = idxOf('ESTADO');
+  const ciudadIdx = idxOf('CIUDAD');
+  const fechaIdx  = idxOf('FECHA');
+  const guiaIdx   = idxOf('GUIA');
+  const prodIdx   = idxOf('PRODUCTOS');
+  // Productos — con fallback a posición fija si el header difiere
+  const nIdx    = idxOf('N')    >= 0 ? idxOf('N')    : 6;
+  const pIdx    = idxOf('P')    >= 0 ? idxOf('P')    : 7;
+  const parIdx  = idxOf('PAR')  >= 0 ? idxOf('PAR')  : 8;
+  const engIdx  = idxOf('ENG')  >= 0 ? idxOf('ENG')  : 9;
+  const dadIdx  = idxOf('DADOS')>= 0 ? idxOf('DADOS'): 10;
+
+  const data = rows.slice(1).filter(r => r[nombreIdx]); // filas con datos
+  const tipoBig = (tipo || '').toUpperCase();
+
+  // ── RESUMEN: conteo por estado ───────────────────────────────────────────
+  if (tipoBig === 'RESUMEN') {
+    const conteos = {};
+    for (const r of data) {
+      const e = (r[estadoIdx] || 'SIN ESTADO').toUpperCase();
+      conteos[e] = (conteos[e] || 0) + 1;
+    }
+    return { resumen: conteos, total: data.length };
+  }
+
+  // ── PENDIENTES / POR_ESTADO: lista pedidos de un estado ─────────────────
+  if (tipoBig === 'PENDIENTES' || tipoBig === 'POR_ESTADO') {
+    const estado = (filtroEstado || 'PENDIENTE').toUpperCase();
+    const filtrados = data.filter(r => (r[estadoIdx] || '').toUpperCase() === estado);
+    return {
+      estado,
+      total: filtrados.length,
+      pedidos: filtrados.map(r => ({
+        nombre:   r[nombreIdx] || '',
+        ciudad:   r[ciudadIdx] || '',
+        productos: r[prodIdx]  || '',
+        fecha:    r[fechaIdx]  || '',
+        guia:     r[guiaIdx]   || ''
+      }))
+    };
+  }
+
+  // ── PRODUCTOS_PENDIENTES: suma de unidades por tipo ─────────────────────
+  if (tipoBig === 'PRODUCTOS_PENDIENTES') {
+    const estado = (filtroEstado || 'PENDIENTE').toUpperCase();
+    const filtrados = data.filter(r => (r[estadoIdx] || '').toUpperCase() === estado);
+    const totales = { normal: 0, picante: 0, parejas: 0, enganchados: 0, dados: 0 };
+    for (const r of filtrados) {
+      totales.normal      += parseInt(r[nIdx])   || 0;
+      totales.picante     += parseInt(r[pIdx])   || 0;
+      totales.parejas     += parseInt(r[parIdx]) || 0;
+      totales.enganchados += parseInt(r[engIdx]) || 0;
+      totales.dados       += parseInt(r[dadIdx]) || 0;
+    }
+    return { estado, totalPedidos: filtrados.length, productos: totales };
+  }
+
+  return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO' };
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos };

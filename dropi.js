@@ -431,4 +431,41 @@ async function buscarOrden(query, telefono) {
   return { guia, shipping, orderId, pdfUrl, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, setToken };
+// Genera la guía de una orden DROPI ya existente (sin crear nueva orden).
+// Útil para reintentar cuando la guía falló en el primer intento.
+async function generarGuia(orderId) {
+  const token = await getToken();
+  let client = makeClient(token);
+  console.log(`DROPI generarGuia: PUT /orders/myorders/${orderId}`);
+
+  async function doGenerate(c) {
+    const guideRes = await c.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
+    const guideData = guideRes.data;
+    const orderObj = guideData?.order || guideData?.objects || guideData?.data || {};
+    const sticker =
+      orderObj?.shipping_guide || guideData?.shipping_guide ||
+      orderObj?.guide_number   || guideData?.guide_number   ||
+      orderObj?.tracking_number || guideData?.tracking_number;
+    const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
+    const pdfUrl = sticker
+      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
+      : null;
+    console.log(`generarGuia: guia=${sticker} shipping=${shippingAmt}`);
+    return { guia: sticker, shipping: shippingAmt, orderId, pdfUrl };
+  }
+
+  try {
+    return await doGenerate(client);
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      return await doGenerate(client);
+    }
+    const errData = JSON.stringify(e.response?.data)?.slice(0, 200);
+    throw new Error(`DROPI generarGuia ${status}: ${errData}`);
+  }
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken };
