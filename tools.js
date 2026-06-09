@@ -190,6 +190,20 @@ const tools = [
     }
   },
   {
+    name: "imprimir_guias",
+    description: "Descarga los PDFs de guías de envío de hoy desde DROPI, los combina en un PDF con 4 guías por hoja A4 y te lo envía por WhatsApp. Úsalo cuando Fabián diga 'imprime las guías', 'mándame las guías para imprimir', 'necesito las guías de hoy', etc.",
+    input_schema: {
+      type: "object",
+      properties: {
+        fecha: {
+          type: "string",
+          description: "Fecha en formato dd/mm/yyyy. Si no se indica, usa hoy."
+        }
+      },
+      required: []
+    }
+  },
+  {
     name: "reporte_pedidos",
     description: "Consultas y reportes sobre pedidos de TODAS las fechas (no solo hoy). Lee el historial completo de Sheets. Úsalo cuando Fabián pregunte cuántos pedidos hay pendientes en total, qué productos faltan enviar, resumen general de estados, pedidos enviados, etc.",
     input_schema: {

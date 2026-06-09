@@ -2,6 +2,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
+const { downloadPdf, merge4Up } = require('./pdf');
+const { sendDocument } = require('./evolution');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -176,6 +178,14 @@ Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a tod
 → Con nombre específico: pasa el nombre. Sin nombre o "todos": no pases nombre (batch automático).
 → NUNCA pidas confirmación para esto — ejecuta directo.
 → Sheets se encarga de enviar el WhatsApp automáticamente al marcar la casilla.
+
+## Imprimir guías de envío
+Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las guías para imprimir", "dame el PDF de las guías":
+→ USA imprimir_guias INMEDIATAMENTE sin pedir confirmación.
+→ Sin fecha específica: usa las guías de hoy.
+→ El tool descarga los PDFs de DROPI, los combina 4 por hoja A4 y te envía el PDF por WhatsApp automáticamente.
+→ Si algún PDF falla, avisa cuáles no se pudieron incluir.
+→ NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
 
 ## Editar pedidos
 Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
@@ -384,6 +394,50 @@ async function executeTool(toolName, input) {
       return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje automáticamente.`;
     }
 
+    case 'imprimir_guias': {
+      const guias = await sheets.getGuiasParaImprimir(input.fecha || null);
+
+      if (guias.length === 0) {
+        return `No hay guías con PDF disponible para ${input.fecha || 'hoy'}. Asegúrate de que los pedidos tengan guía generada en DROPI.`;
+      }
+
+      // Descargar PDFs en paralelo, saltando los que fallen
+      const resultados = await Promise.allSettled(
+        guias.map(g => downloadPdf(g.pdfUrl).then(buf => ({ ...g, buf })))
+      );
+
+      const descargados = resultados
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+
+      const fallidos = resultados
+        .filter(r => r.status === 'rejected')
+        .map((_, i) => guias[i].nombre);
+
+      if (descargados.length === 0) {
+        return `No se pudo descargar ningún PDF. Puede que las guías aún no estén disponibles en DROPI. Intenta en unos minutos.`;
+      }
+
+      // Combinar en PDF 4 por hoja
+      const pdfFinal = await merge4Up(descargados.map(d => d.buf));
+
+      // Enviar por WhatsApp al mismo número que envió el mensaje
+      const fecha = input.fecha || new Date().toLocaleDateString('es-EC', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        timeZone: 'America/Guayaquil'
+      });
+      const fileName = `guias-${fecha.replace(/\//g, '-')}.pdf`;
+
+      await sendDocument(input._from, pdfFinal, fileName);
+
+      const nombresStr = descargados.map(d => `• ${d.nombre} — Guía ${d.guia}`).join('\n');
+      const fallMsg = fallidos.length > 0
+        ? `\n\n⚠️ No se pudieron descargar (${fallidos.length}): ${fallidos.join(', ')}`
+        : '';
+
+      return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}`;
+    }
+
     case 'actualizar_pedido': {
       const res = await sheets.actualizarPedido(input.nombre, input.cambios);
       if (!res.found) return `No encontré ningún pedido para "${input.nombre}".`;
@@ -448,7 +502,7 @@ async function executeTool(toolName, input) {
   }
 }
 
-async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg') {
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null) {
   let userContent;
   if (imageBase64) {
     userContent = [
@@ -475,7 +529,9 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
 
     for (const block of response.content) {
       if (block.type === 'tool_use') {
-        const toolResult = await executeTool(block.name, block.input);
+        // Inyectar _from para tools que necesiten enviar archivos de vuelta
+        const inputConFrom = fromPhone ? { ...block.input, _from: fromPhone } : block.input;
+        const toolResult = await executeTool(block.name, inputConFrom);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,

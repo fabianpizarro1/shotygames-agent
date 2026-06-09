@@ -634,4 +634,51 @@ async function reportePedidos(tipo, filtroEstado) {
   return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO' };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos };
+// Devuelve las guías del día (o de una fecha específica) que tienen PDF listo para imprimir.
+// Requiere GUIA + DROPI order ID en Sheets para construir la URL del PDF.
+async function getGuiasParaImprimir(fecha) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const nombreIdx = headers.indexOf('NOMBRE');
+  const fechaIdx  = headers.indexOf('FECHA');
+  const guiaIdx   = headers.indexOf('GUIA');
+  let dropiColIdx = headers.indexOf('Softr Record ID');
+  if (dropiColIdx === -1) dropiColIdx = 33;
+
+  const hoy = fecha || new Date().toLocaleDateString('es-EC', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    timeZone: 'America/Guayaquil'
+  });
+
+  const guias = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[nombreIdx]) continue;
+    if (r[fechaIdx] !== hoy) continue;
+
+    const guia = r[guiaIdx] || '';
+    if (!guia) continue;
+
+    const dropiRaw = String(r[dropiColIdx] || '');
+    const dropiId  = dropiRaw.startsWith('DROPI:') ? dropiRaw.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+
+    guias.push({
+      nombre: r[nombreIdx],
+      guia,
+      dropiId,
+      fecha: r[fechaIdx],
+      pdfUrl: `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
+    });
+  }
+
+  return guias;
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir };

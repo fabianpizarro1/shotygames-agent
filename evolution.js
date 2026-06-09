@@ -55,4 +55,18 @@ async function getMediaBase64(messageData, instance = INSTANCE) {
   return response.data?.base64 || null;
 }
 
-module.exports = { sendText, sendReaction, markAsRead, getMediaBase64 };
+// Envía un documento (PDF, etc.) por WhatsApp
+async function sendDocument(to, fileBuffer, fileName, caption = '', instance = INSTANCE) {
+  const base64 = fileBuffer.toString('base64');
+  const response = await getClient(instance).post(`/message/sendMedia/${instance}`, {
+    number: to,
+    mediatype: 'document',
+    mimetype: 'application/pdf',
+    media: base64,
+    fileName,
+    caption
+  });
+  return response.data;
+}
+
+module.exports = { sendText, sendReaction, markAsRead, getMediaBase64, sendDocument };

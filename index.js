@@ -163,7 +163,7 @@ app.post('/webhook', async (req, res) => {
     } else {
       messageText = 'Te mando una imagen de la guía para que registres el envío.';
     }
-    const { text: reply, updatedHistory } = await chat(history, messageText, imageBase64, imageMime);
+    const { text: reply, updatedHistory } = await chat(history, messageText, imageBase64, imageMime, from);
 
     await saveHistory(from, updatedHistory);
     await sendText(from, reply);
