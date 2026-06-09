@@ -205,6 +205,8 @@ app.post('/webhook/ventas', async (req, res) => {
 
     if (!text && !imageMsg && !audioMsg) return;
 
+    console.log(`[VENTAS] from=${from} instance=${INSTANCE_VENTAS} apiKeyVentas=${process.env.EVOLUTION_API_KEY_VENTAS ? 'SET' : 'NOT SET'}`);
+
     await markAsRead(from, messageId, INSTANCE_VENTAS);
     await sendReaction(from, messageId, '⏳', INSTANCE_VENTAS);
 
@@ -217,7 +219,7 @@ app.post('/webhook/ventas', async (req, res) => {
         imageBase64 = await getMediaBase64(data, INSTANCE_VENTAS);
         imageMime = imageMsg.mimetype || 'image/jpeg';
       } catch (e) {
-        console.error('Ventas - error obteniendo imagen:', e.message);
+        console.error('[VENTAS] error obteniendo imagen:', e.message);
       }
     }
 
@@ -231,7 +233,7 @@ app.post('/webhook/ventas', async (req, res) => {
           transcribedAudio = await transcribeBase64(audioBase64, mime);
         }
       } catch (e) {
-        console.error('Ventas - error transcribiendo audio:', e.message);
+        console.error('[VENTAS] error transcribiendo audio:', e.message);
       }
     }
 
@@ -248,14 +250,22 @@ app.post('/webhook/ventas', async (req, res) => {
       messageText = 'Hola';
     }
 
+    console.log('[VENTAS] llamando chatVentas...');
     const { text: reply, updatedHistory } = await chatVentas(history, messageText, imageBase64, imageMime);
+    console.log('[VENTAS] chatVentas OK, enviando respuesta...');
 
     await saveHistory(from, updatedHistory, 'ventas');
     await sendText(from, reply, INSTANCE_VENTAS);
+    console.log('[VENTAS] respuesta enviada OK');
     await sendReaction(from, messageId, '✅', INSTANCE_VENTAS);
 
   } catch (error) {
-    console.error('Ventas error:', error.message);
+    console.error('[VENTAS] error:', error.message);
+    if (error.response) {
+      console.error('[VENTAS] status:', error.response.status);
+      console.error('[VENTAS] url:', error.config?.url);
+      console.error('[VENTAS] data:', JSON.stringify(error.response.data).slice(0, 300));
+    }
   }
 });
 
