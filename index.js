@@ -255,8 +255,15 @@ app.post('/webhook/ventas', async (req, res) => {
     console.log('[VENTAS] chatVentas OK, enviando respuesta...');
 
     await saveHistory(from, updatedHistory, 'ventas');
-    await sendText(from, reply, INSTANCE_VENTAS);
-    console.log('[VENTAS] respuesta enviada OK');
+
+    // Enviar en múltiples mensajes si Nicole usó el separador |||
+    const partes = reply.split('|||').map(p => p.trim()).filter(Boolean);
+    for (let i = 0; i < partes.length; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 800));
+      await sendText(from, partes[i], INSTANCE_VENTAS);
+    }
+
+    console.log(`[VENTAS] ${partes.length} mensaje(s) enviado(s) OK`);
     await sendReaction(from, messageId, '✅', INSTANCE_VENTAS);
 
   } catch (error) {
