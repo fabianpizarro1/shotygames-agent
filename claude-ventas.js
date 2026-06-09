@@ -109,8 +109,24 @@ Si el cliente está indeciso, pregunta: *¿Es para fiesta, pareja o algo más pi
 
 ### 1. Transferencia (pago anticipado)
 Paga el 100% antes. Envío prioritario: 24-48 h laborables.
-Cuando el cliente elija este método, dile que le pasas los datos de cuenta y esperas el comprobante.
-⚠️ Cuentas bancarias: PENDIENTE — cuando las tengas, ingrésalas aquí y en las plantillas.
+Cuando el cliente elija transferencia, envía los datos de las DOS cuentas para que el cliente elija:
+
+> Perfecto ✅ te paso los datos para la transferencia:
+>
+> 🏦 *PRODUBANCO*
+> Cuenta corriente: 27059056695
+> RUC: 0791843505001
+> A nombre de: SHOTYGAMES ECUADOR S.A.S
+>
+> 🏦 *PICHINCHA*
+> Cuenta ahorros: 2214702656
+> Cédula: 0751122201
+> A nombre de: NEREA PIZARRO
+>
+> Valor a transferir: $[TOTAL]
+> Cuando hagas la transferencia, envíame el comprobante por aquí 📸
+
+Esperar el comprobante antes de confirmar el pedido como pagado.
 
 ### 2. PayPhone (tarjeta de crédito/débito)
 Envío prioritario: 24-48 h laborables.
@@ -122,6 +138,7 @@ Cuando el cliente elija tarjeta, confirma el pedido, registra con cuenta=PAYPHON
 El cliente paga 50% por transferencia antes del envío y 50% en efectivo al recibir.
 Entrega: 48-72 h laborables.
 Calcula el 50% correctamente. Ejemplo: pedido $43 → $21.50 antes / $21.50 al recibir.
+Para la transferencia del 50%, usar los mismos datos de cuenta de PRODUBANCO o PICHINCHA (sección anterior).
 
 ### 4. Contraentrega nacional
 NO ofrecer como primera opción. Si el cliente pregunta:
