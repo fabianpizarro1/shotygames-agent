@@ -478,9 +478,19 @@ async function verificarCliente(telefono) {
   const tel = String(telefono).trim();
 
   async function doPost(c) {
+    // DROPI usa los productos del pedido actual para buscar historial — pasar uno real
+    // para que el endpoint no devuelva vacío por no encontrar coincidencias de producto
+    const sampleProducts = [{
+      id: PRODUCTS.normal.id,
+      name: PRODUCTS.normal.name,
+      quantity: 1,
+      price: 23,
+      type: 'SIMPLE',
+      user_id: USER_ID,
+    }];
     const res = await c.post('/orders/getclientclasification', {
       phone: tel,
-      products: [],
+      products: sampleProducts,
     });
     return res.data;
   }
@@ -499,20 +509,41 @@ async function verificarCliente(telefono) {
     }
   }
 
-  // Loguear respuesta completa la primera vez para mapear los campos
-  console.log('DROPI verificarCliente response:', JSON.stringify(data)?.slice(0, 800));
+  // Loguear respuesta completa para debug
+  console.log('DROPI verificarCliente raw response:', JSON.stringify(data));
 
-  // Extraer stats — DROPI puede devolver los datos en distintas estructuras
-  const obj = data?.objects || data?.data || data?.client || data || {};
+  // Extraer el objeto de datos — DROPI puede envolverlo en distintas estructuras
+  const obj = data?.objects ?? data?.data ?? data?.client ?? data ?? {};
+
+  // Busca un campo numérico en el objeto cuyos keys contengan alguna de las palabras
+  function findField(o, ...words) {
+    for (const key of Object.keys(o)) {
+      const k = key.toLowerCase();
+      if (words.some(w => k.includes(w))) {
+        const val = o[key];
+        if (val !== null && val !== undefined) return val;
+      }
+    }
+    return null;
+  }
+
+  const total      = findField(obj, 'total')      ?? null;
+  const entregados = findField(obj, 'deliver', 'entregad') ?? null;
+  const devueltos  = findField(obj, 'return', 'devolu')    ?? null;
+  const pendientes = findField(obj, 'pending', 'pendient') ?? null;
+  const clasificacion = obj.classification ?? obj.clasification ?? obj.category ?? obj.clasificacion ?? null;
+  const nombre     = obj.name ?? obj.full_name ?? obj.fullname ?? null;
 
   return {
     raw: data,
-    total:       obj.total_orders      ?? obj.total          ?? obj.ordersQuantity   ?? null,
-    entregados:  obj.delivered_orders  ?? obj.delivered      ?? obj.entregadas       ?? null,
-    devueltos:   obj.returned_orders   ?? obj.returned       ?? obj.devoluciones     ?? null,
-    pendientes:  obj.pending_orders    ?? obj.pending        ?? null,
-    clasificacion: obj.classification  ?? obj.clasification  ?? obj.category         ?? null,
-    nombre:      obj.name              ?? obj.full_name      ?? null,
+    total,
+    entregados,
+    devueltos,
+    pendientes,
+    clasificacion,
+    nombre,
+    // Campos crudos del objeto para debug cuando no matchea nada
+    _keys: Object.keys(obj),
   };
 }
 

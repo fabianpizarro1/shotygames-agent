@@ -522,11 +522,11 @@ async function executeTool(toolName, input) {
       const tel = input.telefono;
       const data = await verificarCliente(tel);
 
-      // Si la respuesta tiene todos nulos, DROPI no encontró al cliente
+      // Si la respuesta tiene todos nulos, mostrar raw para debug
       if (data.total === null && data.entregados === null && data.devueltos === null) {
-        // Mostrar raw por si los campos tienen otro nombre
-        const resumen = JSON.stringify(data.raw)?.slice(0, 400);
-        return `📋 DROPI no devolvió datos para *${tel}*.\nRespuesta raw: ${resumen}`;
+        const keys = data._keys?.length ? `Keys: ${data._keys.join(', ')}` : '';
+        const resumen = JSON.stringify(data.raw)?.slice(0, 600);
+        return `📋 DROPI no devolvió datos para *${tel}*.\n${keys}\nRaw: ${resumen}`;
       }
 
       const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
