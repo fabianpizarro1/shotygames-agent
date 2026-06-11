@@ -4,6 +4,12 @@ const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
 
+// WhatsApp usa *bold* (un asterisco), no **bold** (doble asterisco de markdown).
+// Convierte cualquier **texto** → *texto* antes de enviar.
+function waFormat(text) {
+  return text.replace(/\*\*(.+?)\*\*/gs, '*$1*');
+}
+
 const { transcribeBase64 } = require('./transcribe');
 
 const app = express();
@@ -166,7 +172,7 @@ app.post('/webhook', async (req, res) => {
     const { text: reply, updatedHistory } = await chat(history, messageText, imageBase64, imageMime, from);
 
     await saveHistory(from, updatedHistory);
-    await sendText(from, reply);
+    await sendText(from, waFormat(reply));
     await sendReaction(from, messageId, '✅');
 
   } catch (error) {
@@ -257,7 +263,7 @@ app.post('/webhook/ventas', async (req, res) => {
     await saveHistory(from, updatedHistory, 'ventas');
 
     // Enviar en múltiples mensajes si Nicole usó el separador |||
-    const partes = reply.split('|||').map(p => p.trim()).filter(Boolean);
+    const partes = reply.split('|||').map(p => waFormat(p.trim())).filter(Boolean);
     for (let i = 0; i < partes.length; i++) {
       if (i > 0) await new Promise(r => setTimeout(r, 800));
       await sendText(from, partes[i], INSTANCE_VENTAS);
