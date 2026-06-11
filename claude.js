@@ -418,11 +418,16 @@ async function executeTool(toolName, input) {
       }
 
       // Combinar guías 4 por hoja
-      const pdfGuias   = await merge4Up(descargados.map(d => d.buf));
+      const pdfGuias = await merge4Up(descargados.map(d => d.buf));
 
-      // Generar tarjetas de agradecimiento 4 por hoja y unir al mismo PDF
-      const pdfTarjetas = await generateThankyouCards(descargados.map(d => ({ nombre: d.nombre })));
-      const pdfFinal    = await mergePdfs(pdfGuias, pdfTarjetas);
+      // Tarjetas: si falla por cualquier razón, se envían solo las guías
+      let pdfFinal = pdfGuias;
+      try {
+        const pdfTarjetas = await generateThankyouCards(descargados.map(d => ({ nombre: d.nombre })));
+        pdfFinal = await mergePdfs(pdfGuias, pdfTarjetas);
+      } catch (e) {
+        console.error('generateThankyouCards error (se omiten tarjetas):', e.message);
+      }
 
       // Nombre del archivo
       const hoy = new Date().toLocaleDateString('es-EC', {
@@ -431,22 +436,26 @@ async function executeTool(toolName, input) {
       });
       const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
 
-      // Enviar por WhatsApp + subir a Drive en paralelo
-      const [, driveResult] = await Promise.allSettled([
-        sendDocument(input._from, pdfFinal, fileName),
-        uploadPdf(pdfFinal, fileName),
-      ]);
+      // Enviar por WhatsApp — esto sí es crítico, si falla lanza el error
+      await sendDocument(input._from, pdfFinal, fileName);
 
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
+
+      // Subir a Drive — no crítico, no bloquea la respuesta
+      let driveMsg = '';
+      try {
+        const driveFile = await uploadPdf(pdfFinal, fileName);
+        driveMsg = `\n📁 Drive: ${driveFile.name}`;
+      } catch (e) {
+        console.error('Drive upload error:', e.message);
+        driveMsg = `\n⚠️ Drive: no se pudo subir`;
+      }
 
       const nombresStr = descargados.map(d => `• ${d.nombre} — Guía ${d.guia}`).join('\n');
       const fallMsg = fallidos.length > 0
         ? `\n\n⚠️ No se pudo descargar (${fallidos.length}): ${fallidos.map(f => f.nombre).join(', ')}`
         : '';
-      const driveMsg = driveResult.status === 'fulfilled'
-        ? `\n📁 Subido a Drive: ${driveResult.value.name}`
-        : `\n⚠️ Drive: ${driveResult.reason?.message || 'error al subir'}`;
 
       return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}${driveMsg}`;
     }
