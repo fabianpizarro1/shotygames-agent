@@ -16,12 +16,6 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 - Español siempre. Tono de amigo de confianza.
 - Si algo no cuadra, lo dices.
 
-## Formato de texto (WhatsApp)
-- Negritas: *texto* — UN solo asterisco por lado. NUNCA uses **texto** (doble asterisco).
-- Cursiva: _texto_
-- Tachado: ~texto~
-- Código: \`texto\`
-
 ## Productos y precios
 **Físicos:**
 - NORMAL (N) — $23
