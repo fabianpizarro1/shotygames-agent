@@ -2,7 +2,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
-const { downloadPdf, merge4Up } = require('./pdf');
+const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
 const { sendDocument } = require('./evolution');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -416,8 +416,12 @@ async function executeTool(toolName, input) {
         return `No se pudo descargar ningún PDF. Puede que las guías aún no estén listas en DROPI. Intenta en unos minutos.`;
       }
 
-      // Combinar en PDF 4 por hoja
-      const pdfFinal = await merge4Up(descargados.map(d => d.buf));
+      // Combinar guías 4 por hoja
+      const pdfGuias   = await merge4Up(descargados.map(d => d.buf));
+
+      // Generar tarjetas de agradecimiento 4 por hoja y unir al mismo PDF
+      const pdfTarjetas = await generateThankyouCards(descargados.map(d => ({ nombre: d.nombre })));
+      const pdfFinal    = await mergePdfs(pdfGuias, pdfTarjetas);
 
       // Enviar por WhatsApp
       const hoy = new Date().toLocaleDateString('es-EC', {
