@@ -474,8 +474,13 @@ async function verificarCliente(telefono) {
   const token = await getToken();
   let client = makeClient(token);
 
-  // Normalizar teléfono: DROPI puede aceptar con o sin prefijo 593
-  const tel = String(telefono).trim();
+  // Normalizar teléfono al formato que usa DROPI internamente: 993154462 (sin 0, sin 593, sin +)
+  // Acepta: 0993154462 | 993154462 | 593993154462 | +593993154462
+  const tel = String(telefono).trim()
+    .replace(/^\+/, '')   // quitar +
+    .replace(/^593/, '')  // quitar código de país 593
+    .replace(/^0/, '');   // quitar 0 inicial
+  console.log(`verificarCliente: tel normalizado = ${tel} (original: ${telefono})`);
 
   async function doPost(c) {
     // DROPI usa los productos del pedido actual para buscar historial — pasar uno real
