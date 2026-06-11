@@ -3,6 +3,7 @@ const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
+const { verificarCliente } = require('./dropi');
 const { sendDocument } = require('./evolution');
 const { uploadPdf } = require('./drive');
 
@@ -187,6 +188,12 @@ Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las g
 → Descarga los PDFs de DROPI, los combina 4 por hoja A4, te envía el PDF por WhatsApp y marca automáticamente esos pedidos como impresos en Sheets.
 → Si algún PDF falla, avisa cuáles no se pudieron incluir.
 → NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
+
+## Verificar cliente en DROPI
+Cuando Fabián mande un número de teléfono preguntando si el cliente es confiable, si acepta contraentrega, o quiera saber su historial en DROPI:
+→ USA verificar_cliente_dropi con ese teléfono.
+→ Devuelve total de pedidos, entregados y devoluciones en toda la plataforma.
+→ Úsalo también cuando diga "verifica este número", "cómo está este cliente en DROPI", "cuántas devoluciones tiene".
 
 ## Editar pedidos
 Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
@@ -509,6 +516,28 @@ async function executeTool(toolName, input) {
         `• *${p.nombre}* — ${p.ciudad} — ${p.productos} — ${p.fecha}`
       ).join('\n');
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
+    }
+
+    case 'verificar_cliente_dropi': {
+      const tel = input.telefono;
+      const data = await verificarCliente(tel);
+
+      // Si la respuesta tiene todos nulos, DROPI no encontró al cliente
+      if (data.total === null && data.entregados === null && data.devueltos === null) {
+        // Mostrar raw por si los campos tienen otro nombre
+        const resumen = JSON.stringify(data.raw)?.slice(0, 400);
+        return `📋 DROPI no devolvió datos para *${tel}*.\nRespuesta raw: ${resumen}`;
+      }
+
+      const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
+      const nombre = data.nombre ? `\n👤 ${data.nombre}` : '';
+      const pendientes = data.pendientes !== null ? `\n⏳ Pendientes: ${data.pendientes}` : '';
+
+      return `📊 Reputación DROPI para *${tel}*${nombre}
+
+📦 Total pedidos: *${data.total ?? '?'}*
+✅ Entregados: *${data.entregados ?? '?'}*
+↩️ Devoluciones: *${data.devueltos ?? '?'}*${pendientes}${clasificacion}`;
     }
 
     case 'pedidos_hoy':

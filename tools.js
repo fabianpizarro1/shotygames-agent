@@ -216,6 +216,20 @@ const tools = [
       required: ["tipo"]
     }
   }
+  ,{
+    name: "verificar_cliente_dropi",
+    description: "Consulta en DROPI la reputación de un número de teléfono: cuántos pedidos tiene en toda la plataforma, cuántos entregados y cuántas devoluciones. Útil para decidir si aceptar contraentrega con un cliente nuevo.",
+    input_schema: {
+      type: "object",
+      properties: {
+        telefono: {
+          type: "string",
+          description: "Número de teléfono del cliente a verificar (con o sin prefijo 593, con o sin 0 inicial)"
+        }
+      },
+      required: ["telefono"]
+    }
+  }
 ];
 
 module.exports = tools;

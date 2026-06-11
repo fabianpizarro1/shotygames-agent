@@ -468,4 +468,52 @@ async function generarGuia(orderId) {
   }
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken };
+// Verifica la reputación de un cliente en toda la plataforma DROPI por teléfono.
+// Útil para decidir si aceptar un pedido con contraentrega.
+async function verificarCliente(telefono) {
+  const token = await getToken();
+  let client = makeClient(token);
+
+  // Normalizar teléfono: DROPI puede aceptar con o sin prefijo 593
+  const tel = String(telefono).trim();
+
+  async function doPost(c) {
+    const res = await c.post('/orders/getclientclasification', {
+      phone: tel,
+      products: [],
+    });
+    return res.data;
+  }
+
+  let data;
+  try {
+    data = await doPost(client);
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      data = await doPost(client);
+    } else {
+      throw new Error(`DROPI verificarCliente ${status}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
+    }
+  }
+
+  // Loguear respuesta completa la primera vez para mapear los campos
+  console.log('DROPI verificarCliente response:', JSON.stringify(data)?.slice(0, 800));
+
+  // Extraer stats — DROPI puede devolver los datos en distintas estructuras
+  const obj = data?.objects || data?.data || data?.client || data || {};
+
+  return {
+    raw: data,
+    total:       obj.total_orders      ?? obj.total          ?? obj.ordersQuantity   ?? null,
+    entregados:  obj.delivered_orders  ?? obj.delivered      ?? obj.entregadas       ?? null,
+    devueltos:   obj.returned_orders   ?? obj.returned       ?? obj.devoluciones     ?? null,
+    pendientes:  obj.pending_orders    ?? obj.pending        ?? null,
+    clasificacion: obj.classification  ?? obj.clasification  ?? obj.category         ?? null,
+    nombre:      obj.name              ?? obj.full_name      ?? null,
+  };
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente };
