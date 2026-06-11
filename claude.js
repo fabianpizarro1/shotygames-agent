@@ -4,6 +4,7 @@ const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
 const { sendDocument } = require('./evolution');
+const { uploadPdf } = require('./drive');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -423,13 +424,18 @@ async function executeTool(toolName, input) {
       const pdfTarjetas = await generateThankyouCards(descargados.map(d => ({ nombre: d.nombre })));
       const pdfFinal    = await mergePdfs(pdfGuias, pdfTarjetas);
 
-      // Enviar por WhatsApp
+      // Nombre del archivo
       const hoy = new Date().toLocaleDateString('es-EC', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         timeZone: 'America/Guayaquil'
       });
       const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
-      await sendDocument(input._from, pdfFinal, fileName);
+
+      // Enviar por WhatsApp + subir a Drive en paralelo
+      const [, driveResult] = await Promise.allSettled([
+        sendDocument(input._from, pdfFinal, fileName),
+        uploadPdf(pdfFinal, fileName),
+      ]);
 
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
@@ -438,8 +444,11 @@ async function executeTool(toolName, input) {
       const fallMsg = fallidos.length > 0
         ? `\n\n⚠️ No se pudo descargar (${fallidos.length}): ${fallidos.map(f => f.nombre).join(', ')}`
         : '';
+      const driveMsg = driveResult.status === 'fulfilled'
+        ? `\n📁 Subido a Drive: ${driveResult.value.name}`
+        : `\n⚠️ Drive: ${driveResult.reason?.message || 'error al subir'}`;
 
-      return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}`;
+      return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}${driveMsg}`;
     }
 
     case 'actualizar_pedido': {
