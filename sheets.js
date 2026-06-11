@@ -634,9 +634,9 @@ async function reportePedidos(tipo, filtroEstado) {
   return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO' };
 }
 
-// Devuelve las guías del día (o de una fecha específica) que tienen PDF listo para imprimir.
-// Requiere GUIA + DROPI order ID en Sheets para construir la URL del PDF.
-async function getGuiasParaImprimir(fecha) {
+// Devuelve pedidos en estado PENDIENTE que tienen guía y aún no fueron impresos.
+// Requiere columna "IMPRESO" (checkbox) en el Sheet — la busca por nombre.
+async function getGuiasParaImprimir() {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
@@ -645,40 +645,63 @@ async function getGuiasParaImprimir(fecha) {
   const rows = res.data.values || [];
   const headers = rows[0] || [];
 
-  const nombreIdx = headers.indexOf('NOMBRE');
-  const fechaIdx  = headers.indexOf('FECHA');
-  const guiaIdx   = headers.indexOf('GUIA');
-  let dropiColIdx = headers.indexOf('Softr Record ID');
+  const nombreIdx  = headers.indexOf('NOMBRE');
+  const estadoIdx  = headers.indexOf('ESTADO');
+  const guiaIdx    = headers.indexOf('GUIA');
+  const impresoIdx = headers.indexOf('IMPRESO');
+  let dropiColIdx  = headers.indexOf('Softr Record ID');
   if (dropiColIdx === -1) dropiColIdx = 33;
 
-  const hoy = fecha || new Date().toLocaleDateString('es-EC', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    timeZone: 'America/Guayaquil'
-  });
+  if (impresoIdx === -1) {
+    console.warn('getGuiasParaImprimir: columna IMPRESO no encontrada en el Sheet');
+  }
 
   const guias = [];
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r[nombreIdx]) continue;
-    if (r[fechaIdx] !== hoy) continue;
 
+    // Solo pedidos PENDIENTES
+    if ((r[estadoIdx] || '').toUpperCase() !== 'PENDIENTE') continue;
+
+    // Solo con guía generada
     const guia = r[guiaIdx] || '';
     if (!guia) continue;
 
+    // Solo los que aún NO están impresos
+    const impreso = r[impresoIdx];
+    if (impreso === 'TRUE' || impreso === true) continue;
+
+    // Necesitamos el DROPI order ID para la URL del PDF
     const dropiRaw = String(r[dropiColIdx] || '');
     const dropiId  = dropiRaw.startsWith('DROPI:') ? dropiRaw.replace('DROPI:', '') : null;
     if (!dropiId) continue;
 
     guias.push({
-      nombre: r[nombreIdx],
+      nombre:  r[nombreIdx],
       guia,
       dropiId,
-      fecha: r[fechaIdx],
-      pdfUrl: `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
+      rowNum:  i + 1,
+      pdfUrl:  `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
     });
   }
 
-  return guias;
+  return { guias, impresoIdx };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir };
+// Marca IMPRESO = TRUE en las filas indicadas (después de generar el PDF)
+async function marcarGuiasImpresas(rowNums, impresoIdx) {
+  if (!rowNums.length || impresoIdx === -1) return;
+  const sheetsApi = await getSheets();
+  const updates = rowNums.map(rowNum => ({
+    range: `PEDIDOS!${idxToCol(impresoIdx)}${rowNum}`,
+    values: [[true]]
+  }));
+  await sheetsApi.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEETS_ID,
+    resource: { valueInputOption: 'RAW', data: updates }
+  });
+  console.log(`marcarGuiasImpresas: ${rowNums.length} filas marcadas`);
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas };

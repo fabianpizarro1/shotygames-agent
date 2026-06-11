@@ -181,9 +181,9 @@ Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a tod
 
 ## Imprimir guías de envío
 Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las guías para imprimir", "dame el PDF de las guías":
-→ USA imprimir_guias INMEDIATAMENTE sin pedir confirmación.
-→ Sin fecha específica: usa las guías de hoy.
-→ El tool descarga los PDFs de DROPI, los combina 4 por hoja A4 y te envía el PDF por WhatsApp automáticamente.
+→ USA imprimir_guias INMEDIATAMENTE sin pedir confirmación y sin parámetros.
+→ El tool busca TODOS los pedidos en estado PENDIENTE que tengan guía generada y aún no estén marcados como impresos (columna IMPRESO).
+→ Descarga los PDFs de DROPI, los combina 4 por hoja A4, te envía el PDF por WhatsApp y marca automáticamente esos pedidos como impresos en Sheets.
 → Si algún PDF falla, avisa cuáles no se pudieron incluir.
 → NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
 
@@ -395,10 +395,10 @@ async function executeTool(toolName, input) {
     }
 
     case 'imprimir_guias': {
-      const guias = await sheets.getGuiasParaImprimir(input.fecha || null);
+      const { guias, impresoIdx } = await sheets.getGuiasParaImprimir();
 
       if (guias.length === 0) {
-        return `No hay guías con PDF disponible para ${input.fecha || 'hoy'}. Asegúrate de que los pedidos tengan guía generada en DROPI.`;
+        return `No hay guías pendientes de imprimir. Todos los pedidos PENDIENTES con guía ya están marcados como impresos, o aún no tienen guía generada.`;
       }
 
       // Descargar PDFs en paralelo, saltando los que fallen
@@ -410,29 +410,29 @@ async function executeTool(toolName, input) {
         .filter(r => r.status === 'fulfilled')
         .map(r => r.value);
 
-      const fallidos = resultados
-        .filter(r => r.status === 'rejected')
-        .map((_, i) => guias[i].nombre);
+      const fallidos = guias.filter((_, i) => resultados[i].status === 'rejected');
 
       if (descargados.length === 0) {
-        return `No se pudo descargar ningún PDF. Puede que las guías aún no estén disponibles en DROPI. Intenta en unos minutos.`;
+        return `No se pudo descargar ningún PDF. Puede que las guías aún no estén listas en DROPI. Intenta en unos minutos.`;
       }
 
       // Combinar en PDF 4 por hoja
       const pdfFinal = await merge4Up(descargados.map(d => d.buf));
 
-      // Enviar por WhatsApp al mismo número que envió el mensaje
-      const fecha = input.fecha || new Date().toLocaleDateString('es-EC', {
+      // Enviar por WhatsApp
+      const hoy = new Date().toLocaleDateString('es-EC', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         timeZone: 'America/Guayaquil'
       });
-      const fileName = `guias-${fecha.replace(/\//g, '-')}.pdf`;
-
+      const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
       await sendDocument(input._from, pdfFinal, fileName);
+
+      // Marcar como impresas en Sheets
+      await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
 
       const nombresStr = descargados.map(d => `• ${d.nombre} — Guía ${d.guia}`).join('\n');
       const fallMsg = fallidos.length > 0
-        ? `\n\n⚠️ No se pudieron descargar (${fallidos.length}): ${fallidos.join(', ')}`
+        ? `\n\n⚠️ No se pudo descargar (${fallidos.length}): ${fallidos.map(f => f.nombre).join(', ')}`
         : '';
 
       return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}`;

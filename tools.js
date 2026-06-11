@@ -191,15 +191,10 @@ const tools = [
   },
   {
     name: "imprimir_guias",
-    description: "Descarga los PDFs de guías de envío de hoy desde DROPI, los combina en un PDF con 4 guías por hoja A4 y te lo envía por WhatsApp. Úsalo cuando Fabián diga 'imprime las guías', 'mándame las guías para imprimir', 'necesito las guías de hoy', etc.",
+    description: "Descarga los PDFs de todos los pedidos en estado PENDIENTE que aún no han sido impresos, los combina en un PDF con 4 guías por hoja A4 y te lo envía por WhatsApp. Úsalo cuando Fabián diga 'imprime las guías', 'mándame las guías', 'necesito las guías para imprimir', etc. NO necesita ningún parámetro — USA INMEDIATAMENTE sin pedir confirmación.",
     input_schema: {
       type: "object",
-      properties: {
-        fecha: {
-          type: "string",
-          description: "Fecha en formato dd/mm/yyyy. Si no se indica, usa hoy."
-        }
-      },
+      properties: {},
       required: []
     }
   },
