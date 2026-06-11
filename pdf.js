@@ -22,14 +22,13 @@ async function merge4Up(pdfBuffers) {
   const A4_H = 841.89;
   const cellW = A4_W / 2;
   const cellH = A4_H / 2;
-  const MARGIN = 2; // margen mínimo — las guías usan casi toda la celda
+  const MARGIN = 1; // 1pt de separación entre guías — prácticamente nada
 
-  // Esquina exterior de cada celda (donde se ancla la guía)
-  const cells = [
-    { ox: 0,     oy: cellH, anchorX: 'left',  anchorY: 'top'    }, // arriba-izq
-    { ox: cellW, oy: cellH, anchorX: 'right', anchorY: 'top'    }, // arriba-der
-    { ox: 0,     oy: 0,     anchorX: 'left',  anchorY: 'bottom' }, // abajo-izq
-    { ox: cellW, oy: 0,     anchorX: 'right', anchorY: 'bottom' }, // abajo-der
+  const positions = [
+    { ox: 0,     oy: cellH },
+    { ox: cellW, oy: cellH },
+    { ox: 0,     oy: 0     },
+    { ox: cellW, oy: 0     },
   ];
 
   for (let i = 0; i < pdfBuffers.length; i += 4) {
@@ -40,26 +39,16 @@ async function merge4Up(pdfBuffers) {
       try {
         const srcDoc = await PDFDocument.load(group[j]);
         const [embeddedPage] = await outputDoc.embedPdf(srcDoc, [0]);
-        const { width, height } = embeddedPage;
+        const { ox, oy } = positions[j];
 
-        const availW = cellW - MARGIN * 2;
-        const availH = cellH - MARGIN * 2;
-        const scale  = Math.min(availW / width, availH / height);
-        const scaledW = width  * scale;
-        const scaledH = height * scale;
-
-        const { ox, oy, anchorX, anchorY } = cells[j];
-
-        // Anclar al borde exterior de la celda para minimizar huecos entre guías
-        const x = anchorX === 'left'
-          ? ox + MARGIN
-          : ox + cellW - scaledW - MARGIN;
-
-        const y = anchorY === 'top'
-          ? oy + cellH - scaledH - MARGIN
-          : oy + MARGIN;
-
-        page.drawPage(embeddedPage, { x, y, width: scaledW, height: scaledH });
+        // Llenar la celda completa — sin respetar proporción original
+        // Las guías DROPI son ~A6 así que el estiramiento es mínimo
+        page.drawPage(embeddedPage, {
+          x: ox + MARGIN,
+          y: oy + MARGIN,
+          width:  cellW - MARGIN * 2,
+          height: cellH - MARGIN * 2,
+        });
       } catch (e) {
         console.error(`pdf.js: error embebiendo guía ${i + j + 1}:`, e.message);
       }
