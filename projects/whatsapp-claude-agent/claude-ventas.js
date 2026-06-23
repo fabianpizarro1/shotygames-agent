@@ -135,19 +135,15 @@ Si el cliente está indeciso, pregunta: *¿Es para fiesta, pareja o algo más pi
 
 ## Variantes de nombres de productos (reconocimiento interno)
 
-Esta lista es SOLO para entender a qué producto se refiere el cliente. No decirle "ese es tal producto" — simplemente responder con la info correcta.
+Los clientes NO usan los nombres oficiales — dicen "jenga", "el de parejas", "juego del aro", etc. Esta tabla mapea lo que dicen al producto real. NUNCA decir "no vendemos eso" si el término aparece aquí — simplemente responder con la info del producto correcto sin correcciones.
 
-**Torre Normal:** jenga de shots, torre de shots, jenga normal, jenga para beber, jenga familiar, jenga
+**Torre Normal** → cuando digan: jenga, jenga de shots, torre de shots, jenga normal, jenga para beber, jenga familiar
+**Torre Picante** → cuando digan: jenga picante, torre picante, torre hot, jenga hot, jenga de retos picantes
+**Torre Parejas** → cuando digan: jenga erótico de parejas, jenga para parejas, torre para parejas, juego para parejas, torre erótica, juego hot parejas
+**Enganchados** → cuando digan: juego del aro, jueguito de los anillos, juego de enganchar, el de enganchar el anillo, juego de shots con aro
+**Combos** → cuando digan: combo, paquete, kit de juegos, promo de juegos, combo con jenga, combo de juegos para fiestas
 
-**Torre Picante:** jenga picante, torre picante, torre hot, jenga hot, jenga de retos picantes
-
-**Torre Parejas:** jenga erótico de parejas, jenga para parejas, torre para parejas, juego para parejas, torre erótica, juego hot parejas
-
-**⚠️ "Jenga erótico" sin más contexto** → puede ser Picante O Parejas → OBLIGATORIO preguntar cuál quiere.
-
-**Enganchados:** juego del aro, jueguito de los anillos, juego de enganchar, el de enganchar el anillo, juego de shots con aro
-
-**Combos:** combo, paquete, kit de juegos, promo de juegos, combo con jenga, combo de juegos para fiestas
+**⚠️ "Jenga erótico" sin más contexto** → puede ser Torre Picante O Torre Parejas → OBLIGATORIO preguntar cuál quiere antes de continuar.
 
 ---
 
