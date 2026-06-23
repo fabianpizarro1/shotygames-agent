@@ -346,6 +346,26 @@ app.post('/admin/token', (req, res) => {
 app.get('/payphone/response', (req, res) => res.send('Pago procesado. Puedes cerrar esta ventana.'));
 app.get('/payphone/cancel', (req, res) => res.send('Pago cancelado. Puedes cerrar esta ventana.'));
 
+app.get('/reset/:phone', (req, res) => {
+  const phone = req.params.phone;
+  const keysDeleted = [];
+  for (const prefix of ['chat', 'ventas']) {
+    const key = `${prefix}:${phone}`;
+    if (memoryStore[key]) {
+      delete memoryStore[key];
+      keysDeleted.push(key);
+    }
+  }
+  // Cancelar debounce pendiente si existe
+  if (pendingVentas.has(phone)) {
+    clearTimeout(pendingVentas.get(phone).timer);
+    pendingVentas.delete(phone);
+    keysDeleted.push(`debounce:${phone}`);
+  }
+  console.log(`RESET ${phone}:`, keysDeleted);
+  res.json({ ok: true, phone, cleared: keysDeleted });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
