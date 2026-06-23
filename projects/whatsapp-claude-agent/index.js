@@ -342,6 +342,10 @@ app.post('/admin/token', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
 });
 
+// Endpoints de retorno de PayPhone (requeridos por su API)
+app.get('/payphone/response', (req, res) => res.send('Pago procesado. Puedes cerrar esta ventana.'));
+app.get('/payphone/cancel', (req, res) => res.send('Pago cancelado. Puedes cerrar esta ventana.'));
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });

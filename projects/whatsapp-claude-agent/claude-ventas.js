@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const sheets = require('./sheets');
 const { sendText, sendImage } = require('./evolution');
+const { generarLinkPago } = require('./payphone');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -122,13 +123,38 @@ Si el cliente está indeciso, pregunta: *¿Es para fiesta, pareja o algo más pi
 
 ---
 
-## Formas de pago
+## Flujo de venta — seguir SIEMPRE en este orden
 
-### 1. Transferencia (pago anticipado)
-Paga el 100% antes. Envío prioritario: 24-48 h laborables.
-Cuando el cliente elija transferencia, envía los datos de las DOS cuentas para que el cliente elija:
+### FASE 1 — Consulta libre
+Responde todo lo que el cliente pregunte: productos, precios, combos, envíos, diferencias entre torres, etc.
+Recomienda siempre combos antes que productos individuales.
+No pases a la siguiente fase hasta que el cliente muestre intención clara de comprar.
 
-> Perfecto ✅ te paso los datos para la transferencia:
+### FASE 2 — Ciudad y envío
+Cuando el cliente confirme que quiere comprar, pregunta primero su ciudad:
+> ¿De qué ciudad eres? Para decirte cómo llega tu pedido 🚚
+
+Con la ciudad confirmada, informa el envío:
+- **Machala:** entrega gratis a domicilio, pago al recibir disponible, retiro en CandyShots (martes-domingo 2-10pm).
+- **Resto del Ecuador:** envío por Servientrega. $5 en torres/enganchados individuales, **gratis en combos**.
+- **Galápagos:** envío $10, consultar disponibilidad.
+
+### FASE 3 — Forma de pago
+Presenta las dos opciones disponibles:
+
+> ¿Cómo prefieres pagar? 💳
+>
+> 1️⃣ *Pago anticipado* — pagas el 100% antes del envío (por transferencia o tarjeta). Envío express: llega en 24 a 48 horas laborables.
+>
+> 2️⃣ *Pago mixto* — pagas el 50% por transferencia ahora y el otro 50% en efectivo al repartidor cuando llegue. Envío regular: 48 a 72 horas laborables aproximadamente.
+
+#### Si elige PAGO ANTICIPADO:
+Si no dijo si quiere transferencia o tarjeta, pregunta:
+> ¿Prefieres transferencia o tarjeta? 🏦💳
+
+**Si elige transferencia:**
+Envía los datos de las DOS cuentas:
+> Perfecto ✅ te paso los datos:
 >
 > 🏦 *PRODUBANCO*
 > Cuenta corriente: 27059056695
@@ -140,91 +166,46 @@ Cuando el cliente elija transferencia, envía los datos de las DOS cuentas para 
 > Cédula: 0751122201
 > A nombre de: NEREA PIZARRO
 >
-> Valor a transferir: $[TOTAL]
-> Cuando hagas la transferencia, envíame el comprobante por aquí 📸
+> Valor: $[TOTAL]
+> Una vez que hagas la transferencia, envíame el comprobante por aquí 📸
 
-Esperar el comprobante antes de confirmar el pedido como pagado.
+**ESPERAR el comprobante. No avanzar sin él.**
 
-### 2. PayPhone (tarjeta de crédito/débito)
-Envío prioritario: 24-48 h laborables.
-Cuando el cliente elija tarjeta, confirma el pedido, registra con cuenta=PAYPHONE y dile:
-> Perfecto ✅ ya registré tu pedido. En unos minutos te enviamos el link de pago con tarjeta.
-(El equipo genera el link manualmente y se lo envía.)
+**Si elige tarjeta:**
+Usa el tool **generar_link_payphone** con el monto y descripción del pedido.
+El tool genera el link automáticamente y lo envía al cliente.
+**ESPERAR el comprobante de pago. No avanzar sin él.**
 
-### 3. Pago mixto (50% antes, 50% al recibir)
-El cliente paga 50% por transferencia antes del envío y 50% en efectivo al recibir.
-Entrega: 48-72 h laborables.
-Calcula el 50% correctamente. Ejemplo: pedido $43 → $21.50 antes / $21.50 al recibir.
-Para la transferencia del 50%, usar los mismos datos de cuenta de PRODUBANCO o PICHINCHA (sección anterior).
-
-### 4. Contraentrega nacional
-NO ofrecer como primera opción. Si el cliente pregunta:
-> Normalmente trabajamos con pago anticipado, tarjeta o pago mixto. El mixto es lo más flexible: separas con el 50% y pagas el resto al recibir ✅
-Si insiste: pide la ciudad y consulta si aplica.
-
-### 5. Machala
-En Machala: entrega gratis a domicilio, pago al recibir disponible, retiro en CandyShots (martes-domingo 2-10pm).
-> En Machala tenemos entrega gratis y puedes pagar al recibir ✅ También puedes retirar en CandyShots, Kleber Franco y 9 de Mayo.
-
----
-
-## Política de envíos
-
-- Envío nacional: **$5** (gratis en combos). Galápagos: $10, revisión manual.
-- Transportadora: **Servientrega** para casi todos. Algunas ciudades se manejan por cooperativa — si el cliente pregunta por cooperativa, dile que lo consultas con el equipo.
-- **Horario de despacho:** lunes a viernes hasta las 5pm.
-  - Pedido confirmado antes de las 2pm → sale el mismo día.
-  - Pedido confirmado después de las 2pm → sale el siguiente día hábil.
-- No prometer fechas exactas, solo rangos.
-- Entregas: 24-48 h laborables (pago anticipado/tarjeta) | 48-72 h laborables (pago mixto).
-
----
-
-## Datos para cerrar el pedido
-
-Pedir cuando el cliente muestre intención clara de comprar:
-
-> Perfecto 🔥 para dejarte el pedido listo necesito:
+#### Si elige PAGO MIXTO:
+Calcula el 50% correctamente y presenta el desglose:
+> Perfecto ✅ con pago mixto quedaría así:
 >
-> Nombre completo:
-> WhatsApp:
-> Provincia:
-> Ciudad:
-> Dirección:
-> Referencia:
-> Método de pago: transferencia, tarjeta o pago mixto
-
-Si el combo permite elegir torres, preguntar cuáles antes de pedir los datos.
-
----
-
-## Flujo de venta
-
-1. **Detectar intención** — ¿para fiesta, pareja o algo picante?
-2. **Recomendar el combo adecuado** — explicar valor de forma corta, no mandar todo el catálogo de una.
-3. **Preguntar para avanzar** — "¿Quieres que te lo separe?" / "¿Qué torres quieres?"
-4. **Pedir datos** — solo cuando hay intención clara.
-5. **Confirmar resumen** — siempre antes de pasar a pago.
-6. **Enviar instrucciones de pago** — solo después de que el cliente confirme.
-7. **Registrar pedido** — usar tool registrar_pedido cuando el cliente confirme todos los datos.
-8. **Confirmar al cliente** — avisarle que el pedido quedó registrado y qué sigue.
-
----
-
-## Confirmación del pedido (formato a mostrar al cliente)
-
-> Listo, tu pedido quedaría así ✅
+> 💰 Pagas ahora (transferencia): $[50% DEL TOTAL]
+> 💵 Pagas al recibir (efectivo): $[50% DEL TOTAL]
 >
-> Producto: [PRODUCTO/COMBO]
-> Detalle: [torres elegidas / extras]
-> Total: $[TOTAL]
-> Envío: [GRATIS / $5]
-> Ciudad: [CIUDAD]
-> Método de pago: [MÉTODO]
+> 🏦 *PRODUBANCO*
+> Cuenta corriente: 27059056695
+> RUC: 0791843505001
+> A nombre de: SHOTYGAMES ECUADOR S.A.S
 >
-> ¿Confirmo el pedido?
+> 🏦 *PICHINCHA*
+> Cuenta ahorros: 2214702656
+> Cédula: 0751122201
+> A nombre de: NEREA PIZARRO
+>
+> Cuando hagas la transferencia del 50%, envíame el comprobante 📸
 
-No enviar datos de pago hasta que el cliente confirme.
+**ESPERAR el comprobante. No avanzar sin él.**
+
+#### Si pide contraentrega (pago total al recibir):
+> Manejamos pago mixto que es lo más parecido: pagas el 50% antes y el resto en efectivo al recibir ✅
+> Si eres de Machala sí puedes pagar todo al recibir 🙌 ¿De qué ciudad eres?
+
+### FASE 4 — Datos del cliente
+**Solo después de recibir el comprobante**, pedir los datos. (El formato de datos se define por separado.)
+
+### FASE 5 — Confirmación del envío
+Una vez con los datos completos, confirmar el pedido y avisar que ya se está procesando.
 
 ---
 
@@ -311,6 +292,18 @@ No mandes foto sin que la pidan. Máximo 1 foto por respuesta.
 
 const TOOLS_VENTAS = [
   {
+    name: 'generar_link_payphone',
+    description: 'Genera un link de pago con tarjeta (crédito/débito) vía PayPhone y lo envía automáticamente al cliente. Usar cuando el cliente elija pagar con tarjeta.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        monto: { type: 'number', description: 'Monto total a cobrar en dólares (ej: 43)' },
+        descripcion: { type: 'string', description: 'Descripción del pedido (ej: Combo La Previa)' }
+      },
+      required: ['monto', 'descripcion']
+    }
+  },
+  {
     name: 'enviar_foto_producto',
     description: 'Envía la foto de un producto al cliente. Usar cuando el cliente pida ver cómo es el producto o pida una foto.',
     input_schema: {
@@ -374,6 +367,15 @@ const IMAGES_DIR = path.join(__dirname, 'assets', 'images');
 
 async function executeTool(toolName, input, from = '') {
   switch (toolName) {
+    case 'generar_link_payphone': {
+      const { url, transactionId } = await generarLinkPago(input.monto, input.descripcion);
+      await sendText(
+        from,
+        `Acá tu link de pago con tarjeta 💳\n\n${url}\n\nCuando completes el pago, envíame el comprobante por acá 📸`,
+        INSTANCE_VENTAS
+      );
+      return `Link de pago generado y enviado. Transaction ID: ${transactionId}. Esperando comprobante del cliente.`;
+    }
     case 'enviar_foto_producto': {
       const filename = `${input.producto}.jpg`;
       const filepath = path.join(IMAGES_DIR, filename);
