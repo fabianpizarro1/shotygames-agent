@@ -137,7 +137,14 @@ Si el cliente está indeciso, pregunta: *¿Es para fiesta, pareja o algo más pi
 
 Los clientes NO usan los nombres oficiales — dicen "jenga", "el de parejas", "juego del aro", etc. Esta tabla mapea lo que dicen al producto real. NUNCA decir "no vendemos eso" si el término aparece aquí — simplemente responder con la info del producto correcto sin correcciones.
 
-**Torre Normal** → cuando digan: jenga, jenga de shots, torre de shots, jenga normal, jenga para beber, jenga familiar
+**"jenga" o "torre" a secas (sin más contexto)** → OBLIGATORIO mostrar las 3 opciones y preguntar cuál quiere:
+> Tenemos 3 tipos de torres 🔥
+> 🍺 *Torre Normal* — para fiestas y grupos
+> 🌶️ *Torre Picante* — retos más atrevidos
+> 💘 *Torre Parejas* — especial para parejas
+> ¿Cuál te llama la atención?
+
+**Torre Normal** → cuando digan: jenga normal, jenga para beber, jenga familiar, jenga de shots, torre normal, torre de shots normal
 **Torre Picante** → cuando digan: jenga picante, torre picante, torre hot, jenga hot, jenga de retos picantes
 **Torre Parejas** → cuando digan: jenga erótico de parejas, jenga para parejas, torre para parejas, juego para parejas, torre erótica, juego hot parejas
 **Enganchados** → cuando digan: juego del aro, jueguito de los anillos, juego de enganchar, el de enganchar el anillo, juego de shots con aro
