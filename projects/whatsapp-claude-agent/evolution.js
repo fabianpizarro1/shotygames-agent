@@ -8,40 +8,77 @@ const client = axios.create({
   }
 });
 
-const INSTANCE = process.env.EVOLUTION_INSTANCE;
+const clientVentas = axios.create({
+  baseURL: process.env.EVOLUTION_API_URL,
+  headers: {
+    'apikey': process.env.EVOLUTION_API_KEY_VENTAS || process.env.EVOLUTION_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
 
-async function sendText(to, text) {
-  const response = await client.post(`/message/sendText/${INSTANCE}`, {
+const INSTANCE = process.env.EVOLUTION_INSTANCE;
+const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
+
+function getClient(instance) {
+  return instance === INSTANCE_VENTAS ? clientVentas : client;
+}
+
+async function sendText(to, text, instance = INSTANCE) {
+  const response = await getClient(instance).post(`/message/sendText/${instance}`, {
     number: to,
     text: text
   });
   return response.data;
 }
 
-async function sendReaction(to, messageId, emoji) {
+async function sendReaction(to, messageId, emoji, instance = INSTANCE) {
   try {
-    await client.post(`/message/sendReaction/${INSTANCE}`, {
+    await getClient(instance).post(`/message/sendReaction/${instance}`, {
       number: to,
       reactionMessage: { key: { id: messageId }, reaction: emoji }
     });
-  } catch (e) {
-    // reacciones son opcionales, no romper el flujo
-  }
+  } catch (e) {}
 }
 
-async function markAsRead(to, messageId) {
+async function markAsRead(to, messageId, instance = INSTANCE) {
   try {
-    await client.post(`/chat/markMessageAsRead/${INSTANCE}`, {
+    await getClient(instance).post(`/chat/markMessageAsRead/${instance}`, {
       readMessages: [{ remoteJid: `${to}@s.whatsapp.net`, id: messageId }]
     });
   } catch (e) {}
 }
 
-async function getMediaBase64(messageData) {
-  const response = await client.post(`/chat/getBase64FromMediaMessage/${INSTANCE}`, {
+async function getMediaBase64(messageData, instance = INSTANCE) {
+  const response = await getClient(instance).post(`/chat/getBase64FromMediaMessage/${instance}`, {
     message: messageData
   });
   return response.data?.base64 || null;
 }
 
-module.exports = { sendText, sendReaction, markAsRead, getMediaBase64 };
+// Envía un documento (PDF, etc.) por WhatsApp
+async function sendDocument(to, fileBuffer, fileName, caption = '', instance = INSTANCE) {
+  const base64 = fileBuffer.toString('base64');
+  const response = await getClient(instance).post(`/message/sendMedia/${instance}`, {
+    number: to,
+    mediatype: 'document',
+    mimetype: 'application/pdf',
+    media: base64,
+    fileName,
+    caption
+  });
+  return response.data;
+}
+
+// Envía una imagen por WhatsApp. imageData puede ser base64 o URL pública.
+async function sendImage(to, imageData, caption = '', instance = INSTANCE) {
+  const response = await getClient(instance).post(`/message/sendMedia/${instance}`, {
+    number: to,
+    mediatype: 'image',
+    mimetype: 'image/jpeg',
+    media: imageData,
+    caption
+  });
+  return response.data;
+}
+
+module.exports = { sendText, sendReaction, markAsRead, getMediaBase64, sendDocument, sendImage };
