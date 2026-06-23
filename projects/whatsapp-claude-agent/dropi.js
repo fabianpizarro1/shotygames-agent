@@ -468,4 +468,88 @@ async function generarGuia(orderId) {
   }
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken };
+// Verifica la reputación de un cliente en toda la plataforma DROPI por teléfono.
+// Útil para decidir si aceptar un pedido con contraentrega.
+async function verificarCliente(telefono) {
+  const token = await getToken();
+  let client = makeClient(token);
+
+  // Normalizar teléfono al formato que usa DROPI internamente: 993154462 (sin 0, sin 593, sin +)
+  // Acepta: 0993154462 | 993154462 | 593993154462 | +593993154462
+  const tel = String(telefono).trim()
+    .replace(/^\+/, '')   // quitar +
+    .replace(/^593/, '')  // quitar código de país 593
+    .replace(/^0/, '');   // quitar 0 inicial
+  console.log(`verificarCliente: tel normalizado = ${tel} (original: ${telefono})`);
+
+  async function doPost(c) {
+    // DROPI usa los productos del pedido actual para buscar historial — pasar uno real
+    // para que el endpoint no devuelva vacío por no encontrar coincidencias de producto
+    const sampleProducts = [{
+      id: PRODUCTS.normal.id,
+      name: PRODUCTS.normal.name,
+      quantity: 1,
+      price: 23,
+      type: 'SIMPLE',
+      user_id: USER_ID,
+    }];
+    const res = await c.post('/orders/getclientclasification', {
+      phone: tel,
+      products: sampleProducts,
+    });
+    return res.data;
+  }
+
+  let data;
+  try {
+    data = await doPost(client);
+  } catch (e) {
+    const status = e.response?.status;
+    if (status === 401 || status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      data = await doPost(client);
+    } else {
+      throw new Error(`DROPI verificarCliente ${status}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
+    }
+  }
+
+  // Loguear respuesta completa para debug
+  console.log('DROPI verificarCliente raw response:', JSON.stringify(data));
+
+  // Extraer el objeto de datos — DROPI puede envolverlo en distintas estructuras
+  const obj = data?.objects ?? data?.data ?? data?.client ?? data ?? {};
+
+  // Busca un campo numérico en el objeto cuyos keys contengan alguna de las palabras
+  function findField(o, ...words) {
+    for (const key of Object.keys(o)) {
+      const k = key.toLowerCase();
+      if (words.some(w => k.includes(w))) {
+        const val = o[key];
+        if (val !== null && val !== undefined) return val;
+      }
+    }
+    return null;
+  }
+
+  const total      = findField(obj, 'total')      ?? null;
+  const entregados = findField(obj, 'deliver', 'entregad') ?? null;
+  const devueltos  = findField(obj, 'return', 'devolu')    ?? null;
+  const pendientes = findField(obj, 'pending', 'pendient') ?? null;
+  const clasificacion = obj.classification ?? obj.clasification ?? obj.category ?? obj.clasificacion ?? null;
+  const nombre     = obj.name ?? obj.full_name ?? obj.fullname ?? null;
+
+  return {
+    raw: data,
+    total,
+    entregados,
+    devueltos,
+    pendientes,
+    clasificacion,
+    nombre,
+    // Campos crudos del objeto para debug cuando no matchea nada
+    _keys: Object.keys(obj),
+  };
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente };

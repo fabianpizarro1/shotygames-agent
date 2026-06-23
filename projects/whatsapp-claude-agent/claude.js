@@ -2,6 +2,10 @@ const Anthropic = require('@anthropic-ai/sdk');
 const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
+const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
+const { verificarCliente } = require('./dropi');
+const { sendDocument } = require('./evolution');
+const { uploadPdf } = require('./drive');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -14,10 +18,10 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 
 ## Productos y precios
 **Físicos:**
-- NORMAL (N) — $20
-- PICANTE (P) — $20
-- PAREJAS (PAR) — $25
-- ENGANCHADOS (ENG) — $15
+- NORMAL (N) — $23
+- PICANTE (P) — $23
+- PAREJAS (PAR) — $23
+- ENGANCHADOS (ENG) — $28
 
 **Digitales:**
 - EMPAREJADOS
@@ -176,6 +180,20 @@ Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a tod
 → Con nombre específico: pasa el nombre. Sin nombre o "todos": no pases nombre (batch automático).
 → NUNCA pidas confirmación para esto — ejecuta directo.
 → Sheets se encarga de enviar el WhatsApp automáticamente al marcar la casilla.
+
+## Imprimir guías de envío
+Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las guías para imprimir", "dame el PDF de las guías":
+→ USA imprimir_guias INMEDIATAMENTE sin pedir confirmación y sin parámetros.
+→ El tool busca TODOS los pedidos en estado PENDIENTE que tengan guía generada y aún no estén marcados como impresos (columna IMPRESO).
+→ Descarga los PDFs de DROPI, los combina 4 por hoja A4, te envía el PDF por WhatsApp y marca automáticamente esos pedidos como impresos en Sheets.
+→ Si algún PDF falla, avisa cuáles no se pudieron incluir.
+→ NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
+
+## Verificar cliente en DROPI
+Cuando Fabián mande un número de teléfono preguntando si el cliente es confiable, si acepta contraentrega, o quiera saber su historial en DROPI:
+→ USA verificar_cliente_dropi con ese teléfono.
+→ Devuelve total de pedidos, entregados y devoluciones en toda la plataforma.
+→ Úsalo también cuando diga "verifica este número", "cómo está este cliente en DROPI", "cuántas devoluciones tiene".
 
 ## Editar pedidos
 Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
@@ -384,6 +402,71 @@ async function executeTool(toolName, input) {
       return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje automáticamente.`;
     }
 
+    case 'imprimir_guias': {
+      const { guias, impresoIdx } = await sheets.getGuiasParaImprimir();
+
+      if (guias.length === 0) {
+        return `No hay guías pendientes de imprimir. Todos los pedidos PENDIENTES con guía ya están marcados como impresos, o aún no tienen guía generada.`;
+      }
+
+      // Descargar PDFs en paralelo, saltando los que fallen
+      const resultados = await Promise.allSettled(
+        guias.map(g => downloadPdf(g.pdfUrl).then(buf => ({ ...g, buf })))
+      );
+
+      const descargados = resultados
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+
+      const fallidos = guias.filter((_, i) => resultados[i].status === 'rejected');
+
+      if (descargados.length === 0) {
+        return `No se pudo descargar ningún PDF. Puede que las guías aún no estén listas en DROPI. Intenta en unos minutos.`;
+      }
+
+      // Combinar guías 4 por hoja
+      const pdfGuias = await merge4Up(descargados.map(d => d.buf));
+
+      // Tarjetas: si falla por cualquier razón, se envían solo las guías
+      let pdfFinal = pdfGuias;
+      try {
+        const pdfTarjetas = await generateThankyouCards(descargados.map(d => ({ nombre: d.nombre })));
+        pdfFinal = await mergePdfs(pdfGuias, pdfTarjetas);
+      } catch (e) {
+        console.error('generateThankyouCards error (se omiten tarjetas):', e.message);
+      }
+
+      // Nombre del archivo
+      const hoy = new Date().toLocaleDateString('es-EC', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        timeZone: 'America/Guayaquil'
+      });
+      const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
+
+      // Enviar por WhatsApp — esto sí es crítico, si falla lanza el error
+      await sendDocument(input._from, pdfFinal, fileName);
+
+      // Marcar como impresas en Sheets
+      await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
+
+      // Subir a Drive — no crítico, no bloquea la respuesta
+      let driveMsg = '';
+      try {
+        const driveFile = await uploadPdf(pdfFinal, fileName);
+        driveMsg = `\n📁 Drive: ${driveFile.name}`;
+      } catch (e) {
+        console.error('Drive upload error:', e.message);
+        driveMsg = `\n⚠️ Drive: no se pudo subir`;
+      }
+
+      const nombresStr = descargados.map(d => `• ${d.nombre} — Guía ${d.guia}`).join('\n');
+      const fallMsg = fallidos.length > 0
+        ? `\n\n⚠️ No se pudo descargar (${fallidos.length}): ${fallidos.map(f => f.nombre).join(', ')}`
+        : '';
+
+      return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}${driveMsg}`;
+    }
+
     case 'actualizar_pedido': {
       const res = await sheets.actualizarPedido(input.nombre, input.cambios);
       if (!res.found) return `No encontré ningún pedido para "${input.nombre}".`;
@@ -435,6 +518,28 @@ async function executeTool(toolName, input) {
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
     }
 
+    case 'verificar_cliente_dropi': {
+      const tel = input.telefono;
+      const data = await verificarCliente(tel);
+
+      // Si la respuesta tiene todos nulos, mostrar raw para debug
+      if (data.total === null && data.entregados === null && data.devueltos === null) {
+        const keys = data._keys?.length ? `Keys: ${data._keys.join(', ')}` : '';
+        const resumen = JSON.stringify(data.raw)?.slice(0, 600);
+        return `📋 DROPI no devolvió datos para *${tel}*.\n${keys}\nRaw: ${resumen}`;
+      }
+
+      const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
+      const nombre = data.nombre ? `\n👤 ${data.nombre}` : '';
+      const pendientes = data.pendientes !== null ? `\n⏳ Pendientes: ${data.pendientes}` : '';
+
+      return `📊 Reputación DROPI para *${tel}*${nombre}
+
+📦 Total pedidos: *${data.total ?? '?'}*
+✅ Entregados: *${data.entregados ?? '?'}*
+↩️ Devoluciones: *${data.devueltos ?? '?'}*${pendientes}${clasificacion}`;
+    }
+
     case 'pedidos_hoy':
       const hoy = await sheets.getPedidosHoy();
       if (!hoy.total) return 'No hay pedidos registrados hoy.';
@@ -448,7 +553,7 @@ async function executeTool(toolName, input) {
   }
 }
 
-async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg') {
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null) {
   let userContent;
   if (imageBase64) {
     userContent = [
@@ -475,7 +580,9 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
 
     for (const block of response.content) {
       if (block.type === 'tool_use') {
-        const toolResult = await executeTool(block.name, block.input);
+        // Inyectar _from para tools que necesiten enviar archivos de vuelta
+        const inputConFrom = fromPhone ? { ...block.input, _from: fromPhone } : block.input;
+        const toolResult = await executeTool(block.name, inputConFrom);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: block.id,
