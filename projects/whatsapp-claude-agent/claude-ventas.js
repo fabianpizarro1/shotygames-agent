@@ -448,7 +448,7 @@ async function chatVentas(history, newMessage, imageBase64 = null, imageMime = '
   const messages = [...history, { role: 'user', content: userContent }];
 
   let response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1024,
     system: SYSTEM_PROMPT_VENTAS,
     tools: TOOLS_VENTAS,
@@ -474,7 +474,7 @@ async function chatVentas(history, newMessage, imageBase64 = null, imageMime = '
     messages.push({ role: 'user', content: toolResults });
 
     response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: SYSTEM_PROMPT_VENTAS,
       tools: TOOLS_VENTAS,
