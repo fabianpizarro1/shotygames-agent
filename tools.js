@@ -74,51 +74,6 @@ const tools = [
     }
   },
   {
-    name: "registrar_gasto",
-    description: "Registra un gasto en la hoja GASTOS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        categoria: { type: "string", description: "Categoría del gasto (ej: MADERA, PUBLICIDAD, ENVIO, ARRIENDO)" },
-        observaciones: { type: "string", description: "Descripción o detalle del gasto" },
-        cuenta: { type: "string", description: "Cuenta desde donde se pagó: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        valor: { type: "string", description: "Monto del gasto" },
-        fecha: { type: "string", description: "Fecha del gasto (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor"]
-    }
-  },
-  {
-    name: "registrar_ingreso",
-    description: "Registra un ingreso en la hoja INGRESOS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        categoria: { type: "string", description: "Categoría del ingreso (ej: VENTA, DIGITAL, OTRO)" },
-        observaciones: { type: "string", description: "Descripción o detalle del ingreso" },
-        cuenta: { type: "string", description: "Cuenta donde se recibió: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        valor: { type: "string", description: "Monto del ingreso" },
-        fecha: { type: "string", description: "Fecha del ingreso (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor"]
-    }
-  },
-  {
-    name: "registrar_transferencia",
-    description: "Registra una transferencia entre cuentas en la hoja TRANSFERENCIAS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        sale: { type: "string", description: "Cuenta desde donde sale el dinero: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        entra: { type: "string", description: "Cuenta donde entra el dinero" },
-        motivo: { type: "string", description: "Motivo o descripción de la transferencia" },
-        valor: { type: "string", description: "Monto de la transferencia" },
-        fecha: { type: "string", description: "Fecha (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor", "sale", "entra"]
-    }
-  },
-  {
     name: "sincronizar_guia_dropi",
     description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
     input_schema: {
@@ -214,20 +169,6 @@ const tools = [
         }
       },
       required: ["tipo"]
-    }
-  }
-  ,{
-    name: "verificar_cliente_dropi",
-    description: "Consulta en DROPI la reputación de un número de teléfono: cuántos pedidos tiene en toda la plataforma, cuántos entregados y cuántas devoluciones. Útil para decidir si aceptar contraentrega con un cliente nuevo.",
-    input_schema: {
-      type: "object",
-      properties: {
-        telefono: {
-          type: "string",
-          description: "Número de teléfono del cliente a verificar (con o sin prefijo 593, con o sin 0 inicial)"
-        }
-      },
-      required: ["telefono"]
     }
   }
 ];

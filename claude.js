@@ -3,7 +3,6 @@ const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
-const { verificarCliente } = require('./dropi');
 const { sendDocument } = require('./evolution');
 const { uploadPdf } = require('./drive');
 
@@ -106,31 +105,6 @@ Responde confirmando el registro sin mencionar guía ni DROPI.
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
 
-## Registrar gastos, ingresos y transferencias
-
-Cuando Fabián diga algo como "gasto X en Y" / "me pagaron X por Y" / "transferí X de A a B":
-1. Infiere la categoría y cuenta según las listas de abajo
-2. Confirma antes de registrar:
-   "✅ [TIPO]: $[valor] | [CATEGORIA] | [CUENTA]. ¿Confirmas?"
-3. Cuando confirme, ejecuta el tool correspondiente
-
-### Cuentas (mapea del mensaje a estos valores exactos)
-CAJA (efectivo, cash) | PICHINCHA | GUAYAQUIL | PACÍFICO | PAYPHONE | DROPI | PRODUBANCO
-
-### Categorías de GASTOS (elige la más cercana al contexto)
-COSTOS - VASOS | COSTOS - LACAS | COSTOS - INSUMOS | COSTOS - CAJAS JENGAS | COSTOS - IMPRENTA | COSTOS - ENGANCHADOS | COSTOS - TABLERO MDF JENGAS | COSTOS - CORTE TABLERO MDF JENGAS | COSTOS - EXTRAS | COSTOS - ADHESIVOS
-SUELDOS - FABIAN | SUELDOS - NEREA | SUELDOS - TALLER
-MARKETING Y PUBLICIDAD - PUBLICIDAD META
-ADMINISTRATIVOS - INTERNET | ADMINISTRATIVOS - LUZ | ADMINISTRATIVOS - PLAN CLARO | ADMINISTRATIVOS - HOSTING | ADMINISTRATIVOS - LOVABLE | ADMINISTRATIVOS - CANVA
-DEUDAS - COOPSI | DEUDAS - TJT PACIFICO | DEUDAS - OTROS
-CARRO - GASOLINA | CARRO - LAVADAS | CARRO - MANTENIMIENTOS | CARRO - PARKING | CARRO - EXTRAS
-AHORRO | DEVOLUCIONES | PERDIDAS | COMISIONES TRANSFERENCIAS | COMISIONES PAYPHONE | ENVIOS / ENTREGAS ADICIONALES | RUEDA | EXTRAS | SALIDA DE DIVISAS | AJUSTES
-
-### Categorías de INGRESOS (elige la más cercana al contexto)
-INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
-
-**Todo en MAYÚSCULAS** al registrar.
-
 ## Crear guía en DROPI (pedido ya existente)
 Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
 
@@ -188,12 +162,6 @@ Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las g
 → Descarga los PDFs de DROPI, los combina 4 por hoja A4, te envía el PDF por WhatsApp y marca automáticamente esos pedidos como impresos en Sheets.
 → Si algún PDF falla, avisa cuáles no se pudieron incluir.
 → NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
-
-## Verificar cliente en DROPI
-Cuando Fabián mande un número de teléfono preguntando si el cliente es confiable, si acepta contraentrega, o quiera saber su historial en DROPI:
-→ USA verificar_cliente_dropi con ese teléfono.
-→ Devuelve total de pedidos, entregados y devoluciones en toda la plataforma.
-→ Úsalo también cuando diga "verifica este número", "cómo está este cliente en DROPI", "cuántas devoluciones tiene".
 
 ## Editar pedidos
 Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
@@ -348,21 +316,6 @@ async function executeTool(toolName, input) {
       const envioStr = found.shipping ? ` | Envío: $${parseFloat(found.shipping).toFixed(2)}` : '';
       const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
       return `✅ ${nombreReal} — Guía *${found.guia}*${envioStr}${pdfStr}`;
-    }
-
-    case 'registrar_gasto': {
-      await sheets.registrarMovimiento('GASTOS', input);
-      return `✅ Gasto registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
-    }
-
-    case 'registrar_ingreso': {
-      await sheets.registrarMovimiento('INGRESOS', input);
-      return `✅ Ingreso registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
-    }
-
-    case 'registrar_transferencia': {
-      await sheets.registrarMovimiento('TRANSFERENCIAS', input);
-      return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
     }
 
     case 'obtener_guia_pedido': {
@@ -520,28 +473,6 @@ async function executeTool(toolName, input) {
         `• *${p.nombre}* — ${p.ciudad} — ${p.productos} — ${p.fecha}`
       ).join('\n');
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
-    }
-
-    case 'verificar_cliente_dropi': {
-      const tel = input.telefono;
-      const data = await verificarCliente(tel);
-
-      // Si la respuesta tiene todos nulos, mostrar raw para debug
-      if (data.total === null && data.entregados === null && data.devueltos === null) {
-        const keys = data._keys?.length ? `Keys: ${data._keys.join(', ')}` : '';
-        const resumen = JSON.stringify(data.raw)?.slice(0, 600);
-        return `📋 DROPI no devolvió datos para *${tel}*.\n${keys}\nRaw: ${resumen}`;
-      }
-
-      const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
-      const nombre = data.nombre ? `\n👤 ${data.nombre}` : '';
-      const pendientes = data.pendientes !== null ? `\n⏳ Pendientes: ${data.pendientes}` : '';
-
-      return `📊 Reputación DROPI para *${tel}*${nombre}
-
-📦 Total pedidos: *${data.total ?? '?'}*
-✅ Entregados: *${data.entregados ?? '?'}*
-↩️ Devoluciones: *${data.devueltos ?? '?'}*${pendientes}${clasificacion}`;
     }
 
     case 'pedidos_hoy':
