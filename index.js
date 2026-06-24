@@ -319,6 +319,8 @@ app.get('/admin/dropi-debug', async (req, res) => {
   try {
     const dropiMod = require('./dropi');
     const axios = require('axios');
+    // Forzar re-login para asegurar token fresco
+    await dropiMod._autoLogin();
     const token = await dropiMod._getToken();
     const headers = {
       'accept': 'application/json, text/plain, */*',
