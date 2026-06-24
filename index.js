@@ -4,7 +4,6 @@ const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
 const { getHistory, saveHistory, clearHistory } = require('./history');
-const { setupTelegramBot } = require('./telegram-bot');
 
 // WhatsApp usa *bold* (un asterisco), no **bold** (doble asterisco de markdown).
 // Convierte cualquier **texto** → *texto* antes de enviar.
@@ -21,8 +20,13 @@ const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
 const dropi = require('./dropi');
 
-// Inicializar bot de Telegram (usa las mismas funciones de historial)
-setupTelegramBot(app, getHistory, saveHistory);
+// Inicializar bot de Telegram (tolerante a fallos — si no arranca, el servidor sigue)
+try {
+  const { setupTelegramBot } = require('./telegram-bot');
+  setupTelegramBot(app, getHistory, saveHistory);
+} catch (e) {
+  console.error('[TELEGRAM] Error al cargar telegram-bot.js:', e.message);
+}
 
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);

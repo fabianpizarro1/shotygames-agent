@@ -1,4 +1,9 @@
-const { Telegraf } = require('telegraf');
+let Telegraf;
+try {
+  ({ Telegraf } = require('telegraf'));
+} catch (e) {
+  throw new Error('telegraf no instalado. Corre: npm install telegraf');
+}
 const axios = require('axios');
 const { chat } = require('./claude');
 const { transcribeBase64 } = require('./transcribe');
