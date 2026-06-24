@@ -109,11 +109,13 @@ function setupTelegramBot(app, getHistory, saveHistory) {
 
   const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
   if (webhookUrl) {
-    // Modo webhook — para producción en EasyPanel
-    const path = '/telegram';
-    app.use(bot.webhookCallback(path));
-    bot.telegram.setWebhook(`${webhookUrl}${path}`)
-      .then(() => console.log(`[TELEGRAM] Webhook registrado: ${webhookUrl}${path}`))
+    // Modo webhook — ruta Express directa, evita conflicto con express.json()
+    app.post('/telegram', (req, res) => {
+      res.sendStatus(200);
+      bot.handleUpdate(req.body).catch(e => console.error('[TELEGRAM] handleUpdate error:', e.message));
+    });
+    bot.telegram.setWebhook(`${webhookUrl}/telegram`)
+      .then(() => console.log(`[TELEGRAM] Webhook registrado: ${webhookUrl}/telegram`))
       .catch(e => console.error('[TELEGRAM] Error registrando webhook:', e.message));
   } else {
     // Modo polling — para desarrollo local
