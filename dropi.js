@@ -552,4 +552,4 @@ async function verificarCliente(telefono) {
   };
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente };
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente, _getToken: getToken };

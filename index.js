@@ -312,6 +312,48 @@ async function procesarBatchVentas(from, items, firstMessageId) {
   }
 }
 
+// Diagnóstico temporal DROPI — explora endpoints para mapear saldo y pagos
+app.get('/admin/dropi-debug', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    const axios = require('axios');
+    const token = await dropiMod._getToken();
+    const headers = {
+      'accept': 'application/json, text/plain, */*',
+      'content-type': 'application/json',
+      'origin': 'https://app.dropi.ec',
+      'referer': 'https://app.dropi.ec/',
+      'x-authorization': `Bearer ${token}`,
+      'user-agent': 'Mozilla/5.0'
+    };
+    const BASE = 'https://api.dropi.ec/api';
+    const results = {};
+    const endpoints = [
+      '/wallets',
+      '/account',
+      '/supplier/balance',
+      '/remittances?page=1&perPage=10',
+      '/liquidations?page=1&perPage=10',
+      '/payments?page=1&perPage=10',
+      '/orders/myorders?page=1&perPage=5&status=PAGADO_PROVEEDOR&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&status=ENTREGADO&user_id=11362',
+    ];
+    for (const ep of endpoints) {
+      try {
+        const r = await axios.get(`${BASE}${ep}`, { headers, timeout: 8000 });
+        results[ep] = { status: r.status, keys: Object.keys(r.data || {}), sample: JSON.stringify(r.data).slice(0, 400) };
+      } catch (e) {
+        results[ep] = { error: e.response?.status || e.message };
+      }
+    }
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
