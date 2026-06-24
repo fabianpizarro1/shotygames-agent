@@ -324,27 +324,24 @@ app.get('/admin/dropi-debug', async (req, res) => {
     // Usar el mismo makeClient que usan los otros endpoints — headers idénticos
     const client = dropiMod._makeClient(token);
     const results = {};
+    // Obtener datos completos del usuario (tiene wallets anidados)
+    const userRes = await client.get('/users/11362', { timeout: 8000 });
+    results['users_11362_full'] = userRes.data;
+
+    // Probar variantes de wallet y órdenes pagadas
     const endpoints = [
-      '/orders/myorders?page=1&perPage=5&user_id=11362',
-      '/orders/myorders?page=1&perPage=3&status=ENTREGADO&user_id=11362',
-      '/orders/myorders?page=1&perPage=3&status=GUIA_GENERADA&user_id=11362',
-      '/wallet',
-      '/wallets',
-      '/wallets/11362',
-      '/users/me',
-      '/users/11362',
-      '/suppliers/11362',
-      '/suppliers/11362/wallet',
-      '/billing',
-      '/billing/11362',
-      '/remittances',
-      '/remittances?user_id=11362',
-      '/liquidations',
+      '/wallet?user_id=11362',
+      '/wallet/11362',
+      '/orders/myorders?page=1&pageSize=5&search=&user_id=11362',
+      '/orders/myorders?page=1&result_number=5&search=&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&search=a&status=ENTREGADO&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&search=a&status=PAGADO_PROVEEDOR&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&search=a&status=LIQUIDADO&user_id=11362',
     ];
     for (const ep of endpoints) {
       try {
         const r = await client.get(ep, { timeout: 8000 });
-        results[ep] = { status: r.status, keys: Object.keys(r.data || {}), sample: JSON.stringify(r.data).slice(0, 500) };
+        results[ep] = { status: r.status, keys: Object.keys(r.data || {}), sample: JSON.stringify(r.data).slice(0, 600) };
       } catch (e) {
         results[ep] = { error: e.response?.status || e.message };
       }
