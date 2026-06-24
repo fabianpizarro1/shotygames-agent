@@ -331,14 +331,20 @@ app.get('/admin/dropi-debug', async (req, res) => {
     const BASE = 'https://api.dropi.ec/api';
     const results = {};
     const endpoints = [
-      '/wallets',
-      '/account',
-      '/supplier/balance',
-      '/remittances?page=1&perPage=10',
-      '/liquidations?page=1&perPage=10',
-      '/payments?page=1&perPage=10',
-      '/orders/myorders?page=1&perPage=5&status=PAGADO_PROVEEDOR&user_id=11362',
-      '/orders/myorders?page=1&perPage=5&status=ENTREGADO&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&status=GUIA_GENERADA&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&status=DELIVERED&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&status=LIQUIDATED&user_id=11362',
+      '/orders/myorders?page=1&perPage=5&status=PAGADO&user_id=11362',
+      '/profile',
+      '/users/me',
+      '/users/11362',
+      '/supplier/11362',
+      '/commerce/wallet',
+      '/billing',
+      '/billing/balance',
+      '/wallet',
+      '/supplier/wallet',
     ];
     for (const ep of endpoints) {
       try {
