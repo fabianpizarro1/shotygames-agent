@@ -443,8 +443,12 @@ async function executeTool(toolName, input) {
       });
       const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
 
-      // Enviar por WhatsApp — esto sí es crítico, si falla lanza el error
-      await sendDocument(input._from, pdfFinal, fileName);
+      // Enviar el PDF — usa callback de Telegram si está disponible, si no manda por WhatsApp
+      if (input._sendDocument) {
+        await input._sendDocument(pdfFinal, fileName);
+      } else {
+        await sendDocument(input._from, pdfFinal, fileName);
+      }
 
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
@@ -553,7 +557,7 @@ async function executeTool(toolName, input) {
   }
 }
 
-async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null) {
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null, sendDocumentCallback = null) {
   let userContent;
   if (imageBase64) {
     userContent = [
@@ -581,7 +585,11 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
     for (const block of response.content) {
       if (block.type === 'tool_use') {
         // Inyectar _from para tools que necesiten enviar archivos de vuelta
-        const inputConFrom = fromPhone ? { ...block.input, _from: fromPhone } : block.input;
+        const inputConFrom = {
+          ...block.input,
+          _from: fromPhone,
+          ...(sendDocumentCallback ? { _sendDocument: sendDocumentCallback } : {})
+        };
         const toolResult = await executeTool(block.name, inputConFrom);
         toolResults.push({
           type: 'tool_result',

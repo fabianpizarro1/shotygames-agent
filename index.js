@@ -3,6 +3,8 @@ const express = require('express');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
+const { getHistory, saveHistory, clearHistory } = require('./history');
+const { setupTelegramBot } = require('./telegram-bot');
 
 // WhatsApp usa *bold* (un asterisco), no **bold** (doble asterisco de markdown).
 // Convierte cualquier **texto** → *texto* antes de enviar.
@@ -16,74 +18,11 @@ const app = express();
 app.use(express.json());
 
 const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
-
-const memoryStore = {};
-let redisClient = null;
-try {
-  if (process.env.REDIS_URL) {
-    const Redis = require('ioredis');
-    redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: true, enableOfflineQueue: false });
-    redisClient.on('error', () => { redisClient = null; });
-  }
-} catch (e) {}
-
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
-const MAX_HISTORY = 8;
 const dropi = require('./dropi');
 
-async function getHistory(phone, prefix = 'chat') {
-  try {
-    if (redisClient) {
-      const raw = await redisClient.get(`${prefix}:${phone}`);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return sanitizeHistory(parsed);
-    }
-  } catch (e) {}
-  return sanitizeHistory(memoryStore[`${prefix}:${phone}`] || []);
-}
-
-function sanitizeHistory(history) {
-  // Recortar al máximo permitido
-  let h = history.slice(-MAX_HISTORY);
-
-  // Nunca empezar con un mensaje de assistant (Claude espera user primero)
-  while (h.length > 0 && h[0].role === 'assistant') h = h.slice(1);
-
-  // Eliminar tool_results huérfanos al principio:
-  // Si el primer mensaje user contiene tool_result sin tool_use previo, quitarlo.
-  while (h.length > 0 && h[0].role === 'user') {
-    const content = Array.isArray(h[0].content) ? h[0].content : [];
-    const hasOrphanResult = content.some(b => b.type === 'tool_result');
-    if (hasOrphanResult) h = h.slice(2); // quita ese user + el assistant previo (si queda)
-    else break;
-  }
-
-  // Nunca terminar con un assistant que tiene tool_use sin su tool_result
-  while (h.length > 0) {
-    const last = h[h.length - 1];
-    if (last.role === 'assistant') {
-      const content = Array.isArray(last.content) ? last.content : [];
-      if (content.some(b => b.type === 'tool_use')) {
-        h = h.slice(0, -1); // quita el assistant incompleto
-        continue;
-      }
-    }
-    break;
-  }
-
-  return h;
-}
-
-async function saveHistory(phone, history, prefix = 'chat') {
-  const trimmed = sanitizeHistory(history);
-  try {
-    if (redisClient) {
-      await redisClient.set(`${prefix}:${phone}`, JSON.stringify(trimmed), 'EX', 86400);
-      return;
-    }
-  } catch (e) {}
-  memoryStore[`${prefix}:${phone}`] = trimmed;
-}
+// Inicializar bot de Telegram (usa las mismas funciones de historial)
+setupTelegramBot(app, getHistory, saveHistory);
 
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
@@ -183,6 +122,11 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// Debounce de mensajes ventas: agrupa los mensajes de un mismo cliente antes de responder.
+// Evita responder a cada mensaje por separado cuando el cliente manda varios seguidos.
+const pendingVentas = new Map();
+const VENTAS_DEBOUNCE_MS = 50000; // 50 segundos
+
 app.post('/webhook/ventas', async (req, res) => {
   res.sendStatus(200);
   console.log('WEBHOOK VENTAS recibido:', JSON.stringify(req.body).slice(0, 200));
@@ -211,13 +155,12 @@ app.post('/webhook/ventas', async (req, res) => {
 
     if (!text && !imageMsg && !audioMsg) return;
 
-    console.log(`[VENTAS] from=${from} instance=${INSTANCE_VENTAS} apiKeyVentas=${process.env.EVOLUTION_API_KEY_VENTAS ? 'SET' : 'NOT SET'}`);
+    console.log(`[VENTAS] from=${from} instance=${INSTANCE_VENTAS}`);
 
+    // Marcar como leído inmediatamente
     await markAsRead(from, messageId, INSTANCE_VENTAS);
-    await sendReaction(from, messageId, '⏳', INSTANCE_VENTAS);
 
-    const history = await getHistory(from, 'ventas');
-
+    // Obtener medios ahora: el caché de Evolution puede expirar antes de que termine el debounce
     let imageBase64 = null;
     let imageMime = 'image/jpeg';
     if (imageMsg) {
@@ -229,23 +172,19 @@ app.post('/webhook/ventas', async (req, res) => {
       }
     }
 
-    let transcribedAudio = null;
+    let messageText;
     if (audioMsg) {
       try {
-        const { transcribeBase64 } = require('./transcribe');
         const audioBase64 = await getMediaBase64(data, INSTANCE_VENTAS);
         if (audioBase64) {
           const mime = audioMsg.mimetype || 'audio/ogg';
-          transcribedAudio = await transcribeBase64(audioBase64, mime);
+          messageText = await transcribeBase64(audioBase64, mime);
+          console.log('[VENTAS] audio transcrito:', messageText);
         }
       } catch (e) {
         console.error('[VENTAS] error transcribiendo audio:', e.message);
       }
-    }
-
-    let messageText;
-    if (transcribedAudio) {
-      messageText = transcribedAudio;
+      if (!messageText) messageText = 'Hola';
     } else if (text) {
       messageText = text;
     } else if (imageMsg?.caption) {
@@ -256,9 +195,57 @@ app.post('/webhook/ventas', async (req, res) => {
       messageText = 'Hola';
     }
 
-    console.log('[VENTAS] llamando chatVentas...');
-    const { text: reply, updatedHistory } = await chatVentas(history, messageText, imageBase64, imageMime);
-    console.log('[VENTAS] chatVentas OK, enviando respuesta...');
+    // Debounce: acumular mensajes y esperar silencio antes de procesar
+    const existing = pendingVentas.get(from);
+
+    if (existing) {
+      // Ya hay mensajes pendientes: agregar al batch y reiniciar el timer
+      clearTimeout(existing.timer);
+      existing.items.push({ text: messageText, imageBase64, imageMime, messageId });
+      existing.timer = setTimeout(() => {
+        pendingVentas.delete(from);
+        procesarBatchVentas(from, existing.items, existing.firstMessageId).catch(console.error);
+      }, VENTAS_DEBOUNCE_MS);
+    } else {
+      // Primer mensaje del batch: enviar ⏳ y crear entrada en el mapa
+      await sendReaction(from, messageId, '⏳', INSTANCE_VENTAS);
+      const batch = {
+        firstMessageId: messageId,
+        items: [{ text: messageText, imageBase64, imageMime, messageId }],
+        timer: null
+      };
+      batch.timer = setTimeout(() => {
+        pendingVentas.delete(from);
+        procesarBatchVentas(from, batch.items, batch.firstMessageId).catch(console.error);
+      }, VENTAS_DEBOUNCE_MS);
+      pendingVentas.set(from, batch);
+    }
+
+  } catch (error) {
+    console.error('[VENTAS] error en webhook:', error.message);
+    if (error.response) {
+      console.error('[VENTAS] status:', error.response.status);
+      console.error('[VENTAS] data:', JSON.stringify(error.response.data).slice(0, 300));
+    }
+  }
+});
+
+async function procesarBatchVentas(from, items, firstMessageId) {
+  try {
+    // Combinar todos los textos del batch en un solo mensaje
+    const combinedText = items.map(i => i.text).filter(Boolean).join('\n');
+    const imageItem = items.find(i => i.imageBase64);
+
+    console.log(`[VENTAS] procesando batch de ${items.length} mensaje(s) de ${from}`);
+
+    const history = await getHistory(from, 'ventas');
+    const { text: reply, updatedHistory } = await chatVentas(
+      history,
+      combinedText,
+      imageItem?.imageBase64 || null,
+      imageItem?.imageMime || 'image/jpeg',
+      from
+    );
 
     await saveHistory(from, updatedHistory, 'ventas');
 
@@ -270,17 +257,15 @@ app.post('/webhook/ventas', async (req, res) => {
     }
 
     console.log(`[VENTAS] ${partes.length} mensaje(s) enviado(s) OK`);
-    await sendReaction(from, messageId, '✅', INSTANCE_VENTAS);
+    await sendReaction(from, firstMessageId, '✅', INSTANCE_VENTAS);
 
   } catch (error) {
-    console.error('[VENTAS] error:', error.message);
-    if (error.response) {
-      console.error('[VENTAS] status:', error.response.status);
-      console.error('[VENTAS] url:', error.config?.url);
-      console.error('[VENTAS] data:', JSON.stringify(error.response.data).slice(0, 300));
+    console.error('[VENTAS] error procesando batch:', error.message);
+    if (ADMIN_PHONES.length) {
+      await sendText(ADMIN_PHONES[0], `⚠️ Error bot ventas: ${error.message}`, INSTANCE_VENTAS).catch(() => {});
     }
   }
-});
+}
 
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
@@ -294,6 +279,26 @@ app.post('/admin/token', (req, res) => {
   dropi.setToken(token);
   console.log('DROPI token actualizado via /admin/token');
   res.json({ ok: true, ts: new Date().toISOString() });
+});
+
+// Endpoints de retorno de PayPhone (requeridos por su API)
+app.get('/payphone/response', (req, res) => res.send('Pago procesado. Puedes cerrar esta ventana.'));
+app.get('/payphone/cancel', (req, res) => res.send('Pago cancelado. Puedes cerrar esta ventana.'));
+
+app.get('/reset/:phone', async (req, res) => {
+  const phone = req.params.phone;
+
+  const keysDeleted = await clearHistory(phone);
+
+  // Cancelar debounce pendiente de ventas
+  if (pendingVentas.has(phone)) {
+    clearTimeout(pendingVentas.get(phone).timer);
+    pendingVentas.delete(phone);
+    keysDeleted.push(`debounce:${phone}`);
+  }
+
+  console.log(`RESET ${phone}:`, keysDeleted);
+  res.json({ ok: true, phone, cleared: keysDeleted });
 });
 
 app.get('/health', (req, res) => {
