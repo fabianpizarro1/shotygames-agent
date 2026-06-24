@@ -1,123 +1,116 @@
 const axios = require('axios');
 const FormData = require('form-data');
-const { chat } = require('./claude');
 const { transcribeBase64 } = require('./transcribe');
 
 const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_IDS || '')
   .split(',').map(id => parseInt(id.trim())).filter(Boolean);
 
-function tgApiUrl(method) {
-  return `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${method}`;
+function tgApi(token, method) {
+  return `https://api.telegram.org/bot${token}/${method}`;
 }
 
-async function sendMessage(chatId, text) {
+async function sendMessage(token, chatId, text) {
   const formatted = text.replace(/\*\*(.+?)\*\*/gs, '*$1*');
   try {
-    await axios.post(tgApiUrl('sendMessage'), { chat_id: chatId, text: formatted, parse_mode: 'Markdown' });
+    await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text: formatted, parse_mode: 'Markdown' });
   } catch (e) {
-    await axios.post(tgApiUrl('sendMessage'), { chat_id: chatId, text });
+    await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text });
   }
 }
 
-async function sendDocument(chatId, buffer, filename) {
+async function sendDocument(token, chatId, buffer, filename) {
   const form = new FormData();
   form.append('chat_id', String(chatId));
   form.append('document', buffer, { filename });
-  await axios.post(tgApiUrl('sendDocument'), form, { headers: form.getHeaders() });
+  await axios.post(tgApi(token, 'sendDocument'), form, { headers: form.getHeaders() });
 }
 
-async function downloadFile(fileId) {
-  const { data } = await axios.get(tgApiUrl(`getFile?file_id=${fileId}`));
+async function downloadFile(token, fileId) {
+  const { data } = await axios.get(tgApi(token, `getFile?file_id=${fileId}`));
   const filePath = data.result.file_path;
   const res = await axios.get(
-    `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${filePath}`,
+    `https://api.telegram.org/file/bot${token}/${filePath}`,
     { responseType: 'arraybuffer' }
   );
   return Buffer.from(res.data);
 }
 
-function setupTelegramBot(app, getHistory, saveHistory) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+// Configura un bot de Telegram en una ruta específica
+// chatFn(history, message, imageBase64, imageMime, from, sendDocumentCb) → { text, updatedHistory }
+function setupBot(app, { token, path, name, chatFn, webhookUrl }, getHistory, saveHistory) {
   if (!token) {
-    console.log('[TELEGRAM] TELEGRAM_BOT_TOKEN no definido — bot desactivado');
+    console.log(`[${name}] token no definido — desactivado`);
     return;
   }
 
-  app.post('/telegram', async (req, res) => {
+  app.post(path, async (req, res) => {
     res.sendStatus(200);
-
     try {
-      const update = req.body;
-      const msg = update?.message;
+      const msg = req.body?.message;
       if (!msg) return;
 
       const chatId = msg.chat.id;
-      const from = `tg_${chatId}`;
-
       if (ADMIN_IDS.length && !ADMIN_IDS.includes(chatId)) return;
 
-      let messageText = '';
-      let imageBase64 = null;
-      let imageMime = 'image/jpeg';
+      const from = `tg_${name}_${chatId}`;
+      let messageText = '', imageBase64 = null, imageMime = 'image/jpeg';
 
       if (msg.text) {
         messageText = msg.text;
-
       } else if (msg.voice || msg.audio) {
-        const fileId = (msg.voice || msg.audio).file_id;
         try {
-          const buf = await downloadFile(fileId);
+          const buf = await downloadFile(token, (msg.voice || msg.audio).file_id);
           messageText = await transcribeBase64(buf.toString('base64'), 'audio/ogg');
-          console.log('[TELEGRAM] audio transcrito:', messageText);
+          console.log(`[${name}] audio transcrito: ${messageText.slice(0, 60)}`);
         } catch (e) {
-          console.error('[TELEGRAM] error transcribiendo audio:', e.message);
-          messageText = 'Hola';
+          console.error(`[${name}] error transcribiendo:`, e.message);
+          messageText = 'Audio no disponible';
         }
-
       } else if (msg.photo) {
         const photo = msg.photo[msg.photo.length - 1];
         try {
-          const buf = await downloadFile(photo.file_id);
+          const buf = await downloadFile(token, photo.file_id);
           imageBase64 = buf.toString('base64');
-          imageMime = 'image/jpeg';
         } catch (e) {
-          console.error('[TELEGRAM] error descargando foto:', e.message);
+          console.error(`[${name}] error descargando foto:`, e.message);
         }
-        messageText = msg.caption || 'Te mando una imagen de la guía para que registres el envío.';
-
+        messageText = msg.caption || 'Imagen recibida';
       } else {
         return;
       }
 
-      console.log(`[TELEGRAM] ${from}: ${messageText.slice(0, 80)}`);
+      console.log(`[${name}] ${from}: ${messageText.slice(0, 80)}`);
 
-      const history = await getHistory(from, 'telegram');
+      const history = await getHistory(from, name);
+      const sendDocCb = async (buffer, filename) => sendDocument(token, chatId, buffer, filename);
+      const { text: reply, updatedHistory } = await chatFn(history, messageText, imageBase64, imageMime, from, sendDocCb);
+      await saveHistory(from, updatedHistory, name);
+      await sendMessage(token, chatId, reply);
 
-      const sendDocumentCallback = async (buffer, filename) => {
-        await sendDocument(chatId, buffer, filename);
-      };
-
-      const { text: reply, updatedHistory } = await chat(
-        history, messageText, imageBase64, imageMime, from, sendDocumentCallback
-      );
-
-      await saveHistory(from, updatedHistory, 'telegram');
-      await sendMessage(chatId, reply);
-
-    } catch (error) {
-      console.error('[TELEGRAM] error:', error.message);
+    } catch (err) {
+      console.error(`[${name}] error:`, err.message);
     }
   });
 
-  // Registrar webhook con Telegram
-  const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
   if (webhookUrl) {
-    axios.post(tgApiUrl('setWebhook'), { url: `${webhookUrl}/telegram` })
-      .then(r => console.log('[TELEGRAM] Webhook registrado:', r.data?.ok))
-      .catch(e => console.error('[TELEGRAM] Error registrando webhook:', e.message));
+    axios.post(tgApi(token, 'setWebhook'), { url: `${webhookUrl}${path}` })
+      .then(r => console.log(`[${name}] Webhook registrado:`, r.data?.ok))
+      .catch(e => console.error(`[${name}] Error webhook:`, e.message));
   }
 
-  console.log('[TELEGRAM] Bot configurado OK');
+  console.log(`[${name}] Bot configurado en ${path}`);
 }
 
-module.exports = { setupTelegramBot };
+// Mantener compatibilidad con el bot operacional original
+function setupTelegramBot(app, getHistory, saveHistory) {
+  const { chat } = require('./claude');
+  setupBot(app, {
+    token: process.env.TELEGRAM_BOT_TOKEN,
+    path: '/telegram',
+    name: 'OPS',
+    chatFn: chat,
+    webhookUrl: process.env.TELEGRAM_WEBHOOK_URL
+  }, getHistory, saveHistory);
+}
+
+module.exports = { setupBot, setupTelegramBot };

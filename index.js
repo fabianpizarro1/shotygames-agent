@@ -20,12 +20,53 @@ const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
 const dropi = require('./dropi');
 
-// Inicializar bot de Telegram (tolerante a fallos — si no arranca, el servidor sigue)
+// ── BOTS DE TELEGRAM ──────────────────────────────────────
+const BASE_URL = process.env.TELEGRAM_WEBHOOK_URL || '';
+
 try {
-  const { setupTelegramBot } = require('./telegram-bot');
+  const { setupBot, setupTelegramBot } = require('./telegram-bot');
+
+  // Bot operacional (pedidos, guías DROPI, impresión)
   setupTelegramBot(app, getHistory, saveHistory);
+
+  // Bot contabilidad
+  if (process.env.TELEGRAM_CONTA_TOKEN) {
+    const { chatConta } = require('./claude-conta');
+    setupBot(app, {
+      token: process.env.TELEGRAM_CONTA_TOKEN,
+      path: '/telegram-conta',
+      name: 'CONTA',
+      chatFn: (history, msg) => chatConta(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  }
+
+  // Bot DROPI
+  if (process.env.TELEGRAM_DROPI_TOKEN) {
+    const { chatDropi } = require('./claude-dropi');
+    setupBot(app, {
+      token: process.env.TELEGRAM_DROPI_TOKEN,
+      path: '/telegram-dropi',
+      name: 'DROPI',
+      chatFn: (history, msg) => chatDropi(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  }
+
+  // Bot asistente personal
+  if (process.env.TELEGRAM_PERSONAL_TOKEN) {
+    const { chatPersonal } = require('./claude-personal');
+    setupBot(app, {
+      token: process.env.TELEGRAM_PERSONAL_TOKEN,
+      path: '/telegram-personal',
+      name: 'PERSONAL',
+      chatFn: (history, msg) => chatPersonal(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  }
+
 } catch (e) {
-  console.error('[TELEGRAM] Error al cargar telegram-bot.js:', e.message);
+  console.error('[TELEGRAM] Error al cargar bots:', e.message);
 }
 
 app.post('/webhook', async (req, res) => {
