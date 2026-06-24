@@ -322,15 +322,17 @@ async function executeTool(toolName, input) {
       const res = await sheets.obtenerGuiaPedido(input.nombre);
       if (!res) return `No encontré ningún pedido para "${input.nombre}".`;
       if (res.candidatos) {
-        const lista = res.candidatos.map((c, i) =>
-          `${i + 1}. ${c.nombre} — ${c.fecha}${c.guia ? ' — Guía: ' + c.guia : ' — sin guía'}`
-        ).join('\n');
-        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿De cuál quieres la guía?`;
+        const lista = res.candidatos.map((c, i) => {
+          const guiaInfo = c.guia ? ` — Guía: ${c.guia}` : ' — sin guía';
+          const pdfInfo = c.pdfUrl ? `\n   📄 ${c.pdfUrl}` : '';
+          return `${i + 1}. ${c.nombre} — ${c.fecha}${guiaInfo}${pdfInfo}`;
+        }).join('\n');
+        return `Hay varios pedidos para "${input.nombre}":\n\n${lista}`;
       }
       if (!res.guia) {
         return `El pedido de ${res.nombre} (${res.fecha}) aún no tiene guía generada.`;
       }
-      const pdfPart = res.pdfUrl ? `\n\n📄 ${res.pdfUrl}` : '';
+      const pdfPart = res.pdfUrl ? `\n📄 ${res.pdfUrl}` : '';
       return `📦 *${res.nombre}* — ${res.fecha}\nGuía: *${res.guia}*${pdfPart}`;
     }
 

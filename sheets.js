@@ -422,7 +422,10 @@ async function obtenerGuiaPedido(nombre) {
       candidatos: matches.map(m => ({
         nombre: m.nombre,
         fecha:  m.fecha,
-        guia:   m.guia
+        guia:   m.guia || null,
+        pdfUrl: (m.guia && m.dropiId)
+          ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${m.dropiId}-GUIA-${m.guia}.pdf`
+          : null
       }))
     };
   }
