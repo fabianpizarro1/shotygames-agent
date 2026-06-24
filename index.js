@@ -318,40 +318,33 @@ app.get('/admin/dropi-debug', async (req, res) => {
   if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
   try {
     const dropiMod = require('./dropi');
-    const axios = require('axios');
     // Forzar re-login para asegurar token fresco
     await dropiMod._autoLogin();
     const token = await dropiMod._getToken();
-    const headers = {
-      'accept': 'application/json, text/plain, */*',
-      'content-type': 'application/json',
-      'origin': 'https://app.dropi.ec',
-      'referer': 'https://app.dropi.ec/',
-      'x-authorization': `Bearer ${token}`,
-      'user-agent': 'Mozilla/5.0'
-    };
-    const BASE = 'https://api.dropi.ec/api';
+    // Usar el mismo makeClient que usan los otros endpoints — headers idénticos
+    const client = dropiMod._makeClient(token);
     const results = {};
     const endpoints = [
       '/orders/myorders?page=1&perPage=5&user_id=11362',
-      '/orders/myorders?page=1&perPage=5&status=GUIA_GENERADA&user_id=11362',
-      '/orders/myorders?page=1&perPage=5&status=DELIVERED&user_id=11362',
-      '/orders/myorders?page=1&perPage=5&status=LIQUIDATED&user_id=11362',
-      '/orders/myorders?page=1&perPage=5&status=PAGADO&user_id=11362',
-      '/profile',
+      '/orders/myorders?page=1&perPage=3&status=ENTREGADO&user_id=11362',
+      '/orders/myorders?page=1&perPage=3&status=GUIA_GENERADA&user_id=11362',
+      '/wallet',
+      '/wallets',
+      '/wallets/11362',
       '/users/me',
       '/users/11362',
-      '/supplier/11362',
-      '/commerce/wallet',
+      '/suppliers/11362',
+      '/suppliers/11362/wallet',
       '/billing',
-      '/billing/balance',
-      '/wallet',
-      '/supplier/wallet',
+      '/billing/11362',
+      '/remittances',
+      '/remittances?user_id=11362',
+      '/liquidations',
     ];
     for (const ep of endpoints) {
       try {
-        const r = await axios.get(`${BASE}${ep}`, { headers, timeout: 8000 });
-        results[ep] = { status: r.status, keys: Object.keys(r.data || {}), sample: JSON.stringify(r.data).slice(0, 400) };
+        const r = await client.get(ep, { timeout: 8000 });
+        results[ep] = { status: r.status, keys: Object.keys(r.data || {}), sample: JSON.stringify(r.data).slice(0, 500) };
       } catch (e) {
         results[ep] = { error: e.response?.status || e.message };
       }
