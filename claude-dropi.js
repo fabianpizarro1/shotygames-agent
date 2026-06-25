@@ -76,12 +76,9 @@ async function executeTool(name, input) {
     }
 
     case 'saldo_dropi': {
-      const { saldo, detalle } = await dropi.getSaldoDropi();
-      if (saldo === 0 || detalle.length === 0) {
-        return `💰 Saldo DROPI: *$0.00*\nNo hay pagos pendientes en tu cartera.`;
-      }
-      const lineas = detalle.map(d => `• $${d.monto.toFixed(2)}${d.descripcion ? ' — ' + d.descripcion : ''}${d.fecha ? ' (' + d.fecha + ')' : ''}`).join('\n');
-      return `💰 Saldo DROPI: *$${saldo.toFixed(2)}*\n\n${lineas}`;
+      const { saldo, congelado } = await dropi.getSaldoDropi();
+      const congeladoTxt = congelado ? '\n⚠️ Cartera congelada' : '';
+      return `💰 Saldo DROPI: *$${saldo.toFixed(2)}*${congeladoTxt}`;
     }
 
     case 'sincronizar_pagos_dropi': {

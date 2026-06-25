@@ -554,21 +554,20 @@ async function verificarCliente(telefono) {
   };
 }
 
-// Consulta el saldo pendiente de pago en DROPI
+// Consulta el saldo en DROPI — está en /users/:id dentro del campo wallets[]
 async function getSaldoDropi() {
   const token = await getToken();
   let client = makeClient(token);
   async function doGet(c) {
-    const res = await c.get('/wallet');
-    const objects = res.data?.objects || [];
-    if (!Array.isArray(objects) || objects.length === 0) return { saldo: 0, detalle: [] };
-    const detalle = objects.map(w => ({
-      monto: parseFloat(w.amount || w.balance || w.total || 0),
-      descripcion: w.description || w.concept || w.type || '',
-      fecha: w.date || w.created_at || ''
-    }));
-    const saldo = detalle.reduce((sum, w) => sum + w.monto, 0);
-    return { saldo, detalle };
+    const res = await c.get(`/users/${USER_ID}`);
+    const obj = res.data?.objects || {};
+    const wallets = obj.wallets || [];
+    if (!wallets.length) return { saldo: 0, congelado: false };
+    const wallet = wallets[0];
+    return {
+      saldo: parseFloat(wallet.amount || 0),
+      congelado: wallet.is_frozen || false
+    };
   }
   try {
     return await doGet(client);

@@ -313,49 +313,6 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 }
 
 
-// Diagnóstico DROPI — buscar endpoint de saldo real
-app.get('/admin/dropi-wallet', async (req, res) => {
-  const adminKey = process.env.ADMIN_KEY || '';
-  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
-  try {
-    const dropiMod = require('./dropi');
-    await dropiMod._autoLogin();
-    const token = await dropiMod._getToken();
-    const client = dropiMod._makeClient(token);
-    const axios = require('axios');
-    const results = {};
-
-    // GET /historywallet con variantes de params
-    const hgets = [
-      '/historywallet?pageSize=10',
-      '/historywallet?result_number=10',
-      '/historywallet?pageSize=10&user_id=11362',
-      '/historywallet?result_number=10&user_id=11362',
-    ];
-    for (const ep of hgets) {
-      try {
-        const r = await client.get(ep, { timeout: 6000 });
-        results[`GET ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 500) };
-      } catch (e) { results[`GET ${ep}`] = { error: e.response?.status || e.message }; }
-    }
-
-    // POST /wallet/history con variantes
-    const posts = [
-      ['/wallet/history', {}],
-      ['/wallet/history', { user_id: 11362 }],
-      ['/wallet/history', { user_id: 11362, page: 1, perPage: 10 }],
-      ['/wallet/history', { user_id: 11362, pageSize: 10 }],
-    ];
-    for (const [ep, body] of posts) {
-      try {
-        const r = await client.post(ep, body, { timeout: 6000 });
-        results[`POST ${ep} ${JSON.stringify(body)}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 500) };
-      } catch (e) { results[`POST ${ep} ${JSON.stringify(body)}`] = { error: e.response?.status || e.message }; }
-    }
-
-    res.json(results);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
 
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
