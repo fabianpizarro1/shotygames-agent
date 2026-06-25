@@ -327,13 +327,16 @@ app.get('/admin/dropi-wallet', async (req, res) => {
 
     // Rutas GET a probar
     const gets = [
-      '/cartera', '/cartera/11362', '/portfolio',
-      '/finance', '/finances', '/finance/11362',
-      '/suppliers/balance', '/supplier/balance/11362',
-      '/payment/balance', '/payments/balance',
-      '/wallet?page=1&perPage=10',
-      '/wallet/history', '/wallet/transactions',
-      '/orders/balance', '/orders/balance/11362',
+      '/historywallet',
+      '/historywallet?page=1&perPage=10',
+      '/historywallet?user_id=11362',
+      '/historywallet?page=1&perPage=10&user_id=11362',
+      '/wallet/history',
+      '/wallet/history?page=1&perPage=10',
+      '/wallethistory',
+      '/wallets/history',
+      '/cartera', '/portfolio',
+      '/finance', '/finances',
     ];
     for (const ep of gets) {
       try {
