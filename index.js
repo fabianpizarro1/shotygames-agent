@@ -312,65 +312,6 @@ async function procesarBatchVentas(from, items, firstMessageId) {
   }
 }
 
-// Diagnóstico temporal DROPI — explora endpoints para mapear saldo y pagos
-app.get('/admin/dropi-debug', async (req, res) => {
-  const adminKey = process.env.ADMIN_KEY || '';
-  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
-  try {
-    const dropiMod = require('./dropi');
-    // Forzar re-login para asegurar token fresco
-    await dropiMod._autoLogin();
-    const token = await dropiMod._getToken();
-    // Usar el mismo makeClient que usan los otros endpoints — headers idénticos
-    const client = dropiMod._makeClient(token);
-    const results = {};
-    // 1. Ver las últimas órdenes para sacar un order ID real y su estructura completa
-    try {
-      const ordRes = await client.get('/orders/myorders?page=1&perPage=10&search=shotygames&user_id=11362', { timeout: 8000 });
-      const orders = ordRes.data?.objects || ordRes.data?.data || [];
-      const firstOrder = Array.isArray(orders) ? orders[0] : null;
-      results['last_order_sample'] = firstOrder ? {
-        id: firstOrder.id,
-        status: firstOrder.status,
-        status_delivery: firstOrder.status_delivery,
-        payment_status: firstOrder.payment_status,
-        paid: firstOrder.paid,
-        allKeys: Object.keys(firstOrder)
-      } : { raw: JSON.stringify(ordRes.data).slice(0, 500) };
-    } catch(e) { results['last_order_sample'] = { error: e.message }; }
-
-    // 2. Buscar una orden real por nombre y ver su detalle completo
-    try {
-      const ordRes2 = await client.get('/orders/myorders?page=1&perPage=5&search=ANGELO&user_id=11362', { timeout: 8000 });
-      const orders2 = ordRes2.data?.objects || [];
-      const o = Array.isArray(orders2) ? orders2[0] : null;
-      if (o) {
-        // Obtener detalle completo de esa orden
-        const detRes = await client.get(`/orders/myorders/${o.id}`, { timeout: 8000 });
-        const det = detRes.data?.order || detRes.data?.objects || detRes.data;
-        results['order_detail_full'] = { id: o.id, keys: Object.keys(det || {}), status: det?.status, payment: det?.payment_status, raw: JSON.stringify(det).slice(0, 800) };
-      }
-    } catch(e) { results['order_detail_full'] = { error: e.message }; }
-
-    // 3. Wallet con diferentes parámetros
-    const endpoints = [
-      '/wallet?supplier_id=11362',
-      '/wallet?user_id=11362&type=supplier',
-      `/orders/myorders?page=1&perPage=10&search=a&start_date=${new Date().toISOString().slice(0,10)}&end_date=${new Date().toISOString().slice(0,10)}&user_id=11362`,
-    ];
-    for (const ep of endpoints) {
-      try {
-        const r = await client.get(ep, { timeout: 8000 });
-        results[ep] = { status: r.status, sample: JSON.stringify(r.data).slice(0, 600) };
-      } catch (e) {
-        results[ep] = { error: e.response?.status || e.message };
-      }
-    }
-    res.json(results);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {

@@ -311,14 +311,15 @@ async function getOrdenPorId(orderId) {
     const orden = data?.order || data?.objects || data?.data || data;
     const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
     const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+    const status = orden?.status || null;
     const pdfUrl = guia
       ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
       : null;
-    console.log(`DROPI getOrdenPorId: guia=${guia} shipping=${shipping}`);
-    return { guia, shipping, orderId, pdfUrl };
+    console.log(`DROPI getOrdenPorId: guia=${guia} shipping=${shipping} status=${status}`);
+    return { guia, shipping, orderId, pdfUrl, status };
   } catch (e) {
-    const status = e.response?.status;
-    if (status === 401 || status === 403) {
+    const httpStatus = e.response?.status;
+    if (httpStatus === 401 || httpStatus === 403) {
       const newToken = await autoLogin();
       client = makeClient(newToken);
       const res = await client.get(`/orders/myorders/${orderId}`);
@@ -326,12 +327,13 @@ async function getOrdenPorId(orderId) {
       const orden = data?.order || data?.objects || data?.data || data;
       const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
       const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+      const status = orden?.status || null;
       const pdfUrl = guia
         ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
         : null;
-      return { guia, shipping, orderId, pdfUrl };
+      return { guia, shipping, orderId, pdfUrl, status };
     }
-    throw new Error(`DROPI getOrdenPorId ${status}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
+    throw new Error(`DROPI getOrdenPorId ${httpStatus}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
   }
 }
 
@@ -552,4 +554,32 @@ async function verificarCliente(telefono) {
   };
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient };
+// Consulta el saldo pendiente de pago en DROPI
+async function getSaldoDropi() {
+  const token = await getToken();
+  let client = makeClient(token);
+  async function doGet(c) {
+    const res = await c.get('/wallet');
+    const objects = res.data?.objects || [];
+    if (!Array.isArray(objects) || objects.length === 0) return { saldo: 0, detalle: [] };
+    const detalle = objects.map(w => ({
+      monto: parseFloat(w.amount || w.balance || w.total || 0),
+      descripcion: w.description || w.concept || w.type || '',
+      fecha: w.date || w.created_at || ''
+    }));
+    const saldo = detalle.reduce((sum, w) => sum + w.monto, 0);
+    return { saldo, detalle };
+  }
+  try {
+    return await doGet(client);
+  } catch (e) {
+    if (e.response?.status === 401 || e.response?.status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      return await doGet(client);
+    }
+    throw e;
+  }
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient };

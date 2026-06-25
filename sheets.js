@@ -707,4 +707,56 @@ async function marcarGuiasImpresas(rowNums, impresoIdx) {
   console.log(`marcarGuiasImpresas: ${rowNums.length} filas marcadas`);
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas };
+// Obtiene pedidos en estado ENVIADO que tienen un DROPI order ID guardado
+// Para sincronizar su estado contra DROPI y detectar entregas/pagos
+async function getOrdenesEnviadas() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxTel    = headers.indexOf('TELEFONO');
+  const idxEstado = headers.indexOf('ESTADO');
+  const idxGuia   = headers.indexOf('GUIA');
+
+  // DROPI order ID está en columna AH (índice 33) guardado como "DROPI:XXXXX"
+  const idxDropiId = 33;
+
+  const resultado = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxNombre]) continue;
+    const estado = row[idxEstado] || '';
+    if (estado !== 'ENVIADO' && estado !== 'PENDIENTE') continue;
+    const dropiCell = row[idxDropiId] || '';
+    const dropiId = dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+    resultado.push({
+      fila: i + 1,
+      nombre: row[idxNombre] || '',
+      telefono: row[idxTel] || '',
+      estado,
+      guia: row[idxGuia] || '',
+      dropiId
+    });
+  }
+  return resultado;
+}
+
+// Marca un pedido como ENTREGADO en Sheets por número de fila
+async function marcarEntregado(fila) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A1:AJ1' });
+  const headers = res.data.values?.[0] || [];
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxEstado === -1) throw new Error('Columna ESTADO no encontrada');
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(idxEstado)}${fila}`,
+    valueInputOption: 'RAW',
+    resource: { values: [['ENTREGADO']] }
+  });
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado };
