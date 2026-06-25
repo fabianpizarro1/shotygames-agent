@@ -314,6 +314,20 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 
 
 
+// Consulta rápida de usuario DROPI por ID
+app.get('/admin/dropi-user/:id', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    await dropiMod._autoLogin();
+    const client = dropiMod._makeClient(await dropiMod._getToken());
+    const r = await client.get(`/users/${req.params.id}`);
+    const obj = r.data?.objects || {};
+    res.json({ name: obj.name, surname: obj.surname, email: obj.email, store: obj.store_name, status: obj.status, wallets: obj.wallets });
+  } catch (e) { res.status(500).json({ error: e.response?.status || e.message }); }
+});
+
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
