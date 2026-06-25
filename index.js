@@ -326,15 +326,19 @@ app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
     // Ver estado actual
     const current = await client.get(`/orders/myorders/${dropiId}`);
     const currentStatus = current.data?.objects?.status || current.data?.status || JSON.stringify(current.data).slice(0, 200);
-    // Probar marcar como ROTULO_IMPRESO
-    let printResult;
-    try {
-      const r = await client.put(`/orders/myorders/${dropiId}`, { status: 'ROTULO_IMPRESO' });
-      printResult = { ok: true, response: JSON.stringify(r.data).slice(0, 300) };
-    } catch (e) {
-      printResult = { error: e.response?.status, msg: JSON.stringify(e.response?.data).slice(0, 200) };
+    const candidatos = ['DESPACHADO', 'LISTO_PARA_DESPACHO', 'RECOLECTADO', 'EN_RUTA', 'IMPRESO', 'PREPARADO', 'PROCESADO', 'ROTULADO'];
+    const resultados = {};
+    for (const status of candidatos) {
+      try {
+        const r = await client.put(`/orders/myorders/${dropiId}`, { status });
+        const d = r.data;
+        resultados[status] = d?.isSuccess ? '✅ ACEPTADO' : `❌ ${d?.message}`;
+        if (d?.isSuccess) break; // si acepta uno, parar
+      } catch (e) {
+        resultados[status] = `error ${e.response?.status}`;
+      }
     }
-    res.json({ dropiId, estadoAntes: currentStatus, intentoRotuloImpreso: printResult });
+    res.json({ dropiId, estadoAntes: currentStatus, resultados });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
