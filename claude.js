@@ -408,6 +408,14 @@ async function executeTool(toolName, input) {
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
 
+      // Marcar como impresas en DROPI — no crítico, no bloquea
+      const dropiMod = require('./dropi');
+      for (const d of descargados) {
+        if (d.dropiId) {
+          dropiMod.marcarImpresaDropi(d.dropiId).catch(e => console.error(`marcarImpresaDropi ${d.dropiId}:`, e.message));
+        }
+      }
+
       // Subir a Drive — no crítico, no bloquea la respuesta
       let driveMsg = '';
       try {

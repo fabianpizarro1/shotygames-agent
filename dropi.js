@@ -470,6 +470,27 @@ async function generarGuia(orderId) {
   }
 }
 
+// Marca una orden DROPI como impresa (campo printed: true)
+async function marcarImpresaDropi(dropiId) {
+  const token = await getToken();
+  let client = makeClient(token);
+  async function doMark(c) {
+    const r = await c.put(`/orders/myorders/${dropiId}`, { printed: true });
+    return r.data?.isSuccess === true;
+  }
+  try {
+    return await doMark(client);
+  } catch (e) {
+    if (e.response?.status === 401 || e.response?.status === 403) {
+      const newToken = await autoLogin();
+      client = makeClient(newToken);
+      return await doMark(client);
+    }
+    console.error(`marcarImpresaDropi ${dropiId}:`, e.message);
+    return false;
+  }
+}
+
 // Verifica la reputación de un cliente en toda la plataforma DROPI por teléfono.
 // Útil para decidir si aceptar un pedido con contraentrega.
 async function verificarCliente(telefono) {
@@ -581,4 +602,4 @@ async function getSaldoDropi() {
   }
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient };
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient };
