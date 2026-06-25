@@ -313,6 +313,52 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 }
 
 
+// Diagnóstico DROPI — buscar endpoint de saldo real
+app.get('/admin/dropi-wallet', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    await dropiMod._autoLogin();
+    const token = await dropiMod._getToken();
+    const client = dropiMod._makeClient(token);
+    const axios = require('axios');
+    const results = {};
+
+    // Rutas GET a probar
+    const gets = [
+      '/cartera', '/cartera/11362', '/portfolio',
+      '/finance', '/finances', '/finance/11362',
+      '/suppliers/balance', '/supplier/balance/11362',
+      '/payment/balance', '/payments/balance',
+      '/wallet?page=1&perPage=10',
+      '/wallet/history', '/wallet/transactions',
+      '/orders/balance', '/orders/balance/11362',
+    ];
+    for (const ep of gets) {
+      try {
+        const r = await client.get(ep, { timeout: 6000 });
+        results[`GET ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 400) };
+      } catch (e) { results[`GET ${ep}`] = { error: e.response?.status || e.message }; }
+    }
+
+    // Rutas POST a probar
+    const posts = [
+      ['/wallet', { user_id: 11362 }],
+      ['/cartera', { user_id: 11362 }],
+      ['/finance/balance', { user_id: 11362 }],
+    ];
+    for (const [ep, body] of posts) {
+      try {
+        const r = await client.post(ep, body, { timeout: 6000 });
+        results[`POST ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 400) };
+      } catch (e) { results[`POST ${ep}`] = { error: e.response?.status || e.message }; }
+    }
+
+    res.json(results);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
