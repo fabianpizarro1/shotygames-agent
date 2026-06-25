@@ -314,6 +314,30 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 
 
 
+// Diagnóstico: probar marcar orden DROPI como impresa
+app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    await dropiMod._autoLogin();
+    const client = dropiMod._makeClient(await dropiMod._getToken());
+    const dropiId = req.params.dropiId;
+    // Ver estado actual
+    const current = await client.get(`/orders/myorders/${dropiId}`);
+    const currentStatus = current.data?.objects?.status || current.data?.status || JSON.stringify(current.data).slice(0, 200);
+    // Probar marcar como ROTULO_IMPRESO
+    let printResult;
+    try {
+      const r = await client.put(`/orders/myorders/${dropiId}`, { status: 'ROTULO_IMPRESO' });
+      printResult = { ok: true, response: JSON.stringify(r.data).slice(0, 300) };
+    } catch (e) {
+      printResult = { error: e.response?.status, msg: JSON.stringify(e.response?.data).slice(0, 200) };
+    }
+    res.json({ dropiId, estadoAntes: currentStatus, intentoRotuloImpreso: printResult });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Diagnóstico: pedidos ENVIADOS con dropiId y su estado actual en DROPI
 app.get('/admin/sync-preview', async (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
