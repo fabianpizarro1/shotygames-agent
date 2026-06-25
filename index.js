@@ -326,16 +326,26 @@ app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
     // Ver estado actual
     const current = await client.get(`/orders/myorders/${dropiId}`);
     const currentStatus = current.data?.objects?.status || current.data?.status || JSON.stringify(current.data).slice(0, 200);
-    const candidatos = ['DESPACHADO', 'LISTO_PARA_DESPACHO', 'RECOLECTADO', 'EN_RUTA', 'IMPRESO', 'PREPARADO', 'PROCESADO', 'ROTULADO'];
+    // Es un checkbox en el frontend — probar campos booleanos
+    const payloads = [
+      { printed: true },
+      { is_printed: true },
+      { impreso: true },
+      { print: true },
+      { printed: 1 },
+      { guide_printed: true },
+      { rotulo_impreso: true },
+    ];
     const resultados = {};
-    for (const status of candidatos) {
+    for (const body of payloads) {
+      const key = JSON.stringify(body);
       try {
-        const r = await client.put(`/orders/myorders/${dropiId}`, { status });
+        const r = await client.put(`/orders/myorders/${dropiId}`, body);
         const d = r.data;
-        resultados[status] = d?.isSuccess ? '✅ ACEPTADO' : `❌ ${d?.message}`;
-        if (d?.isSuccess) break; // si acepta uno, parar
+        resultados[key] = d?.isSuccess ? '✅ ACEPTADO' : `❌ ${d?.message}`;
+        if (d?.isSuccess) break;
       } catch (e) {
-        resultados[status] = `error ${e.response?.status}`;
+        resultados[key] = `error ${e.response?.status}`;
       }
     }
     res.json({ dropiId, estadoAntes: currentStatus, resultados });
