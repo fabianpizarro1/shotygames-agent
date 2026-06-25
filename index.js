@@ -325,37 +325,32 @@ app.get('/admin/dropi-wallet', async (req, res) => {
     const axios = require('axios');
     const results = {};
 
-    // Rutas GET a probar
-    const gets = [
-      '/historywallet',
-      '/historywallet?page=1&perPage=10',
-      '/historywallet?user_id=11362',
-      '/historywallet?page=1&perPage=10&user_id=11362',
-      '/wallet/history',
-      '/wallet/history?page=1&perPage=10',
-      '/wallethistory',
-      '/wallets/history',
-      '/cartera', '/portfolio',
-      '/finance', '/finances',
+    // GET /historywallet con variantes de params
+    const hgets = [
+      '/historywallet?pageSize=10',
+      '/historywallet?result_number=10',
+      '/historywallet?pageSize=10&user_id=11362',
+      '/historywallet?result_number=10&user_id=11362',
     ];
-    for (const ep of gets) {
+    for (const ep of hgets) {
       try {
         const r = await client.get(ep, { timeout: 6000 });
-        results[`GET ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 400) };
+        results[`GET ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 500) };
       } catch (e) { results[`GET ${ep}`] = { error: e.response?.status || e.message }; }
     }
 
-    // Rutas POST a probar
+    // POST /wallet/history con variantes
     const posts = [
-      ['/wallet', { user_id: 11362 }],
-      ['/cartera', { user_id: 11362 }],
-      ['/finance/balance', { user_id: 11362 }],
+      ['/wallet/history', {}],
+      ['/wallet/history', { user_id: 11362 }],
+      ['/wallet/history', { user_id: 11362, page: 1, perPage: 10 }],
+      ['/wallet/history', { user_id: 11362, pageSize: 10 }],
     ];
     for (const [ep, body] of posts) {
       try {
         const r = await client.post(ep, body, { timeout: 6000 });
-        results[`POST ${ep}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 400) };
-      } catch (e) { results[`POST ${ep}`] = { error: e.response?.status || e.message }; }
+        results[`POST ${ep} ${JSON.stringify(body)}`] = { ok: r.data?.isSuccess, sample: JSON.stringify(r.data).slice(0, 500) };
+      } catch (e) { results[`POST ${ep} ${JSON.stringify(body)}`] = { error: e.response?.status || e.message }; }
     }
 
     res.json(results);
