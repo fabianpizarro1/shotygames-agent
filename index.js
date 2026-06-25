@@ -314,6 +314,28 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 
 
 
+// Diagnóstico: pedidos ENVIADOS con dropiId y su estado actual en DROPI
+app.get('/admin/sync-preview', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const sheets = require('./sheets');
+    const dropiMod = require('./dropi');
+    const ordenes = await sheets.getOrdenesEnviadas();
+    if (!ordenes.length) return res.json({ total: 0, mensaje: 'No hay pedidos ENVIADOS con dropiId en Sheets' });
+    const resultado = [];
+    for (const orden of ordenes.slice(0, 20)) {
+      try {
+        const d = await dropiMod.getOrdenPorId(orden.dropiId);
+        resultado.push({ nombre: orden.nombre, guia: orden.guia, estadoSheets: orden.estado, estadoDropi: d.status, dropiId: orden.dropiId, fila: orden.fila });
+      } catch (e) {
+        resultado.push({ nombre: orden.nombre, guia: orden.guia, estadoSheets: orden.estado, estadoDropi: 'ERROR: ' + e.message, dropiId: orden.dropiId, fila: orden.fila });
+      }
+    }
+    res.json({ total: ordenes.length, ordenes: resultado });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Consulta rápida de usuario DROPI por ID
 app.get('/admin/dropi-user/:id', async (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
