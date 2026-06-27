@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { startReminders } = require('./reminders');
 const express = require('express');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
@@ -427,6 +428,8 @@ app.get('/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3500;
+startReminders();
+
 app.listen(PORT, () => {
   console.log(`Agente Claude corriendo en puerto ${PORT}`);
 });

@@ -34,10 +34,10 @@ async function listarTareas(filtro_estado = null, proyecto = null) {
   const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'TAREAS!A:G' });
   const rows = (res.data.values || []).slice(1).filter(r => r[0]);
 
-  let tareas = rows.map(r => ({
+  let tareas = rows.map((r, idx) => ({
     id: r[0], tarea: r[1], estado: r[2] || 'PENDIENTE',
     prioridad: r[3] || 'MEDIA', fecha_limite: r[4] || '',
-    proyecto: r[5] || '', notas: r[6] || '', _row: rows.indexOf(r) + 2
+    proyecto: r[5] || '', notas: r[6] || '', _row: idx + 2
   }));
 
   if (filtro_estado) tareas = tareas.filter(t => t.estado === filtro_estado.toUpperCase());
@@ -66,6 +66,35 @@ async function completarTarea(id_o_texto) {
   return null;
 }
 
+async function actualizarTarea(id_o_texto, campos) {
+  const sheets = getSheets();
+  const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'TAREAS!A:G' });
+  const rows = res.data.values || [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const [id, tarea] = rows[i];
+    if (id === id_o_texto || tarea?.toUpperCase().includes(id_o_texto.toUpperCase())) {
+      // A=ID B=TAREA C=ESTADO D=PRIORIDAD E=FECHA_LIMITE F=PROYECTO G=NOTAS
+      const colMap = { estado: 'C', prioridad: 'D', fecha_limite: 'E', proyecto: 'F', notas: 'G' };
+      for (const [campo, col] of Object.entries(colMap)) {
+        if (campos[campo] !== undefined) {
+          const val = ['estado', 'prioridad', 'proyecto'].includes(campo)
+            ? campos[campo].toUpperCase()
+            : campos[campo];
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEET_ID,
+            range: `TAREAS!${col}${i + 1}`,
+            valueInputOption: 'RAW',
+            requestBody: { values: [[val]] }
+          });
+        }
+      }
+      return { tarea, fila: i + 1 };
+    }
+  }
+  return null;
+}
+
 // ── MEMORIA del bot ──────────────────────────────────────
 
 async function guardarMemoria({ categoria, nota }) {
@@ -86,4 +115,4 @@ async function leerMemoria() {
   return rows.map(r => ({ fecha: r[0], categoria: r[1], nota: r[2] }));
 }
 
-module.exports = { crearTarea, listarTareas, completarTarea, guardarMemoria, leerMemoria };
+module.exports = { crearTarea, listarTareas, completarTarea, actualizarTarea, guardarMemoria, leerMemoria };
