@@ -429,6 +429,18 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3500;
 
+
+// Actualizar Google refresh token en memoria sin redeploy
+app.post('/admin/google-token', (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  const { refresh_token } = req.body;
+  if (!refresh_token) return res.status(400).json({ error: 'Falta refresh_token' });
+  process.env.GOOGLE_REFRESH_TOKEN = refresh_token;
+  console.log('Google refresh token actualizado en memoria:', refresh_token.slice(0, 20) + '...');
+  res.json({ ok: true, preview: refresh_token.slice(0, 20) + '...' });
+});
+
 // Debug temporal — borrar después
 app.get('/admin/debug-env', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
