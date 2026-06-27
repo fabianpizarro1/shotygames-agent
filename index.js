@@ -428,6 +428,19 @@ app.get('/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3500;
+
+// Debug temporal — borrar después
+app.get('/admin/debug-env', (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  const rt = process.env.GOOGLE_REFRESH_TOKEN || '';
+  res.json({
+    REFRESH_TOKEN_PREVIEW: rt.slice(0, 30) + '...',
+    REFRESH_TOKEN_LENGTH: rt.length,
+    CLIENT_ID_PREVIEW: (process.env.GOOGLE_CLIENT_ID || '').slice(0, 20) + '...',
+  });
+});
+
 startReminders();
 
 app.listen(PORT, () => {
