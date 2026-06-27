@@ -430,6 +430,40 @@ app.get('/health', (req, res) => {
 const PORT = process.env.PORT || 3500;
 
 
+
+// Test Calendar API directamente desde el servidor
+app.get('/admin/test-calendar', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  const https = require('https');
+  const rt = process.env.GOOGLE_REFRESH_TOKEN;
+  const cid = process.env.GOOGLE_CLIENT_ID;
+  const csec = process.env.GOOGLE_CLIENT_SECRET;
+  
+  // Step 1: get access token
+  const postData = new URLSearchParams({ client_id: cid, client_secret: csec, refresh_token: rt, grant_type: 'refresh_token' }).toString();
+  const tokenRes = await new Promise((resolve, reject) => {
+    const req2 = https.request({ hostname: 'oauth2.googleapis.com', path: '/token', method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(postData) }
+    }, (r2) => { let d = ''; r2.on('data', c => d += c); r2.on('end', () => resolve(JSON.parse(d))); });
+    req2.on('error', reject); req2.write(postData); req2.end();
+  });
+  
+  if (!tokenRes.access_token) return res.json({ step: 'token', error: tokenRes, rt_preview: rt ? rt.slice(0,20)+'...' : 'MISSING' });
+  
+  // Step 2: call Calendar API
+  const calRes = await new Promise((resolve, reject) => {
+    const calReq = https.request({
+      hostname: 'www.googleapis.com',
+      path: '/calendar/v3/calendars/primary/events?maxResults=3&singleEvents=true&timeMin=' + new Date().toISOString(),
+      headers: { 'Authorization': 'Bearer ' + tokenRes.access_token }
+    }, (r2) => { let d = ''; r2.on('data', c => d += c); r2.on('end', () => resolve({ status: r2.statusCode, body: d })); });
+    calReq.on('error', reject); calReq.end();
+  });
+  
+  res.json({ step: 'calendar', status: calRes.status, body: calRes.body.slice(0, 500), rt_preview: rt.slice(0,20)+'...' });
+});
+
 // Actualizar Google refresh token en memoria sin redeploy
 app.post('/admin/google-token', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
