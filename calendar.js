@@ -1,6 +1,7 @@
 const { google } = require('googleapis');
 
 let _calendarRefreshToken = null;
+let _tokenLoadPromise = null;
 
 async function loadTokenFromSupabase() {
   try {
@@ -15,9 +16,24 @@ async function loadTokenFromSupabase() {
       .single();
     if (data?.messages?.token) {
       _calendarRefreshToken = data.messages.token;
-      console.log('[CALENDAR] Token cargado desde Supabase');
+      console.log('[CALENDAR] Token cargado desde Supabase:', _calendarRefreshToken.slice(0, 20) + '...');
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error('[CALENDAR] Error cargando token:', e.message);
+  }
+}
+
+// Garantiza que el token esté cargado antes de usarlo
+async function ensureToken() {
+  if (_calendarRefreshToken) return;
+  if (!_tokenLoadPromise) _tokenLoadPromise = loadTokenFromSupabase();
+  await _tokenLoadPromise;
+}
+
+function setRefreshToken(token) {
+  _calendarRefreshToken = token;
+  _tokenLoadPromise = Promise.resolve();
+  saveTokenToSupabase(token).catch(() => {});
 }
 
 async function saveTokenToSupabase(token) {
@@ -35,16 +51,9 @@ async function saveTokenToSupabase(token) {
   }
 }
 
-function setRefreshToken(token) {
-  _calendarRefreshToken = token;
-  saveTokenToSupabase(token).catch(() => {});
-}
-
 function getRefreshToken() {
   return _calendarRefreshToken || process.env.GOOGLE_REFRESH_TOKEN;
 }
-
-loadTokenFromSupabase();
 
 function getAuth() {
   const auth = new google.auth.OAuth2(
@@ -60,16 +69,15 @@ function getCalendarClient() {
 }
 
 async function listarEventos(dias = 7) {
+  await ensureToken();
   const cal = getCalendarClient();
   const now = new Date();
   const hasta = new Date();
   hasta.setDate(hasta.getDate() + dias);
 
-  // Obtener lista de todos los calendarios
   const listRes = await cal.calendarList.list();
   const calendarios = listRes.data.items || [];
 
-  // Traer eventos de todos los calendarios en paralelo
   const resultados = await Promise.allSettled(
     calendarios.map(c => cal.events.list({
       calendarId: c.id,
@@ -98,12 +106,12 @@ async function listarEventos(dias = 7) {
     }
   }
 
-  // Ordenar por fecha de inicio
   eventos.sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
   return eventos;
 }
 
 async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion = '', todo_el_dia = false }) {
+  await ensureToken();
   const cal = getCalendarClient();
 
   let start, end;
@@ -126,6 +134,7 @@ async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion
 }
 
 async function eliminarEvento(eventId) {
+  await ensureToken();
   const cal = getCalendarClient();
   await cal.events.delete({ calendarId: 'primary', eventId });
   return true;
