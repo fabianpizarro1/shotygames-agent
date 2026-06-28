@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { startReminders } = require('./reminders');
+const calendarModule = require('./calendar');
 const express = require('express');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
@@ -471,6 +472,7 @@ app.post('/admin/google-token', (req, res) => {
   const { refresh_token } = req.body;
   if (!refresh_token) return res.status(400).json({ error: 'Falta refresh_token' });
   process.env.GOOGLE_REFRESH_TOKEN = refresh_token;
+  calendarModule.setRefreshToken(refresh_token);
   console.log('Google refresh token actualizado en memoria:', refresh_token.slice(0, 20) + '...');
   res.json({ ok: true, preview: refresh_token.slice(0, 20) + '...' });
 });
