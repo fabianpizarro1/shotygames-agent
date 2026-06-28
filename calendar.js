@@ -1,6 +1,5 @@
 const { google } = require('googleapis');
 
-// Token en memoria — se carga desde Supabase al inicio o se actualiza via /admin/google-token
 let _calendarRefreshToken = null;
 
 async function loadTokenFromSupabase() {
@@ -45,7 +44,6 @@ function getRefreshToken() {
   return _calendarRefreshToken || process.env.GOOGLE_REFRESH_TOKEN;
 }
 
-// Cargar token al iniciar
 loadTokenFromSupabase();
 
 function getAuth() {
@@ -57,38 +55,56 @@ function getAuth() {
   return auth;
 }
 
-function getCalendar() {
+function getCalendarClient() {
   return google.calendar({ version: 'v3', auth: getAuth() });
 }
 
 async function listarEventos(dias = 7) {
-  const cal = getCalendar();
+  const cal = getCalendarClient();
   const now = new Date();
   const hasta = new Date();
   hasta.setDate(hasta.getDate() + dias);
 
-  const res = await cal.events.list({
-    calendarId: 'primary',
-    timeMin: now.toISOString(),
-    timeMax: hasta.toISOString(),
-    singleEvents: true,
-    orderBy: 'startTime',
-    maxResults: 20,
-    timeZone: 'America/Guayaquil'
-  });
+  // Obtener lista de todos los calendarios
+  const listRes = await cal.calendarList.list();
+  const calendarios = listRes.data.items || [];
 
-  return (res.data.items || []).map(e => ({
-    id: e.id,
-    titulo: e.summary || '(sin título)',
-    inicio: e.start?.dateTime || e.start?.date,
-    fin: e.end?.dateTime || e.end?.date,
-    descripcion: e.description || '',
-    allDay: !e.start?.dateTime
-  }));
+  // Traer eventos de todos los calendarios en paralelo
+  const resultados = await Promise.allSettled(
+    calendarios.map(c => cal.events.list({
+      calendarId: c.id,
+      timeMin: now.toISOString(),
+      timeMax: hasta.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 20,
+      timeZone: 'America/Guayaquil'
+    }).then(r => ({ items: r.data.items || [], calNombre: c.summary })))
+  );
+
+  const eventos = [];
+  for (const r of resultados) {
+    if (r.status !== 'fulfilled') continue;
+    for (const e of r.value.items) {
+      eventos.push({
+        id: e.id,
+        titulo: e.summary || '(sin título)',
+        inicio: e.start?.dateTime || e.start?.date,
+        fin: e.end?.dateTime || e.end?.date,
+        descripcion: e.description || '',
+        calendario: r.value.calNombre,
+        allDay: !e.start?.dateTime
+      });
+    }
+  }
+
+  // Ordenar por fecha de inicio
+  eventos.sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+  return eventos;
 }
 
 async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion = '', todo_el_dia = false }) {
-  const cal = getCalendar();
+  const cal = getCalendarClient();
 
   let start, end;
   if (todo_el_dia) {
@@ -110,7 +126,7 @@ async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion
 }
 
 async function eliminarEvento(eventId) {
-  const cal = getCalendar();
+  const cal = getCalendarClient();
   await cal.events.delete({ calendarId: 'primary', eventId });
   return true;
 }
