@@ -9,6 +9,29 @@ const { uploadPdf } = require('./drive');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+function calcularDiasPendiente(fechaStr) {
+  if (!fechaStr) return 0;
+  const parts = fechaStr.split('/');
+  if (parts.length !== 3) return 0;
+  const [d, m, y] = parts;
+  const fecha = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((hoy - fecha) / 86400000));
+}
+
+function formatStock(s) {
+  if (!s) return '';
+  const lineas = [];
+  if (s.normal > 0)       lineas.push(`• ${s.normal} NORMAL`);
+  if (s.picante > 0)      lineas.push(`• ${s.picante} PICANTE`);
+  if (s.parejas > 0)      lineas.push(`• ${s.parejas} PAREJAS`);
+  if (s.enganchados > 0)  lineas.push(`• ${s.enganchados} ENGANCHADOS`);
+  if (s.dados > 0)        lineas.push(`• ${s.dados} DADOS`);
+  if (lineas.length === 0) return `📦 Stock: todo despachado`;
+  const total = (s.normal||0) + (s.picante||0) + (s.parejas||0) + (s.enganchados||0) + (s.dados||0);
+  return `📦 *POR ARMAR:*\n${lineas.join('\n')}\nTotal: *${total} uds*`;
+}
+
 const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de Shotygames — juegos de mesa para fiestas, venta por WhatsApp, envíos a todo Ecuador.
 
 ## Tu identidad
@@ -212,14 +235,17 @@ Cuando Fabián haga preguntas sobre el estado general de los pedidos:
 
 | Lo que dice Fabián | tipo | filtro_estado |
 |---|---|---|
-| "cuántos pedidos pendientes hay" / "qué falta enviar" | PENDIENTES | PENDIENTE |
+| "qué hay pendiente" / "pendientes" / "reporte" / "dame el reporte" | OPS_COMPLETO | — |
 | "qué productos faltan enviar" / "qué tengo que armar" | PRODUCTOS_PENDIENTES | PENDIENTE |
 | "resumen de pedidos" / "cómo van los pedidos" | RESUMEN | — |
 | "pedidos enviados" / "qué está en camino" | POR_ESTADO | ENVIADO |
 | "pedidos entregados" | POR_ESTADO | ENTREGADO |
 
+**OPS_COMPLETO** es el reporte estándar cuando Fabián pide saber el estado general. Devuelve en un solo bloque:
+- Lista de pedidos PENDIENTES con: nombre, días pendiente, ciudad, productos y si es PAGADO o MIXTO (tiene saldo por cobrar)
+- Stock por armar (unidades de cada tipo)
+
 Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
-Al responder PENDIENTES o POR_ESTADO, lista nombre, ciudad, productos y fecha.
 
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
@@ -489,6 +515,19 @@ async function executeTool(toolName, input) {
 
       const tipoBig = (input.tipo || '').toUpperCase();
 
+      // ── OPS_COMPLETO: pedidos pendientes con detalle + stock ──────────────
+      if (tipoBig === 'OPS_COMPLETO') {
+        if (!res.total) return `✅ Sin pedidos pendientes.\n\n${formatStock(res.stock)}`;
+        const listaPed = res.pedidos.map(p => {
+          const dias = calcularDiasPendiente(p.fecha);
+          const pago = p.saldo && parseFloat(p.saldo.replace(/[^0-9.]/g, '')) > 0
+            ? `💵 MIXTO +$${parseFloat(p.saldo.replace(/[^0-9.]/g, '')).toFixed(2)}`
+            : `✅ PAGADO`;
+          return `• *${p.nombre}* ⏳${dias}d — ${p.ciudad}\n  ${p.productos} — ${pago}`;
+        }).join('\n');
+        return `🔴 *PENDIENTES: ${res.total}*\n\n${listaPed}\n\n${formatStock(res.stock)}`;
+      }
+
       if (tipoBig === 'PRODUCTOS_PENDIENTES') {
         const p = res.productos;
         const lineas = [];
@@ -510,11 +549,15 @@ async function executeTool(toolName, input) {
         return `📊 Resumen de pedidos (${res.total} en total):\n\n${lineas}`;
       }
 
-      // PENDIENTES / POR_ESTADO
+      // PENDIENTES / POR_ESTADO — formato mejorado con pago y días
       if (!res.total) return `No hay pedidos en estado ${res.estado}.`;
-      const lista = res.pedidos.map(p =>
-        `• *${p.nombre}* — ${p.ciudad} — ${p.productos} — ${p.fecha}`
-      ).join('\n');
+      const lista = res.pedidos.map(p => {
+        const dias = calcularDiasPendiente(p.fecha);
+        const pago = p.saldo && parseFloat(p.saldo.replace(/[^0-9.]/g, '')) > 0
+          ? `💵 MIXTO +$${parseFloat(p.saldo.replace(/[^0-9.]/g, '')).toFixed(2)}`
+          : `✅ PAGADO`;
+        return `• *${p.nombre}* ⏳${dias}d — ${p.ciudad} — ${p.productos} — ${pago}`;
+      }).join('\n');
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
     }
 

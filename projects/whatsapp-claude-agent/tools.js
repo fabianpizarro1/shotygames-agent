@@ -197,7 +197,7 @@ const tools = [
       properties: {
         tipo: {
           type: "string",
-          description: "Tipo de consulta: PENDIENTES (lista pedidos de un estado), PRODUCTOS_PENDIENTES (suma de unidades por tipo pendientes de envío), RESUMEN (conteo total por estado), POR_ESTADO (pedidos filtrando por estado específico)"
+          description: "Tipo de consulta: OPS_COMPLETO (pedidos pendientes + stock en un solo reporte — usar cuando Fabián pide 'qué hay pendiente' o quiere el reporte completo), PENDIENTES (lista pedidos de un estado), PRODUCTOS_PENDIENTES (suma de unidades por tipo pendientes de envío), RESUMEN (conteo total por estado), POR_ESTADO (pedidos filtrando por estado específico)"
         },
         filtro_estado: {
           type: "string",

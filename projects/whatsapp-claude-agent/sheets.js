@@ -579,6 +579,7 @@ async function reportePedidos(tipo, filtroEstado) {
   const fechaIdx  = idxOf('FECHA');
   const guiaIdx   = idxOf('GUIA');
   const prodIdx   = idxOf('PRODUCTOS');
+  const saldoIdx  = idxOf('SALDO');
   // Productos — con fallback a posición fija si el header difiere
   const nIdx    = idxOf('N')    >= 0 ? idxOf('N')    : 6;
   const pIdx    = idxOf('P')    >= 0 ? idxOf('P')    : 7;
@@ -611,7 +612,8 @@ async function reportePedidos(tipo, filtroEstado) {
         ciudad:   r[ciudadIdx] || '',
         productos: r[prodIdx]  || '',
         fecha:    r[fechaIdx]  || '',
-        guia:     r[guiaIdx]   || ''
+        guia:     r[guiaIdx]   || '',
+        saldo:    r[saldoIdx]  || ''
       }))
     };
   }
@@ -631,7 +633,31 @@ async function reportePedidos(tipo, filtroEstado) {
     return { estado, totalPedidos: filtrados.length, productos: totales };
   }
 
-  return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO' };
+  // ── OPS_COMPLETO: pedidos pendientes + stock para reporte manual ────────
+  if (tipoBig === 'OPS_COMPLETO') {
+    const filtrados = data.filter(r => (r[estadoIdx] || '').toUpperCase() === 'PENDIENTE');
+    const totales = { normal: 0, picante: 0, parejas: 0, enganchados: 0, dados: 0 };
+    for (const r of filtrados) {
+      totales.normal      += parseInt(r[nIdx])   || 0;
+      totales.picante     += parseInt(r[pIdx])   || 0;
+      totales.parejas     += parseInt(r[parIdx]) || 0;
+      totales.enganchados += parseInt(r[engIdx]) || 0;
+      totales.dados       += parseInt(r[dadIdx]) || 0;
+    }
+    return {
+      total: filtrados.length,
+      pedidos: filtrados.map(r => ({
+        nombre:   r[nombreIdx] || '',
+        ciudad:   r[ciudadIdx] || '',
+        productos: r[prodIdx]  || '',
+        fecha:    r[fechaIdx]  || '',
+        saldo:    r[saldoIdx]  || ''
+      })),
+      stock: totales
+    };
+  }
+
+  return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO, OPS_COMPLETO' };
 }
 
 module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos };
