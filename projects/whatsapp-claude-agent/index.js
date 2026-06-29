@@ -3,6 +3,7 @@ const express = require('express');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
+const { getHistory, saveHistory, clearHistory } = require('./history');
 
 // WhatsApp usa *bold* (un asterisco), no **bold** (doble asterisco de markdown).
 // Convierte cualquier **texto** → *texto* antes de enviar.
@@ -16,73 +17,56 @@ const app = express();
 app.use(express.json());
 
 const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
-
-const memoryStore = {};
-let redisClient = null;
-try {
-  if (process.env.REDIS_URL) {
-    const Redis = require('ioredis');
-    redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: true, enableOfflineQueue: false });
-    redisClient.on('error', () => { redisClient = null; });
-  }
-} catch (e) {}
-
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
-const MAX_HISTORY = 8;
 const dropi = require('./dropi');
 
-async function getHistory(phone, prefix = 'chat') {
-  try {
-    if (redisClient) {
-      const raw = await redisClient.get(`${prefix}:${phone}`);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return sanitizeHistory(parsed);
-    }
-  } catch (e) {}
-  return sanitizeHistory(memoryStore[`${prefix}:${phone}`] || []);
-}
+// ── BOTS DE TELEGRAM ──────────────────────────────────────
+const BASE_URL = process.env.TELEGRAM_WEBHOOK_URL || '';
 
-function sanitizeHistory(history) {
-  // Recortar al máximo permitido
-  let h = history.slice(-MAX_HISTORY);
+try {
+  const { setupBot, setupTelegramBot } = require('./telegram-bot');
 
-  // Nunca empezar con un mensaje de assistant (Claude espera user primero)
-  while (h.length > 0 && h[0].role === 'assistant') h = h.slice(1);
+  // Bot operacional (pedidos, guías DROPI, impresión)
+  setupTelegramBot(app, getHistory, saveHistory);
 
-  // Eliminar tool_results huérfanos al principio:
-  // Si el primer mensaje user contiene tool_result sin tool_use previo, quitarlo.
-  while (h.length > 0 && h[0].role === 'user') {
-    const content = Array.isArray(h[0].content) ? h[0].content : [];
-    const hasOrphanResult = content.some(b => b.type === 'tool_result');
-    if (hasOrphanResult) h = h.slice(2); // quita ese user + el assistant previo (si queda)
-    else break;
+  // Bot contabilidad
+  if (process.env.TELEGRAM_CONTA_TOKEN) {
+    const { chatConta } = require('./claude-conta');
+    setupBot(app, {
+      token: process.env.TELEGRAM_CONTA_TOKEN,
+      path: '/telegram-conta',
+      name: 'CONTA',
+      chatFn: (history, msg) => chatConta(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
   }
 
-  // Nunca terminar con un assistant que tiene tool_use sin su tool_result
-  while (h.length > 0) {
-    const last = h[h.length - 1];
-    if (last.role === 'assistant') {
-      const content = Array.isArray(last.content) ? last.content : [];
-      if (content.some(b => b.type === 'tool_use')) {
-        h = h.slice(0, -1); // quita el assistant incompleto
-        continue;
-      }
-    }
-    break;
+  // Bot DROPI
+  if (process.env.TELEGRAM_DROPI_TOKEN) {
+    const { chatDropi } = require('./claude-dropi');
+    setupBot(app, {
+      token: process.env.TELEGRAM_DROPI_TOKEN,
+      path: '/telegram-dropi',
+      name: 'DROPI',
+      chatFn: (history, msg) => chatDropi(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
   }
 
-  return h;
-}
+  // Bot asistente personal
+  if (process.env.TELEGRAM_PERSONAL_TOKEN) {
+    const { chatPersonal } = require('./claude-personal');
+    setupBot(app, {
+      token: process.env.TELEGRAM_PERSONAL_TOKEN,
+      path: '/telegram-personal',
+      name: 'PERSONAL',
+      chatFn: (history, msg) => chatPersonal(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  }
 
-async function saveHistory(phone, history, prefix = 'chat') {
-  const trimmed = sanitizeHistory(history);
-  try {
-    if (redisClient) {
-      await redisClient.set(`${prefix}:${phone}`, JSON.stringify(trimmed), 'EX', 86400);
-      return;
-    }
-  } catch (e) {}
-  memoryStore[`${prefix}:${phone}`] = trimmed;
+} catch (e) {
+  console.error('[TELEGRAM] Error al cargar bots:', e.message);
 }
 
 app.post('/webhook', async (req, res) => {
@@ -328,6 +312,82 @@ async function procesarBatchVentas(from, items, firstMessageId) {
   }
 }
 
+
+
+// Diagnóstico: probar marcar orden DROPI como impresa
+app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    await dropiMod._autoLogin();
+    const client = dropiMod._makeClient(await dropiMod._getToken());
+    const dropiId = req.params.dropiId;
+    // Ver estado actual
+    const current = await client.get(`/orders/myorders/${dropiId}`);
+    const currentStatus = current.data?.objects?.status || current.data?.status || JSON.stringify(current.data).slice(0, 200);
+    // Es un checkbox en el frontend — probar campos booleanos
+    const payloads = [
+      { printed: true },
+      { is_printed: true },
+      { impreso: true },
+      { print: true },
+      { printed: 1 },
+      { guide_printed: true },
+      { rotulo_impreso: true },
+    ];
+    const resultados = {};
+    for (const body of payloads) {
+      const key = JSON.stringify(body);
+      try {
+        const r = await client.put(`/orders/myorders/${dropiId}`, body);
+        const d = r.data;
+        resultados[key] = d?.isSuccess ? '✅ ACEPTADO' : `❌ ${d?.message}`;
+        if (d?.isSuccess) break;
+      } catch (e) {
+        resultados[key] = `error ${e.response?.status}`;
+      }
+    }
+    res.json({ dropiId, estadoAntes: currentStatus, resultados });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Diagnóstico: pedidos ENVIADOS con dropiId y su estado actual en DROPI
+app.get('/admin/sync-preview', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const sheets = require('./sheets');
+    const dropiMod = require('./dropi');
+    const ordenes = await sheets.getOrdenesEnviadas();
+    if (!ordenes.length) return res.json({ total: 0, mensaje: 'No hay pedidos ENVIADOS con dropiId en Sheets' });
+    const resultado = [];
+    for (const orden of ordenes.slice(0, 20)) {
+      try {
+        const d = await dropiMod.getOrdenPorId(orden.dropiId);
+        resultado.push({ nombre: orden.nombre, guia: orden.guia, estadoSheets: orden.estado, estadoDropi: d.status, dropiId: orden.dropiId, fila: orden.fila });
+      } catch (e) {
+        resultado.push({ nombre: orden.nombre, guia: orden.guia, estadoSheets: orden.estado, estadoDropi: 'ERROR: ' + e.message, dropiId: orden.dropiId, fila: orden.fila });
+      }
+    }
+    res.json({ total: ordenes.length, ordenes: resultado });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Consulta rápida de usuario DROPI por ID
+app.get('/admin/dropi-user/:id', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const dropiMod = require('./dropi');
+    await dropiMod._autoLogin();
+    const client = dropiMod._makeClient(await dropiMod._getToken());
+    const r = await client.get(`/users/${req.params.id}`);
+    const obj = r.data?.objects || {};
+    res.json({ name: obj.name, surname: obj.surname, email: obj.email, store: obj.store_name, status: obj.status, wallets: obj.wallets });
+  } catch (e) { res.status(500).json({ error: e.response?.status || e.message }); }
+});
+
 // Endpoint para que el script del Mac actualice el token automáticamente
 app.post('/admin/token', (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
@@ -342,8 +402,84 @@ app.post('/admin/token', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
 });
 
+// Endpoints de retorno de PayPhone (requeridos por su API)
+app.get('/payphone/response', (req, res) => res.send('Pago procesado. Puedes cerrar esta ventana.'));
+app.get('/payphone/cancel', (req, res) => res.send('Pago cancelado. Puedes cerrar esta ventana.'));
+
+app.get('/reset/:phone', async (req, res) => {
+  const phone = req.params.phone;
+
+  const keysDeleted = await clearHistory(phone);
+
+  // Cancelar debounce pendiente de ventas
+  if (pendingVentas.has(phone)) {
+    clearTimeout(pendingVentas.get(phone).timer);
+    pendingVentas.delete(phone);
+    keysDeleted.push(`debounce:${phone}`);
+  }
+
+  console.log(`RESET ${phone}:`, keysDeleted);
+  res.json({ ok: true, phone, cleared: keysDeleted });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── NOTIFICACIONES AUTOMÁTICAS ───────────────────────────────
+try {
+  const cron = require('node-cron');
+  const { enviarReporteOPS, enviarSaldoDropi, enviarSaldosMañana, enviarCierreNoche, enviarBriefingPersonal } = require('./notificaciones');
+
+  // OPS: 10am Ecuador lun-vie = 15:00 UTC
+  cron.schedule('0 15 * * 1-5', () => enviarReporteOPS('10:00 AM'));
+  // OPS: 12pm Ecuador lun-vie = 17:00 UTC
+  cron.schedule('0 17 * * 1-5', () => enviarReporteOPS('12:00 PM'));
+  // OPS: 3pm Ecuador lun-vie = 20:00 UTC
+  cron.schedule('0 20 * * 1-5', () => enviarReporteOPS('3:00 PM'));
+
+  // DROPI: 10pm Ecuador = 03:00 UTC (+1 día)
+  cron.schedule('0 3 * * *', () => enviarSaldoDropi());
+
+  // CONTA: 10am Ecuador lun-vie = 15:00 UTC
+  cron.schedule('0 15 * * 1-5', () => enviarSaldosMañana());
+  // CONTA: 10pm Ecuador = 03:00 UTC (+1 día)
+  cron.schedule('0 3 * * *', () => enviarCierreNoche());
+
+  // PERSONAL: briefing 10am Ecuador lun-vie = 15:00 UTC (calendario + tareas + programa recordatorios)
+  cron.schedule('0 15 * * 1-5', () => enviarBriefingPersonal());
+
+  console.log('[CRON] Notificaciones: OPS 10am/12pm/3pm lun-vie | DROPI 10pm | CONTA 10am lun-vie + 10pm | PERSONAL briefing 10am lun-vie');
+} catch (e) {
+  console.error('[CRON] Error al iniciar notificaciones:', e.message);
+}
+
+// Endpoints admin manuales
+app.get('/admin/reporte-ops', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarReporteOPS } = require('./notificaciones');
+    await enviarReporteOPS('Manual');
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/admin/saldo-dropi', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarSaldoDropi } = require('./notificaciones');
+    await enviarSaldoDropi();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/admin/cierre-conta', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarCierreNoche } = require('./notificaciones');
+    await enviarCierreNoche();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3500;
