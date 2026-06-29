@@ -170,6 +170,29 @@ const tools = [
       },
       required: ["tipo"]
     }
+  },
+  {
+    name: "leer_stock",
+    description: "Lee el stock actual de la hoja PEND: cuántas unidades hay de cada producto (TENGO), cuántas se necesitan para pedidos pendientes (NECESITO) y cuántas faltan (FALTA). Úsalo cuando Fabián pregunte cuánto stock hay, si alcanza para despachar, o qué falta producir.",
+    input_schema: { type: "object", properties: {} }
+  },
+  {
+    name: "actualizar_stock",
+    description: "Actualiza el stock (columna TENGO) de un producto en la hoja PEND. Úsalo cuando Fabián diga que acaba de fabricar unidades o que el stock cambió.",
+    input_schema: {
+      type: "object",
+      properties: {
+        juego: {
+          type: "string",
+          description: "Nombre del juego a actualizar (ej: Torre Normal, Torre Picante, Torre Parejas, Enganchados, Dados)"
+        },
+        cantidad: {
+          type: "number",
+          description: "Nueva cantidad en stock (número total que hay ahora, no el incremento)"
+        }
+      },
+      required: ["juego", "cantidad"]
+    }
   }
 ];
 

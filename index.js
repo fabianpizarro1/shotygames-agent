@@ -1,6 +1,4 @@
 require('dotenv').config();
-const { startReminders } = require('./reminders');
-const calendarModule = require('./calendar');
 const express = require('express');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
@@ -428,69 +426,37 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ── NOTIFICACIONES AUTOMÁTICAS OPS ──────────────────────────
+try {
+  const cron = require('node-cron');
+  const { enviarReporteOPS } = require('./notificaciones');
+
+  // 8:00am Ecuador (UTC-5 = 13:00 UTC)
+  cron.schedule('0 13 * * *', () => enviarReporteOPS('8:00 AM'), { timezone: 'UTC' });
+  // 12:00pm Ecuador (17:00 UTC)
+  cron.schedule('0 17 * * *', () => enviarReporteOPS('12:00 PM'), { timezone: 'UTC' });
+  // 3:00pm Ecuador (20:00 UTC)
+  cron.schedule('0 20 * * *', () => enviarReporteOPS('3:00 PM'), { timezone: 'UTC' });
+
+  console.log('[CRON] Notificaciones OPS programadas: 8am, 12pm, 3pm Ecuador');
+} catch (e) {
+  console.error('[CRON] Error al iniciar notificaciones:', e.message);
+}
+
+// Endpoint para reporte manual desde Telegram o Claude Code
+app.get('/admin/reporte-ops', async (req, res) => {
+  const key = req.headers['x-admin-key'];
+  if (key !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarReporteOPS } = require('./notificaciones');
+    await enviarReporteOPS('Manual');
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3500;
-
-
-
-// Test Calendar API directamente desde el servidor
-app.get('/admin/test-calendar', async (req, res) => {
-  const adminKey = process.env.ADMIN_KEY || '';
-  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
-  const https = require('https');
-  const rt = process.env.GOOGLE_REFRESH_TOKEN;
-  const cid = process.env.GOOGLE_CLIENT_ID;
-  const csec = process.env.GOOGLE_CLIENT_SECRET;
-  
-  // Step 1: get access token
-  const postData = new URLSearchParams({ client_id: cid, client_secret: csec, refresh_token: rt, grant_type: 'refresh_token' }).toString();
-  const tokenRes = await new Promise((resolve, reject) => {
-    const req2 = https.request({ hostname: 'oauth2.googleapis.com', path: '/token', method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(postData) }
-    }, (r2) => { let d = ''; r2.on('data', c => d += c); r2.on('end', () => resolve(JSON.parse(d))); });
-    req2.on('error', reject); req2.write(postData); req2.end();
-  });
-  
-  if (!tokenRes.access_token) return res.json({ step: 'token', error: tokenRes, rt_preview: rt ? rt.slice(0,20)+'...' : 'MISSING' });
-  
-  // Step 2: call Calendar API
-  const calRes = await new Promise((resolve, reject) => {
-    const calReq = https.request({
-      hostname: 'www.googleapis.com',
-      path: '/calendar/v3/calendars/primary/events?maxResults=3&singleEvents=true&timeMin=' + new Date().toISOString(),
-      headers: { 'Authorization': 'Bearer ' + tokenRes.access_token }
-    }, (r2) => { let d = ''; r2.on('data', c => d += c); r2.on('end', () => resolve({ status: r2.statusCode, body: d })); });
-    calReq.on('error', reject); calReq.end();
-  });
-  
-  res.json({ step: 'calendar', status: calRes.status, body: calRes.body.slice(0, 500), rt_preview: rt.slice(0,20)+'...' });
-});
-
-// Actualizar Google refresh token en memoria sin redeploy
-app.post('/admin/google-token', (req, res) => {
-  const adminKey = process.env.ADMIN_KEY || '';
-  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
-  const { refresh_token } = req.body;
-  if (!refresh_token) return res.status(400).json({ error: 'Falta refresh_token' });
-  process.env.GOOGLE_REFRESH_TOKEN = refresh_token;
-  calendarModule.setRefreshToken(refresh_token);
-  console.log('Google refresh token actualizado en memoria:', refresh_token.slice(0, 20) + '...');
-  res.json({ ok: true, preview: refresh_token.slice(0, 20) + '...' });
-});
-
-// Debug temporal — borrar después
-app.get('/admin/debug-env', (req, res) => {
-  const adminKey = process.env.ADMIN_KEY || '';
-  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
-  const rt = process.env.GOOGLE_REFRESH_TOKEN || '';
-  res.json({
-    REFRESH_TOKEN_PREVIEW: rt.slice(0, 30) + '...',
-    REFRESH_TOKEN_LENGTH: rt.length,
-    CLIENT_ID_PREVIEW: (process.env.GOOGLE_CLIENT_ID || '').slice(0, 20) + '...',
-  });
-});
-
-startReminders();
-
 app.listen(PORT, () => {
   console.log(`Agente Claude corriendo en puerto ${PORT}`);
 });

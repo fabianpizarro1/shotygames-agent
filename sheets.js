@@ -759,4 +759,35 @@ async function marcarEntregado(fila) {
   });
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado };
+// ── STOCK (hoja PEND) ─────────────────────────────────────────
+async function leerStock() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:D' });
+  const rows = (res.data.values || []).slice(1).filter(r => r[0] && !r[0].toLowerCase().includes('total'));
+  return rows.map(r => ({
+    juego: r[0],
+    tengo: parseInt(r[1]) || 0,
+    necesito: parseInt(r[2]) || 0,
+    falta: parseInt(r[3]) || 0,
+  }));
+}
+
+async function actualizarStock(juego, cantidad) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:B' });
+  const rows = res.data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0]?.toLowerCase().includes(juego.toLowerCase())) {
+      await sheetsApi.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID,
+        range: `PEND!B${i + 1}`,
+        valueInputOption: 'RAW',
+        resource: { values: [[cantidad]] }
+      });
+      return { juego: rows[i][0], cantidad };
+    }
+  }
+  return null;
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };

@@ -189,6 +189,11 @@ Cuando Fabián haga preguntas sobre el estado general de los pedidos:
 Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
 Al responder PENDIENTES o POR_ESTADO, lista nombre, ciudad, productos y fecha.
 
+## Stock (hoja PEND)
+→ USA leer_stock cuando Fabián pregunte por el stock, si hay suficiente para despachar, o qué falta producir.
+→ USA actualizar_stock cuando Fabián diga que fabricó unidades nuevas o que el stock cambió.
+→ leer_stock compara automáticamente TENGO vs NECESITO y avisa si falta algo.
+
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
 - **Actualizar guía** de envío
@@ -492,6 +497,27 @@ async function executeTool(toolName, input) {
         `• ${p.NOMBRE} — ${p.CIUDAD} — ${p.PRODUCTOS} — ${p.ESTADO}`
       ).join('\n');
       return `📊 Pedidos hoy: ${hoy.total}\n\n${lista}`;
+
+    case 'leer_stock': {
+      const stock = await sheets.leerStock();
+      if (!stock.length) return 'No hay datos de stock en la hoja PEND.';
+      const lineas = stock.map(s => {
+        const icono = s.falta > 0 ? '❌' : '✅';
+        const alerta = s.falta > 0 ? ` ← FALTAN ${s.falta}` : '';
+        return `${icono} ${s.juego}: tengo ${s.tengo}, necesito ${s.necesito}${alerta}`;
+      });
+      const faltan = stock.filter(s => s.falta > 0);
+      const resumen = faltan.length
+        ? `\n⚠️ Hay ${faltan.length} producto(s) con faltante. Hay que producir antes de despachar.`
+        : `\n✅ Stock suficiente para todos los pedidos pendientes.`;
+      return `📦 *STOCK ACTUAL (hoja PEND):*\n\n${lineas.join('\n')}${resumen}`;
+    }
+
+    case 'actualizar_stock': {
+      const r = await sheets.actualizarStock(input.juego, input.cantidad);
+      if (!r) return `No encontré "${input.juego}" en la hoja PEND.`;
+      return `✅ Stock actualizado: ${r.juego} → ${r.cantidad} unidades`;
+    }
 
     default:
       return 'Herramienta no reconocida.';
