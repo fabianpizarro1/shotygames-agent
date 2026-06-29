@@ -1,52 +1,117 @@
 /**
- * notificaciones.js — Reportes automáticos y manuales del bot OPS
+ * notificaciones.js — Reportes automáticos de todos los bots
+ *
+ * OPS:   8am, 12pm, 3pm  — pedidos pendientes + stock
+ * DROPI: 10pm             — saldo DROPI
+ * CONTA: 8am              — total en cuentas
+ * CONTA: 10pm             — cierre del día (ingresos, gastos, saldos teóricos)
  */
 
 const https = require('https');
 const sheets = require('./sheets');
+const conta = require('./sheets-conta');
+const dropi = require('./dropi');
 
-const OPS_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const ADMIN_CHAT = process.env.TELEGRAM_ADMIN_IDS?.split(',')[0];
+const CHAT = process.env.TELEGRAM_ADMIN_IDS?.split(',')[0];
+const TOKENS = {
+  ops:      process.env.TELEGRAM_BOT_TOKEN,
+  conta:    process.env.TELEGRAM_CONTA_TOKEN,
+  dropi:    process.env.TELEGRAM_DROPI_TOKEN,
+  personal: process.env.TELEGRAM_PERSONAL_TOKEN,
+};
 
-function sendTelegramMsg(token, chatId, text) {
+// ── Helper: enviar mensaje Telegram ─────────────────────────
+function tg(bot, text) {
+  const token = TOKENS[bot];
+  if (!token || !CHAT) return Promise.resolve();
   return new Promise((resolve, reject) => {
-    const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' });
+    const body = JSON.stringify({ chat_id: CHAT, text, parse_mode: 'HTML' });
     const req = https.request({
       hostname: 'api.telegram.org',
       path: `/bot${token}/sendMessage`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
     }, res => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => resolve(JSON.parse(d)));
+      let d = ''; res.on('data', c => d += c); res.on('end', () => resolve(JSON.parse(d)));
     });
     req.on('error', reject);
-    req.write(body);
-    req.end();
+    req.write(body); req.end();
   });
 }
 
-async function enviarReporteOPS(hora = '') {
-  if (!OPS_TOKEN || !ADMIN_CHAT) {
-    console.log('[NOTIF] Sin token OPS o ADMIN_CHAT — omitiendo reporte');
-    return;
+function fechaHoyEC() {
+  return new Date().toLocaleDateString('es-EC', {
+    day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Guayaquil'
+  });
+}
+
+function horaEC() {
+  return new Date().toLocaleTimeString('es-EC', {
+    timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+// ── Helper: leer hoja de finanzas y filtrar por hoy ─────────
+async function leerMovimientosHoy() {
+  const SHEET_FIN = process.env.SHEETS_ID_FINANZAS;
+  const auth = (() => {
+    const { google } = require('googleapis');
+    const a = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    a.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+    return google.sheets({ version: 'v4', auth: a });
+  })();
+
+  const hoy = fechaHoyEC();
+
+  async function getHoja(nombre) {
+    const res = await auth.spreadsheets.values.get({ spreadsheetId: SHEET_FIN, range: `${nombre}!A:F` });
+    const rows = (res.data.values || []).slice(1);
+    return rows.filter(r => r[0] === hoy);
   }
 
+  const [gastos, ingresos, transferencias] = await Promise.all([
+    getHoja('GASTOS'), getHoja('INGRESOS'), getHoja('TRANSFERENCIAS')
+  ]);
+
+  // Calcular totales
+  const totalGastos = gastos.reduce((s, r) => s + (parseFloat(r[5]) || 0), 0);
+  const totalIngresos = ingresos.reduce((s, r) => s + (parseFloat(r[5]) || 0), 0);
+
+  // Movimiento por cuenta hoy
+  const movCuenta = {};
+  ingresos.forEach(r => {
+    const c = r[4]?.toUpperCase() || 'CAJA';
+    movCuenta[c] = (movCuenta[c] || 0) + (parseFloat(r[5]) || 0);
+  });
+  gastos.forEach(r => {
+    const c = r[4]?.toUpperCase() || 'CAJA';
+    movCuenta[c] = (movCuenta[c] || 0) - (parseFloat(r[5]) || 0);
+  });
+  transferencias.forEach(r => {
+    const sale = r[2]?.toUpperCase();
+    const entra = r[3]?.toUpperCase();
+    const val = parseFloat(r[5]) || 0;
+    if (sale) movCuenta[sale] = (movCuenta[sale] || 0) - val;
+    if (entra) movCuenta[entra] = (movCuenta[entra] || 0) + val;
+  });
+
+  return { gastos, ingresos, transferencias, totalGastos, totalIngresos, movCuenta };
+}
+
+// ════════════════════════════════════════════════════════════
+// BOT OPS — 8am / 12pm / 3pm
+// ════════════════════════════════════════════════════════════
+async function enviarReporteOPS(hora = '') {
+  if (!TOKENS.ops || !CHAT) return;
   try {
-    // Pedidos pendientes
     const reporte = await sheets.reportePedidos('todos', 'PENDIENTE');
     const totalPendientes = reporte?.totalPedidos ?? 0;
     const pedidos = reporte?.pedidos ?? [];
-
-    // Stock
     const stock = await sheets.leerStock();
 
-    // Construir mensaje
-    const ahora = hora || new Date().toLocaleTimeString('es-EC', { timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit' });
+    const ahora = hora || horaEC();
     let msg = `📦 <b>REPORTE OPS — ${ahora}</b>\n\n`;
 
-    // Pedidos pendientes
     if (totalPendientes === 0) {
       msg += `✅ Sin pedidos pendientes\n`;
     } else {
@@ -58,28 +123,115 @@ async function enviarReporteOPS(hora = '') {
         if (parseInt(p.parejas) > 0) prods.push(`${p.parejas} Parejas`);
         if (parseInt(p.enganchados) > 0) prods.push(`${p.enganchados} Eng`);
         if (parseInt(p.dados) > 0) prods.push(`${p.dados} Dados`);
-        const prodStr = prods.length ? ` — ${prods.join(', ')}` : '';
-        msg += `• ${p.nombre}${prodStr}\n`;
+        msg += `• ${p.nombre}${prods.length ? ` — ${prods.join(', ')}` : ''}\n`;
       });
       if (totalPendientes > 8) msg += `... y ${totalPendientes - 8} más\n`;
     }
 
-    // Stock
     if (stock.length > 0) {
-      msg += `\n📦 <b>STOCK ACTUAL:</b>\n`;
+      msg += `\n📦 <b>STOCK:</b>\n`;
       stock.forEach(s => {
-        const ok = s.falta <= 0;
-        const icono = ok ? '✅' : '❌';
-        const alertaFalta = !ok ? ` ← FALTAN ${s.falta}` : '';
-        msg += `${icono} ${s.juego}: ${s.tengo} (necesito: ${s.necesito})${alertaFalta}\n`;
+        msg += `${s.falta > 0 ? '❌' : '✅'} ${s.juego}: ${s.tengo}${s.falta > 0 ? ` ← FALTAN ${s.falta}` : ''}\n`;
       });
     }
 
-    await sendTelegramMsg(OPS_TOKEN, ADMIN_CHAT, msg);
-    console.log(`[NOTIF] Reporte OPS enviado — ${ahora}`);
+    await tg('ops', msg);
+    console.log(`[NOTIF] OPS enviado — ${ahora}`);
   } catch (err) {
-    console.error('[NOTIF] Error enviando reporte OPS:', err.message);
+    console.error('[NOTIF OPS]', err.message);
   }
 }
 
-module.exports = { enviarReporteOPS };
+// ════════════════════════════════════════════════════════════
+// BOT DROPI — 10pm — Saldo DROPI
+// ════════════════════════════════════════════════════════════
+async function enviarSaldoDropi() {
+  if (!TOKENS.dropi || !CHAT) return;
+  try {
+    const { saldo, congelado } = await dropi.getSaldoDropi();
+    const msg = `💰 <b>SALDO DROPI — ${horaEC()}</b>\n\n<b>$${parseFloat(saldo || 0).toFixed(2)}</b>${congelado ? '\n\n⚠️ Saldo congelado' : ''}`;
+    await tg('dropi', msg);
+    console.log('[NOTIF] Saldo DROPI enviado');
+  } catch (err) {
+    console.error('[NOTIF DROPI]', err.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// BOT CONTA — 8am — Total en cuentas
+// ════════════════════════════════════════════════════════════
+async function enviarSaldosMañana() {
+  if (!TOKENS.conta || !CHAT) return;
+  try {
+    const { saldos, total } = await conta.leerSaldosReales();
+
+    let msg = `💰 <b>BUENOS DÍAS — SALDOS AL ${fechaHoyEC()}</b>\n\n`;
+    saldos.forEach(s => {
+      msg += `• ${s.cuenta}: <b>$${s.saldo.toFixed(2)}</b> (al ${s.actualizado})\n`;
+    });
+    msg += `\n<b>TOTAL: $${total.toFixed(2)}</b>`;
+
+    if (total < 200) msg += `\n\n⚠️ Liquidez crítica — menos de $200.`;
+
+    await tg('conta', msg);
+    console.log('[NOTIF] Saldos mañana enviado');
+  } catch (err) {
+    console.error('[NOTIF CONTA mañana]', err.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// BOT CONTA — 10pm — Cierre del día
+// ════════════════════════════════════════════════════════════
+async function enviarCierreNoche() {
+  if (!TOKENS.conta || !CHAT) return;
+  try {
+    const { gastos, ingresos, transferencias, totalGastos, totalIngresos, movCuenta } = await leerMovimientosHoy();
+    const { saldos, total: totalAnterior } = await conta.leerSaldosReales();
+
+    const netoDia = totalIngresos - totalGastos;
+
+    let msg = `📊 <b>CIERRE DEL DÍA — ${fechaHoyEC()}</b>\n\n`;
+
+    // Resumen del día
+    msg += `✅ <b>INGRESÓ:</b> $${totalIngresos.toFixed(2)}`;
+    if (ingresos.length) {
+      ingresos.slice(0, 5).forEach(r => msg += `\n  · ${r[2]} — $${parseFloat(r[5]).toFixed(2)}`);
+    }
+
+    msg += `\n\n❌ <b>SALIÓ:</b> $${totalGastos.toFixed(2)}`;
+    if (gastos.length) {
+      gastos.slice(0, 5).forEach(r => msg += `\n  · ${r[2]} — $${parseFloat(r[5]).toFixed(2)}`);
+    }
+
+    if (transferencias.length) {
+      msg += `\n\n🔄 <b>TRANSFERENCIAS:</b>`;
+      transferencias.forEach(r => msg += `\n  · $${parseFloat(r[5]).toFixed(2)} de ${r[2]} → ${r[3]}`);
+    }
+
+    msg += `\n\n<b>NETO DEL DÍA: ${netoDia >= 0 ? '+' : ''}$${netoDia.toFixed(2)}</b>`;
+
+    // Saldos teóricos (último real conocido + movimientos de hoy)
+    msg += `\n\n💼 <b>SALDOS TEÓRICOS (lo que debería haber):</b>`;
+    const saldoMap = {};
+    saldos.forEach(s => saldoMap[s.cuenta] = s.saldo);
+
+    // Aplicar movimientos del día
+    Object.entries(movCuenta).forEach(([cuenta, delta]) => {
+      saldoMap[cuenta] = (saldoMap[cuenta] || 0) + delta;
+    });
+
+    Object.entries(saldoMap).forEach(([cuenta, saldo]) => {
+      msg += `\n• ${cuenta}: $${saldo.toFixed(2)}`;
+    });
+
+    msg += `\n\n<i>Dime cuánto hay real en cada cuenta para actualizar y cuadrar. Ejemplo:\nCaja: 15, Pichincha: 320, Payphone: 80</i>`;
+
+    await tg('conta', msg);
+    console.log('[NOTIF] Cierre noche enviado');
+  } catch (err) {
+    console.error('[NOTIF CONTA noche]', err.message);
+  }
+}
+
+module.exports = { enviarReporteOPS, enviarSaldoDropi, enviarSaldosMañana, enviarCierreNoche };

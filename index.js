@@ -426,34 +426,57 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── NOTIFICACIONES AUTOMÁTICAS OPS ──────────────────────────
+// ── NOTIFICACIONES AUTOMÁTICAS ───────────────────────────────
 try {
   const cron = require('node-cron');
-  const { enviarReporteOPS } = require('./notificaciones');
+  const { enviarReporteOPS, enviarSaldoDropi, enviarSaldosMañana, enviarCierreNoche } = require('./notificaciones');
 
-  // 8:00am Ecuador (UTC-5 = 13:00 UTC)
-  cron.schedule('0 13 * * *', () => enviarReporteOPS('8:00 AM'), { timezone: 'UTC' });
-  // 12:00pm Ecuador (17:00 UTC)
-  cron.schedule('0 17 * * *', () => enviarReporteOPS('12:00 PM'), { timezone: 'UTC' });
-  // 3:00pm Ecuador (20:00 UTC)
-  cron.schedule('0 20 * * *', () => enviarReporteOPS('3:00 PM'), { timezone: 'UTC' });
+  // OPS: 8am Ecuador = 13:00 UTC
+  cron.schedule('0 13 * * *', () => enviarReporteOPS('8:00 AM'));
+  // OPS: 12pm Ecuador = 17:00 UTC
+  cron.schedule('0 17 * * *', () => enviarReporteOPS('12:00 PM'));
+  // OPS: 3pm Ecuador = 20:00 UTC
+  cron.schedule('0 20 * * *', () => enviarReporteOPS('3:00 PM'));
 
-  console.log('[CRON] Notificaciones OPS programadas: 8am, 12pm, 3pm Ecuador');
+  // DROPI: 10pm Ecuador = 03:00 UTC (+1 día)
+  cron.schedule('0 3 * * *', () => enviarSaldoDropi());
+
+  // CONTA: 8am Ecuador = 13:00 UTC
+  cron.schedule('0 13 * * *', () => enviarSaldosMañana());
+  // CONTA: 10pm Ecuador = 03:00 UTC (+1 día)
+  cron.schedule('0 3 * * *', () => enviarCierreNoche());
+
+  console.log('[CRON] Notificaciones: OPS 8am/12pm/3pm | DROPI 10pm | CONTA 8am+10pm');
 } catch (e) {
   console.error('[CRON] Error al iniciar notificaciones:', e.message);
 }
 
-// Endpoint para reporte manual desde Telegram o Claude Code
+// Endpoints admin manuales
 app.get('/admin/reporte-ops', async (req, res) => {
-  const key = req.headers['x-admin-key'];
-  if (key !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
   try {
     const { enviarReporteOPS } = require('./notificaciones');
     await enviarReporteOPS('Manual');
     res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/admin/saldo-dropi', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarSaldoDropi } = require('./notificaciones');
+    await enviarSaldoDropi();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/admin/cierre-conta', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarCierreNoche } = require('./notificaciones');
+    await enviarCierreNoche();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3500;
