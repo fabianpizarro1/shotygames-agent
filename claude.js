@@ -3,7 +3,6 @@ const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
-const { verificarCliente } = require('./dropi');
 const { sendDocument } = require('./evolution');
 const { uploadPdf } = require('./drive');
 
@@ -106,31 +105,6 @@ Responde confirmando el registro sin mencionar guía ni DROPI.
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
 
-## Registrar gastos, ingresos y transferencias
-
-Cuando Fabián diga algo como "gasto X en Y" / "me pagaron X por Y" / "transferí X de A a B":
-1. Infiere la categoría y cuenta según las listas de abajo
-2. Confirma antes de registrar:
-   "✅ [TIPO]: $[valor] | [CATEGORIA] | [CUENTA]. ¿Confirmas?"
-3. Cuando confirme, ejecuta el tool correspondiente
-
-### Cuentas (mapea del mensaje a estos valores exactos)
-CAJA (efectivo, cash) | PICHINCHA | GUAYAQUIL | PACÍFICO | PAYPHONE | DROPI | PRODUBANCO
-
-### Categorías de GASTOS (elige la más cercana al contexto)
-COSTOS - VASOS | COSTOS - LACAS | COSTOS - INSUMOS | COSTOS - CAJAS JENGAS | COSTOS - IMPRENTA | COSTOS - ENGANCHADOS | COSTOS - TABLERO MDF JENGAS | COSTOS - CORTE TABLERO MDF JENGAS | COSTOS - EXTRAS | COSTOS - ADHESIVOS
-SUELDOS - FABIAN | SUELDOS - NEREA | SUELDOS - TALLER
-MARKETING Y PUBLICIDAD - PUBLICIDAD META
-ADMINISTRATIVOS - INTERNET | ADMINISTRATIVOS - LUZ | ADMINISTRATIVOS - PLAN CLARO | ADMINISTRATIVOS - HOSTING | ADMINISTRATIVOS - LOVABLE | ADMINISTRATIVOS - CANVA
-DEUDAS - COOPSI | DEUDAS - TJT PACIFICO | DEUDAS - OTROS
-CARRO - GASOLINA | CARRO - LAVADAS | CARRO - MANTENIMIENTOS | CARRO - PARKING | CARRO - EXTRAS
-AHORRO | DEVOLUCIONES | PERDIDAS | COMISIONES TRANSFERENCIAS | COMISIONES PAYPHONE | ENVIOS / ENTREGAS ADICIONALES | RUEDA | EXTRAS | SALIDA DE DIVISAS | AJUSTES
-
-### Categorías de INGRESOS (elige la más cercana al contexto)
-INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
-
-**Todo en MAYÚSCULAS** al registrar.
-
 ## Crear guía en DROPI (pedido ya existente)
 Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
 
@@ -189,12 +163,6 @@ Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las g
 → Si algún PDF falla, avisa cuáles no se pudieron incluir.
 → NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
 
-## Verificar cliente en DROPI
-Cuando Fabián mande un número de teléfono preguntando si el cliente es confiable, si acepta contraentrega, o quiera saber su historial en DROPI:
-→ USA verificar_cliente_dropi con ese teléfono.
-→ Devuelve total de pedidos, entregados y devoluciones en toda la plataforma.
-→ Úsalo también cuando diga "verifica este número", "cómo está este cliente en DROPI", "cuántas devoluciones tiene".
-
 ## Editar pedidos
 Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
 → USA actualizar_pedido con el nombre y los cambios.
@@ -220,6 +188,11 @@ Cuando Fabián haga preguntas sobre el estado general de los pedidos:
 
 Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
 Al responder PENDIENTES o POR_ESTADO, lista nombre, ciudad, productos y fecha.
+
+## Stock (hoja PEND)
+→ USA leer_stock cuando Fabián pregunte por el stock, si hay suficiente para despachar, o qué falta producir.
+→ USA actualizar_stock cuando Fabián diga que fabricó unidades nuevas o que el stock cambió.
+→ leer_stock compara automáticamente TENGO vs NECESITO y avisa si falta algo.
 
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
@@ -350,34 +323,21 @@ async function executeTool(toolName, input) {
       return `✅ ${nombreReal} — Guía *${found.guia}*${envioStr}${pdfStr}`;
     }
 
-    case 'registrar_gasto': {
-      await sheets.registrarMovimiento('GASTOS', input);
-      return `✅ Gasto registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
-    }
-
-    case 'registrar_ingreso': {
-      await sheets.registrarMovimiento('INGRESOS', input);
-      return `✅ Ingreso registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
-    }
-
-    case 'registrar_transferencia': {
-      await sheets.registrarMovimiento('TRANSFERENCIAS', input);
-      return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
-    }
-
     case 'obtener_guia_pedido': {
       const res = await sheets.obtenerGuiaPedido(input.nombre);
       if (!res) return `No encontré ningún pedido para "${input.nombre}".`;
       if (res.candidatos) {
-        const lista = res.candidatos.map((c, i) =>
-          `${i + 1}. ${c.nombre} — ${c.fecha}${c.guia ? ' — Guía: ' + c.guia : ' — sin guía'}`
-        ).join('\n');
-        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿De cuál quieres la guía?`;
+        const lista = res.candidatos.map((c, i) => {
+          const guiaInfo = c.guia ? ` — Guía: ${c.guia}` : ' — sin guía';
+          const pdfInfo = c.pdfUrl ? `\n   📄 ${c.pdfUrl}` : '';
+          return `${i + 1}. ${c.nombre} — ${c.fecha}${guiaInfo}${pdfInfo}`;
+        }).join('\n');
+        return `Hay varios pedidos para "${input.nombre}":\n\n${lista}`;
       }
       if (!res.guia) {
         return `El pedido de ${res.nombre} (${res.fecha}) aún no tiene guía generada.`;
       }
-      const pdfPart = res.pdfUrl ? `\n\n📄 ${res.pdfUrl}` : '';
+      const pdfPart = res.pdfUrl ? `\n📄 ${res.pdfUrl}` : '';
       return `📦 *${res.nombre}* — ${res.fecha}\nGuía: *${res.guia}*${pdfPart}`;
     }
 
@@ -443,11 +403,23 @@ async function executeTool(toolName, input) {
       });
       const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
 
-      // Enviar por WhatsApp — esto sí es crítico, si falla lanza el error
-      await sendDocument(input._from, pdfFinal, fileName);
+      // Enviar el PDF — usa callback de Telegram si está disponible, si no manda por WhatsApp
+      if (input._sendDocument) {
+        await input._sendDocument(pdfFinal, fileName);
+      } else {
+        await sendDocument(input._from, pdfFinal, fileName);
+      }
 
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
+
+      // Marcar como impresas en DROPI — no crítico, no bloquea
+      const dropiMod = require('./dropi');
+      for (const d of descargados) {
+        if (d.dropiId) {
+          dropiMod.marcarImpresaDropi(d.dropiId).catch(e => console.error(`marcarImpresaDropi ${d.dropiId}:`, e.message));
+        }
+      }
 
       // Subir a Drive — no crítico, no bloquea la respuesta
       let driveMsg = '';
@@ -518,28 +490,6 @@ async function executeTool(toolName, input) {
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
     }
 
-    case 'verificar_cliente_dropi': {
-      const tel = input.telefono;
-      const data = await verificarCliente(tel);
-
-      // Si la respuesta tiene todos nulos, mostrar raw para debug
-      if (data.total === null && data.entregados === null && data.devueltos === null) {
-        const keys = data._keys?.length ? `Keys: ${data._keys.join(', ')}` : '';
-        const resumen = JSON.stringify(data.raw)?.slice(0, 600);
-        return `📋 DROPI no devolvió datos para *${tel}*.\n${keys}\nRaw: ${resumen}`;
-      }
-
-      const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
-      const nombre = data.nombre ? `\n👤 ${data.nombre}` : '';
-      const pendientes = data.pendientes !== null ? `\n⏳ Pendientes: ${data.pendientes}` : '';
-
-      return `📊 Reputación DROPI para *${tel}*${nombre}
-
-📦 Total pedidos: *${data.total ?? '?'}*
-✅ Entregados: *${data.entregados ?? '?'}*
-↩️ Devoluciones: *${data.devueltos ?? '?'}*${pendientes}${clasificacion}`;
-    }
-
     case 'pedidos_hoy':
       const hoy = await sheets.getPedidosHoy();
       if (!hoy.total) return 'No hay pedidos registrados hoy.';
@@ -548,12 +498,33 @@ async function executeTool(toolName, input) {
       ).join('\n');
       return `📊 Pedidos hoy: ${hoy.total}\n\n${lista}`;
 
+    case 'leer_stock': {
+      const stock = await sheets.leerStock();
+      if (!stock.length) return 'No hay datos de stock en la hoja PEND.';
+      const lineas = stock.map(s => {
+        const icono = s.falta > 0 ? '❌' : '✅';
+        const alerta = s.falta > 0 ? ` ← FALTAN ${s.falta}` : '';
+        return `${icono} ${s.juego}: tengo ${s.tengo}, necesito ${s.necesito}${alerta}`;
+      });
+      const faltan = stock.filter(s => s.falta > 0);
+      const resumen = faltan.length
+        ? `\n⚠️ Hay ${faltan.length} producto(s) con faltante. Hay que producir antes de despachar.`
+        : `\n✅ Stock suficiente para todos los pedidos pendientes.`;
+      return `📦 *STOCK ACTUAL (hoja PEND):*\n\n${lineas.join('\n')}${resumen}`;
+    }
+
+    case 'actualizar_stock': {
+      const r = await sheets.actualizarStock(input.juego, input.cantidad);
+      if (!r) return `No encontré "${input.juego}" en la hoja PEND.`;
+      return `✅ Stock actualizado: ${r.juego} → ${r.cantidad} unidades`;
+    }
+
     default:
       return 'Herramienta no reconocida.';
   }
 }
 
-async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null) {
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null, sendDocumentCallback = null) {
   let userContent;
   if (imageBase64) {
     userContent = [
@@ -581,7 +552,11 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
     for (const block of response.content) {
       if (block.type === 'tool_use') {
         // Inyectar _from para tools que necesiten enviar archivos de vuelta
-        const inputConFrom = fromPhone ? { ...block.input, _from: fromPhone } : block.input;
+        const inputConFrom = {
+          ...block.input,
+          _from: fromPhone,
+          ...(sendDocumentCallback ? { _sendDocument: sendDocumentCallback } : {})
+        };
         const toolResult = await executeTool(block.name, inputConFrom);
         toolResults.push({
           type: 'tool_result',

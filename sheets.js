@@ -422,7 +422,10 @@ async function obtenerGuiaPedido(nombre) {
       candidatos: matches.map(m => ({
         nombre: m.nombre,
         fecha:  m.fecha,
-        guia:   m.guia
+        guia:   m.guia || null,
+        pdfUrl: (m.guia && m.dropiId)
+          ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${m.dropiId}-GUIA-${m.guia}.pdf`
+          : null
       }))
     };
   }
@@ -704,4 +707,87 @@ async function marcarGuiasImpresas(rowNums, impresoIdx) {
   console.log(`marcarGuiasImpresas: ${rowNums.length} filas marcadas`);
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas };
+// Obtiene pedidos en estado ENVIADO que tienen un DROPI order ID guardado
+// Para sincronizar su estado contra DROPI y detectar entregas/pagos
+async function getOrdenesEnviadas() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxTel    = headers.indexOf('TELEFONO');
+  const idxEstado = headers.indexOf('ESTADO');
+  const idxGuia   = headers.indexOf('GUIA');
+
+  // DROPI order ID está en columna AH (índice 33) guardado como "DROPI:XXXXX"
+  const idxDropiId = 33;
+
+  const resultado = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxNombre]) continue;
+    const estado = row[idxEstado] || '';
+    if (estado !== 'ENVIADO' && estado !== 'PENDIENTE') continue;
+    const dropiCell = row[idxDropiId] || '';
+    const dropiId = dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+    resultado.push({
+      fila: i + 1,
+      nombre: row[idxNombre] || '',
+      telefono: row[idxTel] || '',
+      estado,
+      guia: row[idxGuia] || '',
+      dropiId
+    });
+  }
+  return resultado;
+}
+
+// Marca un pedido como ENTREGADO en Sheets por número de fila
+async function marcarEntregado(fila) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A1:AJ1' });
+  const headers = res.data.values?.[0] || [];
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxEstado === -1) throw new Error('Columna ESTADO no encontrada');
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(idxEstado)}${fila}`,
+    valueInputOption: 'RAW',
+    resource: { values: [['ENTREGADO']] }
+  });
+}
+
+// ── STOCK (hoja PEND) ─────────────────────────────────────────
+async function leerStock() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:D' });
+  const rows = (res.data.values || []).slice(1).filter(r => r[0] && !r[0].toLowerCase().includes('total'));
+  return rows.map(r => ({
+    juego: r[0],
+    tengo: parseInt(r[1]) || 0,
+    necesito: parseInt(r[2]) || 0,
+    falta: parseInt(r[3]) || 0,
+  }));
+}
+
+async function actualizarStock(juego, cantidad) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:B' });
+  const rows = res.data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0]?.toLowerCase().includes(juego.toLowerCase())) {
+      await sheetsApi.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID,
+        range: `PEND!B${i + 1}`,
+        valueInputOption: 'RAW',
+        resource: { values: [[cantidad]] }
+      });
+      return { juego: rows[i][0], cantidad };
+    }
+  }
+  return null;
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };
