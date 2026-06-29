@@ -45,6 +45,17 @@ function fechaHoyEC() {
   });
 }
 
+function calcularDiasPendiente(fechaStr) {
+  if (!fechaStr) return 0;
+  const parts = fechaStr.split('/');
+  if (parts.length !== 3) return 0;
+  const [d, m, y] = parts;
+  const fecha = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((hoy - fecha) / 86400000));
+}
+
 function horaEC() {
   return new Date().toLocaleTimeString('es-EC', {
     timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit'
@@ -104,8 +115,8 @@ async function leerMovimientosHoy() {
 async function enviarReporteOPS(hora = '') {
   if (!TOKENS.ops || !CHAT) return;
   try {
-    const reporte = await sheets.reportePedidos('todos', 'PENDIENTE');
-    const totalPendientes = reporte?.totalPedidos ?? 0;
+    const reporte = await sheets.reportePedidos('PENDIENTES', 'PENDIENTE');
+    const totalPendientes = reporte?.total ?? 0;
     const pedidos = reporte?.pedidos ?? [];
     const stock = await sheets.leerStock();
 
@@ -117,13 +128,11 @@ async function enviarReporteOPS(hora = '') {
     } else {
       msg += `🔴 <b>PENDIENTES: ${totalPendientes}</b>\n`;
       pedidos.slice(0, 8).forEach(p => {
-        const prods = [];
-        if (parseInt(p.normal) > 0) prods.push(`${p.normal} Normal`);
-        if (parseInt(p.picante) > 0) prods.push(`${p.picante} Picante`);
-        if (parseInt(p.parejas) > 0) prods.push(`${p.parejas} Parejas`);
-        if (parseInt(p.enganchados) > 0) prods.push(`${p.enganchados} Eng`);
-        if (parseInt(p.dados) > 0) prods.push(`${p.dados} Dados`);
-        msg += `• ${p.nombre}${prods.length ? ` — ${prods.join(', ')}` : ''}\n`;
+        const dias = calcularDiasPendiente(p.fecha);
+        const diasStr = dias >= 1 ? ` ⏳${dias}d` : '';
+        const ciudad = p.ciudad ? ` — ${p.ciudad}` : '';
+        const prods = p.productos || '';
+        msg += `• ${p.nombre}${diasStr}${ciudad}${prods ? ` — ${prods}` : ''}\n`;
       });
       if (totalPendientes > 8) msg += `... y ${totalPendientes - 8} más\n`;
     }

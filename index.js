@@ -431,22 +431,22 @@ try {
   const cron = require('node-cron');
   const { enviarReporteOPS, enviarSaldoDropi, enviarSaldosMañana, enviarCierreNoche } = require('./notificaciones');
 
-  // OPS: 8am Ecuador = 13:00 UTC
-  cron.schedule('0 13 * * *', () => enviarReporteOPS('8:00 AM'));
-  // OPS: 12pm Ecuador = 17:00 UTC
-  cron.schedule('0 17 * * *', () => enviarReporteOPS('12:00 PM'));
-  // OPS: 3pm Ecuador = 20:00 UTC
-  cron.schedule('0 20 * * *', () => enviarReporteOPS('3:00 PM'));
+  // OPS: 10am Ecuador lun-vie = 15:00 UTC
+  cron.schedule('0 15 * * 1-5', () => enviarReporteOPS('10:00 AM'));
+  // OPS: 12pm Ecuador lun-vie = 17:00 UTC
+  cron.schedule('0 17 * * 1-5', () => enviarReporteOPS('12:00 PM'));
+  // OPS: 3pm Ecuador lun-vie = 20:00 UTC
+  cron.schedule('0 20 * * 1-5', () => enviarReporteOPS('3:00 PM'));
 
   // DROPI: 10pm Ecuador = 03:00 UTC (+1 día)
   cron.schedule('0 3 * * *', () => enviarSaldoDropi());
 
-  // CONTA: 8am Ecuador = 13:00 UTC
-  cron.schedule('0 13 * * *', () => enviarSaldosMañana());
+  // CONTA: 10am Ecuador lun-vie = 15:00 UTC
+  cron.schedule('0 15 * * 1-5', () => enviarSaldosMañana());
   // CONTA: 10pm Ecuador = 03:00 UTC (+1 día)
   cron.schedule('0 3 * * *', () => enviarCierreNoche());
 
-  console.log('[CRON] Notificaciones: OPS 8am/12pm/3pm | DROPI 10pm | CONTA 8am+10pm');
+  console.log('[CRON] Notificaciones: OPS 10am/12pm/3pm lun-vie | DROPI 10pm | CONTA 10am lun-vie + 10pm');
 } catch (e) {
   console.error('[CRON] Error al iniciar notificaciones:', e.message);
 }
