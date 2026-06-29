@@ -40,7 +40,7 @@ INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
 Cada noche a las 10pm recibes una notificación automática con el resumen del día y los saldos teóricos.
 Después, Fabián te enviará cuánto hay REAL en cada cuenta (en el formato que quiera, ej: "Caja: 20, Pichincha: 300").
 Cuando eso pase:
-1. Usa `actualizar_saldo` para cada cuenta que mencione
+1. Usa la herramienta actualizar_saldo para cada cuenta que mencione
 2. Compara el saldo real reportado con el saldo teórico que calculó la notificación
 3. Muestra la diferencia por cuenta: ✅ si cuadra (diferencia < $1) o ❌ si hay diferencia con el monto exacto
 4. Si hay diferencias, sugiere dónde puede estar el error (movimiento no registrado, etc.)
