@@ -422,7 +422,10 @@ async function obtenerGuiaPedido(nombre) {
       candidatos: matches.map(m => ({
         nombre: m.nombre,
         fecha:  m.fecha,
-        guia:   m.guia
+        guia:   m.guia || null,
+        pdfUrl: (m.guia && m.dropiId)
+          ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${m.dropiId}-GUIA-${m.guia}.pdf`
+          : null
       }))
     };
   }
@@ -660,6 +663,159 @@ async function reportePedidos(tipo, filtroEstado) {
   return { error: 'Tipo no reconocido. Usa: PENDIENTES, PRODUCTOS_PENDIENTES, RESUMEN, POR_ESTADO, OPS_COMPLETO' };
 }
 
+// Devuelve pedidos en estado PENDIENTE que tienen guía y aún no fueron impresos.
+// Requiere columna "IMPRESO" (checkbox) en el Sheet — la busca por nombre.
+async function getGuiasParaImprimir() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const nombreIdx  = headers.indexOf('NOMBRE');
+  const estadoIdx  = headers.indexOf('ESTADO');
+  const guiaIdx    = headers.indexOf('GUIA');
+  const impresoIdx = headers.indexOf('IMPRESO');
+  let dropiColIdx  = headers.indexOf('Softr Record ID');
+  if (dropiColIdx === -1) dropiColIdx = 33;
+
+  if (impresoIdx === -1) {
+    console.warn('getGuiasParaImprimir: columna IMPRESO no encontrada en el Sheet');
+  }
+
+  const guias = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[nombreIdx]) continue;
+
+    // Solo pedidos PENDIENTES
+    if ((r[estadoIdx] || '').toUpperCase() !== 'PENDIENTE') continue;
+
+    // Solo con guía generada
+    const guia = r[guiaIdx] || '';
+    if (!guia) continue;
+
+    // Solo los que aún NO están impresos
+    const impreso = r[impresoIdx];
+    if (impreso === 'TRUE' || impreso === true) continue;
+
+    // Necesitamos el DROPI order ID para la URL del PDF
+    const dropiRaw = String(r[dropiColIdx] || '');
+    const dropiId  = dropiRaw.startsWith('DROPI:') ? dropiRaw.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+
+    guias.push({
+      nombre:  r[nombreIdx],
+      guia,
+      dropiId,
+      rowNum:  i + 1,
+      pdfUrl:  `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
+    });
+  }
+
+  return { guias, impresoIdx };
+}
+
+// Marca IMPRESO = TRUE en las filas indicadas (después de generar el PDF)
+async function marcarGuiasImpresas(rowNums, impresoIdx) {
+  if (!rowNums.length || impresoIdx === -1) return;
+  const sheetsApi = await getSheets();
+  const updates = rowNums.map(rowNum => ({
+    range: `PEDIDOS!${idxToCol(impresoIdx)}${rowNum}`,
+    values: [[true]]
+  }));
+  await sheetsApi.spreadsheets.values.batchUpdate({
+    spreadsheetId: SHEETS_ID,
+    resource: { valueInputOption: 'RAW', data: updates }
+  });
+  console.log(`marcarGuiasImpresas: ${rowNums.length} filas marcadas`);
+}
+
+// Obtiene pedidos en estado ENVIADO que tienen un DROPI order ID guardado
+// Para sincronizar su estado contra DROPI y detectar entregas/pagos
+async function getOrdenesEnviadas() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxTel    = headers.indexOf('TELEFONO');
+  const idxEstado = headers.indexOf('ESTADO');
+  const idxGuia   = headers.indexOf('GUIA');
+
+  // DROPI order ID está en columna AH (índice 33) guardado como "DROPI:XXXXX"
+  const idxDropiId = 33;
+
+  const resultado = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxNombre]) continue;
+    const estado = row[idxEstado] || '';
+    if (estado !== 'ENVIADO' && estado !== 'PENDIENTE') continue;
+    const dropiCell = row[idxDropiId] || '';
+    const dropiId = dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+    resultado.push({
+      fila: i + 1,
+      nombre: row[idxNombre] || '',
+      telefono: row[idxTel] || '',
+      estado,
+      guia: row[idxGuia] || '',
+      dropiId
+    });
+  }
+  return resultado;
+}
+
+// Marca un pedido como ENTREGADO en Sheets por número de fila
+async function marcarEntregado(fila) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A1:AJ1' });
+  const headers = res.data.values?.[0] || [];
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxEstado === -1) throw new Error('Columna ESTADO no encontrada');
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(idxEstado)}${fila}`,
+    valueInputOption: 'RAW',
+    resource: { values: [['ENTREGADO']] }
+  });
+}
+
+// ── STOCK (hoja PEND) ─────────────────────────────────────────
+async function leerStock() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:D' });
+  const rows = (res.data.values || []).slice(1).filter(r => r[0] && !r[0].toLowerCase().includes('total'));
+  return rows.map(r => ({
+    juego: r[0],
+    tengo: parseInt(r[1]) || 0,
+    necesito: parseInt(r[2]) || 0,
+    falta: parseInt(r[3]) || 0,
+  }));
+}
+
+async function actualizarStock(juego, cantidad) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEND!A:B' });
+  const rows = res.data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0]?.toLowerCase().includes(juego.toLowerCase())) {
+      await sheetsApi.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID,
+        range: `PEND!B${i + 1}`,
+        valueInputOption: 'RAW',
+        resource: { values: [[cantidad]] }
+      });
+      return { juego: rows[i][0], cantidad };
+    }
+  }
+  return null;
+}
+
 // Cambia el estado de múltiples pedidos en batch.
 // nuevoEstado: estado a asignar (ej: ENVIADO)
 // excluirNombres: array de nombres a excluir (fuzzy, opcional)
@@ -700,4 +856,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };

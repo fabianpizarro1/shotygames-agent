@@ -74,51 +74,6 @@ const tools = [
     }
   },
   {
-    name: "registrar_gasto",
-    description: "Registra un gasto en la hoja GASTOS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        categoria: { type: "string", description: "Categoría del gasto (ej: MADERA, PUBLICIDAD, ENVIO, ARRIENDO)" },
-        observaciones: { type: "string", description: "Descripción o detalle del gasto" },
-        cuenta: { type: "string", description: "Cuenta desde donde se pagó: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        valor: { type: "string", description: "Monto del gasto" },
-        fecha: { type: "string", description: "Fecha del gasto (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor"]
-    }
-  },
-  {
-    name: "registrar_ingreso",
-    description: "Registra un ingreso en la hoja INGRESOS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        categoria: { type: "string", description: "Categoría del ingreso (ej: VENTA, DIGITAL, OTRO)" },
-        observaciones: { type: "string", description: "Descripción o detalle del ingreso" },
-        cuenta: { type: "string", description: "Cuenta donde se recibió: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        valor: { type: "string", description: "Monto del ingreso" },
-        fecha: { type: "string", description: "Fecha del ingreso (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor"]
-    }
-  },
-  {
-    name: "registrar_transferencia",
-    description: "Registra una transferencia entre cuentas en la hoja TRANSFERENCIAS del Sheet de finanzas.",
-    input_schema: {
-      type: "object",
-      properties: {
-        sale: { type: "string", description: "Cuenta desde donde sale el dinero: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
-        entra: { type: "string", description: "Cuenta donde entra el dinero" },
-        motivo: { type: "string", description: "Motivo o descripción de la transferencia" },
-        valor: { type: "string", description: "Monto de la transferencia" },
-        fecha: { type: "string", description: "Fecha (dd/mm/yyyy). Si no se indica, usa hoy." }
-      },
-      required: ["valor", "sale", "entra"]
-    }
-  },
-  {
     name: "sincronizar_guia_dropi",
     description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
     input_schema: {
@@ -215,6 +170,15 @@ const tools = [
     }
   },
   {
+    name: "imprimir_guias",
+    description: "Descarga los PDFs de todos los pedidos en estado PENDIENTE que aún no han sido impresos, los combina en un PDF con 4 guías por hoja A4 y te lo envía por WhatsApp. Úsalo cuando Fabián diga 'imprime las guías', 'mándame las guías', 'necesito las guías para imprimir', etc. NO necesita ningún parámetro — USA INMEDIATAMENTE sin pedir confirmación.",
+    input_schema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
+  },
+  {
     name: "reporte_pedidos",
     description: "Consultas y reportes sobre pedidos de TODAS las fechas (no solo hoy). Lee el historial completo de Sheets. Úsalo cuando Fabián pregunte cuántos pedidos hay pendientes en total, qué productos faltan enviar, resumen general de estados, pedidos enviados, etc.",
     input_schema: {
@@ -230,6 +194,29 @@ const tools = [
         }
       },
       required: ["tipo"]
+    }
+  },
+  {
+    name: "leer_stock",
+    description: "Lee el stock actual de la hoja PEND: cuántas unidades hay de cada producto (TENGO), cuántas se necesitan para pedidos pendientes (NECESITO) y cuántas faltan (FALTA). Úsalo cuando Fabián pregunte cuánto stock hay, si alcanza para despachar, o qué falta producir.",
+    input_schema: { type: "object", properties: {} }
+  },
+  {
+    name: "actualizar_stock",
+    description: "Actualiza el stock (columna TENGO) de un producto en la hoja PEND. Úsalo cuando Fabián diga que acaba de fabricar unidades o que el stock cambió.",
+    input_schema: {
+      type: "object",
+      properties: {
+        juego: {
+          type: "string",
+          description: "Nombre del juego a actualizar (ej: Torre Normal, Torre Picante, Torre Parejas, Enganchados, Dados)"
+        },
+        cantidad: {
+          type: "number",
+          description: "Nueva cantidad en stock (número total que hay ahora, no el incremento)"
+        }
+      },
+      required: ["juego", "cantidad"]
     }
   }
 ];

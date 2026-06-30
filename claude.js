@@ -618,6 +618,27 @@ async function executeTool(toolName, input) {
       ).join('\n');
       return `📊 Pedidos hoy: ${hoy.total}\n\n${lista}`;
 
+    case 'leer_stock': {
+      const stock = await sheets.leerStock();
+      if (!stock.length) return 'No hay datos de stock en la hoja PEND.';
+      const lineas = stock.map(s => {
+        const icono = s.falta > 0 ? '❌' : '✅';
+        const alerta = s.falta > 0 ? ` ← FALTAN ${s.falta}` : '';
+        return `${icono} ${s.juego}: tengo ${s.tengo}, necesito ${s.necesito}${alerta}`;
+      });
+      const faltan = stock.filter(s => s.falta > 0);
+      const resumen = faltan.length
+        ? `\n⚠️ Hay ${faltan.length} producto(s) con faltante. Hay que producir antes de despachar.`
+        : `\n✅ Stock suficiente para todos los pedidos pendientes.`;
+      return `📦 *STOCK ACTUAL (hoja PEND):*\n\n${lineas.join('\n')}${resumen}`;
+    }
+
+    case 'actualizar_stock': {
+      const r = await sheets.actualizarStock(input.juego, input.cantidad);
+      if (!r) return `No encontré "${input.juego}" en la hoja PEND.`;
+      return `✅ Stock actualizado: ${r.juego} → ${r.cantidad} unidades`;
+    }
+
     default:
       return 'Herramienta no reconocida.';
   }
