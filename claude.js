@@ -3,10 +3,34 @@ const tools = require('./tools');
 const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
+const { verificarCliente } = require('./dropi');
 const { sendDocument } = require('./evolution');
 const { uploadPdf } = require('./drive');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+function calcularDiasPendiente(fechaStr) {
+  if (!fechaStr) return 0;
+  const parts = fechaStr.split('/');
+  if (parts.length !== 3) return 0;
+  const [d, m, y] = parts;
+  const fecha = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((hoy - fecha) / 86400000));
+}
+
+function formatStock(s) {
+  if (!s) return '';
+  const lineas = [];
+  if (s.normal > 0)       lineas.push(`• ${s.normal} NORMAL`);
+  if (s.picante > 0)      lineas.push(`• ${s.picante} PICANTE`);
+  if (s.parejas > 0)      lineas.push(`• ${s.parejas} PAREJAS`);
+  if (s.enganchados > 0)  lineas.push(`• ${s.enganchados} ENGANCHADOS`);
+  if (s.dados > 0)        lineas.push(`• ${s.dados} DADOS`);
+  if (lineas.length === 0) return `📦 Stock: todo despachado`;
+  const total = (s.normal||0) + (s.picante||0) + (s.parejas||0) + (s.enganchados||0) + (s.dados||0);
+  return `📦 *POR ARMAR:*\n${lineas.join('\n')}\nTotal: *${total} uds*`;
+}
 
 const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de Shotygames — juegos de mesa para fiestas, venta por WhatsApp, envíos a todo Ecuador.
 
@@ -105,6 +129,31 @@ Responde confirmando el registro sin mencionar guía ni DROPI.
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
 
+## Registrar gastos, ingresos y transferencias
+
+Cuando Fabián diga algo como "gasto X en Y" / "me pagaron X por Y" / "transferí X de A a B":
+1. Infiere la categoría y cuenta según las listas de abajo
+2. Confirma antes de registrar:
+   "✅ [TIPO]: $[valor] | [CATEGORIA] | [CUENTA]. ¿Confirmas?"
+3. Cuando confirme, ejecuta el tool correspondiente
+
+### Cuentas (mapea del mensaje a estos valores exactos)
+CAJA (efectivo, cash) | PICHINCHA | GUAYAQUIL | PACÍFICO | PAYPHONE | DROPI | PRODUBANCO
+
+### Categorías de GASTOS (elige la más cercana al contexto)
+COSTOS - VASOS | COSTOS - LACAS | COSTOS - INSUMOS | COSTOS - CAJAS JENGAS | COSTOS - IMPRENTA | COSTOS - ENGANCHADOS | COSTOS - TABLERO MDF JENGAS | COSTOS - CORTE TABLERO MDF JENGAS | COSTOS - EXTRAS | COSTOS - ADHESIVOS
+SUELDOS - FABIAN | SUELDOS - NEREA | SUELDOS - TALLER
+MARKETING Y PUBLICIDAD - PUBLICIDAD META
+ADMINISTRATIVOS - INTERNET | ADMINISTRATIVOS - LUZ | ADMINISTRATIVOS - PLAN CLARO | ADMINISTRATIVOS - HOSTING | ADMINISTRATIVOS - LOVABLE | ADMINISTRATIVOS - CANVA
+DEUDAS - COOPSI | DEUDAS - TJT PACIFICO | DEUDAS - OTROS
+CARRO - GASOLINA | CARRO - LAVADAS | CARRO - MANTENIMIENTOS | CARRO - PARKING | CARRO - EXTRAS
+AHORRO | DEVOLUCIONES | PERDIDAS | COMISIONES TRANSFERENCIAS | COMISIONES PAYPHONE | ENVIOS / ENTREGAS ADICIONALES | RUEDA | EXTRAS | SALIDA DE DIVISAS | AJUSTES
+
+### Categorías de INGRESOS (elige la más cercana al contexto)
+INTERESES | PRESTAMOS | RUEDA | AJUSTES | EXTRAS | DIGITALES
+
+**Todo en MAYÚSCULAS** al registrar.
+
 ## Crear guía en DROPI (pedido ya existente)
 Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
 
@@ -163,13 +212,33 @@ Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las g
 → Si algún PDF falla, avisa cuáles no se pudieron incluir.
 → NUNCA digas que no puedes imprimir — siempre intenta con imprimir_guias.
 
-## Editar pedidos
-Cuando Fabián diga algo como "pon el pedido de X como enviado", "cambia la dirección de X a Y", "marca como entregado el de X":
-→ USA actualizar_pedido con el nombre y los cambios.
-→ Para cambios de ESTADO (ENVIADO, ENTREGADO, PENDIENTE): ejecuta directo sin pedir confirmación — es rápido y reversible.
-→ Para otros campos (dirección, teléfono, etc.): confirma primero: "¿Cambio [CAMPO] de [NOMBRE] a [VALOR]?" y espera confirmación.
-→ ESTADO válidos: PENDIENTE (sin enviar) | ENVIADO (despachado) | ENTREGADO (recibido por cliente).
-→ Puedes cambiar varios campos a la vez pasando múltiples keys en cambios.
+## Verificar cliente en DROPI
+Cuando Fabián mande un número de teléfono preguntando si el cliente es confiable, si acepta contraentrega, o quiera saber su historial en DROPI:
+→ USA verificar_cliente_dropi con ese teléfono.
+→ Devuelve total de pedidos, entregados y devoluciones en toda la plataforma.
+→ Úsalo también cuando diga "verifica este número", "cómo está este cliente en DROPI", "cuántas devoluciones tiene".
+
+## Editar estado de pedidos
+
+### Un solo pedido → actualizar_pedido
+"pon el pedido de X como enviado", "marca como entregado el de X", "el pedido de X ya fue enviado":
+→ USA actualizar_pedido con el nombre y cambios: { estado: 'ENVIADO' }
+→ Ejecuta DIRECTO sin pedir confirmación — es reversible.
+
+### Todos o casi todos → cambiar_estado_pedidos
+"ya se enviaron todos los pedidos pendientes", "marca todos los pendientes como enviado", "ya se enviaron todos menos el de X":
+→ USA cambiar_estado_pedidos
+→ Si excluye a alguien: pasa excluir: ['Nombre'] con el nombre exacto.
+→ Ejecuta DIRECTO sin pedir confirmación — es reversible.
+→ NUNCA uses actualizar_pedido en un loop para esto — una sola llamada hace todo.
+
+### Estados válidos
+- PENDIENTE → pedido sin despachar
+- ENVIADO → ya despachado con Servientrega
+- ENTREGADO → cliente ya recibió
+
+### Otros campos (dirección, teléfono, etc.)
+→ Confirma primero antes de cambiar: "¿Cambio [CAMPO] de [NOMBRE] a [VALOR]?"
 
 ## Consultas y reportes de pedidos
 Cuando Fabián haga preguntas sobre el estado general de los pedidos:
@@ -180,19 +249,17 @@ Cuando Fabián haga preguntas sobre el estado general de los pedidos:
 
 | Lo que dice Fabián | tipo | filtro_estado |
 |---|---|---|
-| "cuántos pedidos pendientes hay" / "qué falta enviar" | PENDIENTES | PENDIENTE |
+| "qué hay pendiente" / "pendientes" / "reporte" / "dame el reporte" | OPS_COMPLETO | — |
 | "qué productos faltan enviar" / "qué tengo que armar" | PRODUCTOS_PENDIENTES | PENDIENTE |
 | "resumen de pedidos" / "cómo van los pedidos" | RESUMEN | — |
 | "pedidos enviados" / "qué está en camino" | POR_ESTADO | ENVIADO |
 | "pedidos entregados" | POR_ESTADO | ENTREGADO |
 
-Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
-Al responder PENDIENTES o POR_ESTADO, lista nombre, ciudad, productos y fecha.
+**OPS_COMPLETO** es el reporte estándar cuando Fabián pide saber el estado general. Devuelve en un solo bloque:
+- Lista de pedidos PENDIENTES con: nombre, días pendiente, ciudad, productos y si es PAGADO o MIXTO (tiene saldo por cobrar)
+- Stock por armar (unidades de cada tipo)
 
-## Stock (hoja PEND)
-→ USA leer_stock cuando Fabián pregunte por el stock, si hay suficiente para despachar, o qué falta producir.
-→ USA actualizar_stock cuando Fabián diga que fabricó unidades nuevas o que el stock cambió.
-→ leer_stock compara automáticamente TENGO vs NECESITO y avisa si falta algo.
+Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y muestra el total de unidades.
 
 ## Otras acciones disponibles
 - **Buscar pedido** por nombre
@@ -323,21 +390,34 @@ async function executeTool(toolName, input) {
       return `✅ ${nombreReal} — Guía *${found.guia}*${envioStr}${pdfStr}`;
     }
 
+    case 'registrar_gasto': {
+      await sheets.registrarMovimiento('GASTOS', input);
+      return `✅ Gasto registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
+    }
+
+    case 'registrar_ingreso': {
+      await sheets.registrarMovimiento('INGRESOS', input);
+      return `✅ Ingreso registrado: $${input.valor} — ${input.observaciones || input.categoria || ''}.`;
+    }
+
+    case 'registrar_transferencia': {
+      await sheets.registrarMovimiento('TRANSFERENCIAS', input);
+      return `✅ Transferencia registrada: $${input.valor} de ${input.sale} a ${input.entra}.`;
+    }
+
     case 'obtener_guia_pedido': {
       const res = await sheets.obtenerGuiaPedido(input.nombre);
       if (!res) return `No encontré ningún pedido para "${input.nombre}".`;
       if (res.candidatos) {
-        const lista = res.candidatos.map((c, i) => {
-          const guiaInfo = c.guia ? ` — Guía: ${c.guia}` : ' — sin guía';
-          const pdfInfo = c.pdfUrl ? `\n   📄 ${c.pdfUrl}` : '';
-          return `${i + 1}. ${c.nombre} — ${c.fecha}${guiaInfo}${pdfInfo}`;
-        }).join('\n');
-        return `Hay varios pedidos para "${input.nombre}":\n\n${lista}`;
+        const lista = res.candidatos.map((c, i) =>
+          `${i + 1}. ${c.nombre} — ${c.fecha}${c.guia ? ' — Guía: ' + c.guia : ' — sin guía'}`
+        ).join('\n');
+        return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿De cuál quieres la guía?`;
       }
       if (!res.guia) {
         return `El pedido de ${res.nombre} (${res.fecha}) aún no tiene guía generada.`;
       }
-      const pdfPart = res.pdfUrl ? `\n📄 ${res.pdfUrl}` : '';
+      const pdfPart = res.pdfUrl ? `\n\n📄 ${res.pdfUrl}` : '';
       return `📦 *${res.nombre}* — ${res.fecha}\nGuía: *${res.guia}*${pdfPart}`;
     }
 
@@ -403,23 +483,11 @@ async function executeTool(toolName, input) {
       });
       const fileName = `guias-${hoy.replace(/\//g, '-')}.pdf`;
 
-      // Enviar el PDF — usa callback de Telegram si está disponible, si no manda por WhatsApp
-      if (input._sendDocument) {
-        await input._sendDocument(pdfFinal, fileName);
-      } else {
-        await sendDocument(input._from, pdfFinal, fileName);
-      }
+      // Enviar por WhatsApp — esto sí es crítico, si falla lanza el error
+      await sendDocument(input._from, pdfFinal, fileName);
 
       // Marcar como impresas en Sheets
       await sheets.marcarGuiasImpresas(descargados.map(d => d.rowNum), impresoIdx);
-
-      // Marcar como impresas en DROPI — no crítico, no bloquea
-      const dropiMod = require('./dropi');
-      for (const d of descargados) {
-        if (d.dropiId) {
-          dropiMod.marcarImpresaDropi(d.dropiId).catch(e => console.error(`marcarImpresaDropi ${d.dropiId}:`, e.message));
-        }
-      }
 
       // Subir a Drive — no crítico, no bloquea la respuesta
       let driveMsg = '';
@@ -437,6 +505,19 @@ async function executeTool(toolName, input) {
         : '';
 
       return `✅ PDF enviado — ${descargados.length} guía(s) en ${Math.ceil(descargados.length / 4)} hoja(s):\n\n${nombresStr}${fallMsg}${driveMsg}`;
+    }
+
+    case 'cambiar_estado_pedidos': {
+      const excluir = input.excluir || [];
+      const estadoActual = input.estado_actual || 'PENDIENTE';
+      const res = await sheets.actualizarEstadoMasivo(input.nuevo_estado, excluir, estadoActual);
+      if (res.updated === 0) {
+        const exclMsg = excluir.length ? ` (excluyendo: ${excluir.join(', ')})` : '';
+        return `No hay pedidos en estado ${estadoActual} para marcar${exclMsg}.`;
+      }
+      const lista = res.nombres.map(n => `• ${n}`).join('\n');
+      const exclMsg = excluir.length ? `\n_(excluidos: ${excluir.join(', ')})_` : '';
+      return `✅ *${res.updated} pedido(s)* marcados como *${input.nuevo_estado}*:\n\n${lista}${exclMsg}`;
     }
 
     case 'actualizar_pedido': {
@@ -461,6 +542,19 @@ async function executeTool(toolName, input) {
 
       const tipoBig = (input.tipo || '').toUpperCase();
 
+      // ── OPS_COMPLETO: pedidos pendientes con detalle + stock ──────────────
+      if (tipoBig === 'OPS_COMPLETO') {
+        if (!res.total) return `✅ Sin pedidos pendientes.\n\n${formatStock(res.stock)}`;
+        const listaPed = res.pedidos.map(p => {
+          const dias = calcularDiasPendiente(p.fecha);
+          const pago = p.saldo && parseFloat(p.saldo.replace(/[^0-9.]/g, '')) > 0
+            ? `💵 MIXTO +$${parseFloat(p.saldo.replace(/[^0-9.]/g, '')).toFixed(2)}`
+            : `✅ PAGADO`;
+          return `• *${p.nombre}* ⏳${dias}d — ${p.ciudad}\n  ${p.productos} — ${pago}`;
+        }).join('\n');
+        return `🔴 *PENDIENTES: ${res.total}*\n\n${listaPed}\n\n${formatStock(res.stock)}`;
+      }
+
       if (tipoBig === 'PRODUCTOS_PENDIENTES') {
         const p = res.productos;
         const lineas = [];
@@ -482,12 +576,38 @@ async function executeTool(toolName, input) {
         return `📊 Resumen de pedidos (${res.total} en total):\n\n${lineas}`;
       }
 
-      // PENDIENTES / POR_ESTADO
+      // PENDIENTES / POR_ESTADO — formato mejorado con pago y días
       if (!res.total) return `No hay pedidos en estado ${res.estado}.`;
-      const lista = res.pedidos.map(p =>
-        `• *${p.nombre}* — ${p.ciudad} — ${p.productos} — ${p.fecha}`
-      ).join('\n');
+      const lista = res.pedidos.map(p => {
+        const dias = calcularDiasPendiente(p.fecha);
+        const pago = p.saldo && parseFloat(p.saldo.replace(/[^0-9.]/g, '')) > 0
+          ? `💵 MIXTO +$${parseFloat(p.saldo.replace(/[^0-9.]/g, '')).toFixed(2)}`
+          : `✅ PAGADO`;
+        return `• *${p.nombre}* ⏳${dias}d — ${p.ciudad} — ${p.productos} — ${pago}`;
+      }).join('\n');
       return `📋 Pedidos ${res.estado}: *${res.total}*\n\n${lista}`;
+    }
+
+    case 'verificar_cliente_dropi': {
+      const tel = input.telefono;
+      const data = await verificarCliente(tel);
+
+      // Si la respuesta tiene todos nulos, mostrar raw para debug
+      if (data.total === null && data.entregados === null && data.devueltos === null) {
+        const keys = data._keys?.length ? `Keys: ${data._keys.join(', ')}` : '';
+        const resumen = JSON.stringify(data.raw)?.slice(0, 600);
+        return `📋 DROPI no devolvió datos para *${tel}*.\n${keys}\nRaw: ${resumen}`;
+      }
+
+      const clasificacion = data.clasificacion ? `\n🏷️ Clasificación: *${data.clasificacion}*` : '';
+      const nombre = data.nombre ? `\n👤 ${data.nombre}` : '';
+      const pendientes = data.pendientes !== null ? `\n⏳ Pendientes: ${data.pendientes}` : '';
+
+      return `📊 Reputación DROPI para *${tel}*${nombre}
+
+📦 Total pedidos: *${data.total ?? '?'}*
+✅ Entregados: *${data.entregados ?? '?'}*
+↩️ Devoluciones: *${data.devueltos ?? '?'}*${pendientes}${clasificacion}`;
     }
 
     case 'pedidos_hoy':
@@ -498,33 +618,12 @@ async function executeTool(toolName, input) {
       ).join('\n');
       return `📊 Pedidos hoy: ${hoy.total}\n\n${lista}`;
 
-    case 'leer_stock': {
-      const stock = await sheets.leerStock();
-      if (!stock.length) return 'No hay datos de stock en la hoja PEND.';
-      const lineas = stock.map(s => {
-        const icono = s.falta > 0 ? '❌' : '✅';
-        const alerta = s.falta > 0 ? ` ← FALTAN ${s.falta}` : '';
-        return `${icono} ${s.juego}: tengo ${s.tengo}, necesito ${s.necesito}${alerta}`;
-      });
-      const faltan = stock.filter(s => s.falta > 0);
-      const resumen = faltan.length
-        ? `\n⚠️ Hay ${faltan.length} producto(s) con faltante. Hay que producir antes de despachar.`
-        : `\n✅ Stock suficiente para todos los pedidos pendientes.`;
-      return `📦 *STOCK ACTUAL (hoja PEND):*\n\n${lineas.join('\n')}${resumen}`;
-    }
-
-    case 'actualizar_stock': {
-      const r = await sheets.actualizarStock(input.juego, input.cantidad);
-      if (!r) return `No encontré "${input.juego}" en la hoja PEND.`;
-      return `✅ Stock actualizado: ${r.juego} → ${r.cantidad} unidades`;
-    }
-
     default:
       return 'Herramienta no reconocida.';
   }
 }
 
-async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null, sendDocumentCallback = null) {
+async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/jpeg', fromPhone = null) {
   let userContent;
   if (imageBase64) {
     userContent = [
@@ -552,11 +651,7 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
     for (const block of response.content) {
       if (block.type === 'tool_use') {
         // Inyectar _from para tools que necesiten enviar archivos de vuelta
-        const inputConFrom = {
-          ...block.input,
-          _from: fromPhone,
-          ...(sendDocumentCallback ? { _sendDocument: sendDocumentCallback } : {})
-        };
+        const inputConFrom = fromPhone ? { ...block.input, _from: fromPhone } : block.input;
         const toolResult = await executeTool(block.name, inputConFrom);
         toolResults.push({
           type: 'tool_result',

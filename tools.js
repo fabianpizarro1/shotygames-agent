@@ -74,6 +74,51 @@ const tools = [
     }
   },
   {
+    name: "registrar_gasto",
+    description: "Registra un gasto en la hoja GASTOS del Sheet de finanzas.",
+    input_schema: {
+      type: "object",
+      properties: {
+        categoria: { type: "string", description: "Categoría del gasto (ej: MADERA, PUBLICIDAD, ENVIO, ARRIENDO)" },
+        observaciones: { type: "string", description: "Descripción o detalle del gasto" },
+        cuenta: { type: "string", description: "Cuenta desde donde se pagó: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
+        valor: { type: "string", description: "Monto del gasto" },
+        fecha: { type: "string", description: "Fecha del gasto (dd/mm/yyyy). Si no se indica, usa hoy." }
+      },
+      required: ["valor"]
+    }
+  },
+  {
+    name: "registrar_ingreso",
+    description: "Registra un ingreso en la hoja INGRESOS del Sheet de finanzas.",
+    input_schema: {
+      type: "object",
+      properties: {
+        categoria: { type: "string", description: "Categoría del ingreso (ej: VENTA, DIGITAL, OTRO)" },
+        observaciones: { type: "string", description: "Descripción o detalle del ingreso" },
+        cuenta: { type: "string", description: "Cuenta donde se recibió: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
+        valor: { type: "string", description: "Monto del ingreso" },
+        fecha: { type: "string", description: "Fecha del ingreso (dd/mm/yyyy). Si no se indica, usa hoy." }
+      },
+      required: ["valor"]
+    }
+  },
+  {
+    name: "registrar_transferencia",
+    description: "Registra una transferencia entre cuentas en la hoja TRANSFERENCIAS del Sheet de finanzas.",
+    input_schema: {
+      type: "object",
+      properties: {
+        sale: { type: "string", description: "Cuenta desde donde sale el dinero: PICHINCHA, PAYPHONE, EFECTIVO, etc." },
+        entra: { type: "string", description: "Cuenta donde entra el dinero" },
+        motivo: { type: "string", description: "Motivo o descripción de la transferencia" },
+        valor: { type: "string", description: "Monto de la transferencia" },
+        fecha: { type: "string", description: "Fecha (dd/mm/yyyy). Si no se indica, usa hoy." }
+      },
+      required: ["valor", "sale", "entra"]
+    }
+  },
+  {
     name: "sincronizar_guia_dropi",
     description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
     input_schema: {
@@ -145,12 +190,28 @@ const tools = [
     }
   },
   {
-    name: "imprimir_guias",
-    description: "Descarga los PDFs de todos los pedidos en estado PENDIENTE que aún no han sido impresos, los combina en un PDF con 4 guías por hoja A4 y te lo envía por WhatsApp. Úsalo cuando Fabián diga 'imprime las guías', 'mándame las guías', 'necesito las guías para imprimir', etc. NO necesita ningún parámetro — USA INMEDIATAMENTE sin pedir confirmación.",
+    name: "cambiar_estado_pedidos",
+    description: "Cambia el estado de MÚLTIPLES pedidos en bulk. Úsalo cuando Fabián diga 'marca todos los pendientes como enviados', 'ya se enviaron todos', 'ya se enviaron todos menos el de X', 'marca todos a enviado excepto X y Z', etc. Para un solo pedido por nombre usa actualizar_pedido.",
     input_schema: {
       type: "object",
-      properties: {},
-      required: []
+      properties: {
+        nuevo_estado: {
+          type: "string",
+          description: "Estado a asignar: ENVIADO, ENTREGADO o PENDIENTE",
+          enum: ["ENVIADO", "ENTREGADO", "PENDIENTE"]
+        },
+        estado_actual: {
+          type: "string",
+          description: "Filtro: solo modifica pedidos que estén en este estado ahora. Por defecto: PENDIENTE",
+          enum: ["PENDIENTE", "ENVIADO", "ENTREGADO"]
+        },
+        excluir: {
+          type: "array",
+          items: { type: "string" },
+          description: "Nombres de clientes a NO modificar. Ej: ['Juan García', 'María López']. Se buscan por fuzzy match."
+        }
+      },
+      required: ["nuevo_estado"]
     }
   },
   {
@@ -161,7 +222,7 @@ const tools = [
       properties: {
         tipo: {
           type: "string",
-          description: "Tipo de consulta: PENDIENTES (lista pedidos de un estado), PRODUCTOS_PENDIENTES (suma de unidades por tipo pendientes de envío), RESUMEN (conteo total por estado), POR_ESTADO (pedidos filtrando por estado específico)"
+          description: "Tipo de consulta: OPS_COMPLETO (pedidos pendientes + stock en un solo reporte — usar cuando Fabián pide 'qué hay pendiente' o quiere el reporte completo), PENDIENTES (lista pedidos de un estado), PRODUCTOS_PENDIENTES (suma de unidades por tipo pendientes de envío), RESUMEN (conteo total por estado), POR_ESTADO (pedidos filtrando por estado específico)"
         },
         filtro_estado: {
           type: "string",
@@ -169,29 +230,6 @@ const tools = [
         }
       },
       required: ["tipo"]
-    }
-  },
-  {
-    name: "leer_stock",
-    description: "Lee el stock actual de la hoja PEND: cuántas unidades hay de cada producto (TENGO), cuántas se necesitan para pedidos pendientes (NECESITO) y cuántas faltan (FALTA). Úsalo cuando Fabián pregunte cuánto stock hay, si alcanza para despachar, o qué falta producir.",
-    input_schema: { type: "object", properties: {} }
-  },
-  {
-    name: "actualizar_stock",
-    description: "Actualiza el stock (columna TENGO) de un producto en la hoja PEND. Úsalo cuando Fabián diga que acaba de fabricar unidades o que el stock cambió.",
-    input_schema: {
-      type: "object",
-      properties: {
-        juego: {
-          type: "string",
-          description: "Nombre del juego a actualizar (ej: Torre Normal, Torre Picante, Torre Parejas, Enganchados, Dados)"
-        },
-        cantidad: {
-          type: "number",
-          description: "Nueva cantidad en stock (número total que hay ahora, no el incremento)"
-        }
-      },
-      required: ["juego", "cantidad"]
     }
   }
 ];
