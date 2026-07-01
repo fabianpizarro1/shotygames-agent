@@ -31,6 +31,15 @@ function parseMonto(val) {
   return num;
 }
 
+// Normaliza teléfono ecuatoriano: móvil de 9 dígitos que empieza con 9 → le agrega el 0.
+// "997895029" → "0997895029". Quita prefijo 593. Deja el resto tal cual.
+function normalizarTelefono(tel) {
+  let s = String(tel || '').replace(/\D/g, '');
+  if (s.startsWith('593')) s = s.slice(3);
+  if (s.length === 9 && s.startsWith('9')) s = '0' + s;
+  return s;
+}
+
 // ─── Motor de búsqueda fuzzy por nombre ───────────────────────────────────────
 
 // Quita tildes y pasa a minúsculas: "FABIÁN" → "fabian"
@@ -137,7 +146,7 @@ async function appendPedido(pedido) {
     pedido.nombre || '',                     // col 2:  NOMBRE
     fecha,                                   // col 3:  FECHA
     pedido.mes || mes,                       // col 4:  MES
-    pedido.telefono || '',                   // col 5:  TELEFONO
+    normalizarTelefono(pedido.telefono),     // col 5:  TELEFONO (con 0 al inicio)
     (pedido.ciudad || '').toUpperCase(),     // col 6:  CIUDAD
     pedido.normal || '',                     // col 7:  N
     pedido.picante || '',                    // col 8:  P
@@ -675,10 +684,13 @@ async function getGuiasParaImprimir() {
   const headers = rows[0] || [];
 
   const nombreIdx  = headers.indexOf('NOMBRE');
+  const telIdx     = headers.indexOf('TELEFONO');
   const estadoIdx  = headers.indexOf('ESTADO');
   const guiaIdx    = headers.indexOf('GUIA');
   const impresoIdx = headers.indexOf('IMPRESO');
-  let dropiColIdx  = headers.indexOf('Softr Record ID');
+  // La columna del DROPI order ID: "ORDEN DROPI" (nombre actual) o "Softr Record ID" (nombre viejo). Fallback a idx 33 (AH).
+  let dropiColIdx  = headers.indexOf('ORDEN DROPI');
+  if (dropiColIdx === -1) dropiColIdx = headers.indexOf('Softr Record ID');
   if (dropiColIdx === -1) dropiColIdx = 33;
 
   if (impresoIdx === -1) {
@@ -697,25 +709,40 @@ async function getGuiasParaImprimir() {
     const guia = r[guiaIdx] || '';
     if (!guia) continue;
 
-    // Solo los que aún NO están impresos
+    // Solo los que aún NO están impresos (columna AI = IMPRESO vacía)
     const impreso = r[impresoIdx];
     if (impreso === 'TRUE' || impreso === true) continue;
 
-    // Necesitamos el DROPI order ID para la URL del PDF
+    // El DROPI order ID puede o no estar guardado. Si no está, el handler lo busca en DROPI.
     const dropiRaw = String(r[dropiColIdx] || '');
-    const dropiId  = dropiRaw.startsWith('DROPI:') ? dropiRaw.replace('DROPI:', '') : null;
-    if (!dropiId) continue;
+    const dropiId  = dropiRaw.startsWith('DROPI:') ? dropiRaw.replace('DROPI:', '') : (dropiRaw.match(/^\d+$/) ? dropiRaw : null);
 
     guias.push({
-      nombre:  r[nombreIdx],
+      nombre:   r[nombreIdx],
+      telefono: r[telIdx] || '',
       guia,
       dropiId,
-      rowNum:  i + 1,
-      pdfUrl:  `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
+      rowNum:   i + 1,
+      pdfUrl:   dropiId
+        ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${dropiId}-GUIA-${guia}.pdf`
+        : null
     });
   }
 
-  return { guias, impresoIdx };
+  return { guias, impresoIdx, dropiColIdx };
+}
+
+// Guarda el DROPI order ID en la columna ORDEN DROPI de una fila específica.
+async function guardarOrdenDropi(rowNum, dropiColIdx, orderId) {
+  if (!rowNum || dropiColIdx == null || dropiColIdx < 0 || !orderId) return;
+  const sheetsApi = await getSheets();
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(dropiColIdx)}${rowNum}`,
+    valueInputOption: 'USER_ENTERED',
+    resource: { values: [[`DROPI:${orderId}`]] }
+  });
+  console.log(`guardarOrdenDropi: fila ${rowNum} → DROPI:${orderId}`);
 }
 
 // Marca IMPRESO = TRUE en las filas indicadas (después de generar el PDF)
@@ -856,4 +883,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };
