@@ -1,6 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
-const { authenticator } = require('otplib');
+const crypto = require('crypto');
 
 const BASE = 'https://api.dropi.ec/api';
 const USER_ID = 11362;
@@ -64,6 +64,35 @@ let _token = (() => {
   return null;
 })();
 
+// Generador TOTP (RFC 6238) sin dependencias externas — evita el bug de otplib@13
+// (@otplib/plugin-base32-scure es ESM-only y rompe con require() en Node 18).
+function base32Decode(input) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const clean = input.toUpperCase().replace(/=+$/, '');
+  let bits = '';
+  for (const char of clean) {
+    const val = alphabet.indexOf(char);
+    if (val === -1) throw new Error('Caracter base32 inválido: ' + char);
+    bits += val.toString(2).padStart(5, '0');
+  }
+  const bytes = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  }
+  return Buffer.from(bytes);
+}
+
+function generateTotp(base32Secret, { digits = 6, step = 30 } = {}) {
+  const counter = Math.floor(Date.now() / 1000 / step);
+  const counterBuf = Buffer.alloc(8);
+  counterBuf.writeBigUInt64BE(BigInt(counter));
+  const hmac = crypto.createHmac('sha1', base32Decode(base32Secret)).update(counterBuf).digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) |
+               ((hmac[offset + 2] & 0xff) << 8) | (hmac[offset + 3] & 0xff);
+  return (code % (10 ** digits)).toString().padStart(digits, '0');
+}
+
 // Lee los claims de un JWT sin verificar firma (solo para inspeccionar token_type)
 function decodeJwtPayload(token) {
   try {
@@ -122,7 +151,7 @@ async function autoLogin() {
   };
 
   console.log('DROPI: iniciando auto-login...');
-  const otp = authenticator.generate(totpSecret);
+  const otp = generateTotp(totpSecret);
   const res = await axios.post(`${BASE}/login`, {
     email, password, white_brand_id: 1, brand: '', otp, with_cdc: false
   }, { headers: loginHeaders });
