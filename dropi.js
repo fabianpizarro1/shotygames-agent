@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
+const { authenticator } = require('otplib');
 
 const BASE = 'https://api.dropi.ec/api';
 const USER_ID = 11362;
@@ -63,6 +64,15 @@ let _token = (() => {
   return null;
 })();
 
+// Lee los claims de un JWT sin verificar firma (solo para inspeccionar token_type)
+function decodeJwtPayload(token) {
+  try {
+    return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+  } catch (_) {
+    return null;
+  }
+}
+
 // Actualiza el token en memoria y en archivo (sobrevive reinicios)
 function setToken(token) {
   _token = token.replace(/^Bearer\s+/i, '').trim();
@@ -95,27 +105,43 @@ function makeClient(token) {
 async function autoLogin() {
   const email = process.env.DROPI_EMAIL;
   const password = process.env.DROPI_PASSWORD;
+  const totpSecret = process.env.DROPI_TOTP_SECRET;
   if (!email || !password) throw new Error('Sin credenciales DROPI_EMAIL/DROPI_PASSWORD para auto-login');
+  if (!totpSecret) throw new Error('Sin DROPI_TOTP_SECRET para auto-login (DROPI exige 2FA)');
+
+  const loginHeaders = {
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'es-EC,es;q=0.9',
+    'content-type': 'application/json',
+    'origin': 'https://app.dropi.ec',
+    'referer': 'https://app.dropi.ec/login',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site'
+  };
 
   console.log('DROPI: iniciando auto-login...');
+  const otp = authenticator.generate(totpSecret);
   const res = await axios.post(`${BASE}/login`, {
-    email, password, white_brand_id: 1
-  }, {
-    headers: {
-      'accept': 'application/json, text/plain, */*',
-      'accept-language': 'es-EC,es;q=0.9',
-      'content-type': 'application/json',
-      'origin': 'https://app.dropi.ec',
-      'referer': 'https://app.dropi.ec/login',
-      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'sec-fetch-dest': 'empty',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-site': 'same-site'
-    }
-  });
+    email, password, white_brand_id: 1, brand: '', otp, with_cdc: false
+  }, { headers: loginHeaders });
 
-  const token = res.data?.token;
-  if (!token) throw new Error('Auto-login falló: sin token en respuesta');
+  let token = res.data?.token;
+  if (!token) throw new Error('Auto-login falló: sin token en respuesta de /login');
+
+  // El token de /login puede ser uno temporal de solo-2FA (no sirve para la API).
+  // Se detecta decodificando su propio payload, no adivinando la forma del JSON de respuesta.
+  const claims = decodeJwtPayload(token);
+  if (claims?.token_type === '2FA') {
+    console.log('DROPI: login requiere verificación 2FA adicional, completando...');
+    const verifyRes = await axios.post(`${BASE}/auth/2fa/verify`, {
+      token, code: otp
+    }, { headers: loginHeaders });
+    token = verifyRes.data?.token;
+  }
+
+  if (!token) throw new Error('Auto-login falló: sin token final tras verificación 2FA');
   setToken(token);
   console.log('DROPI: auto-login exitoso, token guardado');
   return token;
