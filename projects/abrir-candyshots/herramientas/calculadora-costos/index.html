@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandyShots — Calculadora de Costos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧃</text></svg>">
+</head>
+<body>
+  <div id="shell">
+
+    <!-- ── Sidebar (desktop) ── -->
+    <aside id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">🧃</span>
+        <div>
+          <div class="brand-name">CandyShots</div>
+          <div class="brand-sub">Calculadora de Costos</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-label">Datos base</div>
+        <button class="nav-item active" data-page="insumos">
+          <span>🛒</span> Insumos
+        </button>
+        <button class="nav-item" data-page="recetas">
+          <span>📋</span> Recetas
+        </button>
+        <button class="nav-item" data-page="costos">
+          <span>💰</span> Costos Fijos
+        </button>
+
+        <div class="nav-label" style="margin-top:8px">Análisis</div>
+        <button class="nav-item" data-page="analisis">
+          <span>📊</span> Análisis por Producto
+        </button>
+        <button class="nav-item" data-page="proyecciones">
+          <span>📈</span> Proyecciones
+        </button>
+      </nav>
+    </aside>
+
+    <!-- ── Main ── -->
+    <div class="main-wrap">
+      <header id="topbar">
+        <span id="topbar-title">Insumos</span>
+      </header>
+      <main id="content"></main>
+    </div>
+
+    <!-- ── Bottom nav (mobile) ── -->
+    <nav id="bottom-nav">
+      <button class="bnav-item active" data-page="insumos">
+        <span class="bnav-icon">🛒</span>
+        <span class="bnav-label">Insumos</span>
+      </button>
+      <button class="bnav-item" data-page="recetas">
+        <span class="bnav-icon">📋</span>
+        <span class="bnav-label">Recetas</span>
+      </button>
+      <button class="bnav-item" data-page="costos">
+        <span class="bnav-icon">💰</span>
+        <span class="bnav-label">Fijos</span>
+      </button>
+      <button class="bnav-item" data-page="analisis">
+        <span class="bnav-icon">📊</span>
+        <span class="bnav-label">Análisis</span>
+      </button>
+      <button class="bnav-item" data-page="proyecciones">
+        <span class="bnav-icon">📈</span>
+        <span class="bnav-label">Proyec.</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/pages/insumos.js"></script>
+  <script src="js/pages/recetas.js"></script>
+  <script src="js/pages/costos.js"></script>
+  <script src="js/pages/analisis.js"></script>
+  <script src="js/pages/proyecciones.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

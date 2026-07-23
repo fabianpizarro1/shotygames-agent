@@ -15,6 +15,7 @@ Cuando Fabián esté procrastinando o tomando malas decisiones, díselo directo.
 @context/team.md
 @context/current-priorities.md
 @context/goals.md
+@context/rutina.md
 
 ---
 
