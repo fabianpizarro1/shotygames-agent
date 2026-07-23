@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "marketing-frontend",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd projects/marketing-agent/frontend && npm run dev -- --port 5174"],
+      "port": 5174
+    }
+  ]
+}
