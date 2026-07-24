@@ -451,12 +451,34 @@ try {
   console.error('[CRON] Error al iniciar notificaciones:', e.message);
 }
 
+// ── CONTENIDO DIARIO (Instagram, manual — bot solo genera y envía) ──
+try {
+  const cron = require('node-cron');
+  const { enviarContenidoDiario } = require('./contenido-diario');
+
+  // 9am Ecuador todos los días = 14:00 UTC
+  cron.schedule('0 14 * * *', () => enviarContenidoDiario());
+
+  console.log('[CRON] Contenido diario: 9am (imagen + caption por Telegram, para publicar manual)');
+} catch (e) {
+  console.error('[CRON] Error al iniciar contenido diario:', e.message);
+}
+
 // Endpoints admin manuales
 app.get('/admin/reporte-ops', async (req, res) => {
   if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
   try {
     const { enviarReporteOPS } = require('./notificaciones');
     await enviarReporteOPS('Manual');
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/admin/contenido-diario', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { enviarContenidoDiario } = require('./contenido-diario');
+    await enviarContenidoDiario();
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
