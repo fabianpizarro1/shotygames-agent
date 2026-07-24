@@ -4,7 +4,7 @@ const sheets = require('./sheets');
 const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
 const { sendDocument } = require('./evolution');
-const { uploadPdf } = require('./drive');
+const { uploadPdfReemplazando } = require('./drive');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -458,11 +458,14 @@ async function executeTool(toolName, input) {
         }
       }
 
-      // Subir a Drive — no crítico, no bloquea la respuesta
+      // Subir a Drive reemplazando los PDFs anteriores — no crítico, no bloquea la respuesta
       let driveMsg = '';
       try {
-        const driveFile = await uploadPdf(pdfFinal, fileName);
+        const driveFile = await uploadPdfReemplazando(pdfFinal, fileName);
         driveMsg = `\n📁 Drive: ${driveFile.name}`;
+        if (driveFile.borrados > 0) {
+          driveMsg += ` (${driveFile.borrados} PDF anterior${driveFile.borrados > 1 ? 'es' : ''} a papelera)`;
+        }
       } catch (e) {
         console.error('Drive upload error:', e.message);
         driveMsg = `\n⚠️ Drive: no se pudo subir`;
