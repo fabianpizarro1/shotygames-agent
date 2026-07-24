@@ -1,4 +1,4 @@
-process.chdir('/Users/user/Desktop/KEPLER/projects/whatsapp-claude-agent');
+process.chdir(require('path').join(__dirname, '..'));
 require('dotenv').config();
 const {google} = require('googleapis');
 const fs = require('fs');
