@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pago con Tarjeta - ShotyGames</title>
+  <link rel="stylesheet" href="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css">
+  <script type="module" src="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: transparent;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+    }
+    #pp-button {
+      width: 100%;
+      max-width: 400px;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #e11d48;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <p>Cargando formulario de pago...</p>
+  </div>
+  <div id="pp-button"></div>
+  <div id="error" class="error" style="display: none;"></div>
+
+  <script>
+    // Get config from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const config = {
+      token: urlParams.get('token'),
+      storeId: urlParams.get('storeId'),
+      clientTransactionId: urlParams.get('clientTransactionId'),
+      amount: parseInt(urlParams.get('amount')),
+      reference: urlParams.get('reference'),
+      phoneNumber: urlParams.get('phoneNumber'),
+      email: urlParams.get('email') || '',
+      responseUrl: urlParams.get('responseUrl') || ''
+    };
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').innerHTML = `<p>${message}</p>`;
+    }
+
+    function initPayphone() {
+      if (!config.token || !config.storeId) {
+        showError('Configuración de pago no disponible');
+        return;
+      }
+
+      try {
+        const ppb = new PPaymentButtonBox({
+          token: config.token,
+          clientTransactionId: config.clientTransactionId,
+          amount: config.amount,
+          amountWithoutTax: config.amount,
+          tax: 0,
+          currency: "USD",
+          storeId: config.storeId,
+          reference: config.reference,
+          lang: "es",
+          defaultMethod: "card",
+          timeZone: -5,
+          phoneNumber: config.phoneNumber,
+          email: config.email,
+          responseUrl: config.responseUrl
+        }).render('pp-button');
+
+        document.getElementById('loading').style.display = 'none';
+      } catch (err) {
+        console.error('Error initializing PayPhone:', err);
+        showError('Error al cargar el formulario de pago');
+      }
+    }
+
+    // Wait for DOM and PayPhone SDK to be ready
+    window.addEventListener('DOMContentLoaded', () => {
+      // Give the SDK time to load
+      const checkInterval = setInterval(() => {
+        if (typeof PPaymentButtonBox !== 'undefined') {
+          clearInterval(checkInterval);
+          initPayphone();
+        }
+      }, 100);
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (typeof PPaymentButtonBox === 'undefined') {
+          showError('Error al cargar el sistema de pagos');
+        }
+      }, 10000);
+    });
+  </script>
+</body>
+</html>

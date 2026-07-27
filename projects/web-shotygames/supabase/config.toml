@@ -1,0 +1,10 @@
+project_id = "xqwvtueudsqgamkyfqby"
+
+[functions.payphone-confirm]
+verify_jwt = false
+
+[functions.payphone-config]
+verify_jwt = false
+
+[functions.payphone-create-link]
+verify_jwt = false

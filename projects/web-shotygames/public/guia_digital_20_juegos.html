@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20 Juegos para Fiestas</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Fredoka', sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '🎉';
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 30px;
+            animation: bounce 2s infinite;
+        }
+        
+        .header::after {
+            content: '🎊';
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 30px;
+            animation: bounce 2s infinite 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .intro {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid #ff6b6b;
+        }
+        
+        .intro h2 {
+            color: #c0392b;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .section-title::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            border-radius: 20px;
+            z-index: -1;
+            animation: rainbow 3s linear infinite;
+        }
+        
+        @keyframes rainbow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .game {
+            background: white;
+            border: 3px solid #e74c3c;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .game:hover {
+            transform: translateY(-5px);
+        }
+        
+        .game-header {
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            color: white;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .game-number {
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-weight: 700;
+        }
+        
+        .game-content {
+            padding: 25px;
+        }
+        
+        .materials {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .materials h4 {
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .materials h4::before {
+            content: '🎯';
+            margin-right: 8px;
+        }
+        
+        .how-to-play {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .how-to-play h4 {
+            color: #0c5460;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .how-to-play h4::before {
+            content: '🎮';
+            margin-right: 8px;
+        }
+        
+        .rules {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .rules h4 {
+            color: #155724;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .rules h4::before {
+            content: '📋';
+            margin-right: 8px;
+        }
+        
+        .tips {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .tips h4 {
+            color: #721c24;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tips h4::before {
+            content: '💡';
+            margin-right: 8px;
+        }
+        
+        .drinking-games .game {
+            border-color: #e74c3c;
+        }
+        
+        .drinking-games .game-header {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .family-games .game {
+            border-color: #27ae60;
+        }
+        
+        .family-games .game-header {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+        
+        .friends-games .game {
+            border-color: #8e44ad;
+        }
+        
+        .friends-games .game-header {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+        }
+        
+        .conclusion {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 40px;
+            text-align: center;
+            border: 3px solid #ff6b6b;
+        }
+        
+        .conclusion h2 {
+            color: #c0392b;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        ul li {
+            position: relative;
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+        
+        ul li::before {
+            content: '🎲';
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .warning::before {
+            content: '⚠️';
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+        
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+            .game:hover { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PORTADA -->
+        <div class="header">
+            <h1>20 Juegos para Fiestas</h1>
+            <p>La guía definitiva para animar cualquier reunión</p>
+        </div>
+        
+        <div class="content">
+            <!-- INTRODUCCIÓN -->
+            <div class="intro">
+                <h2>🎊 Introducción</h2>
+                <p>Organizar una fiesta inolvidable es más fácil de lo que parece. Los juegos son siempre bienvenidos en cualquier reunión, ya sea solo de adultos con unos tragos o con toda la familia, pues crean un ambiente ideal de diversión y risas.</p>
+                <br>
+                <p>En esta guía encontrarás una selección de 20 juegos dinámicos, divertidos y fáciles de entender. Hemos dividido los juegos en categorías para que encuentres los ideales según el tipo de reunión: juegos para beber (solo para adultos), juegos para reuniones familiares (para todas las edades) y juegos para reuniones con amigos.</p>
+                <br>
+                <p>Cada juego está explicado al detalle – incluyendo materiales necesarios, reglas y desarrollo – para que puedas consultar esta guía cómodamente en pleno festejo.</p>
+                
+                <div class="warning">
+                    <strong>Nota importante:</strong> Si van a incluir alcohol en los juegos, recuerden siempre hacerlo con moderación y de forma responsable. ¡Lo importante es pasarla bien de manera segura!
+                </div>
+            </div>
+
+            <!-- JUEGOS PARA BEBER -->
+            <div class="section drinking-games">
+                <div class="section-title">🍻 Juegos para Beber (Adultos)</div>
+                <p style="text-align: center; margin-bottom: 20px; font-style: italic;">Los juegos para beber están diseñados para animar reuniones de adultos con desafíos divertidos que incluyen tragos de por medio. Son ideales para grupos de amigos dispuestos a divertirse y conocer anécdotas inesperadas entre sí.</p>
+                
+                <div class="game">
+                    <div class="game-header">
+                        Yo Nunca Nunca
+                        <div class="game-number">1</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Uno de los clásicos infaltables en fiestas de adultos. Un juego de confesiones que ayuda a conocer mejor a tus amigos entre risas. Se basa en afirmar cosas que nunca has hecho y descubrir quiénes sí las han hecho.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Vasos o copas y la bebida de preferencia para cada participante.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Reúnan a todos los jugadores sentados en círculo, cada uno con su bebida. Un jugador inicia diciendo en voz alta una frase que comience con "Yo nunca nunca..." completándola con algo que nunca haya hecho en su vida (por ejemplo: "Yo nunca nunca he viajado en crucero").</p>
+                            <p>Si algún otro jugador sí ha hecho eso que se menciona, debe dar un trago a su bebida; quienes no lo hayan hecho, no beben. El juego continúa con el siguiente participante formulando otra frase.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Consejos</h4>
+                            <p>Pacten de antemano límites sobre los temas para que todos se sientan cómodos compartiendo. Las frases pueden ir desde inocentes hasta picantes, según el nivel de confianza del grupo. El objetivo es divertirse, no incomodar.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Beer Pong
+                        <div class="game-number">2</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego de competencia por equipos muy popular en fiestas. Combina puntería y bebida, imitando el ping-pong pero con vasos y pelotas de ping-pong.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>12 vasos de plástico (6 por equipo) colocados formando un triángulo en dos extremos opuestos de una mesa, una pelota de ping-pong, cerveza (u otra bebida) para llenar parcialmente los vasos, y una mesa lo suficientemente larga.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Formen dos equipos iguales y posicionen a los jugadores en los extremos opuestos de la mesa. Por turnos, lancen la pelota intentando encestarla dentro de uno de los vasos del equipo contrario.</p>
+                            <p>Si la pelota cae dentro de un vaso, el equipo defensor debe beber el contenido de ese vaso y retirarlo de la mesa. Gana el equipo que logre eliminar todos los vasos del oponente primero.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Variaciones</h4>
+                            <p>Se puede jugar 1 contra 1 (cada uno defiende 6 vasos) o 2 contra 2. Asegúrense de no lanzar demasiado fuerte para evitar derrames, y mantengan bebidas de repuesto para rellenar los vasos.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Flip Cup
+                        <div class="game-number">3</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego de carrera por relevos ideal para amantes de la cerveza y para poner a todos a moverse con prisa. Dos equipos compiten bebiendo y volteando vasos descartables lo más rápido posible.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Varios vasos de plástico (uno para cada participante), una mesa larga y bebida (tradicionalmente cerveza).</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Dividan a los participantes en dos equipos iguales y coloquen a cada equipo en fila a un lado opuesto de la mesa. Cada jugador tiene frente a sí un vaso servido con una cantidad pequeña de cerveza.</p>
+                            <p>Los primeros jugadores de cada fila hacen un brindis, y al señal de inicio, beben rápidamente el contenido de su vaso. En cuanto terminan, dejan el vaso vacío en el borde de la mesa y tratan de voltearlo boca abajo dándole un pequeño toque con el dedo hacia arriba.</p>
+                            <p>Una vez que el primer jugador consigue voltear correctamente su vaso, el siguiente jugador de ese equipo puede empezar a beber y repetir el proceso. El equipo que logre que todos sus miembros beban y volteen sus vasos primero, gana la ronda.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Nota</h4>
+                            <p>Es un juego frenético, así que prepárense para risas, choques de manos y quizá algo de cerveza derramada en la mesa. ¡La coordinación y la rapidez lo son todo!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        El Juego de la Moneda
+                        <div class="game-number">4</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Sencillo pero muy entretenido, poniendo a prueba tu puntería al hacer botar una moneda. Cada acierto te permite asignar tragos a tus amigos. Es uno de los juegos para beber en casa más divertidos por su simplicidad y competencia amistosa.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Una moneda (idealmente de 5 o 10 centavos para que rebote bien) y un vaso ancho con bebida colocado en el centro de una mesa. Funciona mejor sobre una superficie dura donde la moneda pueda rebotar.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Todos los jugadores se reúnen alrededor de la mesa. Por turnos, cada jugador toma la moneda y la intenta hacer rebotar sobre la mesa para que caiga dentro del vaso.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Reglas Especiales</h4>
+                            <ul>
+                                <li>Si la moneda toca el borde del vaso pero no entra, el jugador gana otra oportunidad inmediata</li>
+                                <li>Si la moneda entra, el jugador puede seguir tirando hasta que falle, y por cada enceste puede elegir a otro jugador para que beba un trago</li>
+                                <li>Cuando falla un tiro, debe beber como penitencia antes de pasar la moneda al siguiente</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Mayor o Menor
+                        <div class="game-number">5</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Si a tu grupo le gustan los juegos de cartas, este desafío es perfecto para animar la noche con algo de azar. Un juego muy fácil donde deberán adivinar si la próxima carta será más alta o más baja que la actual.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Una baraja de cartas completa (española o francesa) y las bebidas que estén consumiendo los jugadores.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>El mazo se baraja bien y se coloca boca abajo en el centro de la mesa. Un jugador inicia volcando la primera carta del mazo. El jugador a su izquierda debe decir si cree que la siguiente carta será mayor, menor o igual que la carta visible actual.</p>
+                            <p>Una vez que anuncia su predicción, se revela la siguiente carta del mazo.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Sistema de Resultados</h4>
+                            <ul>
+                                <li><strong>Si acertó:</strong> No bebe y el turno pasa al siguiente jugador</li>
+                                <li><strong>Si falló:</strong> Debe beber un trago como castigo</li>
+                                <li><strong>Si sale igual:</strong> Todos los jugadores deben beber al mismo tiempo</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Variación</h4>
+                            <p>Si alguien acierta tres predicciones seguidas, puede elegir a otra persona para que beba en su lugar una vez.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        ¿Quién es más probable...?
+                        <div class="game-number">6</div>
+                    </div>
+                    <div class="game-content">
+                        <p>El juego de señalar al amigo más propenso a cierta travesura. Se plantea una situación, y a la cuenta de tres todos señalan a la persona del grupo que creen que encaja mejor con esa descripción.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno en especial, solo el grupo de amigos, bebidas en mano y mucha imaginación para las preguntas.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Un jugador formula en voz alta una pregunta del estilo "¿Quién es más probable que...?" completándola con algo divertido o alocado. Den unos segundos para pensar. Luego, cuenten "1, 2, 3" y en tres todos señalan simultáneamente con el dedo a la persona que crean más probable.</p>
+                            <p>Por cada dedo que esté apuntándote, tomas un sorbo de tu bebida. Si nadie te señala, te salvas en esa ronda.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Ejemplos de Preguntas</h4>
+                            <ul>
+                                <li>"¿Quién es más probable que se duerma en una fiesta?"</li>
+                                <li>"¿Quién es más probable que haga el ridículo bailando?"</li>
+                                <li>"¿Quién es más probable que termine en Hollywood?"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        El Juego de la Medusa
+                        <div class="game-number">7</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego de azar rapidísimo que provoca sobresaltos y risas repentinas. Es ideal para grupos grandes y no requiere más que reflejos. Su nombre viene de la mítica criatura de la mirada, porque aquí la clave es a quién decides mirar.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno, aunque es común que cada jugador tenga su vaso en la mano mientras participa.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Los participantes se sientan formando un círculo, todos mirando hacia el centro. Todos comienzan con la cabeza agachada, mirando sus rodillas o la mesa.</p>
+                            <p>Uno de los jugadores cuenta en voz alta: "¡1, 2, 3… Medusa!". En la palabra "Medusa", todos deben levantar la vista inmediatamente y mirar fijamente a otro jugador, al azar.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Reglas del Juego</h4>
+                            <ul>
+                                <li>Si dos jugadores se encuentran mirándose mutuamente, ambos deben gritar "¡Medusa!" lo más rápido posible</li>
+                                <li>Quien lo dice más lento pierde y tiene que beber un trago</li>
+                                <li>Si tu mirada no coincide con la de nadie, estás salvado</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Dato Curioso</h4>
+                            <p>Es sorprendente lo aleatorio que resulta: a veces nadie cruza mirada con nadie; en otras, tres o cuatro parejas se "atrapan" mutuamente. ¡Los gritos de "Medusa" y las risas estarán garantizados!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JUEGOS FAMILIARES -->
+            <div class="section family-games">
+                <div class="section-title">👨‍👩‍👧‍👦 Juegos para Reuniones Familiares</div>
+                <p style="text-align: center; margin-bottom: 20px; font-style: italic;">Las reuniones familiares ofrecen la oportunidad perfecta para juegos en los que pueden participar niños, jóvenes y adultos juntos. El enfoque está en la creatividad, la imaginación y el trabajo en equipo.</p>
+                
+                <div class="game">
+                    <div class="game-header">
+                        Adivina la Canción
+                        <div class="game-number">8</div>
+                    </div>
+                    <div class="game-content">
+                        <p>En este juego musical los participantes pondrán a prueba su habilidad para tararear y su conocimiento de canciones populares. Es perfecto para grupos con distintas generaciones, porque pueden incluir canciones antiguas y modernas para que todos participen.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Papel y lápiz para anotar las canciones a tararear, y un reloj o cronómetro para medir el tiempo. Opcionalmente, papelitos con nombres de canciones conocidas preparados con anticipación.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Dividan a los participantes en dos equipos. En cada ronda, un miembro del equipo deberá tararear (hacer "la la la") la melodía de una canción que le asignará el equipo contrario. No puede decir ninguna palabra de la letra, solo la melodía con sonidos.</p>
+                            <p>El resto de su propio equipo tendrá 30 segundos (o 1 minuto) para adivinar el título de la canción o al menos el nombre del artista. Si logran adivinar dentro del tiempo, su equipo gana un punto.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Reglas Importantes</h4>
+                            <ul>
+                                <li>Prohibido decir la letra: si el tarareador canta una palabra real de la canción, se descalifica esa ronda</li>
+                                <li>Incluir canciones infantiles o de películas si hay niños</li>
+                                <li>Animar a que todos los miembros del equipo tarareen en algún momento</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Adivina quién soy
+                        <div class="game-number">9</div>
+                    </div>
+                    <div class="game-content">
+                        <p>En este juego, cada jugador recibe un personaje secreto en la frente. ¡Las risas comienzan cuando todos intentan descubrir quiénes son mediante preguntas ingeniosas! Es un infaltable en reuniones familiares por lo fácil que es de preparar y lo divertido que resulta.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Papeles pequeños (post-its funcionan muy bien), un bolígrafo y cinta adhesiva o post-its que se pegan solos. En cada papel se escribe el nombre de un personaje conocido: caricaturas, celebridades, deportistas, históricos, etc.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Preparación y Juego</h4>
+                            <p><strong>Preparación:</strong> Escriban un nombre de personaje por papel. Mezclen los papeles boca abajo. Cada jugador toma uno al azar sin mirar el nombre y se lo pega en la frente de forma que todos puedan ver el nombre excepto el propio jugador.</p>
+                            <p><strong>Juego:</strong> Por turnos, cada jugador hará preguntas de sí o no al grupo para deducir qué personaje tiene. Por ejemplo: "¿Mi personaje es un hombre?", "¿Soy un personaje de película?", "¿Estoy vivo?"</p>
+                            <p>Cada jugador puede seguir preguntando hasta que reciba una respuesta "No"; en ese momento su turno termina y pasa al siguiente jugador.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Consejos</h4>
+                            <p>Elijan personajes que todos los presentes puedan conocer para evitar frustraciones. Pueden establecer un tiempo límite (5 minutos) o límite de preguntas (máximo 10) por jugador para añadir emoción.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        El Juego de las Películas (Charadas)
+                        <div class="game-number">10</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un clásico de las fiestas que no podía faltar: hacer charadas o mímica con títulos de películas conocidas. Es ideal para familias porque se adapta a todas las edades usando películas infantiles, clásicas de Hollywood o de moda según los jugadores.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Papeles con títulos de películas escritas y un recipiente para mezclarlos. También un reloj para cronometrar aproximadamente 1 minuto por turno.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Dividan a los participantes en dos equipos equilibrados. Cada equipo contribuye con varios títulos de películas escritas en papeles doblados. En cada ronda, un miembro del equipo será el actor y alguien del equipo contrario le mostrará en secreto el título a representar.</p>
+                            <p>El actor tiene 1 minuto para hacer mímica e intentar que sus compañeros adivinen el título. No puede emitir sonidos, ni hablar, ni apuntar a objetos reales; solo gestos y expresión corporal.</p>
+                            <p>Si el equipo adivina correctamente dentro del minuto, gana 1 punto. Si no logran adivinar, no obtienen puntos.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Reglas Adicionales</h4>
+                            <ul>
+                                <li>Pueden indicar con dedos el número de palabras del título al comenzar</li>
+                                <li>Permitido hacer señas de "moderno/antiguo" como pista</li>
+                                <li>Prohibido deletrear o hacer señas de letras</li>
+                                <li>Si dice alguna palabra por error, se descuenta un punto o cambian de actor</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        El Teléfono Roto
+                        <div class="game-number">11</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un favorito de las reuniones familiares que demuestra cómo un mensaje puede transformarse en cuestión de segundos. Es ideal para un grupo grande y no requiere materiales, solo imaginación. Los adultos también lo disfrutan por los resultados disparatados.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno en especial. Opcionalmente, pueden preparar algunas frases graciosas o trabalenguas para usar, aunque normalmente es más divertido improvisar.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Todos los participantes se sientan o paran formando un círculo. El juego comienza cuando un jugador inventa una frase y la susurra en el oído de la persona a su derecha (o izquierda). Esa frase debe decirse en voz baja y rápidamente, solo una vez, sin repetir.</p>
+                            <p>La persona que escuchó esa frase se la susurra de la misma manera al siguiente jugador, y así sucesivamente, pasando el mensaje de oído en oído alrededor del círculo.</p>
+                            <p>Cuando el mensaje ha recorrido todo el círculo, la última persona debe decir en voz alta la frase que le llegó. El jugador inicial revela cuál era la frase original para que todos puedan comparar.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Ejemplo Divertido</h4>
+                            <p><strong>Empieza:</strong> "El gato con botas juega al fútbol"<br>
+                            <strong>A mitad del círculo:</strong> "El pato en botas jugó en el bosque"<br>
+                            <strong>Puede terminar:</strong> "Un pato en moto cruzó el bosque"</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Sillas Musicales
+                        <div class="game-number">12</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego tradicional de fiestas que nunca pasa de moda. Es perfecto para integrar a todos, desde los más chicos hasta los adultos, en una competencia amistosa de rapidez y reflejos. Además de ser dinámico y mover a todos, requiere muy poca preparación.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Sillas resistentes (una menos que el número de participantes) colocadas formando un círculo, y un dispositivo para reproducir música (celular con altavoz, equipo de sonido, etc.).</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Todos los jugadores menos uno (el controlador de la música) se colocan de pie alrededor de las sillas. Cuando comienza la música, los jugadores deben caminar o bailar alrededor de las sillas en la misma dirección.</p>
+                            <p>De repente, la persona a cargo detiene la música sin previo aviso. En ese instante, todos deben sentarse rápidamente en alguna de las sillas. Como hay una silla menos que personas, una persona quedará de pie sin asiento – ese jugador es eliminado.</p>
+                            <p>Se retira una silla adicional antes de la siguiente ronda. El proceso continúa hasta que queden dos personas y una sola silla en la ronda final.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Variaciones y Consejos</h4>
+                            <ul>
+                                <li>Nadie puede hacer trampa quedándose cerca de una silla; todos deben estar en movimiento</li>
+                                <li>El encargado de la música puede variar la duración para despistar</li>
+                                <li>Cambiar géneros musicales para ver diferentes estilos de baile</li>
+                                <li>Retirar objetos peligrosos alrededor para evitar caídas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Nudo Humano
+                        <div class="game-number">13</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego colaborativo que literalmente acercará a la familia, ¡en un revoltijo de brazos! Ideal para grupos medianos, este juego sirve para romper la timidez y generar muchas carcajadas mientras todos intentan deshacer un caos de personas tomadas de las manos.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno, solo personas. Se juega mejor en un espacio amplio de la sala o el jardín. Si hay jugadores más pequeños, asegúrense de que queden al alcance sin aplastarlos.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Reúnan a todos de pie en círculo, hombro con hombro. Primero, cada jugador extiende su mano derecha y agarra la mano de otra persona que no esté inmediatamente a su lado. Luego, extienden su mano izquierda y agarran la mano de otra persona distinta.</p>
+                            <p>Antes de empezar a desenredar, uno de los participantes se retira un momento del cuarto. Durante su ausencia, el resto debe moverse más, dando vueltas y pasando brazos por encima o debajo de otros, para hacer el nudo más complejo (¡sin soltarse!).</p>
+                            <p>Cuando el jugador que salió regresa, tiene la misión de dirigir a los demás para deshacer el nudo, indicando acciones como "tú pasa por debajo de los brazos de aquel" o "levantemos esta mano por encima". El objetivo es volver a formar un círculo normal sin soltar las manos.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Objetivo</h4>
+                            <p>Este juego no tiene un "ganador" individual, sino que todos ganan al completar la tarea. Garantiza cercanía física y promueve la comunicación. ¡Una actividad perfecta para unir a la familia... enredándose primero!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Historias Encadenadas
+                        <div class="game-number">14</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Este juego sacará el lado creativo y cuentacuentos de cada miembro de la familia. Consiste en inventar colectivamente una historia, frase por frase, rotando entre todos los participantes. Funciona bien tanto con niños pequeños como con adultos dispuestos a improvisar.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>No se necesita nada especial, aunque podrían tener un cuaderno si desean anotar la historia a medida que se crea, para conservarla de recuerdo. Pero esto es opcional; usualmente se juega de forma oral.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Todos se sientan en círculo. Una persona comienza la historia diciendo una frase introductoria como "Había una vez una familia que fue de picnic..." Siguiendo el orden circular, el siguiente participante continúa añadiendo otra frase que conecte con la anterior.</p>
+                            <p>Cada nueva frase debe seguir lógicamente lo que dijo el anterior, pero se permiten giros inesperados, elementos fantásticos y humorísticos. La historia debería tener un inicio y un final, dando por ejemplo dos vueltas completas al círculo.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Consejos</h4>
+                            <ul>
+                                <li>Se anima la libertad creativa y giros inesperados</li>
+                                <li>Pueden acordar dar dos vueltas al círculo antes de concluir</li>
+                                <li>El penúltimo jugador debe encaminar hacia un cierre</li>
+                                <li>Puede hacerse temático según la ocasión (Navidad, cumpleaños, etc.)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JUEGOS CON AMIGOS -->
+            <div class="section friends-games">
+                <div class="section-title">👥 Juegos para Reuniones con Amigos</div>
+                <p style="text-align: center; margin-bottom: 20px; font-style: italic;">Cuando organizas una reunión casual con amigos, estos juegos están pensados para grupos de amigos adolescentes o adultos. Son juegos de conversación, ingenio y atrevimiento que ayudan a conocerse mejor.</p>
+                
+                <div class="game">
+                    <div class="game-header">
+                        Verdad o Reto
+                        <div class="game-number">15</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Posiblemente el rey de los juegos de fiesta entre amigos. Un juego sencillo en el que cada participante elige entre responder honestamente una pregunta personal (verdad) o cumplir un desafío o penitencia (reto). Es versátil tanto para adolescentes como adultos.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Una botella vacía que se hace girar en el centro del círculo para elegir al azar quién participará (opcional). También pueden preparar una lista de preguntas comprometedoras y retos graciosos en papelitos.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Los jugadores se sientan formando un círculo. Se gira una botella en el centro; cuando se detiene, la persona hacia donde apunta el pico será la elegida. A esa persona se le pregunta: "¿Verdad o reto?"</p>
+                            <p><strong>Si elige Verdad:</strong> Los demás le hacen una pregunta personal que debe responder con la verdad, sin mentir.</p>
+                            <p><strong>Si elige Reto:</strong> El grupo le asigna una penitencia o desafío que debe cumplir (bailar sin música, enviar un mensaje divertido, etc.).</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Reglas de Respeto</h4>
+                            <ul>
+                                <li>Establecer límites de antemano sobre preguntas y retos</li>
+                                <li>No hacer preguntas hirientes ni retos peligrosos</li>
+                                <li>Permitir una "carta de escape" por juego si alguien se siente incómodo</li>
+                                <li>Crear un ambiente de confianza</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Dos Verdades y Una Mentira
+                        <div class="game-number">16</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego de conversación ingenioso que funciona excelente como rompehielos incluso con amigos que se conocen poco. Cada jugador debe revelar tres afirmaciones sobre sí mismo – dos verídicas y una falsa – y el resto debe adivinar cuál es la mentira.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno. Si hay muchas personas, papel y lápiz para que cada quien piense sus 3 afirmaciones con calma, pero generalmente se puede hacer de manera oral.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Por turnos, cada jugador enuncia 3 declaraciones sobre sí mismo. De esas tres afirmaciones, 2 deben ser verdad y 1 debe ser inventada (mentira). Por ejemplo: "1) He buceado con tiburones, 2) Sé tocar el piano, 3) Odio la pizza."</p>
+                            <p>El resto de los jugadores discuten un momento y luego cada uno vota cuál de las tres frases cree que es la mentira. Pueden preguntar por detalles para despistar. Tras la votación, el narrador revela cuál era la mentira.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Estrategia</h4>
+                            <p>Es más divertido cuando las verdades suenan increíbles y la mentira suena creíble. Así confundes al grupo. También adapten a anécdotas que no sean tan conocidas por el resto para mayor efectividad.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        ¿Qué Prefieres?
+                        <div class="game-number">17</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego de dilemas que pone a tus amigos en aprietos divertidos: se les plantean dos opciones difíciles y deben elegir con cuál se quedarían y explicar por qué. No hay respuestas correctas; lo entretenido es debatir las razones y asombrarse de las decisiones.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Ninguno, aunque tener una lista de preguntas preparada puede agilizar el juego. Pueden buscar dilemas clásicos, graciosos, extremos y hasta subidos de tono, según el contexto del grupo.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Un jugador toma el turno de formular un dilema al resto en el formato "¿Qué prefieres... (opción A) o (opción B)?" Las opciones suelen ser difíciles o disparatadas para provocar discusión.</p>
+                            <p>Todos los demás deben pensar su elección y luego compartir qué opción prefieren y por qué. No vale elegir "ninguna" o buscar escapatorias: la gracia es forzarse a elegir.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Ejemplos de Dilemas</h4>
+                            <ul>
+                                <li>"¿Qué prefieres, no poder volver a reír nunca o no poder volver a llorar nunca?"</li>
+                                <li>"¿Qué prefieres, viajar 100 años al pasado o 100 años al futuro?"</li>
+                                <li>"¿Qué prefieres, solo poder susurrar o solo poder gritar?"</li>
+                                <li>"¿Qué prefieres, comer tu comida favorita de por vida pero sin sentirle el sabor, o comer cosas que odias pero con sabor delicioso?"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        El Asesino (Juego del Guiño)
+                        <div class="game-number">18</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Si tu grupo de amigos es grande y buscan algo diferente, este puede ser un éxito. Es un juego de roles ocultos y astucia donde un jugador será secretamente el "asesino" y eliminará a otros con un simple guiño, mientras los demás intentan averiguar quién es antes de que caigan todos.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Para elegir al asesino de forma secreta: tantos papelitos como jugadores, uno marcado con una "X" (el asesino) y los demás en blanco. Alternativamente, un moderador externo puede designar al asesino tocándole el hombro.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Preparación y Juego</h4>
+                            <p><strong>Preparación:</strong> Ideal de 6 hasta 15 personas. Mezclen los papeles y que cada uno tome uno sin mostrar. Quien saque la "X" es el asesino, pero debe mantenerlo en secreto.</p>
+                            <p><strong>Juego:</strong> Los jugadores se sientan en círculo de modo que puedan verse las caras. El asesino intentará "matar" a otros jugadores guiñándoles un ojo discretamente. Si eres inocente y alguien te guiña directamente, debes anunciar "¡Estoy muerto!" y salir del juego.</p>
+                            <p>Los supervivientes pueden acusar a alguien de ser el asesino si creen haberlo identificado. Si varios coinciden en la acusación, pueden votar.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Condiciones de Victoria</h4>
+                            <ul>
+                                <li><strong>Inocentes ganan:</strong> Si acusan correctamente al verdadero asesino</li>
+                                <li><strong>Asesino gana:</strong> Si logra eliminar a todos sin ser descubierto</li>
+                                <li><strong>Cuidado:</strong> Si acusan a alguien inocente erróneamente, esa persona es eliminada</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        La Carta del Beso
+                        <div class="game-number">19</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Un juego ideal para fiestas de amigos donde haya confianza y ganas de algo pícaro pero inofensivo. Es un desafío de destreza labial: se trata de pasarse una carta de naipe de boca en boca sin que se caiga. Si la carta se cae durante el pase... puede que haya un "casi beso" accidental.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Solo una carta de una baraja (cualquiera, preferiblemente una vieja que no importe si se humedece un poco) y espacio para que todos se pongan de pie en círculo o fila.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Reúnan a todos de pie, formando un círculo. El juego inicia con una persona sosteniendo la carta contra sus labios, succionando aire para crear un vacío que mantiene la carta "pegada" a su boca.</p>
+                            <p>Esa persona debe voltear hacia el jugador siguiente y, manteniendo la succión, acercar la carta a los labios del siguiente jugador. El segundo jugador debe prepararse aspirando para recibir la carta en su boca cuando el primero suelte.</p>
+                            <p>Si la carta se cae accidentalmente durante el pase entre dos jugadores, ambos pierden el desafío. La penitencia típica es que ambos deben tomar un trago como castigo o realizar algún reto divertido.</p>
+                        </div>
+                        
+                        <div class="warning">
+                            <strong>Nota:</strong> Este juego requiere confianza entre los participantes. Normalmente se juega entre amigos cercanos y con buena actitud. Un "beso accidental" por este juego suele tomarse con humor.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game">
+                    <div class="game-header">
+                        Tutti Frutti
+                        <div class="game-number">20</div>
+                    </div>
+                    <div class="game-content">
+                        <p>Cerramos la guía con otro clásico que muchos habrán jugado en la escuela. Es un juego de lápiz y papel por turnos, donde se compite por llenar categorías de palabras lo más rápido posible con una letra determinada. Ideal para grupos que disfrutan los desafíos mentales y competitivos.</p>
+                        
+                        <div class="materials">
+                            <h4>Materiales Necesarios</h4>
+                            <p>Hoja de papel y lápiz para cada jugador. Cada hoja debe dividirse en columnas, donde cada columna es una categoría (Nombre, Animal, País, Comida, Objeto, etc.). Decidan entre todos de 5 a 7 categorías distintas para usar.</p>
+                        </div>
+                        
+                        <div class="how-to-play">
+                            <h4>Cómo Jugar</h4>
+                            <p>Todos dibujan en su hoja una tabla con las columnas de categorías elegidas. Para iniciar una ronda, el grupo escoge una letra al azar (alguien recita el abecedario mentalmente hasta que otro diga "¡Stop!").</p>
+                            <p>Cuando todos saben la letra, a la cuenta de tres comienzan: todos deben llenar sus columnas con palabras que empiecen por esa letra. El primero que complete todas las categorías grita "¡Tutti Frutti!" o "¡Basta!" y todos dejan de escribir inmediatamente.</p>
+                        </div>
+                        
+                        <div class="rules">
+                            <h4>Sistema de Puntuación</h4>
+                            <ul>
+                                <li><strong>Palabra única (nadie más la puso):</strong> 10 puntos</li>
+                                <li><strong>Palabra repetida:</strong> 5 puntos</li>
+                                <li><strong>Palabra inválida o vacía:</strong> 0 puntos</li>
+                            </ul>
+                            <p>Se suman los puntos de todas las categorías para cada jugador en esa ronda. Jueguen tantas rondas como letras quieran cubrir. Al final, quien tenga más puntos totales es el campeón.</p>
+                        </div>
+                        
+                        <div class="tips">
+                            <h4>Consejos</h4>
+                            <p>Para mayor reto, usen más categorías o incluyan algunas difíciles (Cantante famoso, Marca comercial, etc.). Si no se ponen de acuerdo sobre una palabra, el grupo vota si es válida o no.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONCLUSIÓN -->
+            <div class="conclusion">
+                <h2>🎉 ¡Y ahí lo tienes!</h2>
+                <p>Esta guía reúne 20 ideas de juegos para que nunca más tus fiestas caigan en la monotonía. Desde competencias de bebida para animar reuniones de adultos, pasando por clásicos familiares que unen generaciones, hasta juegos de ingenio y picardía entre amigos – hay opciones para cada ocasión.</p>
+                <br>
+                <p>Esperamos que cada juego haya quedado claro y te sirva para crear momentos inolvidables en compañía de quienes más quieres. Recuerda que lo más importante es la actitud: un simple juego se convierte en risas aseguradas cuando todos se suman con entusiasmo.</p>
+                
+                <div class="tips">
+                    <h4>Consejos Finales para el Éxito</h4>
+                    <ul>
+                        <li><strong>Elige el juego adecuado para tu público:</strong> Ten en cuenta la edad de los participantes y el ambiente</li>
+                        <li><strong>Prepara los materiales con anticipación:</strong> Ten listas las cartas, monedas, papeles, etc., para no interrumpir la fiesta</li>
+                        <li><strong>Explica las reglas claramente:</strong> Tómate unos minutos para que todos entiendan cómo jugar antes de empezar</li>
+                        <li><strong>Seguridad y respeto:</strong> Si juegan con alcohol, vigilen el consumo y no obliguen a nadie a beber más de lo que quiera</li>
+                        <li><strong>Ambiente animado:</strong> Acompaña la sesión con buena música, bocadillos para picar, y premios simbólicos para los ganadores</li>
+                    </ul>
+                </div>
+                
+                <p><strong>¡Diviértanse muchísimo!</strong> Ahora sí, a ponerla en práctica: reúne a tu grupo, elige un par de juegos de esta guía y... ¡que comience la fiesta!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Añadir interactividad suave
+        document.querySelectorAll('.game').forEach(game => {
+            game.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            game.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0
