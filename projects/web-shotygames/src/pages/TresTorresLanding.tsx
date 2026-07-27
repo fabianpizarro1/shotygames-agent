@@ -50,9 +50,18 @@ import torrePicante8 from "@/assets/torre-picante-8.webp";
 import torrePicante9 from "@/assets/torre-picante-9.webp";
 import torrePicante10 from "@/assets/torre-picante-10.webp";
 
+import torreParejasImg from "@/assets/torre-parejas.jpg";
+import torreParejas1 from "@/assets/torre-parejas-1.webp";
+import torreParejas2 from "@/assets/torre-parejas-2.webp";
 import torreParejas3 from "@/assets/torre-parejas-3.webp";
 import torreParejas4 from "@/assets/torre-parejas-4.webp";
 import torreParejas5 from "@/assets/torre-parejas-5.webp";
+import torreParejas6 from "@/assets/torre-parejas-6.webp";
+import torreParejas7 from "@/assets/torre-parejas-7.webp";
+import torreParejas8 from "@/assets/torre-parejas-8.webp";
+import torreParejas9 from "@/assets/torre-parejas-9.webp";
+import torreParejas10 from "@/assets/torre-parejas-10.webp";
+import torreParejas11 from "@/assets/torre-parejas-11.webp";
 
 import ebook30Posiciones from "@/assets/ebook-30-posiciones.webp";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
@@ -79,6 +88,10 @@ interface Plan {
   microcopy?: string;
 }
 
+// Orden de negocio (2026-07-27): se empuja el plan de 2 torres como
+// "Recomendado" — antes era el de 3 ("Más elegido"). En móvil las tarjetas
+// se reordenan con CSS (order-*) sin tocar este array; en escritorio se
+// mantiene el orden natural 1/2/3.
 const PLANES: Plan[] = [
   {
     id: "una",
@@ -86,6 +99,7 @@ const PLANES: Plan[] = [
     precio: 28,
     productId: "torreNormal",
     imagen: torreNormalImg,
+    etiqueta: "OPCIÓN INDIVIDUAL",
     torreSelection: { required: true, count: 1 },
     incluye: [
       "La torre que elijas",
@@ -103,6 +117,8 @@ const PLANES: Plan[] = [
     ahorro: 17,
     productId: "torres",
     imagen: torreNormalBrillo,
+    destacado: true,
+    etiqueta: "RECOMENDADO",
     torreSelection: { required: true, count: 2 },
     incluye: [
       "2 torres a elección (puedes repetir)",
@@ -112,6 +128,7 @@ const PLANES: Plan[] = [
       "1 Shot Bidu de regalo",
     ],
     cta: "ELEGIR MIS 2 TORRES",
+    microcopy: "El más pedido. Ahorras $17 sobre el precio individual.",
   },
   {
     id: "tres",
@@ -121,11 +138,10 @@ const PLANES: Plan[] = [
     ahorro: 35,
     productId: "chuchaqui",
     imagen: torreNormalBrillo,
-    destacado: true,
-    etiqueta: "MÁS ELEGIDO",
+    etiqueta: "PACK COMPLETO",
     isCombo: true,
     comboIncludes: [
-      "Torre de Shots Normal",
+      "Torre La Previa",
       "Torre de Shots Picante",
       "Torre de Shots Parejas",
       "3 vasos tequileros",
@@ -134,7 +150,7 @@ const PLANES: Plan[] = [
       "1 Shot Bidu",
     ],
     incluye: [
-      "Torre Normal + Picante + Parejas",
+      "La Previa + Picante + Parejas",
       "3 vasos tequileros",
       "Guía digital: 20 juegos para fiestas",
       "Guía digital: 30 posiciones",
@@ -142,15 +158,18 @@ const PLANES: Plan[] = [
       "Lista para cualquier plan: amigos, previa o pareja",
     ],
     cta: "LAS QUIERO LAS 3",
-    microcopy: "Es la que más piden. Te sale a $16 por torre.",
+    microcopy: "El pack completo. Te sale a $16 por torre.",
   },
 ];
 
-/** Las 3 torres, con retos reales. Los de Parejas van censurados a propósito. */
+/** Las 3 torres, con retos reales.
+ * "La Previa" es el nombre nuevo de lo que era Torre Normal (2026-07-27).
+ * Ojo: el Combo "La Previa" ya existe con ese nombre en otras landings —
+ * Fabián confirmó que los combos se van a renombrar después para no chocar. */
 const TORRES = [
   {
     id: "normal",
-    nombre: "Torre Normal",
+    nombre: "La Previa",
     emoji: "🎉",
     para: "Grupos, amigos, cualquier reunión",
     vibra: "Divertida · Rompe el hielo · Apta para todos",
@@ -206,13 +225,15 @@ const TORRES = [
     vibra: "+18 · Sube de nivel rápido",
     descripcion:
       'Para cuando "¿y qué hacemos hoy?" ya no tiene respuesta.',
-    // ⚠️ SOLO fotos con retos NO explícitos. Las demás (1, 6, 8, 9, 10, 11 y la
-    // portada torre-parejas.jpg) muestran retos como "HAZME SEXO ORAL",
-    // "JUEGAS DESNUDO/A" o "HAZME TERMINAR CON TUS MANOS" — publicarlas
-    // arriesga la cuenta de Meta Ads, que es el 95% de las ventas.
-    // De nada sirve censurar el texto si la imagen los muestra.
-    imagen: torreParejas4,
-    galeria: [torreParejas4, torreParejas3, torreParejas5],
+    // Decisión de Fabián (2026-07-27): sin censura por ahora. Antes se filtraban
+    // fotos con retos explícitos por riesgo en Meta Ads — revertido a pedido
+    // suyo, revisar más adelante si Meta rechaza anuncios.
+    imagen: torreParejasImg,
+    galeria: [
+      torreParejasImg, torreParejas1, torreParejas2, torreParejas3, torreParejas4,
+      torreParejas5, torreParejas6, torreParejas7, torreParejas8, torreParejas9,
+      torreParejas10, torreParejas11,
+    ],
     color: "#e11d48",
     retos: [
       "HAZLE UN MASAJE POR 2 MINUTOS",
@@ -221,7 +242,7 @@ const TORRES = [
       "HAZ UN BAILE SEXY",
       "DI TU FANTASÍA SEXUAL",
     ],
-    censurados: 14,
+    censurados: 0,
   },
 ];
 
@@ -244,7 +265,7 @@ const FAQS = [
   },
   {
     q: "¿Qué diferencia hay entre las tres torres?",
-    a: "La Normal tiene retos divertidos para cualquier grupo. La Picante sube el nivel con retos atrevidos, ideal para gente con confianza. La de Parejas es +18 y está pensada solo para dos.",
+    a: "La Previa tiene retos divertidos para cualquier grupo. La Picante sube el nivel con retos atrevidos, ideal para gente con confianza. La de Parejas es +18 y está pensada solo para dos.",
   },
   {
     q: "¿El envío tiene costo?",
@@ -256,7 +277,7 @@ const FAQS = [
   },
   {
     q: "¿Cuántas personas pueden jugar?",
-    a: "La Normal y la Picante funcionan desde 3 personas en adelante, sin límite. La de Parejas está diseñada para dos.",
+    a: "La Previa y la Picante funcionan desde 3 personas en adelante, sin límite. La de Parejas está diseñada para dos.",
   },
 ];
 
@@ -391,11 +412,11 @@ const TresTorresLanding = () => {
   };
 
   const carrusel = [
-    { src: torreNormalBrillo, badge: "Torre Normal 🎉", alt: "Torre de Shots Normal con sus retos" },
+    { src: torreNormalBrillo, badge: "La Previa 🎉", alt: "Torre La Previa con sus retos" },
     { src: torreNormal2, badge: "Reto Real 🔥", alt: "Reto: llama a tu ex" },
     { src: torrePicanteImg, badge: "Torre Picante 🌶️", alt: "Torre de Shots Picante con sus retos" },
     { src: torrePicante6, badge: "Reto Real 😈", alt: "Reto: besa apasionadamente 30 segundos" },
-    { src: torreParejas4, badge: "Torre Parejas 💘", alt: "Torre de Shots Parejas" },
+    { src: torreParejasImg, badge: "Torre Parejas 💘", alt: "Torre de Shots Parejas con sus retos" },
     { src: torreParejas3, badge: "Reto Real 🔥", alt: "Reto: juegas en ropa interior 3 rondas" },
     { src: torreNormal7, badge: "Reto Real 🍊", alt: "Reto: toma el más mandarina" },
     { src: torrePicante3, badge: "Reto Real 🌶️", alt: "Reto atrevido de la torre picante" },
@@ -411,7 +432,7 @@ const TresTorresLanding = () => {
         <title>Las 3 Torres de Shots | Desde $28 con Envío Gratis | ShotyGames Ecuador</title>
         <meta
           name="description"
-          content="Torre Normal, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador y pago contraentrega."
+          content="La Previa, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador y pago contraentrega."
         />
         <meta property="og:title" content="Las 3 Torres de Shots | ShotyGames Ecuador" />
         <meta
@@ -718,19 +739,32 @@ const TresTorresLanding = () => {
             </h2>
           </div>
 
+          {/* Móvil: orden de negocio es Dos (recomendado) → Tres (pack) → Una
+              (individual), distinto del orden natural del array (escritorio
+              vuelve a 1/2/3 con md:order-*). */}
           <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto items-start">
-            {PLANES.map((plan) => (
+            {PLANES.map((plan) => {
+              const ordenMovil =
+                plan.id === "dos" ? "order-1" : plan.id === "tres" ? "order-2" : "order-3";
+              const ordenDesktop =
+                plan.id === "una" ? "md:order-1" : plan.id === "dos" ? "md:order-2" : "md:order-3";
+              return (
               <Card
                 key={plan.id}
-                className={`relative p-6 md:p-8 border-2 flex flex-col transition-all hover:shadow-2xl ${
+                className={`relative p-6 md:p-8 border-2 flex flex-col transition-all hover:shadow-2xl ${ordenMovil} ${ordenDesktop} ${
                   plan.destacado
                     ? "border-[#ff3d00] shadow-2xl md:scale-105 bg-gradient-to-br from-[#ff3d00]/5 to-transparent"
                     : ""
                 }`}
               >
-                {plan.etiqueta && (
+                {plan.etiqueta && plan.destacado && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#ff3d00] text-white px-4 py-1 text-xs font-bold whitespace-nowrap">
                     ⭐ {plan.etiqueta}
+                  </Badge>
+                )}
+                {plan.etiqueta && !plan.destacado && (
+                  <Badge variant="secondary" className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[10px] font-bold whitespace-nowrap">
+                    {plan.etiqueta}
                   </Badge>
                 )}
 
@@ -781,7 +815,8 @@ const TresTorresLanding = () => {
                   <p className="text-xs text-center text-muted-foreground mt-3">{plan.microcopy}</p>
                 )}
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -857,11 +892,11 @@ const TresTorresLanding = () => {
                 <h3 className="text-xl md:text-2xl font-bold mb-2">Contraentrega</h3>
                 <p className="text-sm md:text-base text-muted-foreground mb-4">
                   Pagas en efectivo cuando el paquete llega a tu casa. No necesitas tarjeta ni
-                  transferencia. Cero riesgo para ti.
+                  transferencia. Cero riesgo para ti. Pedido confirmado antes por WhatsApp.
                 </p>
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-500">
                   <CheckCircle2 className="w-4 h-4" />
-                  Disponible en todo Ecuador
+                  Entrega estimada: 48-72h laborables*
                 </div>
               </Card>
 
@@ -874,15 +909,41 @@ const TresTorresLanding = () => {
                 </p>
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#ff3d00]">
                   <Zap className="w-4 h-4" />
-                  Despacho prioritario
+                  Entrega estimada: 24-48h laborables*
                 </div>
               </Card>
             </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              *Tiempos estimados, sujetos a la ruta de Servientrega en tu ciudad.
+            </p>
           </div>
         </div>
       </section>
 
+      {/* ══ 7.5 · GARANTÍA ══ */}
+      <section className="py-10 md:py-14 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-3xl mx-auto p-6 md:p-8 border-2 flex flex-col md:flex-row gap-5 items-start md:items-center">
+            <div className="w-14 h-14 rounded-xl bg-green-500/10 grid place-items-center flex-shrink-0">
+              <CheckCircle2 className="w-8 h-8 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg md:text-xl font-bold mb-1">Garantía de 30 días</h3>
+              <p className="text-sm md:text-base text-muted-foreground">
+                Si falta una pieza o llega con un defecto de fabricación, te la reponemos.
+                Solo necesitamos una foto o video del problema — escríbenos por WhatsApp.
+              </p>
+            </div>
+          </Card>
+        </div>
+      </section>
+
       {/* ══ 8 · PRUEBA SOCIAL ══ */}
+      <div className="text-center pt-10 md:pt-14">
+        <Badge variant="secondary" className="text-xs font-semibold px-3 py-1">
+          🇪🇨 Hecho en Ecuador · Shotygames desde 2017
+        </Badge>
+      </div>
       <Testimonials />
 
       {/* ══ 9 · FAQ ══ */}
