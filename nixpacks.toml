@@ -1,0 +1,21 @@
+# Fija el build del agente. Sin esto, nixpacks escanea el repo y se confunde:
+# `projects/web-shotygames/` es un proyecto Vite con su propio package.json y
+# `"type": "module"`, y al detectarlo dejó de tratar index.js como CommonJS
+# ("require is not defined", 2026-08-12).
+#
+# Acá solo se construye el agente de la raíz. Las webs de projects/ se
+# despliegan aparte en Vercel y no tienen nada que hacer en este build.
+
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install --omit=dev --no-audit --no-fund"]
+
+[phases.build]
+cmds = ["echo 'sin build: el agente corre directo desde la raíz'"]
+
+[start]
+cmd = "node index.js"

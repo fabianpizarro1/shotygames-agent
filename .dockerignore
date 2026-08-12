@@ -1,0 +1,9 @@
+node_modules
+.git
+projects/web-shotygames
+projects/truquito
+projects/emparejados
+projects/entredados
+projects/dropshipping/data
+archives
+*.log
