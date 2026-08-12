@@ -75,7 +75,7 @@ const TOOLS = [
   },
   {
     name: 'sincronizar_guias',
-    description: 'Revisa en DROPI todos los pedidos que están EN_DROPI, detecta cuáles ya tienen guía generada por el proveedor, y actualiza el Sheet con el número de guía, el costo de envío y el estado GUIA_GENERADA. Es lo que corre el cron.',
+    description: 'Revisa en DROPI todos los pedidos en curso (EN_DROPI, GUIA_GENERADA, ENTREGADO) y los hace avanzar de estado según lo que diga DROPI: escribe guía y flete cuando el proveedor genera la guía, marca ENTREGADO cuando se entrega, y PAGADO cuando DROPI acredita la plata. Es lo que corre el cron.',
     input_schema: { type: 'object', properties: {} }
   },
   {
@@ -102,6 +102,17 @@ const TOOLS = [
 ];
 
 const usd = (n) => '$' + (Number(n) || 0).toFixed(2);
+
+/**
+ * Estados de DROPI, en dos grupos. Copiados de claude-dropi.js, donde ya están
+ * probados contra pedidos reales de Shotygames.
+ *
+ * La distinción importa: DROPI marca ENTREGADO al momento de la entrega, pero
+ * acredita la plata en la wallet horas después. Si se tratara "entregado" como
+ * "cobrado", el Sheet diría que hay plata que todavía no llegó.
+ */
+const ESTADOS_ENTREGADO = ['ENTREGADO', 'DELIVERED'];
+const ESTADOS_PAGADO = ['PAGADO', 'PAGADO_PROVEEDOR', 'LIQUIDADO', 'COMPLETADO'];
 
 async function executeTool(name, input) {
   switch (name) {
@@ -187,29 +198,58 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
     }
 
     case 'sincronizar_guias': {
-      const enDropi = await hoja.pedidosPorEstado('EN_DROPI');
-      if (!enDropi.length) return 'No hay pedidos EN_DROPI para revisar.';
+      // Revisa todo lo que está en vuelo y lo hace avanzar de estado según lo
+      // que diga DROPI. Un pedido puede saltar dos estados de una si estuvo
+      // horas sin revisar (ej. EN_DROPI → ENTREGADO).
+      const enVuelo = [];
+      for (const e of ['EN_DROPI', 'GUIA_GENERADA', 'ENTREGADO']) {
+        enVuelo.push(...(await hoja.pedidosPorEstado(e)));
+      }
+      if (!enVuelo.length) return 'No hay pedidos en curso para revisar.';
 
-      const actualizados = [];
-      const sinGuia = [];
+      const cambios = [];
+      const sinNovedad = [];
       const errores = [];
 
-      for (const p of enDropi) {
+      for (const p of enVuelo) {
         const d = hoja.aObjeto(p);
         if (!d.ordenDropi) { errores.push(`${d.idPedido}: sin ORDEN DROPI en el Sheet`); continue; }
 
         try {
           const o = await pedidosDropi.getOrden(d.ordenDropi);
-          if (o.guia) {
-            await hoja.actualizarFila(d.fila, {
-              ESTADO: 'GUIA_GENERADA',
-              GUIA: o.guia,
-              FLETE: o.costoEnvio,
-              F_GUIA: new Date().toISOString()
-            });
-            actualizados.push(`${d.idPedido} → guía ${o.guia} (flete ${usd(o.costoEnvio)})`);
+          const estadoDropi = String(o.estadoDropi || '').toUpperCase();
+          const ahora = new Date().toISOString();
+          const campos = {};
+          let nuevo = d.estado;
+
+          // La plata acreditada manda: si DROPI ya liquidó, va directo a PAGADO
+          if (ESTADOS_PAGADO.some((e) => estadoDropi.includes(e))) {
+            nuevo = 'PAGADO';
+            if (d.estado !== 'PAGADO') campos.F_PAGO = ahora;
+          } else if (ESTADOS_ENTREGADO.some((e) => estadoDropi.includes(e))) {
+            nuevo = 'ENTREGADO';
+            if (d.estado !== 'ENTREGADO') campos.F_ENTREGA = ahora;
+          } else if (o.guia) {
+            nuevo = 'GUIA_GENERADA';
+          }
+
+          // La guía y el flete se escriben apenas aparecen, en cualquier estado
+          if (o.guia && !d.guia) {
+            campos.GUIA = o.guia;
+            campos.FLETE = o.costoEnvio;
+            campos.F_GUIA = ahora;
+          }
+
+          if (nuevo !== d.estado) campos.ESTADO = nuevo;
+
+          if (Object.keys(campos).length) {
+            await hoja.actualizarFila(d.fila, campos);
+            cambios.push(
+              `${d.idPedido}: ${d.estado} → ${nuevo}` +
+              (campos.GUIA ? ` · guía ${campos.GUIA} (flete ${usd(campos.FLETE)})` : '')
+            );
           } else {
-            sinGuia.push(`${d.idPedido} (${o.estadoDropi || 'sin estado'})`);
+            sinNovedad.push(`${d.idPedido} (${estadoDropi || 'sin estado en DROPI'})`);
           }
         } catch (e) {
           errores.push(`${d.idPedido}: ${e.response?.status || e.message}`);
@@ -217,8 +257,8 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
       }
 
       let out = '';
-      if (actualizados.length) out += `✅ ${actualizados.length} con guía nueva:\n${actualizados.join('\n')}\n\n`;
-      if (sinGuia.length) out += `⏳ ${sinGuia.length} esperando al proveedor:\n${sinGuia.join('\n')}\n\n`;
+      if (cambios.length) out += `✅ ${cambios.length} con novedad:\n${cambios.join('\n')}\n\n`;
+      if (sinNovedad.length) out += `⏳ ${sinNovedad.length} sin cambios:\n${sinNovedad.join('\n')}\n\n`;
       if (errores.length) out += `⚠️ ${errores.length} con problema:\n${errores.join('\n')}`;
       return out.trim() || 'Nada que actualizar.';
     }

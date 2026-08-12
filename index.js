@@ -483,11 +483,11 @@ try {
       // se vuelve ruido y se deja de leer.
       const token = process.env.TELEGRAM_DROPI2_TOKEN;
       const chatIds = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
-      if (token && chatIds.length && salida.includes('guía nueva')) {
+      if (token && chatIds.length && salida.includes('con novedad')) {
         for (const chatId of chatIds) {
           await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
             chat_id: chatId,
-            text: `📦 Guías nuevas\n\n${salida}`
+            text: `📦 Pedidos con novedad\n\n${salida}`
           }).catch(e => console.error('[DROPSHIPPING] Telegram:', e.message));
         }
       }
