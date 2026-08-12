@@ -348,4 +348,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { login, buscar, verProducto, pagina, descargarCatalogo, guardarSnapshot, delta };
+module.exports = { login, buscar, verProducto, pagina, descargarCatalogo, guardarSnapshot, delta, conToken };

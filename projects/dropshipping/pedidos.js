@@ -23,15 +23,15 @@
 
 require('dotenv').config();
 const { _makeClient: makeClient, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI } = require('../../dropi');
-const { buscar, pagina } = require('./catalogo');
-const fs = require('fs');
+const { buscar, pagina, conToken } = require('./catalogo');
 
-const TOKEN_FILE = '/tmp/.dropi2_token';
 const USER_ID = 12054;   // cuenta dropshipper de Fabián
 
-function getTokenSync() {
-  try { return fs.readFileSync(TOKEN_FILE, 'utf8').trim(); } catch (_) { return null; }
-}
+// El token se maneja con `conToken` de catalogo.js: hace login solo con las
+// credenciales del .env y reintenta si expira. La primera versión de este
+// archivo leía el token de un archivo en /tmp — que solo existía en la máquina
+// donde se había corrido el scanner. En el servidor nunca existió y todas las
+// llamadas fallaban (2026-08-12).
 
 /** Trae el producto del catálogo con lo necesario para armar la orden. */
 async function getProducto(productoId) {
@@ -161,10 +161,8 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     : await getProducto(productoId);
 
   const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega });
-  const client = makeClient(getTokenSync());
 
-  const res = await client.post('/orders/myorders', body);
-  const data = res.data;
+  const data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
   const orderId = data?.id || data?.objects?.id || data?.data?.id;
 
   if (!orderId) {
@@ -224,8 +222,6 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
  * órdenes de 2024 eran sin recaudo, de ahí las SALIDA al crear).
  */
 async function getMovimientosWallet({ desde, hasta, limite = 100 } = {}) {
-  const client = makeClient(getTokenSync());
-
   const hoy = new Date();
   const haceUnMes = new Date(hoy.getTime() - 45 * 86400000);
   const from = desde || haceUnMes.toISOString().slice(0, 10);
@@ -235,7 +231,7 @@ async function getMovimientosWallet({ desde, hasta, limite = 100 } = {}) {
               `&textToSearch=&type=null&id=null&identification_code=null` +
               `&user_id=${USER_ID}&from=${from}&until=${until}&wallet_id=0`;
 
-  const r = await client.get(url);
+  const r = await conToken(async (c) => c.get(url));
   return (r.data?.objects || []).map((m) => ({
     id: m.id,
     orderId: m.order_id,
@@ -278,8 +274,7 @@ function pagoDeOrden(movimientos, orderId) {
 
 /** Consulta una orden en DROPI. Devuelve estado, guía y costo de envío si ya existen. */
 async function getOrden(orderId) {
-  const client = makeClient(getTokenSync());
-  const r = await client.get(`/orders/myorders/${orderId}`);
+  const r = await conToken(async (c) => c.get(`/orders/myorders/${orderId}`));
   const o = r.data?.objects || r.data?.order || r.data || {};
 
   const guia = o.shipping_guide || o.guide_number || o.tracking_number || null;
