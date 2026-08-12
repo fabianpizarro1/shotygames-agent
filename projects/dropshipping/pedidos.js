@@ -1,0 +1,252 @@
+/**
+ * Creación de órdenes y guías en DROPI para dropshipping.
+ *
+ * Diferencia central con Shotygames: allá Fabián ES el proveedor, así que
+ * `dropi.js` tiene 5 productos con id, nombre y peso fijos, y una sola bodega.
+ * Acá el producto es de OTRO proveedor y cambia en cada test, así que todo eso
+ * hay que leerlo del catálogo en el momento de crear la orden:
+ *
+ *   user_id               → la cuenta dropshipper (quien vende)
+ *   supplier_id           → el dueño real del producto (p.user_id)
+ *   warehouses_selected_id→ la bodega del proveedor (p.warehouse_product[].warehouse_id)
+ *
+ * Si se manda la bodega equivocada, DROPI acepta la orden pero la guía sale mal
+ * o el proveedor nunca la despacha. Por eso se lee del producto y no se asume.
+ *
+ * Uso:
+ *   const { crearPedido } = require('./pedidos');
+ *   await crearPedido({ productoId: 139665, cantidad: 1, precioVenta: 44.86, cliente: {...} });
+ *
+ * Probar el payload SIN crear nada real:
+ *   node projects/dropshipping/pedidos.js --dry-run
+ */
+
+require('dotenv').config();
+const { _makeClient: makeClient, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI } = require('../../dropi');
+const { buscar, pagina } = require('./catalogo');
+const fs = require('fs');
+
+const TOKEN_FILE = '/tmp/.dropi2_token';
+const USER_ID = 12054;   // cuenta dropshipper de Fabián
+
+function getTokenSync() {
+  try { return fs.readFileSync(TOKEN_FILE, 'utf8').trim(); } catch (_) { return null; }
+}
+
+/** Trae el producto del catálogo con lo necesario para armar la orden. */
+async function getProducto(productoId) {
+  // No se puede usar GET /products/{id} con la cuenta dropshipper (devuelve 400),
+  // así que se busca por keywords y se filtra por id. Ver API-DROPI.md.
+  let encontrado = null;
+
+  for (let intento = 0; intento < 3 && !encontrado; intento++) {
+    const lote = await pagina({ startData: 0, pageSize: 100, keywords: String(productoId) });
+    encontrado = lote.find(p => p.id === Number(productoId)) || null;
+    if (!encontrado && intento === 0) {
+      // Buscar por id no siempre funciona; reintentar sin filtro es carísimo,
+      // así que se avisa claro en vez de barrer 33.000 productos.
+      break;
+    }
+  }
+
+  if (!encontrado) {
+    throw new Error(
+      `No se encontró el producto ${productoId} en el catálogo. ` +
+      `Pasá el nombre con buscarProductoPorNombre() o verificá que siga activo.`
+    );
+  }
+  return encontrado;
+}
+
+/** Alternativa cuando se conoce el nombre (más confiable que buscar por id). */
+async function getProductoPorNombre(nombre, productoId) {
+  const res = await buscar(nombre);
+  const p = res.find(x => x.id === Number(productoId)) || res[0];
+  if (!p) throw new Error(`No se encontró ningún producto para "${nombre}"`);
+  return p;
+}
+
+/** La bodega desde la que despacha el proveedor. Sin esto la guía sale mal. */
+function bodegaDe(producto) {
+  const wp = producto.warehouse_product;
+  if (Array.isArray(wp) && wp.length && wp[0].warehouse_id) {
+    return { id: wp[0].warehouse_id, nombre: wp[0].warehouse?.name || null };
+  }
+  return { id: null, nombre: null };
+}
+
+/**
+ * Arma el cuerpo de la orden. Separado de la creación para poder inspeccionarlo
+ * sin mandar nada — el primer pedido real no es lugar para descubrir un typo.
+ */
+function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true }) {
+  const partes = (cliente.nombre || '').trim().split(' ');
+  const nombre = partes[0] || '';
+  const apellido = partes.slice(1).join(' ') || nombre;
+
+  const ciudadUpper = (cliente.ciudad || '').toUpperCase().trim();
+  const cityForDropi = CIUDAD_DROPI[ciudadUpper] || cliente.ciudad;
+  const state = PROVINCIAS[ciudadUpper] || cliente.provincia || cliente.ciudad;
+
+  const bodega = bodegaDe(producto);
+  if (!bodega.id) {
+    throw new Error(`El producto ${producto.id} no expone bodega (warehouse_product vacío). No se puede despachar.`);
+  }
+
+  const total = contraEntrega ? Number(precioVenta) : 0;
+  const precioUnitario = parseFloat((Number(precioVenta) / cantidad).toFixed(2));
+
+  const phone = (cliente.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
+
+  return {
+    total_order: Math.round(total),
+    notes: notas || '',
+    name: nombre,
+    surname: apellido,
+    dir: (cliente.direccion || '').toUpperCase(),
+    country: 'ECUADOR',
+    state,
+    city: cityForDropi,
+    phone,
+    client_email: cliente.email || '',
+    payment_method_id: 1,
+    user_id: USER_ID,                    // la cuenta que vende (dropshipper)
+    supplier_id: producto.user_id,       // el dueño real del producto
+    type: 'FINAL_ORDER',
+    rate_type: contraEntrega ? 'CON RECAUDO' : 'SIN RECAUDO',
+    products: [{
+      id: producto.id,
+      name: producto.name,
+      weight: producto.weight || '1.00',
+      quantity: cantidad,
+      stock: producto.stock ?? 999,
+      variation_id: null,
+      price: precioUnitario,
+      suggested_price: String(producto.suggested_price || '1.00'),
+      sale_price: String(producto.sale_price || '1.00'),
+      variations: [],
+      type: producto.type || 'SIMPLE',
+      user_id: producto.user_id
+    }],
+    distributionCompany: { id: 2, name: 'SERVIENTREGA' },
+    type_service: 'normal',
+    zip_code: null,
+    colonia: '',
+    shop_id: null,
+    dni: '',
+    dni_type: '',
+    insurance: false,
+    shalom_data: null,
+    warehouses_selected_id: bodega.id,   // bodega DEL PROVEEDOR, no la de Shotygames
+    shipping_amount: 0,
+    calculate_costs_and_shiping: true
+  };
+}
+
+/**
+ * Crea el pedido en DROPI y lo deja PENDIENTE.
+ *
+ * Diferencia clave con Shotygames: allá Fabián es el proveedor, así que genera
+ * la guía él mismo en el acto. Acá el dueño del producto es otro y **la guía la
+ * genera el proveedor cuando alista el paquete**. Por eso NO se hace el PUT a
+ * GUIA_GENERADA: forzarlo desde acá pediría una guía de mercadería que el
+ * proveedor todavía no separó.
+ *
+ * El número de guía y el costo real de envío aparecen después — los recoge el
+ * cron de seguimiento (sincronizarGuias) y los escribe en el Sheet.
+ */
+async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVenta, cliente, notas, contraEntrega = true }) {
+  const producto = nombreProducto
+    ? await getProductoPorNombre(nombreProducto, productoId)
+    : await getProducto(productoId);
+
+  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega });
+  const client = makeClient(getTokenSync());
+
+  const res = await client.post('/orders/myorders', body);
+  const data = res.data;
+  const orderId = data?.id || data?.objects?.id || data?.data?.id;
+
+  if (!orderId) {
+    return { ok: false, error: 'DROPI no devolvió id de orden', respuesta: data };
+  }
+
+  return {
+    ok: true,
+    orderId,
+    estado: 'EN_DROPI',
+    producto: producto.name,
+    costoProveedor: parseFloat(producto.sale_price) * cantidad,
+    proveedor: producto.user_id,
+    bodega: bodegaDe(producto)
+  };
+}
+
+/** Consulta una orden en DROPI. Devuelve estado, guía y costo de envío si ya existen. */
+async function getOrden(orderId) {
+  const client = makeClient(getTokenSync());
+  const r = await client.get(`/orders/myorders/${orderId}`);
+  const o = r.data?.objects || r.data?.order || r.data || {};
+
+  const guia = o.shipping_guide || o.guide_number || o.tracking_number || null;
+  const envio = parseFloat(o.shipping_amount || o.discounted_amount || 0) || 0;
+
+  return {
+    orderId,
+    estadoDropi: o.status || o.state || null,
+    guia,
+    costoEnvio: envio,
+    pdf: guia ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf` : null
+  };
+}
+
+// ─── Prueba en seco ──────────────────────────────────────────────────────────
+// Arma el payload real y lo imprime SIN mandarlo a DROPI. Crear una orden de
+// prueba genera un envío real que alguien tiene que pagar y cancelar.
+
+async function dryRun() {
+  const producto = await getProductoPorNombre('Viresta', 139665);
+  const body = armarBody({
+    producto,
+    cantidad: 1,
+    precioVenta: 44.86,
+    cliente: {
+      nombre: 'Juan Perez',
+      telefono: '0991234567',
+      ciudad: 'Machala',
+      direccion: 'Av. 25 de Junio y Guayas, casa 123'
+    },
+    notas: 'PRUEBA EN SECO — no enviada'
+  });
+
+  console.log('\n  PAYLOAD QUE SE MANDARÍA A DROPI (no se envió nada)\n');
+  console.log('  Producto:      ', producto.name, `(id ${producto.id})`);
+  console.log('  Proveedor:     ', body.supplier_id, '— dueño real del producto');
+  console.log('  Cuenta que vende:', body.user_id, '— dropshipper');
+  console.log('  Bodega:        ', body.warehouses_selected_id, '—', bodegaDe(producto).nombre);
+  console.log('  Ciudad → DROPI:', body.city, '| provincia:', body.state);
+  console.log('  Teléfono:      ', body.phone);
+  console.log('  Cobro:         ', body.rate_type, '$' + body.total_order);
+  console.log('\n  products[]:');
+  console.log('  ' + JSON.stringify(body.products[0], null, 2).replace(/\n/g, '\n  '));
+
+  const faltantes = [];
+  if (!body.warehouses_selected_id) faltantes.push('warehouses_selected_id');
+  if (!body.supplier_id) faltantes.push('supplier_id');
+  if (!body.city || !body.state) faltantes.push('ciudad/provincia');
+  if (!body.products[0].id) faltantes.push('producto id');
+
+  console.log('\n  ' + (faltantes.length
+    ? '❌ Faltan campos: ' + faltantes.join(', ')
+    : '✅ Payload completo — listo para el primer pedido real') + '\n');
+}
+
+if (require.main === module) {
+  if (process.argv.includes('--dry-run')) {
+    dryRun().catch(e => { console.error('❌ ' + e.message); process.exit(1); });
+  } else {
+    console.log('Usá --dry-run para inspeccionar el payload sin crear una orden real.');
+  }
+}
+
+module.exports = { crearPedido, getOrden, armarBody, getProductoPorNombre, bodegaDe };

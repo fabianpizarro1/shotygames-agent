@@ -3,3 +3,10 @@ CLAUDE.local.md
 .claude/settings.local.json
 node_modules/
 .DS_Store
+
+# Snapshots del catálogo DROPI: ~13MB cada uno y se regeneran solos con
+# `node projects/dropshipping/catalogo.js snapshot`. No van al repo.
+projects/dropshipping/data/
+
+# Truquito tiene su propio repo (proyecto de Vercel aparte)
+projects/truquito/

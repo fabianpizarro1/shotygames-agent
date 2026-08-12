@@ -53,6 +53,19 @@ try {
     }, getHistory, saveHistory);
   }
 
+  // Bot DROPSHIPPING (Truquito + Avanora) — cuenta DROPI y Sheet distintos a los
+  // de Shotygames, por eso es un bot aparte y no una skill del de arriba.
+  if (process.env.TELEGRAM_DROPI2_TOKEN) {
+    const { chatDropshipping } = require('./claude-dropshipping');
+    setupBot(app, {
+      token: process.env.TELEGRAM_DROPI2_TOKEN,
+      path: '/telegram-dropshipping',
+      name: 'DROPSHIPPING',
+      chatFn: (history, msg) => chatDropshipping(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  }
+
   // Bot asistente personal
   if (process.env.TELEGRAM_PERSONAL_TOKEN) {
     const { chatPersonal } = require('./claude-personal');
@@ -449,6 +462,48 @@ try {
   console.log('[CRON] Notificaciones: OPS 10am/12pm/3pm lun-vie | DROPI 10pm | CONTA 10am lun-vie + 10pm');
 } catch (e) {
   console.error('[CRON] Error al iniciar notificaciones:', e.message);
+}
+
+// ── DROPSHIPPING: seguimiento de guías ───────────────────────
+// El proveedor genera la guía cuando alista el paquete, y no avisa. Sin este
+// cron los pedidos se quedarían en EN_DROPI sin que nadie note que ya salieron.
+// Cada 2h entre 8am y 8pm de Ecuador (13:00-01:00 UTC) — fuera de ese rango
+// los proveedores no están despachando.
+try {
+  const cron = require('node-cron');
+  const { executeTool } = require('./claude-dropshipping');
+  const axios = require('axios');
+
+  async function sincronizarGuiasDropshipping() {
+    try {
+      const salida = await executeTool('sincronizar_guias', {});
+      console.log('[DROPSHIPPING] Sincronización de guías:', salida.slice(0, 200));
+
+      // Solo avisa si algo cambió — un mensaje cada 2h diciendo "nada nuevo"
+      // se vuelve ruido y se deja de leer.
+      const token = process.env.TELEGRAM_DROPI2_TOKEN;
+      const chatIds = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (token && chatIds.length && salida.includes('guía nueva')) {
+        for (const chatId of chatIds) {
+          await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+            chat_id: chatId,
+            text: `📦 Guías nuevas\n\n${salida}`
+          }).catch(e => console.error('[DROPSHIPPING] Telegram:', e.message));
+        }
+      }
+    } catch (e) {
+      console.error('[DROPSHIPPING] Error sincronizando guías:', e.message);
+    }
+  }
+
+  if (process.env.SHEETS_ID_DROPSHIPPING) {
+    cron.schedule('0 13,15,17,19,21,23,1 * * *', sincronizarGuiasDropshipping);
+    console.log('[CRON] Dropshipping: seguimiento de guías cada 2h (8am-8pm Ecuador)');
+  } else {
+    console.log('[CRON] Dropshipping: desactivado (falta SHEETS_ID_DROPSHIPPING)');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar seguimiento de dropshipping:', e.message);
 }
 
 // ── CONTENIDO DIARIO (Instagram, manual — bot solo genera y envía) ──

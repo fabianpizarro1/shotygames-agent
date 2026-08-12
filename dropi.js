@@ -657,4 +657,4 @@ async function getSaldoDropi() {
   }
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient };
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
