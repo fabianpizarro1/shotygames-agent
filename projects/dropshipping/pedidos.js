@@ -24,6 +24,7 @@
 require('dotenv').config();
 const { _makeClient: makeClient, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI } = require('../../dropi');
 const { buscar, pagina, conToken } = require('./catalogo');
+const { resolverCiudad } = require('./ciudades');
 
 const USER_ID = 12054;   // cuenta dropshipper de Fabián
 
@@ -79,14 +80,16 @@ function bodegaDe(producto) {
  * Arma el cuerpo de la orden. Separado de la creación para poder inspeccionarlo
  * sin mandar nada — el primer pedido real no es lugar para descubrir un typo.
  */
-function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true }) {
+function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true, ciudadDropi = null }) {
   const partes = (cliente.nombre || '').trim().split(' ');
   const nombre = partes[0] || '';
   const apellido = partes.slice(1).join(' ') || nombre;
 
+  // La ciudad viene resuelta contra el catálogo de la transportadora cuando se
+  // crea un pedido real. El mapa de dropi.js queda como respaldo para el dry-run.
   const ciudadUpper = (cliente.ciudad || '').toUpperCase().trim();
-  const cityForDropi = CIUDAD_DROPI[ciudadUpper] || cliente.ciudad;
-  const state = PROVINCIAS[ciudadUpper] || cliente.provincia || cliente.ciudad;
+  const cityForDropi = ciudadDropi || CIUDAD_DROPI[ciudadUpper] || cliente.ciudad;
+  const state = cliente.provincia || PROVINCIAS[ciudadUpper] || cliente.ciudad;
 
   const bodega = bodegaDe(producto);
   if (!bodega.id) {
@@ -160,13 +163,26 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     ? await getProductoPorNombre(nombreProducto, productoId)
     : await getProducto(productoId);
 
-  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega });
+  // Traducir la ciudad al nombre de la transportadora ANTES de mandar nada:
+  // si no la reconoce, DROPI rechaza el pedido entero.
+  let ciudadDropi;
+  try {
+    const r = await resolverCiudad(cliente.ciudad, cliente.provincia);
+    ciudadDropi = r.nombre;
+  } catch (e) {
+    return { ok: false, error: e.message, tipo: 'ciudad' };
+  }
+
+  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi });
 
   const data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
   const orderId = data?.id || data?.objects?.id || data?.data?.id;
 
   if (!orderId) {
-    return { ok: false, error: 'DROPI no devolvió id de orden', respuesta: data };
+    // DROPI devuelve 200 con isSuccess:false y el motivo real adentro. Sin
+    // sacarlo a la superficie, el bot solo puede decir "no funcionó".
+    const motivo = data?.data_error || data?.message || 'DROPI no devolvió id de orden';
+    return { ok: false, error: motivo, respuesta: data, ciudadEnviada: ciudadDropi };
   }
 
   // Releer la orden para tomar el flete y la ganancia que DROPI ya calculó.
