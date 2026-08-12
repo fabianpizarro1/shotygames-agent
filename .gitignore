@@ -10,3 +10,7 @@ projects/dropshipping/data/
 
 # Truquito tiene su propio repo (proyecto de Vercel aparte)
 projects/truquito/
+
+# Proyectos con su propio repo (se despliegan aparte)
+projects/emparejados/
+projects/entredados/
