@@ -171,12 +171,28 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     return { ok: false, error: 'DROPI no devolvió id de orden', respuesta: data };
   }
 
+  // Releer la orden para tomar el flete y la ganancia que DROPI ya calculó.
+  // El flete depende de ciudad y peso — usar el número exacto de esta orden en
+  // vez de un promedio hace que la utilidad del Sheet sea real, no estimada.
+  let flete = 0;
+  let gananciaEsperada = 0;
+  try {
+    const o = await getOrden(orderId);
+    flete = o.costoEnvio;
+    gananciaEsperada = o.gananciaEsperada;
+  } catch (_) {
+    // Si falla, el cron lo completa en la próxima pasada. No vale la pena
+    // tumbar un pedido ya creado por no poder leer un monto.
+  }
+
   return {
     ok: true,
     orderId,
     estado: 'EN_DROPI',
     producto: producto.name,
     costoProveedor: parseFloat(producto.sale_price) * cantidad,
+    flete,
+    gananciaEsperada,
     proveedor: producto.user_id,
     bodega: bodegaDe(producto)
   };
@@ -274,6 +290,11 @@ async function getOrden(orderId) {
     estadoDropi: o.status || o.state || null,
     guia,
     costoEnvio: envio,
+    // Lo que DROPI calcula que se va a ganar con esta orden, y lo que
+    // efectivamente acreditó. Comparar ambos revela cualquier diferencia entre
+    // lo prometido y lo cobrado, sin tener que estimar nada.
+    gananciaEsperada: parseFloat(o.dropshipper_amount_to_win || 0) || 0,
+    gananciaAcreditada: parseFloat(o.amount_earned_dropshipper || 0) || 0,
     pdf: guia ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf` : null
   };
 }

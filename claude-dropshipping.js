@@ -144,18 +144,25 @@ async function executeTool(name, input) {
 
       if (!r.ok) return `Falló la creación en DROPI: ${r.error}`;
 
-      await hoja.actualizarFila(d.fila, {
+      const campos = {
         ESTADO: 'EN_DROPI',
         ORDEN_DROPI: r.orderId,
         COSTO: r.costoProveedor,
         F_CONFIRM: new Date().toISOString()
-      });
+      };
+      // El flete exacto de ESTE envío (depende de ciudad y peso). Con él, la
+      // fórmula de utilidad del Sheet deja de ser estimada y da el número real.
+      if (r.flete) campos.FLETE = r.flete;
+
+      await hoja.actualizarFila(d.fila, campos);
 
       return `Pedido ${d.idPedido} creado en DROPI.
 Orden: ${r.orderId}
 Producto: ${r.producto} x${d.cantidad}
-Costo proveedor: ${usd(r.costoProveedor)}
 Cobrar al entregar: ${usd(d.total)}
+Costo proveedor: ${usd(r.costoProveedor)}
+Flete: ${usd(r.flete)}
+Ganas al entregarse: ${usd(r.gananciaEsperada)}
 Bodega: ${r.bodega.nombre || r.bodega.id}
 Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
     }
@@ -237,7 +244,17 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
 
           if (pago) {
             nuevo = 'PAGADO';
-            if (d.estado !== 'PAGADO') campos.F_PAGO = pago.fecha || ahora;
+            if (d.estado !== 'PAGADO') {
+              campos.F_PAGO = pago.fecha || ahora;
+
+              // Lo prometido contra lo acreditado. Si no cuadran, queda escrito
+              // en el Sheet: son centavos que de otro modo nadie notaría.
+              const esperado = o.gananciaEsperada;
+              if (esperado && Math.abs(esperado - pago.total) > 0.05) {
+                campos.NOTAS = `DROPI prometía ${usd(esperado)} y acreditó ${usd(pago.total)} ` +
+                               `(diferencia ${usd(pago.total - esperado)})`;
+              }
+            }
           } else if (ESTADOS_PAGADO.some((e) => estadoDropi.includes(e))) {
             // Respaldo: DROPI dice liquidado pero el movimiento aún no aparece
             nuevo = 'PAGADO';

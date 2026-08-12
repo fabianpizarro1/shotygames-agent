@@ -17,12 +17,15 @@
  *   const { evaluar, precioMinimo, cpaMaximo } = require('./calculadora');
  */
 
-// Valores por defecto — datos reales de Shotygames (2026-07) más supuestos
-// conservadores de dropshipping. Ajustar con --flag cuando tengas tus números.
+// Valores por defecto, verificados contra una orden real de DROPI el 2026-08-12
+// (orden 6500078: PVP $29, proveedor $9, envío $6.38 → acredita $13.62).
 const DEFAULTS = {
-  flete: 5.50,       // flete de ida COD (Shotygames real: $4.63–$6.20)
-  retorno: 3.50,     // flete de devolución cuando el cliente no recibe
-  entrega: 0.70,     // tasa de entrega efectiva — 70% es lo normal en COD Ecuador
+  flete: 6.38,       // costo de envío que DROPI descuenta al entregar
+  // DROPI NO cobra flete de retorno en órdenes CON RECAUDO: si el pedido se
+  // devuelve, solo cobra el flete inicial. Por eso va en 0 y no en un estimado.
+  // Se deja como parámetro por si otra transportadora sí lo cobra.
+  retorno: 0,
+  entrega: 0.70,     // tasa de entrega efectiva — supuesto hasta tener dato propio
   cpa: 10.00,        // costo por pedido en Meta Ads (Shotygames real: $10–$11)
   comision: 0        // % sobre venta si la plataforma de checkout cobra (0 = propia)
 };
