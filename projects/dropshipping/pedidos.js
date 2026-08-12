@@ -189,12 +189,23 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
  * orden como ENTREGADA al momento de la entrega, pero acredita horas después:
  * mirar solo el estado de la orden haría contar plata que todavía no llegó.
  *
- * Cómo se mueve la plata en una orden de dropshipping (verificado 2026-08-12
- * contra el historial real de la cuenta 12054):
- *   crear orden  → SALIDA  "SALIDA POR NUEVA ORDEN: {id}"        (flete por adelantado)
- *   entregada    → ENTRADA "ENTRADA POR GANANCIA ... COMO DROPSHIPPER: {id}"
- *                  ENTRADA "DEVOLUCION DE FLETE ORDEN ENTREGADA. ORDEN ID *{id}*"
- *   cancelada    → ENTRADA "ENTRADA POR CAMBIO DE ESTATUS: CANCELADO, EN LA ORDEN: {id}"
+ * Cómo se mueve la plata depende del tipo de orden. Las tiendas nuevas operan
+ * TODO con recaudo (COD), que es el caso de la izquierda:
+ *
+ *   CON RECAUDO (lo nuestro)          SIN RECAUDO
+ *   ─────────────────────────         ─────────────────────────────────────
+ *   crear: no se cobra nada           crear: SALIDA "SALIDA POR NUEVA ORDEN"
+ *   (Fabián está en una comunidad     (le descuentan el flete al instante)
+ *   DROPI: no hace falta saldo)
+ *
+ *   entregada: ENTRADA por            entregada: ENTRADA por ganancia
+ *   ganancia YA NETA del flete        + ENTRADA "DEVOLUCION DE FLETE"
+ *
+ * Por eso `pagoDeOrden` busca la ENTRADA por GANANCIA y suma la devolución de
+ * flete solo si existe: en COD no aparece y el total es la ganancia sola.
+ *
+ * Verificado 2026-08-12 contra el historial real de la cuenta 12054 (las
+ * órdenes de 2024 eran sin recaudo, de ahí las SALIDA al crear).
  */
 async function getMovimientosWallet({ desde, hasta, limite = 100 } = {}) {
   const client = makeClient(getTokenSync());
