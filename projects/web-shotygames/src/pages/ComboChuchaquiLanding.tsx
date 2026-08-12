@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -55,7 +55,7 @@ const ComboChuchaquiLanding = () => {
   };
 
   const comboIncludes = [
-    "Torre Normal",
+    "Torre La Previa",
     "Torre Picante",
     "Torre Parejas",
     "Enganchados",
@@ -66,7 +66,7 @@ const ComboChuchaquiLanding = () => {
 
   const productImages = [
     { src: comboChuchaquiImg, badge: "Combo Chuchaqui 🔥", alt: "Combo Chuchaqui" },
-    { src: torreNormalImg, badge: "Torre Normal 🎮", alt: "Torre Normal" },
+    { src: torreNormalImg, badge: "Torre La Previa 🎮", alt: "Torre La Previa" },
     { src: torrePicanteImg, badge: "Torre Picante 🌶️", alt: "Torre Picante" },
     { src: torreParejasImg, badge: "Torre Parejas 💕", alt: "Torre Parejas" },
     { src: enganchadosImg, badge: "Enganchados 🎯", alt: "Enganchados" }
@@ -83,13 +83,12 @@ const ComboChuchaquiLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Combo Chuchaqui - Pack Completo para tu Fiesta | ShotyGames Ecuador</title>
-        <meta name="description" content="3 Torres + Enganchados + botella de regalo + guías digitales. El pack definitivo para fiestas épicas. Envíos a todo Ecuador." />
-        <meta property="og:title" content="Combo Chuchaqui - Pack Completo para tu Fiesta | ShotyGames Ecuador" />
-        <meta property="og:description" content="3 Torres + Enganchados + botella de regalo. El pack definitivo para fiestas épicas." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/combo-chuchaqui" />
-      </Helmet>
+      <Seo
+        title="Combo Chuchaqui - Pack Completo para tu Fiesta | ShotyGames Ecuador"
+        description="3 Torres + Enganchados + botella de regalo + guías digitales. El pack definitivo para fiestas épicas. Envíos a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/combo-chuchaqui"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-amber-500 to-orange-600 text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">
@@ -292,7 +291,7 @@ const ComboChuchaquiLanding = () => {
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="text-4xl mb-2">🎮</div>
                     <p className="font-bold text-lg">4 Juegos Completos</p>
-                    <p className="text-sm text-muted-foreground">Torre Normal, Picante, Parejas + Enganchados</p>
+                    <p className="text-sm text-muted-foreground">La Previa, Picante, Parejas + Enganchados</p>
                   </div>
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="text-4xl mb-2">🍾</div>

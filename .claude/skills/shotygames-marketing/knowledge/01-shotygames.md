@@ -14,10 +14,10 @@ E-commerce ecuatoriano de juegos de mesa para fiestas y reuniones. Vende a todo 
 ### Físicos — Individuales
 | Producto | Precio | Contenido | Regalo si pide HOY |
 |---|---|---|---|
-| Torre Normal | $23 + $5 envío | 51 bloques con retos y penitencias + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
-| Torre Picante | $23 + $5 envío | 51 bloques picantes + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
-| Torre Parejas | $23 + $5 envío | 51 bloques para parejas + instrucciones | Guía digital 30 posiciones + 1 vaso tequilero |
-| Enganchados | $28 + $5 envío | Juego de madera, tabla de shots, 1 vaso, 1 dado + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
+| Torre Normal | $28 envío gratis | 51 bloques con retos y penitencias + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
+| Torre Picante | $28 envío gratis | 51 bloques picantes + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
+| Torre Parejas | $28 envío gratis | 51 bloques para parejas + instrucciones | Guía digital 30 posiciones + 1 vaso tequilero |
+| Enganchados | $28 envío gratis | Juego de madera, tabla de shots, 1 vaso, 1 dado + instrucciones | Guía digital 25 juegos para fiestas + 1 vaso tequilero |
 
 **Cómo se juega la torre:** Se arma, cada jugador saca un bloque y cumple el reto. Si tumba la torre, penitencia.
 
@@ -29,15 +29,17 @@ E-commerce ecuatoriano de juegos de mesa para fiestas y reuniones. Vende a todo 
 
 **Dados del Placer físicos:** solo se venden como parte de combos, NO individual.
 
-### Combos — SIEMPRE empujar combos antes que individuales (todos incluyen envío gratis)
+### Combos — SIEMPRE empujar combos antes que individuales
+
+> **Ojo:** el envío es gratis en TODO el catálogo, también en individuales. El gancho del combo ya NO es el envío — es el ahorro por unidad y los regalos extra. No usar "envío gratis" como diferenciador del combo.
 
 | Combo | Precio | Incluye |
 |---|---|---|
-| **Combo 2 Torres** ⭐ | $39 | 2 torres a elección (puede repetir) + Guía 30 posiciones + Guía 25 juegos + 1 Shot Bidu. Ahorro vs. individual: $12 |
-| **Combo La Previa** ⭐ ESTRELLA | $43 | 2 torres a elección + Dados del Placer físicos + Guía 30 posiciones + Guía 25 juegos + Guía del placer + 1 Shot Bidu |
-| **Combo Full Torres** | $49 | Torre Normal + Torre Picante + Torre Parejas + guías digitales + 1 Shot Bidu. Ahorro: $25 |
+| **Combo 2 Torres** ⭐ | $39 | 2 torres a elección (puede repetir) + Guía 30 posiciones + Guía 25 juegos + 1 Shot Bidu. Ahorro vs. individual ($56): **$17** |
+| **Combo La Previa** ⭐ ESTRELLA | $43 | 2 torres a elección + Dados del Placer físicos + Guía 30 posiciones + Guía 25 juegos + Guía del placer + 1 Shot Bidu. Ahorro vs. individual ($56): **$13** + los dados |
+| **Combo Full Torres** | $49 | Torre Normal + Torre Picante + Torre Parejas + guías digitales + 1 Shot Bidu. Ahorro vs. individual ($84): **$35** |
 | **Combo Parejas Hot** ⭐ ESTRELLA PAREJAS | $33 | Torre Parejas + Dados del Placer físicos + Guía 30 posiciones + Guía del placer + 1 Shot Bidu |
-| **Combo Chuchaqui** | $69 | Todo: Normal + Picante + Parejas + Enganchados + Dados físicos + Emparejados + Dados digital + todas las guías + 1 Shot Bidu |
+| **Combo Chuchaqui** | $69 | Todo: Normal + Picante + Parejas + Enganchados + Dados físicos + Emparejados + Dados digital + todas las guías + 1 Shot Bidu. Ahorro vs. individual ($112): **$43** |
 
 ### Recomendación automática por tipo de cliente
 | Si el cliente quiere... | Recomendar |
@@ -49,10 +51,10 @@ E-commerce ecuatoriano de juegos de mesa para fiestas y reuniones. Vende a todo 
 | Una sola torre | Explicar individual pero mencionar el combo |
 
 ## Logística
-- **Envíos:** Todo Ecuador vía Servientrega
+- **Envíos:** GRATIS a todo Ecuador vía Servientrega — en todo el catálogo, individuales y combos
 - **Antes de las 15:00** = envío hoy mismo | **Después de las 15:00** = envío mañana
 - **Machala:** pago contraentrega disponible
-- **Galápagos:** $5 adicional en envío
+- **Galápagos:** revisión manual con el equipo antes de confirmar
 
 ## Audiencia Principal
 - Jóvenes 18-35 años en Ecuador

@@ -1,0 +1,156 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Variant Weight Unit,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Status
+combo-la-previa,Combo La Previa — 2 Torres + Dados del Placer,"<p><strong>El combo que arma la previa completa.</strong> Dos torres a tu elección, los Dados del Placer físicos y tres guías digitales de regalo. Todo por $43 con envío gratis.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>2 Torres de Shots a elección (Normal, Picante o Parejas — puedes repetir)</li>
+  <li>Dados del Placer físicos <em>(no se venden por separado)</em></li>
+  <li>Guía digital: 30 posiciones</li>
+  <li>Guía digital: 25 juegos para fiestas</li>
+  <li>Guía digital del placer</li>
+  <li>1 Shot Bidu de regalo</li>
+  <li>Envío gratis a todo Ecuador</li>
+</ul>
+<h3>Cómo se juega la torre</h3>
+<p>Se arma la torre con los 51 bloques. Cada jugador saca un bloque y cumple el reto que dice. Si tumbas la torre, te toca penitencia. Simple, y no falla.</p>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Combo,"combo,fiesta,grupos,estrella,envio-gratis,contraentrega",TRUE,Elige tus 2 torres,Normal + Picante,combo-la-previa-normal-picante,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-la-previa.jpg,1,Combo La Previa: dos torres de shots y dados del placer,FALSE,Combo La Previa | 2 Torres de Shots + Dados | Envío gratis Ecuador,2 torres de shots a elección + Dados del Placer + 3 guías digitales. $43 con envío gratis a todo Ecuador y pago contraentrega.,active
+combo-la-previa,,,,,,,,Normal + Parejas,combo-la-previa-normal-parejas,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-la-previa,,,,,,,,Picante + Parejas,combo-la-previa-picante-parejas,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-la-previa,,,,,,,,2 Normales,combo-la-previa-2-normales,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-la-previa,,,,,,,,2 Picantes,combo-la-previa-2-picantes,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-la-previa,,,,,,,,2 Parejas,combo-la-previa-2-parejas,3200,,deny,manual,43.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-2-torres,Combo 2 Torres de Shots — Elige tus favoritas,"<p><strong>Dos torres por menos que el precio de dos torres.</strong> Eliges las que quieras — incluso dos iguales — y te ahorras $17.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>2 Torres de Shots a elección (Normal, Picante o Parejas — puedes repetir)</li>
+  <li>Guía digital: 30 posiciones</li>
+  <li>Guía digital: 25 juegos para fiestas</li>
+  <li>1 Shot Bidu de regalo</li>
+  <li>Envío gratis a todo Ecuador</li>
+</ul>
+<h3>Cómo se juega</h3>
+<p>Se arma la torre con los 51 bloques. Cada jugador saca uno y cumple el reto. Si la tumbas, penitencia.</p>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Combo,"combo,fiesta,grupos,envio-gratis,contraentrega",TRUE,Elige tus 2 torres,Normal + Picante,combo-2-torres-normal-picante,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-2-torres.jpg,1,Combo de dos torres de shots Shotygames,FALSE,Combo 2 Torres de Shots | Ahorra $17 | Envío gratis Ecuador,"Elige 2 torres de shots (Normal, Picante o Parejas) por $39 con envío gratis y guías digitales de regalo. Pago contraentrega en todo Ecuador.",active
+combo-2-torres,,,,,,,,Normal + Parejas,combo-2-torres-normal-parejas,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-2-torres,,,,,,,,Picante + Parejas,combo-2-torres-picante-parejas,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-2-torres,,,,,,,,2 Normales,combo-2-torres-2-normales,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-2-torres,,,,,,,,2 Picantes,combo-2-torres-2-picantes,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-2-torres,,,,,,,,2 Parejas,combo-2-torres-2-parejas,2800,,deny,manual,39.00,56.00,TRUE,TRUE,g,,,,,,,
+combo-parejas-hot,Combo Parejas Hot — Torre Parejas + Dados del Placer,"<p><strong>Para salir de la rutina del viernes en casa.</strong> La Torre Parejas más los Dados del Placer, que no se venden por separado. Por el precio de la torre sola con envío, te llevas todo el combo.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>Torre de Shots Parejas — 51 bloques con retos para dos</li>
+  <li>Dados del Placer físicos <em>(no se venden por separado)</em></li>
+  <li>Guía digital: 30 posiciones</li>
+  <li>Guía digital del placer</li>
+  <li>1 Shot Bidu de regalo</li>
+  <li>Envío gratis a todo Ecuador</li>
+</ul>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Combo,"combo,parejas,regalo,envio-gratis,contraentrega",TRUE,Title,Default Title,combo-parejas-hot,1900,,deny,manual,33.00,,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-parejas-hot.jpg,1,Combo Parejas Hot: torre de shots para parejas y dados del placer,FALSE,Combo Parejas Hot | Torre + Dados del Placer | Envío gratis Ecuador,Torre de Shots Parejas + Dados del Placer físicos + guía de 30 posiciones. $33 con envío gratis y pago contraentrega en todo Ecuador.,active
+combo-full-torres,Combo Full Torres — Normal + Picante + Parejas,"<p><strong>Las tres torres, listo para cualquier plan.</strong> Reunión tranquila, previa que se sale de control o noche de pareja — tienes la torre para cada una. Ahorras $35.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>Torre de Shots Normal — 51 bloques</li>
+  <li>Torre de Shots Picante — 51 bloques atrevidos</li>
+  <li>Torre de Shots Parejas — 51 bloques para dos</li>
+  <li>Guías digitales de regalo</li>
+  <li>1 Shot Bidu de regalo</li>
+  <li>Envío gratis a todo Ecuador</li>
+</ul>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Combo,"combo,fiesta,grupos,parejas,envio-gratis,contraentrega",TRUE,Title,Default Title,combo-full-torres,4200,,deny,manual,49.00,84.00,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-full-torres.jpg,1,Combo Full Torres: las tres torres de shots Shotygames,FALSE,Combo Full Torres | Las 3 Torres de Shots | Ahorra $35,Torre Normal + Picante + Parejas por $49 con envío gratis a todo Ecuador. Ahorras $35 y pagas contraentrega.,active
+combo-chuchaqui,Combo Chuchaqui — Todo el catálogo Shotygames,"<p><strong>Todo. Literal, todo lo que vendemos.</strong> Cuatro juegos físicos, los dados, los dos juegos digitales y todas las guías. Ahorras $43 contra comprarlo suelto.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>Torre de Shots Normal</li>
+  <li>Torre de Shots Picante</li>
+  <li>Torre de Shots Parejas</li>
+  <li>Enganchados</li>
+  <li>Dados del Placer físicos</li>
+  <li>Emparejados (juego digital)</li>
+  <li>Dados Digitales</li>
+  <li>Todas las guías digitales</li>
+  <li>1 Shot Bidu de regalo</li>
+  <li>Envío gratis a todo Ecuador</li>
+</ul>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Combo,"combo,fiesta,grupos,parejas,premium,envio-gratis,contraentrega",TRUE,Title,Default Title,combo-chuchaqui,6500,,deny,manual,69.00,112.00,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-full-torres.jpg,1,Combo Chuchaqui: catálogo completo de Shotygames,FALSE,Combo Chuchaqui | Todo Shotygames en un pedido | Ahorra $43,Las 3 torres + Enganchados + Dados del Placer + todos los juegos y guías digitales. $69 con envío gratis y pago contraentrega.,active
+torre-de-shots-normal,Torre de Shots Normal,"<p><strong>El clásico que prende cualquier reunión.</strong> 51 bloques de madera, cada uno con un reto. Se arma, se juega y la fiesta se arma sola.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>51 bloques con retos y penitencias</li>
+  <li>Instrucciones</li>
+  <li>Guía digital: 25 juegos para fiestas</li>
+  <li>1 vaso tequilero</li>
+</ul>
+<h3>Cómo se juega</h3>
+<p>Se arma la torre. Cada jugador saca un bloque y cumple el reto que dice. Si tumbas la torre, penitencia.</p>
+<p><em>¿Vas a comprar más de uno? Con el <a href=""/products/combo-2-torres"">Combo 2 Torres</a> ahorras $17.</em></p>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Juego físico,"torre,fiesta,grupos,contraentrega",TRUE,Title,Default Title,torre-de-shots-normal,1400,,deny,manual,28.00,,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/torre-normal-foto.jpg,1,Torre de Shots Normal de Shotygames,FALSE,Torre de Shots Normal | Juego para fiestas | Ecuador,"51 bloques de madera con retos y penitencias para prender cualquier reunión. $28 con envío GRATIS a todo Ecuador, pago contraentrega.",active
+torre-de-shots-picante,Torre de Shots Picante,"<p><strong>Para las reuniones donde ya nadie se hace el tímido.</strong> Los mismos 51 bloques, pero con retos que rompen el hielo de una.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>51 bloques con retos picantes y penitencias</li>
+  <li>Instrucciones</li>
+  <li>Guía digital: 25 juegos para fiestas</li>
+  <li>1 vaso tequilero</li>
+</ul>
+<p><em>¿Vas a comprar más de uno? Con el <a href=""/products/combo-2-torres"">Combo 2 Torres</a> ahorras $17.</em></p>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Juego físico,"torre,fiesta,grupos,picante,contraentrega",TRUE,Title,Default Title,torre-de-shots-picante,1400,,deny,manual,28.00,,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/torre-picante-brillo.jpg,1,Torre de Shots Picante de Shotygames,FALSE,Torre de Shots Picante | Retos atrevidos | Ecuador,"51 bloques con retos picantes para reuniones sin vergüenza. $28 con envío GRATIS a todo Ecuador, pago contraentrega.",active
+torre-de-shots-parejas,Torre de Shots Parejas,"<p><strong>Para salir de ""y qué hacemos hoy"".</strong> 51 bloques con retos para dos. Sube la tensión sin que tengan que planear nada.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>51 bloques con retos para parejas</li>
+  <li>Instrucciones</li>
+  <li>Guía digital: 30 posiciones</li>
+  <li>1 vaso tequilero</li>
+</ul>
+<p><em>Con el <a href=""/products/combo-parejas-hot"">Combo Parejas Hot</a> te llevas además los Dados del Placer por $33.</em></p>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Juego físico,"torre,parejas,regalo,contraentrega",TRUE,Title,Default Title,torre-de-shots-parejas,1400,,deny,manual,28.00,,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/torre-parejas-foto.jpg,1,Torre de Shots Parejas de Shotygames,FALSE,Torre de Shots Parejas | Juego para dos | Ecuador,"51 bloques con retos para parejas + guía de 30 posiciones de regalo. $28 con envío GRATIS a todo Ecuador, pago contraentrega.",active
+enganchados,Enganchados — Juego de mesa con tabla de shots,"<p><strong>Otro formato, la misma bulla.</strong> Juego de madera con tabla de shots, vaso y dado. Rápido de entender, difícil de soltar.</p>
+<h3>Qué incluye</h3>
+<ul>
+  <li>Juego de madera</li>
+  <li>Tabla de shots</li>
+  <li>1 vaso</li>
+  <li>1 dado</li>
+  <li>Instrucciones</li>
+  <li>Guía digital: 25 juegos para fiestas</li>
+</ul>
+<h3>Pago contraentrega</h3>
+<p>Pagas en efectivo cuando recibes el paquete en tu casa. No necesitas tarjeta ni transferencia.</p>
+<h3>Envío gratis a todo Ecuador</h3>
+<p>Envío GRATIS a todo Ecuador vía Servientrega, desde Machala. Pedidos antes de las 15:00 salen el mismo día; después de las 15:00 salen al día siguiente.</p>",Shotygames,Juego físico,"juego,fiesta,grupos,contraentrega",TRUE,Title,Default Title,enganchados,1800,,deny,manual,28.00,,TRUE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-full-torres.jpg,1,"Enganchados, juego de mesa de madera de Shotygames",FALSE,Enganchados | Juego de madera con tabla de shots | Ecuador,"Juego de madera con tabla de shots, vaso y dado. $28 con envío GRATIS a todo Ecuador, pago contraentrega.",active
+emparejados-digital,Emparejados — Juego digital de cartas para parejas,"<p><strong>Descarga inmediata, sin esperar envío.</strong> Juego de cartas digital para parejas. Lo abres en el celular y ya están jugando.</p>
+<ul>
+  <li>Descarga inmediata tras la compra</li>
+  <li>Se juega desde el celular</li>
+  <li>Sin costo de envío</li>
+</ul>",Shotygames,Juego digital,"digital,parejas,descargable",TRUE,Title,Default Title,emparejados-digital,0,,deny,manual,4.90,,FALSE,TRUE,g,https://catalogo.shotygames.com/images/products/torre-parejas-foto.jpg,1,"Emparejados, juego digital de cartas para parejas",FALSE,Emparejados | Juego digital para parejas | Descarga inmediata,Juego digital de cartas para parejas. Descarga inmediata por $4.90.,active
+dados-digitales,Dados Digitales — 4 dados para parejas,"<p><strong>Cuatro dados, infinitas combinaciones.</strong> Acción, zona, tiempo e intensidad. Descarga inmediata.</p>
+<ul>
+  <li>4 dados: acción, zona, tiempo, intensidad</li>
+  <li>Descarga inmediata tras la compra</li>
+  <li>Sin costo de envío</li>
+</ul>",Shotygames,Juego digital,"digital,parejas,descargable",TRUE,Title,Default Title,dados-digitales,0,,deny,manual,3.90,,FALSE,TRUE,g,https://catalogo.shotygames.com/images/products/combo-parejas-hot.jpg,1,Dados digitales de Shotygames,FALSE,Dados Digitales | 4 dados para parejas | Descarga inmediata,"4 dados digitales: acción, zona, tiempo e intensidad. Descarga inmediata por $3.90.",active

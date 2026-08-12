@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -10,7 +10,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useNavigate } from "react-router-dom";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import enganchados from "@/assets/enganchados-brillo.webp";
-import torreNormalImg from "@/assets/torre-normal.jpg";
+import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import emparejadosPortada from "@/assets/emparejados-portada.jpg";
@@ -121,13 +121,12 @@ const EnganchadosLanding = () => {
     text: "Confirma tu pedido y recibe en casa 🎉"
   }];
   return <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Enganchados - El Juego de Puntería para Fiestas | ShotyGames Ecuador</title>
-        <meta name="description" content="Pon a prueba tu puntería, concentración y velocidad. El juego más adictivo para grupos. Envíos a todo Ecuador." />
-        <meta property="og:title" content="Enganchados - El Juego de Puntería para Fiestas | ShotyGames Ecuador" />
-        <meta property="og:description" content="Pon a prueba tu puntería, concentración y velocidad. El juego más adictivo para grupos." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/enganchados" />
-      </Helmet>
+      <Seo
+        title="Enganchados - El Juego de Puntería para Fiestas | ShotyGames Ecuador"
+        description="Pon a prueba tu puntería, concentración y velocidad. El juego más adictivo para grupos. Envíos a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/enganchados"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#10b981] to-[#059669] text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">
@@ -185,7 +184,14 @@ const EnganchadosLanding = () => {
                 <CarouselContent>
                   {productImages.map((image, index) => <CarouselItem key={index}>
                       <div className="relative aspect-square md:aspect-video rounded-2xl overflow-hidden bg-muted shadow-2xl">
-                        <img src={image.src} alt={image.alt} className="w-full h-full object-cover" />
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className="w-full h-full object-cover"
+                          /* solo la primera se carga ya; las otras 9 al deslizar */
+                          loading={index === 0 ? "eager" : "lazy"}
+                          fetchPriority={index === 0 ? "high" : "auto"}
+                        />
                         <Badge className="absolute top-4 right-4 bg-[#10b981] text-white border-none text-sm md:text-base px-3 py-1">
                           {image.badge}
                         </Badge>
@@ -515,13 +521,13 @@ const EnganchadosLanding = () => {
         upsells={[
           {
             id: 'torreNormal',
-            name: 'Torre de Shots Normal',
+            name: 'Torre La Previa (para grupos)',
             price: 10,
             image: torreNormalImg
           },
           {
             id: 'torrePicante',
-            name: 'Torre de Shots Picante',
+            name: 'Torre Picante (para grupos)',
             price: 10,
             image: torrePicanteImg
           },
@@ -540,7 +546,7 @@ const EnganchadosLanding = () => {
           {
             id: 'emparejados',
             name: 'Emparejados (juego digital)',
-            price: 3.90,
+            price: 2.90,
             image: emparejadosPortada
           }
         ]}

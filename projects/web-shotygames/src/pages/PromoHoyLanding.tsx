@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -76,13 +76,12 @@ const PromoHoyLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Promo de Hoy - 2 Torres + Regalos con Envío Gratis | ShotyGames Ecuador</title>
-        <meta name="description" content="Lleva 2 Torres de Shots a elegir + regalos digitales incluidos con envío gratis. Oferta por tiempo limitado." />
-        <meta property="og:title" content="Promo de Hoy - 2 Torres + Regalos con Envío Gratis | ShotyGames Ecuador" />
-        <meta property="og:description" content="Lleva 2 Torres de Shots a elegir + regalos digitales incluidos con envío gratis." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/promo-hoy" />
-      </Helmet>
+      <Seo
+        title="Promo de Hoy - 2 Torres + Regalos con Envío Gratis | ShotyGames Ecuador"
+        description="Lleva 2 Torres de Shots a elegir + regalos digitales incluidos con envío gratis. Oferta por tiempo limitado."
+        canonical="https://www.shotygames.com/landing/promo-hoy"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">

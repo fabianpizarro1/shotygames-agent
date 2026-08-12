@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -54,7 +54,7 @@ const ComboTorresLanding = () => {
   };
 
   const comboIncludes = [
-    "Torre Normal",
+    "Torre La Previa",
     "Torre Picante",
     "Torre Parejas",
     "🎁 Shot Bidu de regalo",
@@ -64,7 +64,7 @@ const ComboTorresLanding = () => {
 
   const productImages = [
     { src: comboTorresImg, badge: "Combo Torres 🏆", alt: "Combo Torres" },
-    { src: torreNormalImg, badge: "Torre Normal 🎮", alt: "Torre Normal" },
+    { src: torreNormalImg, badge: "Torre La Previa 🎮", alt: "Torre La Previa" },
     { src: torrePicanteImg, badge: "Torre Picante 🌶️", alt: "Torre Picante" },
     { src: torreParejasImg, badge: "Torre Parejas 💕", alt: "Torre Parejas" }
   ];
@@ -80,13 +80,12 @@ const ComboTorresLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Combo 2 Torres de Shots - Ahorra $12 | ShotyGames Ecuador</title>
-        <meta name="description" content="Lleva 2 Torres de Shots + Shot Bidu de regalo + guías digitales. Ahorra $12 vs comprar por separado. Envíos a todo Ecuador." />
-        <meta property="og:title" content="Combo 2 Torres de Shots - Ahorra $12 | ShotyGames Ecuador" />
-        <meta property="og:description" content="Lleva 2 Torres de Shots y ahorra $12 vs comprar por separado. Envíos a todo Ecuador." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/combo-torres" />
-      </Helmet>
+      <Seo
+        title="Combo 2 Torres de Shots - Ahorra $12 | ShotyGames Ecuador"
+        description="Lleva 2 Torres de Shots + Shot Bidu de regalo + guías digitales. Ahorra $12 vs comprar por separado. Envíos a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/combo-torres"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-600 to-purple-800 text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">
@@ -281,7 +280,7 @@ const ComboTorresLanding = () => {
                 <div className="grid md:grid-cols-3 gap-4 md:gap-6 pt-4 md:pt-6">
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="text-4xl mb-2">🎮</div>
-                    <p className="font-bold">Torre Normal</p>
+                    <p className="font-bold">Torre La Previa</p>
                     <p className="text-sm text-muted-foreground">Clásica y divertida</p>
                   </div>
                   <div className="p-4 rounded-lg bg-muted/50">

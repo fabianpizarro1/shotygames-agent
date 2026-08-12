@@ -45,7 +45,7 @@ No abuses — máximo 3 mensajes por respuesta. No uses ||| si tu respuesta es c
 
 ## Productos físicos
 
-### Torres de Shots — $23 c/u + $5 envío (o gratis en combos)
+### Torres de Shots — $28 c/u con envío GRATIS
 Cada torre incluye: la torre, 1 vaso tequilero, instrucciones físicas.
 
 | Torre | Para quién | Regalo digital incluido |
@@ -56,7 +56,7 @@ Cada torre incluye: la torre, 1 vaso tequilero, instrucciones físicas.
 
 Cómo se juega: se arma la torre, cada jugador saca un bloque y cumple el reto. Si tumba la torre, penitencia.
 
-### Enganchados — $28 + $5 envío
+### Enganchados — $28 con envío GRATIS
 Juego competitivo y rápido. Incluye: juego, tabla de shots, 1 vaso, 1 dado, instrucciones.
 Ideal para fiestas y reuniones. No empujarlo demasiado — es más trabajoso de fabricar.
 
@@ -90,15 +90,15 @@ El cliente elige 2 de: Normal, Picante, Parejas (puede repetir).
 ### Combo 2 Torres — $39 (envío gratis)
 2 torres a elección + Guía 30 posiciones + Guía 25 juegos + 1 Shot Bidu.
 El cliente elige 2 de: Normal, Picante, Parejas (puede repetir).
-> 2 torres individuales con envío = $51. Aquí pagas $39.
+> 2 torres por separado = $56. Aquí pagas $39. Ahorras $17.
 
 ### Combo Full Torres — $49 (envío gratis)
 Normal + Picante + Parejas + guías digitales + 1 Shot Bidu.
-> 3 torres + envío individual = $74. Aquí pagas $49.
+> 3 torres por separado = $84. Aquí pagas $49. Ahorras $35.
 
 ### Combo Parejas Hot — $33 (envío gratis) ⭐ para parejas
 Torre Parejas + Dados del Placer físicos + Guía 30 posiciones + Guía del placer + 1 Shot Bidu.
-> La torre sola con envío = $28. Por $5 más llevas el combo completo.
+> La torre sola = $28. Por $5 más llevas el combo completo con los Dados del Placer.
 
 ### Combo Chuchaqui — $69 (envío gratis)
 Normal + Picante + Parejas + Enganchados + Dados físicos + Emparejados + Dados digital + todas las guías + 1 Shot Bidu.
@@ -168,7 +168,7 @@ En Machala: entrega gratis a domicilio, pago al recibir disponible, retiro en Ca
 
 ## Política de envíos
 
-- Envío nacional: **$5** (gratis en combos). Galápagos: $10, revisión manual.
+- Envío nacional: **GRATIS** en todo el catálogo (individuales y combos). Galápagos: revisión manual.
 - Transportadora: **Servientrega** para casi todos. Algunas ciudades se manejan por cooperativa — si el cliente pregunta por cooperativa, dile que lo consultas con el equipo.
 - **Horario de despacho:** lunes a viernes hasta las 5pm.
   - Pedido confirmado antes de las 2pm → sale el mismo día.
@@ -216,7 +216,7 @@ Si el combo permite elegir torres, preguntar cuáles antes de pedir los datos.
 > Producto: [PRODUCTO/COMBO]
 > Detalle: [torres elegidas / extras]
 > Total: $[TOTAL]
-> Envío: [GRATIS / $5]
+> Envío: GRATIS
 > Ciudad: [CIUDAD]
 > Método de pago: [MÉTODO]
 >
@@ -229,10 +229,10 @@ No enviar datos de pago hasta que el cliente confirme.
 ## Objeciones comunes
 
 **"Está caro"**
-> Por eso convienen más los combos 🔥 Una torre con envío te queda en $28, pero por $39 llevas 2 torres con envío gratis y regalos.
+> Por eso convienen más los combos 🔥 Una torre con envío te queda en $33, pero por $39 llevas 2 torres con envío gratis y regalos.
 
 **"Solo quiero una torre"**
-> Claro, también puedes llevar una sola. Te queda en $23 + $5 de envío.
+> Claro, también puedes llevar una sola. Te queda en $28 + $5 de envío.
 > Pero te aviso: por $39 llevas 2 torres con envío gratis 🔥
 Si insiste, vende individual sin pelear.
 
@@ -247,7 +247,7 @@ Si insiste, vende individual sin pelear.
 > Con pago anticipado o tarjeta: 24-48 h laborables. Con pago mixto: 48-72 h.
 
 **"¿El envío es gratis?"**
-> En torres individuales el envío cuesta $5. En los combos va gratis 🔥
+> Sí, el envío va GRATIS a todo Ecuador 🔥 El precio que ves es el precio final.
 
 **"¿Qué torre me recomiendas?"**
 > 🎉 Para fiesta tranqui: Normal | 🌶️ Para grupo con confianza: Picante | 💘 Para pareja: Parejas
@@ -280,7 +280,7 @@ Si insiste, vende individual sin pelear.
 9. Combo La Previa es el combo estrella general. Combo Parejas Hot es el estrella para parejas.
 10. No ofrecer contraentrega nacional como primera opción.
 11. Para Machala: entrega gratis y pago al recibir disponible.
-12. Galápagos: envío $10, revisión manual.
+12. Envío gratis a todo Ecuador. Galápagos: revisión manual con el equipo.
 13. Siempre confirmar resumen antes de enviar datos de pago.
 14. Registrar el pedido en Sheets SOLO después de que el cliente confirme explícitamente.
 15. Para cooperativa (fuera de Machala): decir que lo consultas con el equipo.`;
@@ -306,7 +306,7 @@ const TOOLS_VENTAS = [
         saldo: { type: 'string', description: 'Monto pendiente de cobro' },
         cuenta: { type: 'string', description: 'Método de pago: PAYPHONE, PICHINCHA, GUAYAQUIL, DROPI, etc.' },
         estado: { type: 'string', description: 'PENDIENTE siempre para pedidos nuevos de clientes' },
-        envio: { type: 'string', description: 'Costo de envío: 0 si es gratis, 5 si paga envío' },
+        envio: { type: 'string', description: 'Costo de envío: 0 siempre (envío gratis a todo Ecuador). Solo distinto en casos de revisión manual como Galápagos' },
         transportadora: { type: 'string', description: 'SERVIENTREGA por defecto' },
         notas: { type: 'string', description: 'Combo elegido, torres seleccionadas y cualquier nota adicional' }
       },

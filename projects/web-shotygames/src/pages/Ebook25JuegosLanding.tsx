@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCart, Download, Users, PartyPopper, Wine, Heart, Sparkles, CheckCircle2, Clock, Smartphone, MessageCircle, UserCheck, TreePine, Zap, Star, Gift } from "lucide-react";
 import { CheckoutModal } from "@/components/CheckoutModal";
-import { HelmetProvider, Helmet } from "react-helmet-async";
 
 import portadaEbook from "@/assets/ebook-25-juegos-portada.webp";
 import ejemploJuego from "@/assets/ebook-25-juegos-ejemplo.webp";
+import Seo from "@/components/Seo";
 
 const PRECIO = 4.90;
 const PRECIO_ANTERIOR = 12.99;
@@ -41,11 +41,13 @@ const Ebook25JuegosLanding = () => {
   };
 
   return (
-    <HelmetProvider>
-      <Helmet>
-        <title>25 Juegos para Fiestas - La guía que salva tus reuniones | ShotyGames</title>
-        <meta name="description" content="Guía práctica en PDF con 25 juegos para animar reuniones, cenas y previas. Ideal para Navidad y fin de año. Descarga inmediata por solo $4.90" />
-      </Helmet>
+    <>
+      <Seo
+        title="Guía Digital de 20 Juegos para Fiestas | ShotyGames"
+        description="Guía práctica en PDF con 20 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90"
+        canonical="https://www.shotygames.com/landing/25-juegos-fiestas"
+        type="product"
+      />
 
       <div className="min-h-screen bg-gradient-to-b from-red-950 via-red-900 to-amber-950">
         {/* Decoración navideña sutil */}
@@ -436,7 +438,7 @@ const Ebook25JuegosLanding = () => {
           productId="ebook-25-juegos"
         />
       </div>
-    </HelmetProvider>
+    </>
   );
 };
 

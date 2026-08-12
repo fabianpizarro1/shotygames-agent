@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, ArrowLeft, ShoppingCart } from "lucide-react";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 
-import torreNormal from "@/assets/torre-normal.jpg";
+import torreNormal from "@/assets/torre-normal-brillo.webp";
 import torrePicante from "@/assets/torre-picante.jpg";
 import torreParejas from "@/assets/torre-parejas.jpg";
 import enganchados from "@/assets/enganchados.jpg";
@@ -16,9 +16,9 @@ import cartasPartyshots from "@/assets/cartas-partyshots.jpg";
 const productsData: Record<string, any> = {
   "torre-normal": {
     id: "torre-normal",
-    name: "Torre de Shots Normal",
+    name: "Torre La Previa",
     description: "El clásico que prendió todas las fiestas. 51 bloques con retos, preguntas y penitencias en español.",
-    longDescription: "La Torre de Shots Normal es el juego perfecto para animar cualquier fiesta. Con 51 bloques de madera de alta calidad, cada uno con retos únicos, este juego garantiza risas y diversión durante horas. Ideal para reuniones de amigos, previa, o cualquier ocasión que quieras hacer memorable.",
+    longDescription: "La Torre La Previa es el juego perfecto para animar cualquier fiesta. Con 51 bloques de madera de alta calidad, cada uno con retos únicos, este juego garantiza risas y diversión durante horas. Ideal para reuniones de amigos, previa, o cualquier ocasión que quieras hacer memorable.",
     price: 20,
     image: torreNormal,
     features: [
@@ -166,13 +166,12 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen">
-      <Helmet>
-        <title>{product.name} | ShotyGames Ecuador</title>
-        <meta name="description" content={product.description} />
-        <meta property="og:title" content={`${product.name} | ShotyGames Ecuador`} />
-        <meta property="og:description" content={product.description} />
-        <meta property="og:url" content={`https://shoty-fiesta-web-main.vercel.app/producto/${product.id}`} />
-      </Helmet>
+      <Seo
+        title={`${product.name} | ShotyGames Ecuador`}
+        description={product.description}
+        canonical={`https://www.shotygames.com/producto/${product.id}`}
+        type="product"
+      />
       {/* Header */}
       <header className="bg-secondary py-4 sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-4">

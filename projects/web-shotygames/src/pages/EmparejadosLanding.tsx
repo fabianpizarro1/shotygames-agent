@@ -1,38 +1,63 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Gift, Heart, MessageCircle, Sparkles, Zap, Clock, Shield, Star } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  ShoppingCart, Gift, Heart, Sparkles, Zap, Clock, Printer, Timer,
+  Smartphone, MessageCircle, KeyRound, CheckCircle2, Infinity as InfinityIcon, Star,
+} from "lucide-react";
 import { CheckoutModal } from "@/components/CheckoutModal";
-import heroImage from "@/assets/emparejados-hero.jpg";
+import demoVideo from "@/assets/emparejados-demo.mp4";
 import portadaImage from "@/assets/emparejados-portada.jpg";
 import conexionImage from "@/assets/emparejados-conexion.jpg";
 import deseoImage from "@/assets/emparejados-deseo.jpg";
 import diversionImage from "@/assets/emparejados-diversion.jpg";
 import productImage1 from "@/assets/emparejados-prod-1.webp";
-import productImage2 from "@/assets/emparejados-prod-2.webp";
-import productImage3 from "@/assets/emparejados-prod-3.webp";
-import productImage4 from "@/assets/emparejados-prod-4.webp";
 import ebookImage from "@/assets/ebook-30-posiciones.webp";
-import torreNormalImg from "@/assets/torre-normal.jpg";
+import appCrono from "@/assets/emparejados-app-crono.webp";
+import appBarajea from "@/assets/emparejados-app-barajea.webp";
+import appGuia from "@/assets/emparejados-app-guia.webp";
+import lifeConexion from "@/assets/emparejados-life-conexion.webp";
+import lifeCartas from "@/assets/emparejados-life-cartas.webp";
+import lifeSofa from "@/assets/emparejados-life-sofa.webp";
+import lifeTv from "@/assets/emparejados-life-tv.webp";
+import testimonial1 from "@/assets/testimonial-1.jpg";
+import testimonial2 from "@/assets/testimonial-2.jpg";
+import testimonial3 from "@/assets/testimonial-3.jpg";
+import testimonial4 from "@/assets/testimonial-4.jpg";
+import testimonial5 from "@/assets/testimonial-5.jpg";
+import testimonial6 from "@/assets/testimonial-6.jpg";
+import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
-import enganchadosImg from "@/assets/enganchados.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
 
 const EmparejadosLanding = () => {
-  const navigate = useNavigate();
   const productName = "Emparejados";
-  const productPrice = 3.90;
+  const productPrice = 6.90;
   const originalPrice = 15.00;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
-  
+
+  const heroSlides = [
+    { img: lifeConexion, alt: "Pareja jugando Emparejados en el sofá, carta de Conexión en pantalla" },
+    { img: lifeCartas, alt: "Las cartas de Emparejados desplegadas alrededor del celular" },
+    { img: lifeSofa, alt: "Noche en casa jugando Emparejados desde el celular" },
+    { img: lifeTv, alt: "Pareja en el sofá jugando Emparejados en vez de ver la tele" },
+  ];
+
+  // Rotación automática — pausa en cuanto el usuario toca un indicador
+  const [autoRotate, setAutoRotate] = useState(true);
+  useEffect(() => {
+    if (!autoRotate) return;
+    const t = setInterval(() => setCurrentSlide((p) => (p + 1) % heroSlides.length), 4000);
+    return () => clearInterval(t);
+  }, [autoRotate, heroSlides.length]);
+
   useEffect(() => {
     if (shouldOpenCheckout) {
       setCheckoutOpen(true);
@@ -41,674 +66,642 @@ const EmparejadosLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
+    if (typeof (window as any).fbq !== "undefined") {
+      (window as any).fbq("track", "ViewContent", {
         content_name: productName,
-        content_category: 'Juegos de Cartas',
+        content_category: "Juegos Digitales",
         value: productPrice,
-        currency: 'USD',
+        currency: "USD",
       });
     }
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "InitiateCheckout", {
         content_name: productName,
-        content_category: 'Juegos de Cartas',
-        value: 3.90,
-        currency: 'USD'
+        content_category: "Juegos Digitales",
+        value: productPrice,
+        currency: "USD",
       });
     }
-    
     setCheckoutOpen(true);
   };
 
-  const productImages = [
-    { src: portadaImage, badge: "OFERTA HOY", alt: "Emparejados - Juego Digital para Parejas" },
-    { src: productImage1, badge: "PRODUCTO", alt: "Emparejados - Cartas y caja del juego" },
-    { src: productImage2, badge: "INCLUYE", alt: "Emparejados - Contenido completo del juego" },
-    { src: productImage3, badge: "3 CATEGORÍAS", alt: "Emparejados - Conexión, Deseo y Diversión" },
-    { src: productImage4, badge: "PREMIUM", alt: "Emparejados - Diseño elegante" },
-  ];
-
-  const [currentImage, setCurrentImage] = useState(0);
-
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % productImages.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + productImages.length) % productImages.length);
-  };
-
-  const testimonials = [
+  const categorias = [
     {
-      name: "Sofía M.",
-      location: "Quito",
-      rating: 5,
-      text: "Terminamos muriéndonos de risa y más conectados. Las cartas son súper variadas y nunca aburren.",
-      date: "Hace 3 días",
-      avatar: "SM",
-      photo: null
+      img: conexionImage,
+      titulo: "Conexión",
+      color: "#d63384",
+      emoji: "💗",
+      desc: "Preguntas que abren conversaciones que nunca tuvieron.",
+      ejemplo: "Dile una fantasía romántica que no hayas vivido.",
     },
     {
-      name: "Carlos & Ana",
-      location: "Guayaquil",
-      rating: 5,
-      text: "Lo compramos para nuestro aniversario y fue la mejor decisión. Súper romántico y divertido a la vez.",
-      date: "Hace 1 semana",
-      avatar: "CA",
-      photo: null
+      img: deseoImage,
+      titulo: "Deseo",
+      color: "#8B1538",
+      emoji: "🔥",
+      desc: "Retos para subir la temperatura sin que se sienta forzado.",
+      ejemplo: "Dale tres besos lentos donde tú quieras.",
     },
     {
-      name: "Daniel R.",
-      location: "Cuenca",
-      rating: 5,
-      text: "Las cartas de 'Deseo' son increíbles. Elevó la chispa en nuestra relación de forma elegante.",
-      date: "Hace 2 semanas",
-      avatar: "DR",
-      photo: null
-    },
-    {
-      name: "María José",
-      location: "Manta",
-      rating: 5,
-      text: "Lo uso con mi novio en cada cita. Es perfecto para romper la rutina y conocernos más.",
-      date: "Hace 5 días",
-      avatar: "MJ",
-      photo: null
-    },
-    {
-      name: "Roberto P.",
-      location: "Ambato",
-      rating: 5,
-      text: "Digital y accesible desde cualquier dispositivo. Lo recomiendo 100%. Gran inversión en nuestra relación.",
-      date: "Hace 1 semana",
-      avatar: "RP",
-      photo: null
+      img: diversionImage,
+      titulo: "Diversión",
+      color: "#0077b6",
+      emoji: "🎯",
+      desc: "Dinámicas para reír juntos y romper el hielo.",
+      ejemplo: "Elige una canción y tu pareja deberá bailarla.",
     },
   ];
 
-  const benefits = [
-    { icon: MessageCircle, text: "Más conversación real y cercanía genuina" },
-    { icon: Sparkles, text: "Más chispa y novedad en tu relación" },
-    { icon: Heart, text: "Plan instantáneo para citas y aniversarios" },
-    { icon: Zap, text: "Juegas donde sea, cuando sea" },
-  ];
-
-  const howToPlaySteps = [
-    {
-      step: "1",
-      title: "Baraja las cartas",
-      description: "Presiona BARAJEAR para mezclar las 72 cartas",
-      icon: Heart
-    },
-    {
-      step: "2",
-      title: "Saca una carta",
-      description: "Aparecerá un reto de ❤️ Conexión, 🔥 Deseo o 🎯 Diversión",
-      icon: Sparkles
-    },
-    {
-      step: "3",
-      title: "Cumple o toma",
-      description: "Si no deseas cumplir la carta, toma un shot de castigo",
-      icon: Zap
-    }
+  const pasosEntrega = [
+    { icon: ShoppingCart, titulo: "Haces tu pedido", desc: "Llenas el formulario acá. Toma menos de 1 minuto." },
+    { icon: MessageCircle, titulo: "Te escribo por WhatsApp", desc: "Te llega el resumen del pedido y los datos para pagar." },
+    { icon: KeyRound, titulo: "Pagas y recibes todo", desc: "Link del juego, tu clave, el PDF imprimible y las instrucciones de acceso." },
+    { icon: Smartphone, titulo: "Lo guardas y juegan", desc: "Lo guardas en tu dispositivo y ya pueden jugar sin conexión." },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 overflow-x-hidden w-full">
-      <Helmet>
-        <title>Emparejados - Juego Digital para Parejas | ShotyGames Ecuador</title>
-        <meta name="description" content="El juego digital que fortalece tu relación. Conexión, deseo y diversión. Acceso inmediato por solo $3.90." />
-        <meta property="og:title" content="Emparejados - Juego Digital para Parejas | ShotyGames Ecuador" />
-        <meta property="og:description" content="El juego digital que fortalece tu relación. Conexión, deseo y diversión." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/emparejados" />
-      </Helmet>
-      {/* Fixed Header with Promo */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-primary text-primary-foreground py-3 px-2 text-center font-semibold text-xs sm:text-sm md:text-base shadow-lg animate-fade-in">
-        🎁 HOY: Guía Digital de 30 Posiciones GRATIS + Acceso Inmediato 🎁
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
+      <Seo
+        title="Emparejados — 72 cartas para jugar en pareja | ShotyGames Ecuador"
+        description="72 cartas de Conexión, Deseo y Diversión. Lo juegas desde el celular y además lo puedes imprimir. Acceso inmediato por $6.90."
+        canonical="https://www.shotygames.com/landing/emparejados"
+        image={`https://www.shotygames.com${portadaImage}`}
+        type="product"
+      />
+
+      {/* ── Barra fija ─────────────────────────────────────────────── */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-primary text-primary-foreground py-2.5 px-3 shadow-lg">
+        <div className="flex items-center justify-center gap-x-5 gap-y-1 flex-wrap text-xs sm:text-sm font-semibold">
+          <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" /> Acceso inmediato</span>
+          <span className="flex items-center gap-1.5"><Printer className="w-4 h-4" /> También lo imprimes</span>
+          <span className="flex items-center gap-1.5"><Gift className="w-4 h-4" /> Guía de regalo</span>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="pt-16 pb-24 overflow-x-hidden w-full max-w-[100vw]">
-        {/* Hero Section */}
-        <section className="w-full px-3 sm:px-4 py-8 md:py-12 max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center w-full max-w-full">
-            {/* Image Carousel */}
-            <div className="relative w-full max-w-full">
-              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl w-full bg-background">
-                <img
-                  src={productImages[currentImage].src}
-                  alt={productImages[currentImage].alt}
-                  className="w-full h-full object-contain transition-transform duration-300"
-                  loading={currentImage === 0 ? "eager" : "lazy"}
-                  fetchPriority={currentImage === 0 ? "high" : "auto"}
-                />
-                {/* Preload next image */}
-                <link 
-                  rel="preload" 
-                  as="image" 
-                  href={productImages[(currentImage + 1) % productImages.length].src}
-                />
-                <Badge className="absolute top-4 right-4 bg-destructive text-destructive-foreground text-sm px-3 py-1 animate-pulse">
-                  {productImages[currentImage].badge}
-                </Badge>
+      <div className="pt-14">
+        {/* ── 1. HERO ──────────────────────────────────────────────── */}
+        <section className="px-4 py-8 md:py-14 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Carrusel de imágenes — se entiende qué es en 1 segundo */}
+            <div className="order-1 md:order-1">
+              <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-2xl">
+                {heroSlides.map((slide, i) => (
+                  <img
+                    key={slide.alt}
+                    src={slide.img}
+                    alt={slide.alt}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ease-out ${
+                      i === currentSlide ? "opacity-100" : "opacity-0"
+                    }`}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    fetchPriority={i === 0 ? "high" : "auto"}
+                  />
+                ))}
               </div>
-              
-              {/* Navigation Buttons */}
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hover:scale-110 transition-transform"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full shadow-lg hover:scale-110 transition-transform"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </Button>
 
-              {/* Image Indicators */}
+              {/* Indicadores */}
               <div className="flex justify-center gap-2 mt-4">
-                {productImages.map((_, index) => (
+                {heroSlides.map((slide, i) => (
                   <button
-                    key={index}
-                    onClick={() => setCurrentImage(index)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index === currentImage ? "bg-primary w-8" : "bg-muted-foreground/30"
+                    key={slide.alt}
+                    onClick={() => { setCurrentSlide(i); setAutoRotate(false); }}
+                    aria-label={`Ver imagen ${i + 1}`}
+                    className={`h-2 rounded-full transition-all duration-200 ease-out ${
+                      i === currentSlide ? "bg-primary w-8" : "bg-muted-foreground/30 w-2"
                     }`}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Product Info */}
-            <div className="space-y-4 md:space-y-6 w-full max-w-full">
-              <div className="w-full">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-3 md:mb-4 leading-tight break-words">
-                  Empareja 2: el juego digital que enciende su conexión
-                </h1>
-                <p className="text-base md:text-lg lg:text-xl text-muted-foreground">
-                  72 cartas para reír, conectar y vivir una noche diferente. 100% digital.
-                </p>
-              </div>
+            {/* Copy + precio */}
+            <div className="order-2 md:order-2 space-y-5">
+              <Badge variant="secondary" className="text-xs">
+                <Heart className="w-3.5 h-3.5 mr-1.5" /> Juego digital para parejas
+              </Badge>
 
-              {/* Badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-sm px-3 py-1">
-                  <Gift className="w-4 h-4 mr-1" />
-                  Bono Hoy
-                </Badge>
-                <Badge variant="secondary" className="text-sm px-3 py-1">
-                  <Clock className="w-4 h-4 mr-1" />
-                  Acceso Inmediato
-                </Badge>
-                <Badge variant="secondary" className="text-sm px-3 py-1">
-                  <Shield className="w-4 h-4 mr-1" />
-                  Uso Ilimitado
-                </Badge>
-              </div>
+              <h1 className="font-display font-bold leading-tight">
+                <span className="block text-4xl sm:text-5xl lg:text-6xl text-primary mb-2">
+                  Emparejados
+                </span>
+                <span className="block text-2xl sm:text-3xl lg:text-4xl">
+                  72 cartas para que esta noche no sea igual a las anteriores
+                </span>
+              </h1>
 
-              {/* Price */}
-              <div className="bg-muted/50 rounded-xl p-4 md:p-6 border-2 border-primary/20 w-full">
-                <div className="flex items-baseline gap-2 md:gap-3 mb-2 flex-wrap">
-                  <span className="text-xl md:text-2xl text-muted-foreground line-through">$15.00</span>
-                  <span className="text-4xl md:text-5xl font-bold text-primary">$3.90</span>
+              <p className="text-lg text-muted-foreground">
+                Conexión, Deseo y Diversión. Lo abren en el celular y ya están jugando —
+                sin instalar nada, sin esperar que llegue nada. Y lo pueden guardar en su
+                dispositivo para jugar sin conexión.
+              </p>
+
+              <div className="bg-muted/50 rounded-2xl p-5 border-2 border-primary/20">
+                <div className="flex items-baseline gap-3 mb-1 flex-wrap">
+                  <span className="text-xl text-muted-foreground line-through">${originalPrice.toFixed(2)}</span>
+                  <span className="text-5xl font-bold text-primary">${productPrice.toFixed(2)}</span>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
-                  🎁 <strong>BONO HOY:</strong> Incluye Guía Digital de 30 Posiciones (gratis)
+                <p className="text-sm text-muted-foreground mb-4">
+                  Pago único. Acceso de por vida, sin suscripción.
                 </p>
-                <Button
-                  onClick={handleBuyClick}
-                  size="lg"
-                  variant="hero"
-                  className="w-full text-sm md:text-base lg:text-lg"
-                >
+                <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full text-base">
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  COMPRAR AHORA
-                  <Zap className="ml-2 h-5 w-5" />
+                  LO QUIERO AHORA
                 </Button>
-                <p className="text-xs text-center text-muted-foreground mt-3">
-                  Acceso inmediato al confirmar tu pago. Úsalo cuantas veces quieras.
-                </p>
+                <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
+                  <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Acceso inmediato</span>
+                  <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Uso ilimitado</span>
+                </div>
               </div>
+
+              <p className="text-sm text-muted-foreground">
+                +3.500 clientes ya compraron en ShotyGames 🇪🇨
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Cómo se juega */}
-        <section className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-12 md:py-16 my-8 md:my-12">
-          <div className="bg-muted/30 rounded-xl md:rounded-3xl p-4 sm:p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-3 md:mb-4">
-              Cómo se juega
+        {/* ── 2. EL PROBLEMA ───────────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 bg-muted/30">
+          <div className="max-w-2xl mx-auto text-center space-y-5">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
+              Se sientan en el sofá. Cada uno con su celular. Otra vez.
             </h2>
-            <p className="text-center text-sm md:text-base text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
-              Se juega desde el celular, tablet o PC. Sin descargas.
+            <p className="text-lg text-muted-foreground">
+              No es que se quieran menos. Es que ya nadie propone nada distinto,
+              y esperar a que al otro "se le ocurra algo" no funciona.
             </p>
-
-            <div className="grid md:grid-cols-3 gap-6 md:gap-8 w-full max-w-full">
-            {howToPlaySteps.map((step) => (
-              <Card key={step.step} className="text-center hover:shadow-xl transition-shadow">
-                <CardContent className="pt-8 pb-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <step.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="text-4xl font-bold text-primary mb-2">{step.step}</div>
-                  <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-            </div>
+            <p className="text-lg font-semibold">
+              Alguien tiene que sacar la primera carta. Para eso existe esto.
+            </p>
           </div>
         </section>
 
-        {/* Qué incluye */}
-        <section className="w-full px-3 sm:px-4 py-12 md:py-16 max-w-7xl mx-auto">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-8 md:mb-12">
-            Qué incluye
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto w-full max-w-full">
-            <Card className="hover:shadow-xl transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">✅</div>
-                  <div>
-                    <h3 className="font-semibold mb-1">72 cartas digitales únicas</h3>
-                    <p className="text-sm text-muted-foreground">Contenido exclusivo y variado</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-xl transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">✅</div>
-                  <div>
-                    <h3 className="font-semibold mb-1">3 categorías</h3>
-                    <p className="text-sm text-muted-foreground">Conexión, Deseo, Diversión</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-xl transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">✅</div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Acceso inmediato y repetible</h3>
-                    <p className="text-sm text-muted-foreground">Ilimitadas veces, cuando quieras</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-xl transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">✅</div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Actualizaciones gratis</h3>
-                    <p className="text-sm text-muted-foreground">Mejoras menores incluidas</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-primary/5 border-2 border-primary hover:shadow-xl transition-shadow md:col-span-2">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">🎁</div>
-                  <div>
-                    <h3 className="font-semibold mb-1 text-primary">BONO DE HOY: Guía digital 30 posiciones</h3>
-                    <p className="text-sm text-muted-foreground">Regalo especial solo por comprar hoy</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Vista Previa de Cartas */}
-        <section className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-12 md:py-16 my-8 md:my-12">
-          <div className="bg-muted/30 rounded-xl md:rounded-3xl p-4 sm:p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-3 md:mb-4">
-              Vista previa de las cartas
+        {/* ── 3. LAS 3 CATEGORÍAS ──────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 max-w-6xl mx-auto">
+          <div className="text-center mb-10 md:mb-14">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+              72 cartas, 3 intensidades
             </h2>
-            <p className="text-center text-sm md:text-base text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
-              Conoce las 3 categorías del juego
+            <p className="text-muted-foreground text-lg">
+              Ustedes deciden hasta dónde llegar. La carta solo propone.
             </p>
-
-            <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto w-full max-w-full">
-            <Card className="overflow-hidden hover:shadow-2xl transition-all hover:scale-105">
-              <div className="aspect-[2/3] relative">
-                <img
-                  src={conexionImage}
-                  alt="Categoría Conexión"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <CardContent className="pt-4 pb-6 bg-[#d63384]/10">
-                <h3 className="font-bold text-lg mb-2" style={{ color: '#d63384' }}>💗 CONEXIÓN</h3>
-                <p className="text-sm text-muted-foreground">
-                  Preguntas y dinámicas para abrirse y fortalecer el vínculo emocional.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden hover:shadow-2xl transition-all hover:scale-105">
-              <div className="aspect-[2/3] relative">
-                <img
-                  src={deseoImage}
-                  alt="Categoría Deseo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <CardContent className="pt-4 pb-6 bg-[#8B1538]/10">
-                <h3 className="font-bold text-lg mb-2" style={{ color: '#8B1538' }}>🔥 DESEO</h3>
-                <p className="text-sm text-muted-foreground">
-                  Retos coquetos y elegantes para subir la temperatura con clase.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden hover:shadow-2xl transition-all hover:scale-105">
-              <div className="aspect-[2/3] relative">
-                <img
-                  src={diversionImage}
-                  alt="Categoría Diversión"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <CardContent className="pt-4 pb-6 bg-[#0077b6]/10">
-                <h3 className="font-bold text-lg mb-2" style={{ color: '#0077b6' }}>🎉 DIVERSIÓN</h3>
-                <p className="text-sm text-muted-foreground">
-                  Dinámicas ligeras para reír juntos y romper el hielo.
-                </p>
-              </CardContent>
-            </Card>
-            </div>
           </div>
-        </section>
 
-        {/* Benefits */}
-        <section className="w-full px-3 sm:px-4 py-12 md:py-16 max-w-7xl mx-auto">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-8 md:mb-12">
-            Beneficios que notarás
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto w-full max-w-full">
-            {benefits.map((benefit, index) => (
-              <Card key={index} className="hover:shadow-xl transition-shadow">
-                <CardContent className="pt-6 flex items-start gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                    <benefit.icon className="w-6 h-6 text-primary" />
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {categorias.map((c) => (
+              <Card key={c.titulo} className="overflow-hidden">
+                <div className="aspect-[2/3] bg-muted">
+                  <img
+                    src={c.img}
+                    alt={`Cartas de la categoría ${c.titulo}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <CardContent className="pt-5 pb-6">
+                  <h3 className="font-bold text-lg mb-2" style={{ color: c.color }}>
+                    {c.emoji} {c.titulo.toUpperCase()}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">{c.desc}</p>
+                  <div className="rounded-lg bg-muted/60 px-3 py-2.5 border-l-2" style={{ borderColor: c.color }}>
+                    <p className="text-xs text-muted-foreground mb-0.5">Ejemplo real:</p>
+                    <p className="text-sm italic">"{c.ejemplo}"</p>
                   </div>
-                  <p className="text-lg pt-2">{benefit.text}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Urgencia y Bonus */}
-        <section className="w-full px-3 sm:px-4 py-12 md:py-16 my-8 md:my-12 max-w-7xl mx-auto">
-          <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 shadow-2xl w-full max-w-full">
-            <CardContent className="pt-6 md:pt-8 pb-6 md:pb-8 text-center px-3 sm:px-4">
-              <div className="max-w-3xl mx-auto space-y-4 md:space-y-6 w-full max-w-full">
-                <Badge className="text-lg px-6 py-2 bg-destructive text-destructive-foreground animate-pulse">
-                  OFERTA ESPECIAL
-                </Badge>
-                
-                <h2 className="text-3xl md:text-4xl font-display font-bold">
-                  Compra hoy y llévate GRATIS
-                </h2>
+        {/* ── 3b. VIDEO DEMO — prueba de que el juego existe ───────── */}
+        <section className="px-4 pb-14 md:pb-20 max-w-5xl mx-auto">
+          <div className="bg-muted/30 rounded-2xl md:rounded-3xl px-4 py-10 md:p-12">
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div className="mx-auto w-full max-w-[240px] sm:max-w-[270px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border">
+                <video
+                  src={demoVideo}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="none"
+                  poster={appBarajea}
+                  className="w-full h-full object-cover"
+                  aria-label="Emparejados funcionando en un celular: barajear y sacar cartas"
+                />
+              </div>
 
-                <div className="grid md:grid-cols-2 gap-6 text-left">
-                  <div className="bg-background/80 rounded-xl p-6 border border-primary/20">
-                    <div className="flex items-start gap-4">
-                      <img 
-                        src={ebookImage} 
-                        alt="Ebook 30 Posiciones para Parejas" 
-                        className="w-20 h-28 object-cover rounded-lg shadow-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-xl mb-2">Guía Digital de 30 Posiciones</h3>
-                        <p className="text-muted-foreground">
-                          Ilustrada y práctica. Valor $10 - ¡GRATIS HOY!
-                        </p>
+              <div className="text-center md:text-left space-y-4">
+                <Badge variant="secondary" className="text-xs">
+                  <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Video real
+                </Badge>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
+                  Así se ve funcionando
+                </h2>
+                <p className="text-muted-foreground text-lg">
+                  Sin edición ni maquetas: es el juego corriendo en un celular.
+                  Barajeas, sacas una carta, cumples el reto. Eso es todo lo que hay que aprender.
+                </p>
+                <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full sm:w-auto">
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  LO QUIERO AHORA
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 4. POR QUÉ DIGITAL GANA ──────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 bg-muted/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10 md:mb-14">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+                Lo que un mazo de cartas no puede hacer
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                {
+                  img: appCrono,
+                  icon: Timer,
+                  titulo: "Cronómetro adentro",
+                  desc: 'Cuando la carta dice "durante 3 rondas" o "por 5 minutos", el juego te pone el cronómetro ahí mismo. No hay que buscar el reloj del celular y cortar el momento.',
+                  alt: "Carta de Deseo con el botón Iniciar Cronómetro dentro del juego",
+                },
+                {
+                  img: appBarajea,
+                  icon: Sparkles,
+                  titulo: "Nunca sale en el mismo orden",
+                  desc: "Barajan de nuevo cada vez que juegan. Las 72 cartas se mezclan solas, así que la décima partida no se siente como la primera.",
+                  alt: "Pantalla del juego barajeando las cartas",
+                },
+                {
+                  img: appGuia,
+                  icon: Gift,
+                  titulo: "El regalo ya viene adentro",
+                  desc: "La Guía de 30 Posiciones se descarga con un botón desde el mismo juego. No tienes que pedirla ni esperar que alguien te la mande.",
+                  alt: "Pantalla principal del juego con el botón para descargar la Guía de 30 Posiciones",
+                },
+              ].map((f) => (
+                <Card key={f.titulo} className="overflow-hidden">
+                  <div className="bg-[#0d0d0d] flex justify-center pt-5 px-5">
+                    <img
+                      src={f.img}
+                      alt={f.alt}
+                      className="w-full max-w-[190px] rounded-t-xl shadow-2xl"
+                      loading="lazy"
+                    />
+                  </div>
+                  <CardContent className="pt-5 pb-6">
+                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                      <f.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">{f.titulo}</h3>
+                    <p className="text-sm text-muted-foreground">{f.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              Capturas reales del juego, no ilustraciones
+            </p>
+          </div>
+        </section>
+
+        {/* ── 5. EL PDF IMPRIMIBLE (mecanismo único) ───────────────── */}
+        <section className="px-4 py-14 md:py-20 max-w-5xl mx-auto">
+          <Card className="overflow-hidden border-2 border-primary/30">
+            <div className="grid md:grid-cols-2">
+              {/*
+                SLOT PARA LA FOTO REAL DE LAS CARTAS IMPRESAS.
+                Cuando tengas la foto: guárdala como
+                src/assets/emparejados-cartas-impresas.webp, impórtala arriba
+                y reemplaza `productImage1` por ese import en el <img> de abajo.
+              */}
+              {/* La imagen es 2:3 vertical — en móvil el contenedor tiene que
+                  ser vertical también, si no se recorta media foto */}
+              <div className="aspect-[4/5] md:aspect-auto bg-muted">
+                <img
+                  src={productImage1}
+                  alt="Las 72 cartas de Emparejados impresas en casa"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+
+              <CardContent className="p-6 md:p-10 flex flex-col justify-center">
+                <Badge className="w-fit mb-4 bg-primary text-primary-foreground">
+                  <Printer className="w-3.5 h-3.5 mr-1.5" /> INCLUIDO
+                </Badge>
+                <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 leading-snug">
+                  Es digital. Pero si quieren, lo tienen en la mano.
+                </h2>
+                <p className="text-muted-foreground mb-4">
+                  Con tu compra te mando también el <strong className="text-foreground">PDF imprimible
+                  de las 72 cartas</strong>, listo para imprimir en hojas A4 y cortar en casa.
+                  Frente y dorso, 9 cartas por hoja, con las instrucciones incluidas.
+                </p>
+                <p className="text-muted-foreground">
+                  Así lo juegan del celular cuando están en la cama, y lo juegan con las
+                  cartas físicas cuando quieren algo más real. Los dos formatos, un solo precio.
+                </p>
+              </CardContent>
+            </div>
+          </Card>
+        </section>
+
+        {/* ── 6. QUÉ RECIBES ───────────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 bg-muted/30">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10">
+              Qué recibes exactamente
+            </h2>
+
+            <Card className="shadow-xl">
+              <CardContent className="p-6 md:p-8">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">Emparejados — 72 cartas digitales</p>
+                        <p className="text-sm text-muted-foreground">Conexión, Deseo y Diversión, con cronómetro</p>
                       </div>
+                    </div>
+                    <span className="text-muted-foreground line-through whitespace-nowrap">$15.00</span>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">PDF imprimible de las 72 cartas</p>
+                        <p className="text-sm text-muted-foreground">Para imprimir y cortar en casa</p>
+                      </div>
+                    </div>
+                    <span className="text-primary font-semibold whitespace-nowrap">Incluido</span>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                    <div className="flex items-start gap-3">
+                      <img src={ebookImage} alt="Guía de 30 Posiciones" className="w-10 h-14 object-cover rounded shadow flex-shrink-0" loading="lazy" />
+                      <div>
+                        <p className="font-semibold">Guía de 30 Posiciones</p>
+                        <p className="text-sm text-muted-foreground">La descargas desde adentro del juego</p>
+                      </div>
+                    </div>
+                    <div className="text-right whitespace-nowrap">
+                      <div className="text-muted-foreground line-through text-sm">$4.90</div>
+                      <div className="text-primary font-bold">GRATIS</div>
                     </div>
                   </div>
 
-                  <div className="bg-background/80 rounded-xl p-6 border border-primary/20">
-                    <Zap className="w-10 h-10 text-primary mb-3" />
-                    <h3 className="font-bold text-xl mb-2">Acceso Inmediato</h3>
-                    <p className="text-muted-foreground">
-                      Recibe tu enlace por WhatsApp al instante. Sin esperas.
-                    </p>
+                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">PDF de instrucciones + mini tutorial</p>
+                        <p className="text-sm text-muted-foreground">Para guardarlo en tu celular y jugar sin internet</p>
+                      </div>
+                    </div>
+                    <span className="text-primary font-semibold whitespace-nowrap">Incluido</span>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">Acceso de por vida</p>
+                        <p className="text-sm text-muted-foreground">Sin suscripción, sin límite de veces</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4">
-                  <p className="text-xl font-semibold mb-4">
-                    Precio normal: <span className="line-through text-muted-foreground">$15.00</span>
-                  </p>
-                  <p className="text-4xl font-bold text-primary mb-6">
-                    HOY solo $3.90
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    ⏰ Promo y bono válidos solo por hoy
-                  </p>
-                  <Button
-                    onClick={handleBuyClick}
-                    size="xl"
-                    variant="hero"
-                    className="w-full text-sm sm:text-base md:text-xl px-4 sm:px-8 md:px-12"
-                  >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    COMPRAR AHORA
-                    <Zap className="w-5 h-5 ml-2" />
+                <div className="mt-6 pt-6 border-t-2 border-primary/20">
+                  <div className="flex items-baseline justify-between mb-5">
+                    <span className="text-lg font-semibold">Hoy pagas</span>
+                    <span className="text-4xl font-bold text-primary">${productPrice.toFixed(2)}</span>
+                  </div>
+                  <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full text-base">
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    LO QUIERO AHORA
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="w-full max-w-7xl mx-auto px-3 sm:px-4 py-12 md:py-16 my-8 md:my-12">
-          <div className="bg-muted/30 rounded-xl md:rounded-3xl p-4 sm:p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-3 md:mb-4">
-              Lo que dicen nuestras parejas
+        {/* ── 7. CÓMO LO RECIBES ───────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 max-w-5xl mx-auto">
+          <div className="text-center mb-10 md:mb-14">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+              Cómo te llega
             </h2>
-            <p className="text-center text-sm md:text-base text-muted-foreground mb-8 md:mb-12">
-              Más de 500 parejas ya disfrutando de Empareja 2
+            <p className="text-muted-foreground text-lg">
+              Sin misterio: esto es exactamente lo que pasa después de que le das al botón.
             </p>
+          </div>
 
-          <Carousel className="max-w-5xl mx-auto">
-            <CarouselContent>
-              {testimonials.map((testimonial, index) => (
-                <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                  <Card className="h-full hover:shadow-xl transition-shadow">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center font-bold text-primary">
-                          {testimonial.avatar}
-                        </div>
-                        <div>
-                          <div className="font-semibold">{testimonial.name}</div>
-                          <div className="text-sm text-muted-foreground">{testimonial.location}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-1 mb-3">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-primary text-primary" />
-                        ))}
-                      </div>
-
-                      <p className="text-sm mb-3 italic">"{testimonial.text}"</p>
-                      
-                      <div className="text-xs text-muted-foreground">{testimonial.date}</div>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {pasosEntrega.map((p, i) => (
+              <Card key={p.titulo} className="relative">
+                <CardContent className="pt-6 pb-6">
+                  <div className="absolute top-4 right-4 text-3xl font-bold text-primary/15">
+                    {i + 1}
+                  </div>
+                  <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <p.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-bold mb-2">{p.titulo}</h3>
+                  <p className="text-sm text-muted-foreground">{p.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
-        {/* FAQ */}
-        <section className="w-full px-3 sm:px-4 py-12 md:py-16 max-w-7xl mx-auto">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-center mb-8 md:mb-12">
-            Preguntas frecuentes
-          </h2>
-
-          <div className="max-w-3xl mx-auto space-y-3 md:space-y-4 w-full max-w-full">
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-2">¿Es físico o digital?</h3>
-                <p className="text-muted-foreground">
-                  Es 100% digital. Juegas desde cualquier dispositivo: celular, tablet o computadora. Sin necesidad de descargar nada.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-2">¿Cuándo recibo el acceso?</h3>
-                <p className="text-muted-foreground">
-                  De inmediato al confirmar el pago. Te enviamos el enlace exclusivo por WhatsApp en menos de 5 minutos.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-2">¿Puedo usarlo varias veces?</h3>
-                <p className="text-muted-foreground">
-                  ¡Sí! El acceso es ilimitado. Puedes jugar cuantas veces quieras, sin límite de tiempo ni restricciones.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-2">¿Cómo realizo el pago?</h3>
-                <p className="text-muted-foreground">
-                  Por WhatsApp. Haciendo clic en el botón de compra, te guiamos paso a paso. Es rápido y seguro. Toma menos de 1 minuto.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold text-lg mb-2">¿La guía de 30 posiciones está incluida?</h3>
-                <p className="text-muted-foreground">
-                  Sí, solo por hoy. Es un bono gratis que normalmente vale $10. La recibes junto con el acceso al juego.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="w-full px-3 sm:px-4 py-12 md:py-16 my-8 md:my-12 max-w-7xl mx-auto">
-          <Card className="bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground shadow-2xl w-full max-w-full">
-            <CardContent className="pt-8 md:pt-12 pb-8 md:pb-12 text-center px-3 sm:px-4">
-              <div className="max-w-3xl mx-auto space-y-4 md:space-y-6 w-full max-w-full">
-                <h2 className="text-4xl md:text-5xl font-display font-bold">
-                  Activa tu noche hoy
-                </h2>
-                
-                <p className="text-xl opacity-95">
-                  Empieza a disfrutar en los próximos 5 minutos
-                </p>
-
-                <div className="py-6">
-                  <div className="text-2xl line-through opacity-75 mb-2">$15.00</div>
-                  <div className="text-6xl font-bold mb-2">$3.90</div>
-                  <p className="text-lg opacity-90">+ Guía de 30 posiciones GRATIS</p>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6">
-                  <p className="text-lg font-semibold mb-2">⏰ Promo válida solo por hoy</p>
-                  <p className="opacity-90">No pierdas esta oportunidad única</p>
-                </div>
-
-                <Button
-                  onClick={handleBuyClick}
-                  size="xl"
-                  variant="secondary"
-                  className="text-xl px-12 py-8 text-primary hover:scale-105 transition-transform"
-                >
-                  <ShoppingCart className="w-6 h-6 mr-2" />
-                  COMPRAR AHORA
-                  <Zap className="w-6 h-6 ml-2" />
-                </Button>
-
-                <p className="text-sm opacity-75 pt-4">
-                  ✓ Acceso inmediato ✓ Uso ilimitado ✓ Entrega por WhatsApp
-                </p>
+        {/* ── 7b. RESEÑAS REALES ───────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 bg-muted/30">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-8 md:mb-12">
+              <div className="flex items-center justify-center gap-1.5 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-6 h-6 md:w-7 md:h-7 fill-primary text-primary" />
+                ))}
               </div>
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+                +3.500 clientes en ShotyGames
+              </h2>
+              {/* Framing honesto: son capturas reales de clientes de la marca,
+                  no reseñas específicas de Emparejados. No inventar testimonios. */}
+              <p className="text-muted-foreground">
+                Capturas reales de clientes que ya compraron con nosotros 🇪🇨
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+              {[testimonial1, testimonial2, testimonial3, testimonial4, testimonial5, testimonial6].map((src, i) => (
+                <div
+                  key={i}
+                  className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg bg-muted"
+                >
+                  <img
+                    src={src}
+                    alt={`Captura real de conversación con un cliente de ShotyGames (${i + 1} de 6)`}
+                    width={945}
+                    height={1181}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 8. FAQ ───────────────────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 bg-muted/30">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10">
+              Preguntas frecuentes
+            </h2>
+
+            <Accordion type="single" collapsible className="space-y-3">
+              <AccordionItem value="q1" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Cómo me llega el juego?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Después de hacer el pedido te escribo por WhatsApp con los datos para pagar.
+                  Apenas confirmas el pago te mando el link del juego, tu clave y el PDF imprimible.
+                  El correo que pones en el formulario es el usuario con el que vas a entrar al juego.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q2" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Tengo que descargar o instalar algo?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  No. Se abre desde el navegador del celular, tablet o computadora.
+                  Entras con tu correo y tu clave y ya está funcionando.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q2b" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Necesito internet para jugar?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  No. Puedes guardarlo en tu dispositivo y jugar sin conexión.
+                  <br /><br />
+                  Con tu compra te mando un PDF con las instrucciones de acceso y un
+                  mini tutorial para guardarlo, paso a paso. Toma menos de un minuto.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q3" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿De verdad puedo imprimir las cartas?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Sí. El PDF trae las 72 cartas con frente y dorso, 9 por hoja A4, listas para
+                  imprimir y cortar. Funciona en papel normal, aunque en cartulina quedan mucho mejor.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q4" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Qué tan fuertes son los retos?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Hay de todo, y ustedes eligen. Las de Conexión son conversación pura,
+                  las de Diversión son para reír y las de Deseo suben la temperatura.
+                  Si una carta no les cuadra, la pasan y sacan otra. Nadie los obliga a nada.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q5" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Es discreto?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Totalmente. Es digital, así que no llega ningún paquete a tu casa
+                  ni nadie ve qué compraste. Todo el proceso es entre tú y yo por WhatsApp.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q6" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Lo pago una vez o es suscripción?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Una sola vez. Pagas los $6.90 y el acceso es tuyo para siempre,
+                  sin cobros mensuales ni límite de partidas.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        </section>
+
+        {/* ── 9. CTA FINAL ─────────────────────────────────────────── */}
+        <section className="px-4 py-14 md:py-20 max-w-3xl mx-auto">
+          <Card className="bg-gradient-to-br from-primary via-primary to-primary/85 text-primary-foreground shadow-2xl">
+            <CardContent className="p-8 md:p-12 text-center space-y-6">
+              <h2 className="font-display text-3xl md:text-4xl font-bold leading-snug">
+                Pueden seguir con el celular cada uno por su lado
+              </h2>
+              <p className="text-lg opacity-90">
+                O en cinco minutos estar sacando la primera carta.
+              </p>
+
+              <div className="py-2">
+                <div className="text-xl line-through opacity-70">${originalPrice.toFixed(2)}</div>
+                <div className="text-6xl font-bold my-1">${productPrice.toFixed(2)}</div>
+                <p className="opacity-90">+ PDF imprimible + Guía de 30 Posiciones gratis</p>
+              </div>
+
+              <Button
+                onClick={handleBuyClick}
+                size="xl"
+                variant="secondary"
+                className="w-full sm:w-auto text-lg px-10 text-primary"
+              >
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                LO QUIERO AHORA
+              </Button>
+
+              <p className="text-sm opacity-80 flex items-center justify-center gap-4 flex-wrap">
+                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Acceso inmediato</span>
+                <span className="flex items-center gap-1"><InfinityIcon className="w-4 h-4" /> Uso ilimitado</span>
+              </p>
             </CardContent>
           </Card>
         </section>
       </div>
 
-      {/* Fixed Bottom CTA Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background border-t border-border shadow-2xl w-full">
-        <div className="w-full px-3 py-2.5">
-          <div className="flex items-center justify-between gap-2 w-full max-w-full">
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <img src={portadaImage} alt="Emparejados" className="w-10 h-10 rounded object-cover flex-shrink-0" />
-              <div className="flex-shrink-0">
-                <div className="text-xs text-muted-foreground line-through leading-tight">$15.00</div>
-                <div className="text-base font-bold text-primary leading-tight">$3.90</div>
-              </div>
-            </div>
-            <Button
-              onClick={handleBuyClick}
-              size="sm"
-              variant="hero"
-              className="flex-1 min-w-0 text-xs sm:text-sm"
-            >
-              <ShoppingCart className="w-4 h-4 mr-1 flex-shrink-0" />
-              <span className="truncate">COMPRAR AHORA</span>
-            </Button>
+      {/* ── Sticky móvil ───────────────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t shadow-2xl">
+        <div className="px-3 py-2.5 flex items-center gap-3">
+          <img src={portadaImage} alt="Emparejados" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+          <div className="flex-shrink-0 leading-tight">
+            <div className="text-xs text-muted-foreground line-through">${originalPrice.toFixed(2)}</div>
+            <div className="text-base font-bold text-primary">${productPrice.toFixed(2)}</div>
           </div>
+          <Button onClick={handleBuyClick} size="sm" variant="hero" className="flex-1 min-w-0">
+            <ShoppingCart className="w-4 h-4 mr-1.5 flex-shrink-0" />
+            <span className="truncate">LO QUIERO</span>
+          </Button>
         </div>
       </div>
 
-      {/* Floating WhatsApp Button Desktop */}
-      <div className="hidden md:block">
-        <Button
-          onClick={handleBuyClick}
-          size="lg"
-          variant="whatsapp"
-          className="fixed bottom-6 right-6 z-50 shadow-2xl hover:scale-110 transition-transform animate-pulse px-6 py-6 text-base"
-        >
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          COMPRAR AHORA
-        </Button>
-      </div>
-      
-      {/* Checkout Modal */}
       <CheckoutModal
         open={checkoutOpen}
         onOpenChange={setCheckoutOpen}
@@ -718,30 +711,10 @@ const EmparejadosLanding = () => {
         productImage={portadaImage}
         productId="emparejados"
         upsells={[
-          {
-            id: 'torreNormal',
-            name: 'Torre de Shots Normal',
-            price: 10,
-            image: torreNormalImg
-          },
-          {
-            id: 'torrePicante',
-            name: 'Torre de Shots Picante',
-            price: 10,
-            image: torrePicanteImg
-          },
-          {
-            id: 'torreParejas',
-            name: 'Torre de Shots Parejas',
-            price: 10,
-            image: torreParejasImg
-          },
-          {
-            id: 'dadosPlacer',
-            name: 'Dados del Placer',
-            price: 3.90,
-            image: dadosDelPlacerImg
-          }
+          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalImg },
+          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteImg },
+          { id: "torreParejas", name: "Torre de Shots Parejas", price: 10, image: torreParejasImg },
+          { id: "dadosPlacer", name: "Dados del Placer", price: 3.90, image: dadosDelPlacerImg },
         ]}
       />
     </div>

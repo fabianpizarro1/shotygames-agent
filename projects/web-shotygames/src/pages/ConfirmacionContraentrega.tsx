@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, MessageCircle, Package, Gift } from "lucide-react";
 
+const WHATSAPP_SOPORTE = "593993154462";
+
 export const ConfirmacionContraentrega = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,11 +37,24 @@ export const ConfirmacionContraentrega = () => {
               <MessageCircle className="w-5 h-5" />
               <span className="font-semibold">Revisa tu WhatsApp</span>
             </div>
-            
+
             <p className="text-muted-foreground">
-              En unos momentos te vamos a escribir por WhatsApp para verificar tu pedido y coordinar el pago de tu <strong>{pedido.productoPrincipal}</strong>.
+              En unos momentos te vamos a escribir por WhatsApp para coordinar la reserva de tu <strong>{pedido.productoPrincipal}</strong>.
             </p>
           </div>
+
+          {!isDigitalProduct && pedido.anticipo > 0 && (
+            <div className="bg-background rounded-lg p-4 border-2 border-primary/20 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Reserva ahora (te pasamos los datos por WhatsApp)</span>
+                <span className="font-semibold">${pedido.anticipo.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">En efectivo cuando recibes tu pedido</span>
+                <span className="font-semibold">${pedido.saldo.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
 
           {!isDigitalProduct && (
             <div className="bg-primary/10 rounded-lg p-4 space-y-2 border-2 border-primary/20">
@@ -50,7 +65,6 @@ export const ConfirmacionContraentrega = () => {
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>🚀 Entrega en 2-4 días hábiles</li>
                 <li>🎁 Regalo incluido: <strong>Guía Digital</strong></li>
-                <li>📦 Entrega en 2 a 4 días laborables</li>
               </ul>
             </div>
           )}
@@ -75,7 +89,7 @@ export const ConfirmacionContraentrega = () => {
                 
                 {pedido.upsellTorreNormalSelected && (
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-muted-foreground flex-1">+ Torre Normal</span>
+                    <span className="text-muted-foreground flex-1">+ Torre La Previa</span>
                     <span className="whitespace-nowrap">${pedido.upsellTorreNormalPrice.toFixed(2)}</span>
                   </div>
                 )}
@@ -143,7 +157,18 @@ export const ConfirmacionContraentrega = () => {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 space-y-3">
+            <Button
+              onClick={() => {
+                const mensaje = `Hola, soy ${pedido.nombre} y necesito ayuda con mi pedido ${pedido.idPedido}`;
+                window.open(`https://wa.me/${WHATSAPP_SOPORTE}?text=${encodeURIComponent(mensaje)}`, "_blank");
+              }}
+              variant="whatsapp"
+              className="w-full h-auto whitespace-normal py-3 leading-snug text-center"
+            >
+              <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
+              ¿Alguna pregunta? Escríbenos por WhatsApp
+            </Button>
             <Button
               onClick={() => navigate("/")}
               variant="outline"

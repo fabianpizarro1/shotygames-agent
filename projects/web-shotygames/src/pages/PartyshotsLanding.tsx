@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -10,7 +10,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useNavigate } from "react-router-dom";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import cartasPartyshots from "@/assets/cartas-partyshots.jpg";
-import torreNormalImg from "@/assets/torre-normal.jpg";
+import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import enganchadosImg from "@/assets/enganchados.jpg";
@@ -170,13 +170,12 @@ const PartyshotsLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Cartas PartyShots - Juego de Cartas para Beber | ShotyGames Ecuador</title>
-        <meta name="description" content="Las cartas más divertidas para tu próxima fiesta. Para grupos de 2-10 personas. Con retos, preguntas y penitencias. Envíos a todo Ecuador." />
-        <meta property="og:title" content="Cartas PartyShots - Juego de Cartas para Beber | ShotyGames Ecuador" />
-        <meta property="og:description" content="Las cartas más divertidas para tu próxima fiesta. Para grupos de 2-10 personas." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/partyshots" />
-      </Helmet>
+      <Seo
+        title="Cartas PartyShots - Juego de Cartas para Beber | ShotyGames Ecuador"
+        description="Las cartas más divertidas para tu próxima fiesta. Para grupos de 2-10 personas. Con retos, preguntas y penitencias. Envíos a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/partyshots"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] text-black py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">
@@ -630,13 +629,13 @@ const PartyshotsLanding = () => {
         upsells={[
           {
             id: 'torreNormal',
-            name: 'Torre de Shots Normal',
+            name: 'Torre La Previa (para grupos)',
             price: 10,
             image: torreNormalImg
           },
           {
             id: 'torrePicante',
-            name: 'Torre de Shots Picante',
+            name: 'Torre Picante (para grupos)',
             price: 10,
             image: torrePicanteImg
           },
@@ -655,7 +654,7 @@ const PartyshotsLanding = () => {
           {
             id: 'emparejados',
             name: 'Emparejados (juego digital)',
-            price: 3.90,
+            price: 2.90,
             image: emparejadosPortada
           }
         ]}

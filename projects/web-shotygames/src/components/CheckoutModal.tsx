@@ -11,11 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import emparejadosPortada from "@/assets/emparejados-portada.jpg";
 import dadosDigitalesPrincipal from "@/assets/dados-digitales-principal.webp";
 import guiaPlacerPortada from "@/assets/guia-placer-portada.webp";
-import torreNormalImg from "@/assets/torre-normal.jpg";
+import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import { Gift, Truck, ShoppingBag, CreditCard, Banknote } from "lucide-react";
@@ -164,8 +163,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
   }, [open, onOpenChange]);
 
   const torreOptions = [
-    { id: 'torreNormal', name: 'Torre Normal', image: torreNormalImg },
-    { id: 'torrePicante', name: 'Torre Picante', image: torrePicanteImg },
+    { id: 'torreNormal', name: 'Torre La Previa (para grupos)', image: torreNormalImg },
+    { id: 'torrePicante', name: 'Torre Picante (para grupos)', image: torrePicanteImg },
     { id: 'torreParejas', name: 'Torre Parejas', image: torreParejasImg },
   ];
 
@@ -186,15 +185,15 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     });
     // Upsell especial para dados digitales
     if (productId === 'dadosDigitales' && selectedUpsells['emparejados-digital']) {
-      total += 0.90;
+      total += 2.90;
     }
     // Upsell especial para emparejados
     if (productId === 'emparejados' && selectedUpsells['dados-digital']) {
-      total += 0.90;
+      total += 2.90;
     }
     // Upsell Guía Digital del Placer (para emparejados y dados digitales)
     if ((productId === 'emparejados' || productId === 'dadosDigitales') && selectedUpsells['guia-placer-digital']) {
-      total += 0.90;
+      total += 2.90;
     }
     // Upsell especial para ebook 25 juegos
     if (productId === 'ebook-25-juegos' && selectedUpsells['bingo-navideno']) {
@@ -202,10 +201,23 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     }
     // Upsell especial para guia-placer
     if (productId === 'guia-placer' && selectedUpsells['emparejados-digital']) {
-      total += 3.90;
+      total += 2.90;
     }
     return total;
   };
+
+  // El total ya no cambia según método de pago (se quitó el descuento por
+  // transferencia). getFinalTotal se mantiene como función porque el resto
+  // del componente ya la usa en varios puntos, pero ahora es un passthrough.
+  const getFinalTotal = (_metodo?: string) => calculateTotal();
+
+  // "Pago mixto" (antes "contraentrega" a secas): historial real de 2025
+  // mostró 22.4% de fallo en contraentrega 100% libre vs 2.9% en pagos
+  // anticipados (ver decisions/log.md). La reserva filtra a quien pide sin
+  // intención real, sin ser una barrera grande para el que sí quiere comprar.
+  // Solo aplica a productos físicos — los digitales no tienen contraentrega.
+  const RESERVA_MIXTO = 5;
+  const getSaldoMixto = () => +(calculateTotal() - RESERVA_MIXTO).toFixed(2);
 
   const handleTorreSelection = (torreId: string) => {
     if (!torreSelection) return;
@@ -244,6 +256,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     const idPedido = `PED-${randomDigits}`;
     
     // Método de pago: usa el seleccionado por el usuario
+    // El fallback tiene que coincidir con el defaultValue del RadioGroup que se
+    // muestra: si no, quien deja el default sin tocarlo termina en el flujo
+    // equivocado. Digitales no tienen contraentrega.
     const metodoPagoFinal = data.metodoPago || "transferencia";
     
     let pedido: any;
@@ -256,19 +271,19 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         precioPrincipal: productPrice,
         // Upsell de Emparejados para Dados Digitales
         upsellEmparejadosDigital: productId === 'dadosDigitales' ? (selectedUpsells['emparejados-digital'] || false) : false,
-        upsellEmparejadosDigitalPrice: selectedUpsells['emparejados-digital'] ? 0.90 : 0,
+        upsellEmparejadosDigitalPrice: selectedUpsells['emparejados-digital'] ? 2.90 : 0,
         // Upsell de Dados Digitales para Emparejados
         upsellDadosDigital: productId === 'emparejados' ? (selectedUpsells['dados-digital'] || false) : false,
-        upsellDadosDigitalPrice: selectedUpsells['dados-digital'] ? 0.90 : 0,
+        upsellDadosDigitalPrice: selectedUpsells['dados-digital'] ? 2.90 : 0,
         // Upsell de Bingo Navideño para Ebook 25 Juegos
         upsellBingoNavideno: productId === 'ebook-25-juegos' ? (selectedUpsells['bingo-navideno'] || false) : false,
         upsellBingoNavidenoPrice: selectedUpsells['bingo-navideno'] ? 2.90 : 0,
         // Upsell de Emparejados para Guía del Placer
         upsellEmparejadosGuia: productId === 'guia-placer' ? (selectedUpsells['emparejados-digital'] || false) : false,
-        upsellEmparejadosGuiaPrice: productId === 'guia-placer' && selectedUpsells['emparejados-digital'] ? 3.90 : 0,
+        upsellEmparejadosGuiaPrice: productId === 'guia-placer' && selectedUpsells['emparejados-digital'] ? 2.90 : 0,
         // Upsell de Guía Digital del Placer (para Emparejados y Dados Digitales)
         upsellGuiaPlacerDigital: (productId === 'emparejados' || productId === 'dadosDigitales') ? (selectedUpsells['guia-placer-digital'] || false) : false,
-        upsellGuiaPlacerDigitalPrice: (productId === 'emparejados' || productId === 'dadosDigitales') && selectedUpsells['guia-placer-digital'] ? 0.90 : 0,
+        upsellGuiaPlacerDigitalPrice: (productId === 'emparejados' || productId === 'dadosDigitales') && selectedUpsells['guia-placer-digital'] ? 2.90 : 0,
         total: calculateTotal(),
         nombre: data.nombre,
         telefono: data.telefono,
@@ -292,6 +307,10 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         precioPrincipal: productPrice,
         // Torres seleccionadas del combo (si aplica)
         torresSeleccionadas: torreSelection?.required ? selectedTorres.join(', ') : '',
+        // El Shot Bidu solo va con combos reales (2+ torres o combo fijo tipo
+        // Chuchaqui/La Previa) — NO con un producto individual al que solo le
+        // agregaron un upsell suelto (ej. Torre Picante + Emparejados digital).
+        incluyeShotBidu: isCombo || (torreSelection?.required && (torreSelection?.count ?? 0) >= 2),
         // Campos de upsells (siempre presentes en el webhook)
         upsellTorreNormalSelected: selectedUpsells['torreNormal'] || false,
         upsellTorreNormalPrice: upsellTorreNormal?.price || 0,
@@ -306,6 +325,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         upsellDadosPlacerSelected: selectedUpsells['dadosPlacer'] || false,
         upsellDadosPlacerPrice: upsellDadosPlacer?.price || 0,
         total: calculateTotal(),
+        // Pago mixto: se reserva un monto fijo (coordinado por WhatsApp) y el
+        // resto se cobra en efectivo al recibir. Solo aplica a contraentrega.
+        // Mismos nombres de campo que usa el Sheet (ANTICIPO/SALDO) para que
+        // n8n los pueda mapear directo sin renombrar nada.
+        anticipo: metodoPagoFinal === 'contraentrega' ? RESERVA_MIXTO : 0,
+        saldo: metodoPagoFinal === 'contraentrega' ? getSaldoMixto() : 0,
         nombre: data.nombre,
         telefono: data.telefono,
         provincia: data.provincia,
@@ -330,14 +355,28 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         body: JSON.stringify(pedido),
       });
 
-      // Meta Pixel - Purchase event
+      // Meta Pixel - Lead + Purchase
+      // Decisión explícita de Fabián (2026-08-04): disparar Purchase al
+      // completar el pedido en la web, sin esperar confirmación de pago real.
+      // Esto es más simple (no requiere backend/CAPI) pero mete señal falsa:
+      // ~20-22% de los pedidos de pago mixto no se cobran al final (ver
+      // decisions/log.md). Si más adelante se arma el envío por Conversions
+      // API cuando se llena GUIA en Sheets, hay que quitar este Purchase de
+      // acá para no duplicar la conversión — o reusar el mismo eventID
+      // (idPedido) para que Meta deduplique entre pixel y CAPI.
       if (typeof (window as any).fbq !== 'undefined') {
-        (window as any).fbq('track', 'Purchase', {
-          value: calculateTotal(),
+        (window as any).fbq('track', 'Lead', {
+          value: getFinalTotal(metodoPagoFinal),
           currency: 'USD',
           content_name: productName,
           content_type: 'product'
         });
+        (window as any).fbq('track', 'Purchase', {
+          value: getFinalTotal(metodoPagoFinal),
+          currency: 'USD',
+          content_name: productName,
+          content_type: 'product'
+        }, { eventID: idPedido });
       }
 
       // Redirigir según método de pago
@@ -523,6 +562,19 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Campo oculto registrado a mano: el RadioGroup de método de pago
+              solo llama setValue() en onValueChange, RHF no lo "ve" como
+              obligatorio si no está registrado. Sin esto, el submit pasaba
+              igual aunque nadie hubiera elegido nada. Solo es obligatorio en
+              productos físicos — los digitales no tienen contraentrega y ya
+              vienen con un método preseleccionado en su propio RadioGroup. */}
+          <input
+            type="hidden"
+            {...register("metodoPago", {
+              required: !isDigitalProduct ? "Selecciona un método de pago" : false,
+            })}
+          />
+
           {/* Datos personales */}
           <div className="space-y-5 sm:space-y-4">
             <div>
@@ -584,7 +636,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {productId === 'guia-placer' || productId === 'ebook-25-juegos' ? 'A este correo te enviaremos el enlace de descarga.' : 'A este correo te enviaremos el acceso al juego.'}
+                  {productId === 'guia-placer' || productId === 'ebook-25-juegos'
+                    ? 'A este correo te enviaremos el enlace de descarga.'
+                    : 'Este correo será tu usuario para entrar al juego. El acceso te llega por WhatsApp.'}
                 </p>
                 {errors.email && (
                   <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
@@ -671,29 +725,29 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
               <div className="space-y-4 border-t pt-4">
                 <h3 className="text-lg font-semibold">Mejora tu pedido 🛒</h3>
                 
-                <div className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all ${
-                  selectedUpsells['emparejados-digital'] 
-                    ? 'border-primary bg-primary/10 shadow-md' 
+                <Label htmlFor="upsell-emparejados-digital" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
+                  selectedUpsells['emparejados-digital']
+                    ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-emparejados-digital"
                     checked={selectedUpsells['emparejados-digital'] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setSelectedUpsells(prev => ({ ...prev, 'emparejados-digital': checked as boolean }))
                     }
                   />
-                  <img 
-                    src={emparejadosPortada} 
-                    alt="Emparejados" 
+                  <img
+                    src={emparejadosPortada}
+                    alt="Emparejados"
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor="upsell-emparejados-digital" className="cursor-pointer flex-1">
-                    Agregar <strong>EMPAREJADOS (juego de cartas digital para Parejas)</strong> por solo <strong className="text-primary">$0,90</strong> adicionales.
-                  </Label>
-                </div>
+                  <span className="flex-1 font-normal">
+                    Agregar <strong>EMPAREJADOS (72 cartas para parejas)</strong> por solo <strong className="text-primary">$2,90</strong> adicionales.
+                  </span>
+                </Label>
 
-                <div className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all ${
+                <Label htmlFor="upsell-guia-placer-dados" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['guia-placer-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
@@ -710,10 +764,10 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     alt="Guía Digital del Placer"
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor="upsell-guia-placer-dados" className="cursor-pointer flex-1">
-                    Agregar <strong>Guía Digital del Placer</strong> por solo <strong className="text-primary">$0,90</strong> adicionales.
-                  </Label>
-                </div>
+                  <span className="flex-1 font-normal">
+                    Agregar <strong>Guía Digital del Placer</strong> (guía completa para recuperar la chispa y salir de la rutina) por solo <strong className="text-primary">$2,90</strong> adicionales.
+                  </span>
+                </Label>
               </div>
 
               {/* Resumen del pedido para Dados Digitales */}
@@ -729,13 +783,13 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   {selectedUpsells['emparejados-digital'] && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">+ Emparejados (Digital)</span>
-                      <span className="font-semibold">$0.90</span>
+                      <span className="font-semibold">$2.90</span>
                     </div>
                   )}
                   {selectedUpsells['guia-placer-digital'] && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">+ Guía Digital del Placer</span>
-                      <span className="font-semibold">$0.90</span>
+                      <span className="font-semibold">$2.90</span>
                     </div>
                   )}
                 </div>
@@ -756,31 +810,31 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="transferencia" id="transferencia-dados" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="transferencia-dados" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="transferencia-dados" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="transferencia" id="transferencia-dados" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <Truck className="w-4 h-4" />
                         Transferencia bancaria
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Acceso inmediato tras confirmar el pago
                       </p>
-                    </div>
                   </div>
+                </Label>
                   
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="tarjeta" id="tarjeta-dados" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="tarjeta-dados" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="tarjeta-dados" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="tarjeta" id="tarjeta-dados" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <CreditCard className="w-4 h-4" />
                         Pagar con tarjeta
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Pago seguro con tarjeta de crédito o débito a través de PayPhone
                       </p>
-                    </div>
                   </div>
+                </Label>
                 </RadioGroup>
               </div>
             </>
@@ -792,29 +846,29 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
               <div className="space-y-4 border-t pt-4">
                 <h3 className="text-lg font-semibold">Mejora tu pedido 🛒</h3>
                 
-                <div className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all ${
-                  selectedUpsells['dados-digital'] 
-                    ? 'border-primary bg-primary/10 shadow-md' 
+                <Label htmlFor="upsell-dados-digital" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
+                  selectedUpsells['dados-digital']
+                    ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-dados-digital"
                     checked={selectedUpsells['dados-digital'] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setSelectedUpsells(prev => ({ ...prev, 'dados-digital': checked as boolean }))
                     }
                   />
-                  <img 
-                    src={dadosDigitalesPrincipal} 
-                    alt="Dados Digitales de Posiciones" 
+                  <img
+                    src={dadosDigitalesPrincipal}
+                    alt="Dados Digitales de Posiciones"
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor="upsell-dados-digital" className="cursor-pointer flex-1">
-                    Agregar <strong>Dados Digitales de Posiciones</strong> por solo <strong className="text-primary">$0,90</strong> adicionales.
-                  </Label>
-                </div>
+                  <span className="flex-1 font-normal">
+                    Agregar <strong>Dados Digitales de Posiciones + Dados Digitales de Acciones</strong> (8.942 combinaciones) por solo <strong className="text-primary">$2,90</strong> adicionales.
+                  </span>
+                </Label>
 
-                <div className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all ${
+                <Label htmlFor="upsell-guia-placer-emparejados" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['guia-placer-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
@@ -831,10 +885,10 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     alt="Guía Digital del Placer"
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor="upsell-guia-placer-emparejados" className="cursor-pointer flex-1">
-                    Agregar <strong>Guía Digital del Placer</strong> por solo <strong className="text-primary">$0,90</strong> adicionales.
-                  </Label>
-                </div>
+                  <span className="flex-1 font-normal">
+                    Agregar <strong>Guía Digital del Placer</strong> (guía completa para recuperar la chispa y salir de la rutina) por solo <strong className="text-primary">$2,90</strong> adicionales.
+                  </span>
+                </Label>
               </div>
               <div className="bg-muted/50 rounded-lg p-5 border-2 border-primary/20 space-y-3">
                 <h4 className="font-semibold text-base mb-3">Resumen de tu pedido</h4>
@@ -844,17 +898,28 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     <span className="text-muted-foreground">{productName}</span>
                     <span className="font-semibold">${productPrice.toFixed(2)}</span>
                   </div>
-                  
+
+                  {/* El regalo prometido en la landing tiene que verse acá, si no
+                      el cliente cree que le están cobrando lo que le ofrecieron gratis */}
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">+ PDF imprimible de las 72 cartas</span>
+                    <span className="font-semibold text-primary">GRATIS</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">+ Guía de 30 Posiciones</span>
+                    <span className="font-semibold text-primary">GRATIS</span>
+                  </div>
+
                   {selectedUpsells['dados-digital'] && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">+ Dados Digitales de Posiciones</span>
-                      <span className="font-semibold">$0.90</span>
+                      <span className="text-muted-foreground">+ Dados Digitales</span>
+                      <span className="font-semibold">$2.90</span>
                     </div>
                   )}
                   {selectedUpsells['guia-placer-digital'] && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">+ Guía Digital del Placer</span>
-                      <span className="font-semibold">$0.90</span>
+                      <span className="font-semibold">$2.90</span>
                     </div>
                   )}
                 </div>
@@ -875,31 +940,31 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="transferencia" id="transferencia-digital" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="transferencia-digital" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="transferencia-digital" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="transferencia" id="transferencia-digital" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <Truck className="w-4 h-4" />
                         Transferencia bancaria
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Acceso inmediato tras confirmar el pago
                       </p>
-                    </div>
                   </div>
+                </Label>
                   
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="tarjeta" id="tarjeta-digital" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="tarjeta-digital" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="tarjeta-digital" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="tarjeta" id="tarjeta-digital" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <CreditCard className="w-4 h-4" />
                         Pagar con tarjeta
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Pago seguro con tarjeta de crédito o débito a través de PayPhone
                       </p>
-                    </div>
                   </div>
+                </Label>
                 </RadioGroup>
               </div>
             </>
@@ -911,27 +976,27 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
               <div className="space-y-4 border-t pt-4">
                 <h3 className="text-lg font-semibold">Mejora tu pedido 🛒</h3>
                 
-                <div className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all ${
-                  selectedUpsells['emparejados-digital'] 
-                    ? 'border-primary bg-primary/10 shadow-md' 
+                <Label htmlFor="upsell-emparejados-guia" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
+                  selectedUpsells['emparejados-digital']
+                    ? 'border-primary bg-primary/10 shadow-md'
                     : 'border-border hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-emparejados-guia"
                     checked={selectedUpsells['emparejados-digital'] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setSelectedUpsells(prev => ({ ...prev, 'emparejados-digital': checked as boolean }))
                     }
                   />
-                  <img 
-                    src={emparejadosPortada} 
-                    alt="Emparejados" 
+                  <img
+                    src={emparejadosPortada}
+                    alt="Emparejados"
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor="upsell-emparejados-guia" className="cursor-pointer flex-1">
-                    Agregar <strong>Emparejados</strong> por solo <strong className="text-primary">$3,90</strong>
-                  </Label>
-                </div>
+                  <span className="flex-1 font-normal">
+                    Agregar <strong>Emparejados (72 cartas para parejas)</strong> por solo <strong className="text-primary">$2,90</strong> adicionales.
+                  </span>
+                </Label>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-5 border-2 border-primary/20 space-y-3">
@@ -946,7 +1011,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   {selectedUpsells['emparejados-digital'] && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">+ Emparejados</span>
-                      <span className="font-semibold">$3.90</span>
+                      <span className="font-semibold">$2.90</span>
                     </div>
                   )}
                 </div>
@@ -966,31 +1031,31 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="transferencia" id="transferencia-guia" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="transferencia-guia" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="transferencia-guia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="transferencia" id="transferencia-guia" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <Truck className="w-4 h-4" />
                         Transferencia bancaria
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Acceso inmediato tras confirmar el pago
                       </p>
-                    </div>
                   </div>
+                </Label>
                   
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="tarjeta" id="tarjeta-guia" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="tarjeta-guia" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="tarjeta-guia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="tarjeta" id="tarjeta-guia" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <CreditCard className="w-4 h-4" />
                         Pagar con tarjeta
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Pago seguro con tarjeta de crédito o débito a través de PayPhone
                       </p>
-                    </div>
                   </div>
+                </Label>
                 </RadioGroup>
               </div>
             </>
@@ -1024,31 +1089,31 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="transferencia" id="transferencia-ebook" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="transferencia-ebook" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="transferencia-ebook" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="transferencia" id="transferencia-ebook" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <Truck className="w-4 h-4" />
                         Transferencia bancaria
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Acceso inmediato tras confirmar el pago
                       </p>
-                    </div>
                   </div>
+                </Label>
                   
-                  <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
-                    <RadioGroupItem value="tarjeta" id="tarjeta-ebook" className="mt-1" />
-                    <div className="flex-1">
-                      <Label htmlFor="tarjeta-ebook" className="font-semibold cursor-pointer flex items-center gap-2">
+                  <Label htmlFor="tarjeta-ebook" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="tarjeta" id="tarjeta-ebook" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
                         <CreditCard className="w-4 h-4" />
                         Pagar con tarjeta
-                      </Label>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      </span>
+                    <p className="text-sm text-muted-foreground mt-1">
                         Pago seguro con tarjeta de crédito o débito a través de PayPhone
                       </p>
-                    </div>
                   </div>
+                </Label>
                 </RadioGroup>
               </div>
             </>
@@ -1060,23 +1125,29 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
               <h3 className="text-lg font-semibold">Mejora tu pedido 🛒</h3>
               
               {upsells.map((upsell) => (
-                <div key={upsell.id} className="flex items-center gap-3 border rounded-lg p-4 hover:border-primary transition-colors">
+                <Label
+                  key={upsell.id}
+                  htmlFor={`upsell-${upsell.id}`}
+                  className={`flex items-center gap-3 border rounded-lg p-4 transition-colors cursor-pointer mb-0 ${
+                    selectedUpsells[upsell.id] ? 'border-primary bg-primary/5' : 'hover:border-primary'
+                  }`}
+                >
                   <Checkbox
                     id={`upsell-${upsell.id}`}
                     checked={selectedUpsells[upsell.id] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       setSelectedUpsells(prev => ({ ...prev, [upsell.id]: checked as boolean }))
                     }
                   />
-                  <img 
-                    src={upsell.image} 
-                    alt={upsell.name} 
+                  <img
+                    src={upsell.image}
+                    alt={upsell.name}
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-                  <Label htmlFor={`upsell-${upsell.id}`} className="cursor-pointer flex-1">
+                  <span className="flex-1 font-normal">
                     Agregar <strong>{upsell.name}</strong> por solo <strong className="text-primary">${upsell.price}</strong> adicionales.
-                  </Label>
-                </div>
+                  </span>
+                </Label>
               ))}
             </div>
           )}
@@ -1106,12 +1177,21 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   <span className="font-semibold text-primary">INCLUIDO</span>
                 </div>
               </div>
-              
+
               <div className="border-t border-border pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">Total a pagar:</span>
-                  <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-primary">
+                    ${calculateTotal().toFixed(2)}
+                  </span>
                 </div>
+                {metodoPago === 'contraentrega' && (
+                  <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-dashed">
+                    <span className="text-muted-foreground">
+                      Reserva ahora ${RESERVA_MIXTO.toFixed(2)} + ${getSaldoMixto().toFixed(2)} en efectivo al recibir
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1121,53 +1201,54 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
             <div className="space-y-4 border-t pt-4">
               <Label className="text-lg font-semibold">Elige cómo quieres pagar:</Label>
               <RadioGroup
-                onValueChange={(value) => setValue("metodoPago", value as any)}
-                defaultValue="transferencia"
+                onValueChange={(value) => setValue("metodoPago", value as any, { shouldValidate: true })}
                 className="space-y-3"
               >
-                {/* Contraentrega: el backend y /confirmacion-contraentrega ya existían,
-                    pero no había opción para elegirlo. Va primero porque es la que
-                    menos fricción tiene en tráfico frío (no piden tarjeta por adelantado). */}
-                <div className="flex items-start space-x-3 border-2 border-green-500/40 bg-green-500/5 rounded-lg p-4 hover:border-green-500 transition-colors">
+                <Label htmlFor="contraentrega" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="contraentrega" id="contraentrega" className="mt-1" />
                   <div className="flex-1">
-                    <Label htmlFor="contraentrega" className="font-semibold cursor-pointer flex items-center gap-2">
-                      <Banknote className="w-4 h-4 text-green-600" />
-                      Pago contraentrega
-                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">SIN RIESGO</Badge>
-                    </Label>
+                    <span className="font-semibold flex items-center gap-2">
+                      <Banknote className="w-4 h-4" />
+                      Pago mixto
+                      <Badge variant="secondary" className="text-[10px] px-2 py-0">RESERVA ${RESERVA_MIXTO}</Badge>
+                    </span>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Pagas en efectivo cuando recibes el paquete. No necesitas tarjeta.
+                      Reservas tu pedido con ${RESERVA_MIXTO} y pagas el resto en efectivo cuando lo recibes.
+                      Te coordinamos la reserva por WhatsApp.
                     </p>
                   </div>
-                </div>
+                </Label>
 
-                <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
+                <Label htmlFor="transferencia" className="flex items-start space-x-3 border-2 border-green-500/40 bg-green-500/5 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia" className="mt-1" />
                   <div className="flex-1">
-                    <Label htmlFor="transferencia" className="font-semibold cursor-pointer flex items-center gap-2">
-                      <Truck className="w-4 h-4" />
-                      Transferencia bancaria
-                    </Label>
+                    <span className="font-semibold flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-green-600" />
+                      Pago anticipado por transferencia/depósito
+                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
+                    </span>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Envío prioritario en 24-48 horas laborables
+                      Pagas antes del envío y tu pedido sale primero: te llega en 24-48 horas laborables.
                     </p>
                   </div>
-                </div>
+                </Label>
 
-                <div className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors">
+                <Label htmlFor="tarjeta" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="tarjeta" id="tarjeta" className="mt-1" />
                   <div className="flex-1">
-                    <Label htmlFor="tarjeta" className="font-semibold cursor-pointer flex items-center gap-2">
+                    <span className="font-semibold flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
                       Pagar con tarjeta
-                    </Label>
+                    </span>
                     <p className="text-sm text-muted-foreground mt-1">
                       Pago seguro con tarjeta de crédito o débito a través de PayPhone
                     </p>
                   </div>
-                </div>
+                </Label>
               </RadioGroup>
+              {errors.metodoPago && (
+                <p className="text-sm text-destructive">{errors.metodoPago.message}</p>
+              )}
             </div>
           )}
 

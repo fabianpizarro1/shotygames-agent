@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,13 +133,12 @@ const EmparejadosInternacionalLanding = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 overflow-x-hidden w-full">
-      <Helmet>
-        <title>Emparejados Internacional - Juego Digital para Parejas | ShotyGames</title>
-        <meta name="description" content="El juego digital para parejas con acceso inmediato vía Hotmart. Conexión, deseo y diversión. Solo $3.90." />
-        <meta property="og:title" content="Emparejados Internacional - Juego Digital para Parejas | ShotyGames" />
-        <meta property="og:description" content="El juego digital para parejas con acceso inmediato. Solo $3.90." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/emparejados-internacional" />
-      </Helmet>
+      <Seo
+        title="Emparejados Internacional - Juego Digital para Parejas | ShotyGames"
+        description="El juego digital para parejas con acceso inmediato vía Hotmart. Conexión, deseo y diversión. Solo $3.90."
+        canonical="https://www.shotygames.com/landing/emparejados-internacional"
+        type="website"
+      />
       {/* Fixed Header with Promo */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-primary text-primary-foreground py-3 px-2 text-center font-semibold text-xs sm:text-sm md:text-base shadow-lg animate-fade-in">
         🎁 HOY: Guía Digital de 30 Posiciones GRATIS + Acceso Inmediato 🎁

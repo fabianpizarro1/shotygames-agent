@@ -1,46 +1,54 @@
-import { lazy, Suspense } from "react";
-import { HelmetProvider } from "react-helmet-async";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-const ProductDetail = lazy(() => import("./pages/ProductDetail"));
-const TorreNormalLanding = lazy(() => import("./pages/TorreNormalLanding"));
-const TorrePicanteLanding = lazy(() => import("./pages/TorrePicanteLanding"));
-const TorreParejasLanding = lazy(() => import("./pages/TorreParejasLanding"));
-const PartyshotsLanding = lazy(() => import("./pages/PartyshotsLanding"));
-const EnganchadosLanding = lazy(() => import("./pages/EnganchadosLanding"));
-const EmparejadosLanding = lazy(() => import("./pages/EmparejadosLanding"));
-const EmparejadosInternacionalLanding = lazy(() => import("./pages/EmparejadosInternacionalLanding"));
-const DadosDigitalesLanding = lazy(() => import("./pages/DadosDigitalesLanding"));
-const PromoHoyLanding = lazy(() => import("./pages/PromoHoyLanding"));
-const ComboTorresLanding = lazy(() => import("./pages/ComboTorresLanding"));
-const TresTorresLanding = lazy(() => import("./pages/TresTorresLanding"));
-const ComboChuchaquiLanding = lazy(() => import("./pages/ComboChuchaquiLanding"));
-const ComboLaPreviaLanding = lazy(() => import("./pages/ComboLaPreviaLanding"));
-const Ebook25JuegosLanding = lazy(() => import("./pages/Ebook25JuegosLanding"));
-const GuiaPlacerLanding = lazy(() => import("./pages/GuiaPlacerLanding"));
-const ConfirmacionContraentrega = lazy(() => import("./pages/ConfirmacionContraentrega"));
-const ConfirmacionTransferencia = lazy(() => import("./pages/ConfirmacionTransferencia"));
-const ConfirmacionTarjeta = lazy(() => import("./pages/ConfirmacionTarjeta"));
-const PayphoneCheckout = lazy(() => import("./pages/PayphoneCheckout"));
+const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
+const TorreNormalLanding = lazyWithRetry(() => import("./pages/TorreNormalLanding"));
+const TorrePicanteLanding = lazyWithRetry(() => import("./pages/TorrePicanteLanding"));
+const TorreParejasLanding = lazyWithRetry(() => import("./pages/TorreParejasLanding"));
+const PartyshotsLanding = lazyWithRetry(() => import("./pages/PartyshotsLanding"));
+const EnganchadosLanding = lazyWithRetry(() => import("./pages/EnganchadosLanding"));
+const EmparejadosLanding = lazyWithRetry(() => import("./pages/EmparejadosLanding"));
+const EmparejadosInternacionalLanding = lazyWithRetry(() => import("./pages/EmparejadosInternacionalLanding"));
+const DadosDigitalesLanding = lazyWithRetry(() => import("./pages/DadosDigitalesLanding"));
+const PromoHoyLanding = lazyWithRetry(() => import("./pages/PromoHoyLanding"));
+const ComboTorresLanding = lazyWithRetry(() => import("./pages/ComboTorresLanding"));
+const TresTorresLanding = lazyWithRetry(() => import("./pages/TresTorresLanding"));
+const ComboChuchaquiLanding = lazyWithRetry(() => import("./pages/ComboChuchaquiLanding"));
+const ComboLaPreviaLanding = lazyWithRetry(() => import("./pages/ComboLaPreviaLanding"));
+const Ebook25JuegosLanding = lazyWithRetry(() => import("./pages/Ebook25JuegosLanding"));
+const GuiaPlacerLanding = lazyWithRetry(() => import("./pages/GuiaPlacerLanding"));
+const ConfirmacionContraentrega = lazyWithRetry(() => import("./pages/ConfirmacionContraentrega"));
+const ConfirmacionTransferencia = lazyWithRetry(() => import("./pages/ConfirmacionTransferencia"));
+const ConfirmacionTarjeta = lazyWithRetry(() => import("./pages/ConfirmacionTarjeta"));
+const PayphoneCheckout = lazyWithRetry(() => import("./pages/PayphoneCheckout"));
+
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
-        <Suspense fallback={null}>
+        <RouteErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
@@ -67,10 +75,10 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </RouteErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-  </HelmetProvider>
 );
 
 export default App;

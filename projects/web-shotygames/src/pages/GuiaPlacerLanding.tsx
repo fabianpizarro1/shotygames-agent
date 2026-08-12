@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCart, Heart, Sparkles, CheckCircle2, Flame, BookOpen, MessageCircle, Users, Lock, Download, HelpCircle, ChevronDown } from "lucide-react";
 import { CheckoutModal } from "@/components/CheckoutModal";
-import { HelmetProvider, Helmet } from "react-helmet-async";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Footer from "@/components/Footer";
 import guiaPlacerPortada from "@/assets/guia-placer-portada.webp";
+import Seo from "@/components/Seo";
 
 const PRECIO = 6.90;
 const PRECIO_ANTERIOR = 15.00;
@@ -37,11 +37,13 @@ const GuiaPlacerLanding = () => {
   const openCheckout = () => setIsCheckoutOpen(true);
 
   return (
-    <HelmetProvider>
-      <Helmet>
-        <title>Guía Digital del Placer - Reconecta con tu pareja | ShotyGames</title>
-        <meta name="description" content="Ideas prácticas y experiencias para encender la pasión en pareja. Guía digital PDF con descarga inmediata. Oferta de lanzamiento $6.90" />
-      </Helmet>
+    <>
+      <Seo
+        title="Guía Digital del Placer - Reconecta con tu pareja | ShotyGames"
+        description="Ideas prácticas y experiencias para encender la pasión en pareja. Guía digital PDF con descarga inmediata. Oferta de lanzamiento $6.90"
+        canonical="https://www.shotygames.com/landing/guia-del-placer"
+        type="product"
+      />
 
       <div className="min-h-screen bg-background">
         {/* Ambient warm gradient */}
@@ -416,7 +418,7 @@ const GuiaPlacerLanding = () => {
           productId="guia-placer"
         />
       </div>
-    </HelmetProvider>
+    </>
   );
 };
 

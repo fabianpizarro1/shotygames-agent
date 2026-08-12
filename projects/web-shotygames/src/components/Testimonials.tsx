@@ -47,7 +47,18 @@ const Testimonials = () => {
             <CarouselContent className="-ml-2 sm:-ml-4">
               {testimonialImages.map((testimonial, index) => <CarouselItem key={index} className="pl-2 sm:pl-4 md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
-                    <img src={testimonial.image} alt={testimonial.alt} className="w-full h-auto rounded-lg shadow-lg hover:shadow-xl transition-smooth" loading="lazy" />
+                    {/* aspect-ratio fijo (las 6 son 945x1181 = 4:5 real) para que el
+                        carrusel no salte de alto mientras cargan las imágenes */}
+                    <div className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-smooth">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.alt}
+                        width={945}
+                        height={1181}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
                   </div>
                 </CarouselItem>)}
             </CarouselContent>

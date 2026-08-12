@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -428,19 +428,12 @@ const TresTorresLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Las 3 Torres de Shots | Desde $28 con Envío Gratis | ShotyGames Ecuador</title>
-        <meta
-          name="description"
-          content="La Previa, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador y pago contraentrega."
-        />
-        <meta property="og:title" content="Las 3 Torres de Shots | ShotyGames Ecuador" />
-        <meta
-          property="og:description"
-          content="51 retos en cada torre. Las 3 por $49 con envío gratis y pago contraentrega a todo Ecuador."
-        />
-        <meta property="og:url" content="https://shotygames.com/landing/3-torres" />
-      </Helmet>
+      <Seo
+        title="Las 3 Torres de Shots | Desde $28 con Envío Gratis | ShotyGames Ecuador"
+        description="La Previa, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/3-torres"
+        type="product"
+      />
 
       {/* ══ Barra superior fija ══ */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
@@ -889,10 +882,10 @@ const TresTorresLanding = () => {
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="p-6 md:p-8 border-2 border-green-500/30 bg-green-500/5">
                 <Banknote className="w-10 h-10 text-green-600 mb-4" />
-                <h3 className="text-xl md:text-2xl font-bold mb-2">Contraentrega</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-2">Pago mixto</h3>
                 <p className="text-sm md:text-base text-muted-foreground mb-4">
-                  Pagas en efectivo cuando el paquete llega a tu casa. No necesitas tarjeta ni
-                  transferencia. Cero riesgo para ti. Pedido confirmado antes por WhatsApp.
+                  Reservas tu pedido con $5 y pagas el resto en efectivo cuando el paquete llega
+                  a tu casa. No necesitas tarjeta. Reserva confirmada por WhatsApp.
                 </p>
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-500">
                   <CheckCircle2 className="w-4 h-4" />
@@ -1054,7 +1047,7 @@ const TresTorresLanding = () => {
         torreSelection={planActivo.torreSelection}
         upsells={[
           { id: "dadosPlacer", name: "Dados del Placer", price: 5, image: dadosDelPlacerImg },
-          { id: "emparejados", name: "Emparejados (juego digital)", price: 3.9, image: emparejadosPortada },
+          { id: "emparejados", name: "Emparejados (juego digital)", price: 2.90, image: emparejadosPortada },
         ]}
       />
     </div>

@@ -40,9 +40,9 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 
 ## Productos y precios
 **Físicos:**
-- NORMAL (N) — $23
-- PICANTE (P) — $23
-- PAREJAS (PAR) — $23
+- NORMAL (N) — $28
+- PICANTE (P) — $28
+- PAREJAS (PAR) — $28
 - ENGANCHADOS (ENG) — $28
 
 **Digitales:**

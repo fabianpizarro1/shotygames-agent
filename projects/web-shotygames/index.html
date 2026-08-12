@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,12 +11,12 @@
     
     
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://shoty-fiesta-web-main.vercel.app/og-image.jpg" />
+    <meta property="og:image" content="https://www.shotygames.com/og-image.jpg" />
 
     <meta name="twitter:card" content="summary_large_image" />
 
 
-    <meta name="twitter:image" content="https://shoty-fiesta-web-main.vercel.app/og-image.jpg" />
+    <meta name="twitter:image" content="https://www.shotygames.com/og-image.jpg" />
     
     <!-- Preconnect to Facebook for deferred pixel loading -->
     <link rel="preconnect" href="https://connect.facebook.net">
@@ -48,8 +48,11 @@
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
     
-    <!-- Preload critical assets -->
-    <link rel="preload" as="image" href="/assets/hero-party-D5ydXFso.jpg" fetchpriority="high">
+    <!-- Nota: acá había un preload de /assets/hero-party-*.jpg (141 KB).
+         Se quitó porque index.html es compartido por TODAS las rutas (SPA):
+         esa imagen solo se usa en el hero de la home, así que las ~20 landings
+         la descargaban sin mostrarla nunca. Además el nombre llevaba el hash
+         del build, que cambia en cada deploy — quedaba obsoleto solo. -->
     <meta property="og:title" content="ShotyGames - Los juegos que prenden la fiesta | Entrega inmediata en Machala">
   <meta name="twitter:title" content="ShotyGames - Los juegos que prenden la fiesta | Entrega inmediata en Machala">
   <meta property="og:description" content="Torre de Shots, Enganchados y Cartas PartyShots. Juegos de mesa para beber. Entrega inmediata en Machala, envíos a todo Ecuador. Más de 3500 clientes satisfechos.">
@@ -64,6 +67,40 @@
     /></noscript>
     <!-- End Meta Pixel Code -->
     <div id="root"></div>
+    <script>
+      // Red de seguridad contra pantalla en blanco en la CARGA INICIAL
+      // (distinto del reintento de rutas lazy, que solo cubre navegación
+      // dentro de la app ya cargada). Si el script principal falla al
+      // cargar/ejecutar — deploy justo en ese momento, red del celular
+      // cortada a mitad de la descarga, etc. — React nunca arranca y no
+      // hay nada de React que pueda mostrar un mensaje. Este script plano
+      // no depende de React: detecta el fallo y recarga una sola vez.
+      (function () {
+        var FLAG = "boot-reload-attempted";
+        function reloadOnce() {
+          if (!sessionStorage.getItem(FLAG)) {
+            sessionStorage.setItem(FLAG, "1");
+            window.location.reload();
+          }
+        }
+        // Caso 1: el <script type="module"> falla al cargar (error de red).
+        window.addEventListener(
+          "error",
+          function (e) {
+            if (e.target && e.target.tagName === "SCRIPT") reloadOnce();
+          },
+          true,
+        );
+        // Caso 2: el script cargó pero React nunca llegó a montar nada
+        // (ej. un chunk secundario que también falló silenciosamente).
+        window.addEventListener("load", function () {
+          setTimeout(function () {
+            var root = document.getElementById("root");
+            if (root && root.childElementCount === 0) reloadOnce();
+          }, 6000);
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

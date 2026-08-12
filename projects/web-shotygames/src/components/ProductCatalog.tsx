@@ -13,7 +13,7 @@ import dadosDelPlacer from "@/assets/dados-del-placer.webp";
 
 const physicalProducts = [{
   id: "torre-normal",
-  name: "Torre de Shots Normal",
+  name: "Torre La Previa",
   description: "El clásico que prendió todas las fiestas. 51 bloques con retos, preguntas y penitencias en español.",
   price: 28,
   image: torreNormal,
@@ -74,20 +74,22 @@ const digitalProducts = [{
   id: "emparejados",
   name: "Emparejados",
   description: "Juego digital de cartas para parejas. Conecta, desafía y diviértete con tu pareja.",
-  price: 3.90,
+  price: 6.90,
+  originalPrice: 15.00,
   image: emparejadosPortada,
   badge: "DIGITAL 📱",
   includes: [
     "Acceso inmediato al juego",
-    "3 mazos de cartas digitales",
-    "Actualizaciones gratuitas",
+    "72 cartas digitales",
+    "PDF imprimible de las 72 cartas",
     "Juega desde cualquier dispositivo"
   ]
 }, {
   id: "dados-digitales",
   name: "Dados Digitales de Posiciones",
   description: "Juego digital de dados para parejas. Transforma tu noche en algo especial.",
-  price: 3.90,
+  price: 6.90,
+  originalPrice: 14.90,
   image: dadosDigitalesPrincipal,
   badge: "NUEVO 🎲",
   includes: [
@@ -126,11 +128,11 @@ const ProductCatalog = () => {
     const mappedId = productIdMap[productId] || productId;
     
     const allProducts = [
-      { id: 'torreNormal', name: 'Torre Normal', price: 10, image: torreNormal },
-      { id: 'torrePicante', name: 'Torre Picante', price: 10, image: torrePicante },
+      { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormal },
+      { id: 'torrePicante', name: 'Torre Picante (para grupos)', price: 10, image: torrePicante },
       { id: 'torreParejas', name: 'Torre Parejas', price: 10, image: torreParejas },
       { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacer },
-      { id: 'emparejados', name: 'Emparejados (Juego Digital)', price: 3.90, image: emparejadosPortada }
+      { id: 'emparejados', name: 'Emparejados (Juego Digital)', price: 2.90, image: emparejadosPortada }
     ];
     
     // Filtrar el producto principal y retornar los otros

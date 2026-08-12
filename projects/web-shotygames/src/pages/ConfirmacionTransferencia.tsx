@@ -4,22 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, MessageCircle, Package, Zap } from "lucide-react";
 
+const WHATSAPP_FISICOS = "593993154462";
+const WHATSAPP_DIGITALES = "593939586136";
+
 export const ConfirmacionTransferencia = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const pedido = location.state?.pedido;
   const isDigitalProduct = pedido?.esProductoDigital;
+  const whatsappSoporte = isDigitalProduct ? WHATSAPP_DIGITALES : WHATSAPP_FISICOS;
   const isEbook = pedido?.productoPrincipal?.toLowerCase().includes('ebook') || pedido?.productoPrincipal?.toLowerCase().includes('guía digital de 25');
-  const hasMultipleItems = !!(
-    pedido?.upsellTorreNormalSelected ||
-    pedido?.upsellTorrePicanteSelected ||
-    pedido?.upsellTorreParejasSelected ||
-    pedido?.upsellEnganchadosSelected ||
-    pedido?.upsellEmparejadosSelected ||
-    pedido?.upsellDadosPlacerSelected ||
-    pedido?.productoPrincipal?.toLowerCase().includes('combo') ||
-    pedido?.productoPrincipal?.toLowerCase().includes('promo')
-  );
 
   useEffect(() => {
     if (!pedido) {
@@ -84,7 +78,7 @@ export const ConfirmacionTransferencia = () => {
               ) : (
                 <>
                   <li>🚀 Envío <strong>PRIORITARIO</strong> en 24 a 48 horas laborables</li>
-                  {hasMultipleItems && <li>🎁 Regalo incluido: <strong>Shot BIDU</strong></li>}
+                  {pedido.incluyeShotBidu && <li>🎁 Regalo incluido: <strong>Shot BIDU</strong></li>}
                   <li>✨ Prioridad en despacho</li>
                 </>
               )}
@@ -111,7 +105,7 @@ export const ConfirmacionTransferencia = () => {
                 
                 {pedido.upsellTorreNormalSelected && (
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-muted-foreground flex-1">+ Torre Normal</span>
+                    <span className="text-muted-foreground flex-1">+ Torre La Previa</span>
                     <span className="whitespace-nowrap">${pedido.upsellTorreNormalPrice.toFixed(2)}</span>
                   </div>
                 )}
@@ -188,6 +182,18 @@ export const ConfirmacionTransferencia = () => {
               Una vez que hagas el pago y envíes el comprobante, procesaremos tu pedido de inmediato.
             </p>
             
+            <Button
+              onClick={() => {
+                const mensaje = `Hola, soy ${pedido.nombre} y necesito ayuda con mi pedido ${pedido.idPedido}`;
+                window.open(`https://wa.me/${whatsappSoporte}?text=${encodeURIComponent(mensaje)}`, "_blank");
+              }}
+              variant="whatsapp"
+              className="w-full h-auto whitespace-normal py-3 leading-snug text-center"
+            >
+              <MessageCircle className="w-4 h-4 mr-2 shrink-0" />
+              ¿Alguna pregunta? Escríbenos por WhatsApp
+            </Button>
+
             <Button
               onClick={() => navigate("/")}
               variant="outline"

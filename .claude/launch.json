@@ -2,16 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "marketing-frontend",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd projects/marketing-agent/frontend && npm run dev -- --port 5174"],
-      "port": 5174
-    },
-    {
-      "name": "web-shotygames",
-      "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd projects/web-shotygames && npm run dev"],
-      "port": 8080
+      "name": "truquito",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "projects/truquito"],
+      "port": 5173
     }
   ]
 }

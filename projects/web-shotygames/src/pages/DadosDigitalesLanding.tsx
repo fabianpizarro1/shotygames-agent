@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +21,7 @@ import dadosPreview2 from "@/assets/dados-preview-2.webp";
 
 const DadosDigitalesLanding = () => {
   const productName = "Dados Digitales de Posiciones";
-  const productPrice = 3.90;
+  const productPrice = 6.90;
   const originalPrice = 14.90;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
@@ -170,13 +170,12 @@ const DadosDigitalesLanding = () => {
     answer: "Sí, los Dados de Acciones y la Guía Digital están disponibles solo por lanzamiento."
   }];
   return <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20 overflow-x-hidden w-full">
-      <Helmet>
-        <title>Dados Digitales del Placer - Juego para Parejas | ShotyGames Ecuador</title>
-        <meta name="description" content="Dados digitales con posiciones y retos para parejas. Acceso inmediato por solo $3.90. Enciende la pasión." />
-        <meta property="og:title" content="Dados Digitales del Placer | ShotyGames Ecuador" />
-        <meta property="og:description" content="Dados digitales con posiciones y retos para parejas. Acceso inmediato por solo $3.90." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/dados-digitales" />
-      </Helmet>
+      <Seo
+        title="Dados Digitales del Placer - Juego para Parejas | ShotyGames Ecuador"
+        description="Dados digitales con posiciones y retos para parejas. Acceso inmediato por solo $6.90. Enciende la pasión."
+        canonical="https://www.shotygames.com/landing/dados-digitales"
+        type="website"
+      />
       {/* Fixed Header with Promo */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-primary text-primary-foreground py-3 px-2 text-center font-semibold text-xs sm:text-sm md:text-base shadow-lg animate-fade-in">
         🎁 HOY: 2 BONOS GRATIS + Acceso Inmediato 🎁
@@ -430,7 +429,7 @@ const DadosDigitalesLanding = () => {
             
             <div className="text-center mb-6">
               <p className="text-muted-foreground mb-2">Hoy solo pagas:</p>
-              <p className="text-5xl md:text-6xl font-bold text-primary">$3.90</p>
+              <p className="text-5xl md:text-6xl font-bold text-primary">$6.90</p>
               <Badge className="mt-3 bg-destructive text-destructive-foreground animate-pulse">
                 ⏰ Oferta exclusiva por lanzamiento. Tiempo limitado.
               </Badge>
@@ -571,7 +570,7 @@ const DadosDigitalesLanding = () => {
               Llévate hoy todo el pack
             </h2>
             <p className="text-xl md:text-2xl mb-2">
-              Por solo <span className="font-bold text-3xl md:text-4xl">$3.90</span>
+              Por solo <span className="font-bold text-3xl md:text-4xl">$6.90</span>
             </p>
             <p className="text-primary-foreground/80 mb-6">
               Precio normal: <span className="line-through">$14.90</span>
@@ -593,7 +592,7 @@ const DadosDigitalesLanding = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border p-3 md:hidden">
         <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full text-base animate-pulse">
           <ShoppingCart className="mr-2 h-5 w-5" />
-          COMPRAR - $3.90
+          COMPRAR - $6.90
           <Zap className="ml-2 h-5 w-5" />
         </Button>
       </div>

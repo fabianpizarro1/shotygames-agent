@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
@@ -77,13 +77,12 @@ const ComboLaPreviaLanding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Helmet>
-        <title>Combo La Previa - Kit de Fiesta Completo | ShotyGames Ecuador</title>
-        <meta name="description" content="2 Torres + Enganchados + Shot Bidu + guías digitales. El kit perfecto para arrancar la noche. Envíos a todo Ecuador." />
-        <meta property="og:title" content="Combo La Previa - Kit de Fiesta Completo | ShotyGames Ecuador" />
-        <meta property="og:description" content="2 Torres + Enganchados + Shot Bidu + guías digitales. El kit perfecto para arrancar la noche." />
-        <meta property="og:url" content="https://shoty-fiesta-web-main.vercel.app/landing/combo-la-previa" />
-      </Helmet>
+      <Seo
+        title="Combo La Previa - Kit de Fiesta Completo | ShotyGames Ecuador"
+        description="2 Torres + Enganchados + Shot Bidu + guías digitales. El kit perfecto para arrancar la noche. Envíos a todo Ecuador."
+        canonical="https://www.shotygames.com/landing/combo-la-previa"
+        type="website"
+      />
       {/* Header fijo con promo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-xs md:text-base animate-pulse">
