@@ -211,6 +211,15 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
       const sinNovedad = [];
       const errores = [];
 
+      // Una sola llamada a la wallet para todos los pedidos: es la fuente que
+      // dice cuándo la plata entró de verdad, no cuándo se marcó la entrega.
+      let movimientos = [];
+      try {
+        movimientos = await pedidosDropi.getMovimientosWallet();
+      } catch (e) {
+        errores.push(`No se pudo leer el historial de cartera: ${e.response?.status || e.message}`);
+      }
+
       for (const p of enVuelo) {
         const d = hoja.aObjeto(p);
         if (!d.ordenDropi) { errores.push(`${d.idPedido}: sin ORDEN DROPI en el Sheet`); continue; }
@@ -222,8 +231,15 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
           const campos = {};
           let nuevo = d.estado;
 
-          // La plata acreditada manda: si DROPI ya liquidó, va directo a PAGADO
-          if (ESTADOS_PAGADO.some((e) => estadoDropi.includes(e))) {
+          // La wallet manda sobre el estado de la orden: solo cuenta como
+          // PAGADO si hay una ENTRADA por ganancia ligada a esta orden.
+          const pago = pedidosDropi.pagoDeOrden(movimientos, d.ordenDropi);
+
+          if (pago) {
+            nuevo = 'PAGADO';
+            if (d.estado !== 'PAGADO') campos.F_PAGO = pago.fecha || ahora;
+          } else if (ESTADOS_PAGADO.some((e) => estadoDropi.includes(e))) {
+            // Respaldo: DROPI dice liquidado pero el movimiento aún no aparece
             nuevo = 'PAGADO';
             if (d.estado !== 'PAGADO') campos.F_PAGO = ahora;
           } else if (ESTADOS_ENTREGADO.some((e) => estadoDropi.includes(e))) {
@@ -246,7 +262,8 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
             await hoja.actualizarFila(d.fila, campos);
             cambios.push(
               `${d.idPedido}: ${d.estado} → ${nuevo}` +
-              (campos.GUIA ? ` · guía ${campos.GUIA} (flete ${usd(campos.FLETE)})` : '')
+              (campos.GUIA ? ` · guía ${campos.GUIA} (flete ${usd(campos.FLETE)})` : '') +
+              (pago ? ` · acreditado ${usd(pago.total)}` : '')
             );
           } else {
             sinNovedad.push(`${d.idPedido} (${estadoDropi || 'sin estado en DROPI'})`);

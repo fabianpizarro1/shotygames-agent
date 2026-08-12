@@ -182,6 +182,73 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
   };
 }
 
+/**
+ * Movimientos de la wallet (Historial de Cartera).
+ *
+ * Es la única fuente que dice cuándo la plata entró de verdad. DROPI marca la
+ * orden como ENTREGADA al momento de la entrega, pero acredita horas después:
+ * mirar solo el estado de la orden haría contar plata que todavía no llegó.
+ *
+ * Cómo se mueve la plata en una orden de dropshipping (verificado 2026-08-12
+ * contra el historial real de la cuenta 12054):
+ *   crear orden  → SALIDA  "SALIDA POR NUEVA ORDEN: {id}"        (flete por adelantado)
+ *   entregada    → ENTRADA "ENTRADA POR GANANCIA ... COMO DROPSHIPPER: {id}"
+ *                  ENTRADA "DEVOLUCION DE FLETE ORDEN ENTREGADA. ORDEN ID *{id}*"
+ *   cancelada    → ENTRADA "ENTRADA POR CAMBIO DE ESTATUS: CANCELADO, EN LA ORDEN: {id}"
+ */
+async function getMovimientosWallet({ desde, hasta, limite = 100 } = {}) {
+  const client = makeClient(getTokenSync());
+
+  const hoy = new Date();
+  const haceUnMes = new Date(hoy.getTime() - 45 * 86400000);
+  const from = desde || haceUnMes.toISOString().slice(0, 10);
+  const until = hasta || hoy.toISOString().slice(0, 10);
+
+  const url = `/historywallet?orderBy=id&orderDirection=desc&result_number=${limite}&start=0` +
+              `&textToSearch=&type=null&id=null&identification_code=null` +
+              `&user_id=${USER_ID}&from=${from}&until=${until}&wallet_id=0`;
+
+  const r = await client.get(url);
+  return (r.data?.objects || []).map((m) => ({
+    id: m.id,
+    orderId: m.order_id,
+    tipo: m.type,                       // ENTRADA | SALIDA
+    monto: parseFloat(m.amount) || 0,
+    descripcion: m.description || '',
+    fecha: m.created_at
+  }));
+}
+
+/**
+ * ¿Ya se acreditó la plata de esta orden?
+ *
+ * Busca la ENTRADA por GANANCIA. No sirve cualquier ENTRADA: la devolución de
+ * flete y el reembolso por cancelación también son ENTRADA, y ninguna significa
+ * que se cobró la venta.
+ */
+function pagoDeOrden(movimientos, orderId) {
+  const id = String(orderId);
+  const pago = movimientos.find(
+    (m) =>
+      String(m.orderId) === id &&
+      m.tipo === 'ENTRADA' &&
+      /GANANCIA/i.test(m.descripcion)
+  );
+  if (!pago) return null;
+
+  // El flete devuelto va aparte; sumarlo da el total realmente acreditado.
+  const flete = movimientos.find(
+    (m) => String(m.orderId) === id && m.tipo === 'ENTRADA' && /DEVOLUCION DE FLETE/i.test(m.descripcion)
+  );
+
+  return {
+    monto: pago.monto,
+    fleteDevuelto: flete ? flete.monto : 0,
+    total: pago.monto + (flete ? flete.monto : 0),
+    fecha: pago.fecha
+  };
+}
+
 /** Consulta una orden en DROPI. Devuelve estado, guía y costo de envío si ya existen. */
 async function getOrden(orderId) {
   const client = makeClient(getTokenSync());
@@ -249,4 +316,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { crearPedido, getOrden, armarBody, getProductoPorNombre, bodegaDe };
+module.exports = { crearPedido, getOrden, getMovimientosWallet, pagoDeOrden, armarBody, getProductoPorNombre, bodegaDe };
