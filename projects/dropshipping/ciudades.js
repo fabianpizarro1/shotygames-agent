@@ -45,6 +45,7 @@ async function getCiudades({ refrescar = false } = {}) {
     id: c.id,
     nombre: c.name,
     provincia: c.department?.name || '',
+    tarifas: parseTarifas(c.rate_type),
     nNombre: norm(c.name),
     nProvincia: norm(c.department?.name)
   }));
@@ -52,12 +53,32 @@ async function getCiudades({ refrescar = false } = {}) {
   return _cache;
 }
 
+/** `rate_type` llega como array o como JSON serializado, según el endpoint. */
+function parseTarifas(rt) {
+  if (Array.isArray(rt)) return rt;
+  try { return JSON.parse(rt || '[]'); } catch (_) { return []; }
+}
+
+/**
+ * Solo las ciudades a las que la transportadora sí lleva contra entrega.
+ *
+ * De las 835 del catálogo, 22 tienen `rate_type` vacío — no hay servicio. Las 3
+ * de Galápagos son de esas: aparecen en la lista pero DROPI no despacha ahí.
+ * Ofrecérselas al cliente es prometerle una entrega que nunca va a pasar.
+ */
+async function getCiudadesCOD(opts) {
+  const todas = await getCiudades(opts);
+  return todas.filter((c) => c.tarifas.includes('CON RECAUDO'));
+}
+
 /**
  * Devuelve el nombre exacto que espera DROPI, o lanza un error con las
  * opciones de esa provincia para que se pueda corregir sin adivinar.
  */
 async function resolverCiudad(ciudad, provincia) {
-  const ciudades = await getCiudades();
+  // Solo destinos con servicio contra entrega: si la transportadora no llega,
+  // no sirve de nada acertarle al nombre.
+  const ciudades = await getCiudadesCOD();
   const nCiudad = norm(ciudad);
   const nProv = norm(provincia);
 
@@ -106,4 +127,4 @@ async function resolverCiudad(ciudad, provincia) {
   );
 }
 
-module.exports = { getCiudades, resolverCiudad, _norm: norm };
+module.exports = { getCiudades, getCiudadesCOD, resolverCiudad, _norm: norm };

@@ -17,7 +17,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { getCiudades } = require('./ciudades');
+const { getCiudadesCOD } = require('./ciudades');
 
 const DESTINO = path.join(__dirname, '..', 'truquito', 'src', 'data', 'ecuador.ts');
 
@@ -42,7 +42,10 @@ function bonito(txt) {
 }
 
 async function generar() {
-  const ciudades = await getCiudades({ refrescar: true });
+  // Solo ciudades con servicio contra entrega. 22 del catálogo no lo tienen
+  // (entre ellas las 3 de Galápagos) y ofrecerlas sería prometer una entrega
+  // que la transportadora no hace.
+  const ciudades = await getCiudadesCOD({ refrescar: true });
 
   const porProvincia = {};
   for (const c of ciudades) {
