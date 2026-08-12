@@ -255,8 +255,13 @@ Margen 25%: ${usd(p25)}  ← recomendado`;
   }
 }
 
+/**
+ * Devuelve { text, updatedHistory } — es la forma que espera setupBot en
+ * telegram-bot.js. Si se devuelve un string pelado, el bot revienta con
+ * "Cannot read properties of undefined (reading 'slice')".
+ */
 async function chatDropshipping(history, mensaje) {
-  const messages = [...history, { role: 'user', content: mensaje }];
+  const messages = [...(history || []), { role: 'user', content: mensaje }];
 
   for (let vuelta = 0; vuelta < 6; vuelta++) {
     const res = await client.messages.create({
@@ -268,7 +273,9 @@ async function chatDropshipping(history, mensaje) {
     });
 
     if (res.stop_reason !== 'tool_use') {
-      return res.content.filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+      const text = res.content.filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+      messages.push({ role: 'assistant', content: res.content });
+      return { text: text || 'No supe qué responder a eso.', updatedHistory: messages };
     }
 
     messages.push({ role: 'assistant', content: res.content });
@@ -287,7 +294,10 @@ async function chatDropshipping(history, mensaje) {
     messages.push({ role: 'user', content: resultados });
   }
 
-  return 'Se me acabaron los intentos procesando eso. Probá de nuevo o decímelo más simple.';
+  return {
+    text: 'Se me acabaron los intentos procesando eso. Probá de nuevo o decímelo más simple.',
+    updatedHistory: messages
+  };
 }
 
 module.exports = { chatDropshipping, executeTool };
