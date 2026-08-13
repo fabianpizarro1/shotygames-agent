@@ -502,6 +502,19 @@ try {
   } else {
     console.log('[CRON] Dropshipping: desactivado (falta SHEETS_ID_DROPSHIPPING)');
   }
+
+  // Rutina diaria: snapshot del catálogo + ranking de candidatos.
+  // 5 AM Ecuador = 10:00 UTC. A esa hora la API de DROPI está vacía y el
+  // catálogo baja en ~9 min; a media tarde la misma descarga tarda 25-30.
+  if (process.env.DROPI2_EMAIL) {
+    const { correr: correrDiario } = require('./projects/dropshipping/diario');
+    cron.schedule('0 10 * * *', () => {
+      correrDiario().catch(e => console.error('[DIARIO] Falló:', e.message));
+    });
+    console.log('[CRON] Dropshipping: catálogo + ranking 5am Ecuador');
+  } else {
+    console.log('[CRON] Catálogo diario: desactivado (falta DROPI2_EMAIL)');
+  }
 } catch (e) {
   console.error('[CRON] Error al iniciar seguimiento de dropshipping:', e.message);
 }

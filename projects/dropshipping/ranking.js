@@ -41,8 +41,67 @@ function precioObjetivo(costo) {
   return precioParaMargen({ costo }, 0.25);
 }
 
+/**
+ * Detecta ajustes masivos de inventario disfrazados de ventas.
+ *
+ * Si un proveedor pone todo su catálogo en 500 unidades, el delta contra el
+ * snapshot anterior se lee como "vendió 500 de cada uno". El 2026-08-13 el
+ * proveedor 60343 aparecía con 8 productos a ~500 unidades vendidas, todos con
+ * stock final exactamente 500 — era un reseteo, y ocupaban los 5 primeros
+ * puestos del ranking.
+ *
+ * La firma es inconfundible: varios productos DEL MISMO proveedor con el mismo
+ * delta exacto. Las ventas reales no se reparten así.
+ */
+function detectarAjustesMasivos(movimientos) {
+  const sospechosos = new Set();
+
+  // 1) Delta idéntico repetido en el mismo proveedor.
+  const porDelta = new Map();
+  for (const p of movimientos) {
+    const clave = `${p.user_id}|${p.vendidas}`;
+    if (!porDelta.has(clave)) porDelta.set(clave, []);
+    porDelta.get(clave).push(p);
+  }
+  for (const [, lista] of porDelta) {
+    if (lista.length >= 3) lista.forEach(p => sospechosos.add(p.id));
+  }
+
+  // 2) Grupo de productos del mismo proveedor movidos al mismo ritmo.
+  //
+  // El reseteo no deja números idénticos ni afecta a todo el catálogo. El
+  // proveedor 60343 tenía 13 productos bajando ~500 unidades cada uno (de
+  // ~1000 a ~500) y otros 18 con ventas normales de 1 o 2. Mirar al proveedor
+  // completo diluía la señal; hay que encontrar el GRUPO.
+  //
+  // Un producto es sospechoso si otros 2 o más del mismo proveedor se movieron
+  // casi exactamente lo mismo. Solo aplica a movimientos grandes: que tres
+  // productos vendan 2 unidades el mismo día es normal, que tres vendan 500 no.
+  const MOVIMIENTO_GRANDE = 50;
+  const TOLERANCIA = 0.10;
+
+  const porProveedor = new Map();
+  for (const p of movimientos) {
+    if (!porProveedor.has(p.user_id)) porProveedor.set(p.user_id, []);
+    porProveedor.get(p.user_id).push(p);
+  }
+
+  for (const [, lista] of porProveedor) {
+    for (const p of lista) {
+      if (p.vendidas < MOVIMIENTO_GRANDE) continue;
+      const parecidos = lista.filter(
+        (o) => o.id !== p.id && Math.abs(o.vendidas - p.vendidas) / p.vendidas <= TOLERANCIA
+      );
+      if (parecidos.length >= 2) sospechosos.add(p.id);
+    }
+  }
+
+  return sospechosos;
+}
+
 function analizar({ top = 15, soloSeguros = false } = {}) {
   const d = delta();
+  const ajustes = detectarAjustesMasivos(d.movimientos);
 
   const candidatos = d.movimientos.map(p => {
     const precio = precioObjetivo(p.sale_price);
@@ -57,7 +116,8 @@ function analizar({ top = 15, soloSeguros = false } = {}) {
       sobreSugerido: p.suggested_price > 0 ? precio / p.suggested_price : null,
       cpaMaximo: r.cpaMaximo,
       utilidad: r.utilidadPorPedido,
-      restriccion: restriccion(p)
+      restriccion: restriccion(p),
+      ajusteMasivo: ajustes.has(p.id)
     };
   });
 
@@ -73,6 +133,7 @@ function analizar({ top = 15, soloSeguros = false } = {}) {
 
   const viables = candidatos.filter(p =>
     p.sale_price > 0 &&
+    !p.ajusteMasivo &&                 // no son ventas, es el proveedor recontando
     (p.stock ?? 0) >= STOCK_MINIMO &&
     p.precioObjetivo <= 60 &&
     (!soloSeguros || !p.restriccion)
@@ -85,6 +146,7 @@ function analizar({ top = 15, soloSeguros = false } = {}) {
     descartadosPorStock: candidatos.filter(p => (p.stock ?? 0) < STOCK_MINIMO).length,
     descartadosPorPrecio: candidatos.filter(p => p.precioObjetivo > 60).length,
     conRiesgoMeta: viables.slice(0, top).filter(p => p.restriccion).length,
+    descartadosPorAjuste: candidatos.filter(p => p.ajusteMasivo).length,
     stockMinimo: STOCK_MINIMO
   };
 }
@@ -118,6 +180,7 @@ function imprimir(opts) {
   });
 
   console.log('  ' + '─'.repeat(72));
+  console.log(`  Descartados por ajuste masivo de inventario: ${a.descartadosPorAjuste}`);
   console.log(`  Descartados por stock bajo ${a.stockMinimo}: ${a.descartadosPorStock}`);
   console.log(`  Descartados porque el precio viable pasa de $60: ${a.descartadosPorPrecio}`);
   console.log(`  De los mostrados, con riesgo en Meta: ${a.conRiesgoMeta} (marcados ⚠, no ocultos)`);
