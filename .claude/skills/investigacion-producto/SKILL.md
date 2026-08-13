@@ -205,12 +205,45 @@ hasta la oferta, no el cierre.
 
 ## FASE 4 — Verificar antes de entregar
 
+### Técnico
+
 - `npx tsc --noEmit` y `npx vite build`
 - Las tres variantes cargan y son distintas; una `?v=` desconocida cae en la A
 - Todas las imágenes responden 200
 - Sin scroll horizontal en móvil (375px)
 - El checkout abre en la opción más barata y el total se actualiza al cambiarla
 - Después de desplegar: `curl` a las 3 URLs y a los assets nuevos
+
+### Concordancia entre elementos
+
+Esto es lo que más veces hubo que corregir, y siempre lo cazó Fabián, no yo. **Recorrer la
+página entera de arriba abajo antes de entregarla**, no revisar sección por sección aislada.
+
+**Nada repetido en dos lugares.**
+- La misma foto no puede estar en dos secciones. Pasó: el antes/después de Carmen estaba en
+  los casos Y como foto de su reseña.
+- La misma sección no puede existir dos veces con contenido distinto. Pasó: un bloque de
+  imagen con tres testimonios inventados arriba, y la sección de reseñas reales abajo. El
+  lector ve lo mismo dos veces y la segunda le quita credibilidad a la primera.
+
+**Leer el texto DENTRO de cada imagen, no solo mirarla.** Las piezas heredadas de la
+competencia traen cosas que no se ven de reojo:
+- La marca mal escrita — decía "Aurelis" en vez de "Aurelys" al pie de un bloque.
+- Palabras sin sentido — un ícono decía "Support Euthyroy".
+- Prueba social de OTRA tienda — "MÁS DE 10.000 CLIENTES SATISFECHOS" en una marca que abre
+  hoy. Eso es mentir sobre el propio negocio, y se recorta.
+- El precio de otra tienda ($27.99, $25) contradiciendo el nuestro.
+- Claims médicos incrustados que el copy evita con cuidado ("REDUCE LA INFLAMACIÓN Y EDEMAS").
+
+**Coherencia de datos en toda la página.**
+- El precio de la landing, del checkout y del anuncio dicen lo mismo.
+- Ninguna reseña repite nombre. Ninguna ciudad se repite de más. No todas son 5 estrellas.
+- El ml del producto es el mismo en las fotos, el copy y la ficha.
+- Lo que promete el creativo del anuncio existe en la landing a la que lleva.
+
+**Que cada anuncio apunte a la landing correcta.** Si un anuncio va a `?v=b` y los otros a la
+A, el test mezcla creativo con landing y el resultado no dice cuál movió la aguja. Pasó al
+armar la campaña.
 
 ## Dónde queda todo
 
