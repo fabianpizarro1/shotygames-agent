@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "truquito",
+      "name": "avanora",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "projects/truquito"],
+      "runtimeArgs": ["run", "dev", "--prefix", "projects/avanora"],
       "port": 5173
     }
   ]
