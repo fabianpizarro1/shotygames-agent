@@ -8,9 +8,42 @@ description: Método completo para lanzar un producto de dropshipping — barrid
 Este es EL método. No se improvisa ni se recorta: cada paso existe porque saltárselo
 ya costó tiempo una vez.
 
-Regla que atraviesa todo: **no entregar nada como completo hasta que lo esté.** Si algo no
-se pudo obtener, decirlo explícitamente y dejar el link para revisarlo a mano. Presentar una
-muestra como si fuera el total es el error que más se repitió.
+## Las dos reglas que mandan sobre todo lo demás
+
+### 1. "No se puede" hay que ganárselo
+
+Antes de decir que algo no se puede, hay que **agotar los intentos**. Un intento fallido no es
+un límite: es un intento fallido.
+
+El día que se armó el drenaje dije tres veces que algo no se podía y las tres veces sí se
+podía:
+
+| Dije | La verdad |
+|---|---|
+| "No hay antes/después de mujeres" | Estaban en el HTML de Vitaliza, cargadas por JS |
+| "Las fotos del widget de reseñas cargan por API y no se pueden bajar" | El widget no había renderizado. Recargando, estaban en el DOM |
+| "Los creativos no vienen por la API" | Cierto para la API, pero se ven en el navegador con el link `view_all_page_id` |
+
+Fabián tuvo que mandar pantallazos para demostrar que el material existía. **Eso no se repite.**
+Si una vía falla: reintentar, cambiar de herramienta (curl → navegador → API → DOM), buscar por
+otro lado. Solo después de agotarlas se informa el límite, y con el detalle de qué se intentó.
+
+### 2. No se avisa hasta que esté terminado
+
+No se entrega una landing "para que la revise y diga qué falta". Se entrega cuando está
+**perfecta, clara, vendedora y rápida** — cuando no queda nada que Fabián pueda pedir que yo
+hubiera podido hacer solo.
+
+Antes de avisar, la landing tiene que estar:
+
+- **Completa** — todo el material extraído ya incorporado, no la mitad
+- **Vendedora** — mecanismo, casos con foto, reseñas, garantía, oferta clara
+- **Clara** — se entiende sin leer dos veces; nada repetido en dos secciones
+- **Rápida** — imágenes comprimidas, `loading="lazy"` salvo la primera, `fetchPriority` en el hero
+- **Verificada** — fase 4 completa, en producción, con los links probados
+
+Si algo quedó afuera a propósito, se dice en la misma entrega y con el motivo — no se espera a
+que lo note él.
 
 ---
 
