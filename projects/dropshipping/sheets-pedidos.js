@@ -233,6 +233,14 @@ function aObjeto(p) {
     dropiProductId: val('ID_DROPI'),
     cantidad: Number(val('CANTIDAD')) || 1,
     total: num(val('TOTAL')),
+    // Números de la unidad económica. Se escriben al confirmar el pedido
+    // (COSTO y FLETE salen de la respuesta de DROPI) pero no se estaban
+    // mapeando, así que quedaban invisibles para todo el código que lee por
+    // acá: el Sheet tenía el flete real y nadie podía usarlo.
+    costo: num(val('COSTO')),
+    flete: num(val('FLETE')),
+    cpa: num(val('CPA')),
+    utilidad: num(val('UTILIDAD')),
     ordenDropi: val('ORDEN_DROPI') || null,
     guia: val('GUIA') || null
   };
