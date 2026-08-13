@@ -54,6 +54,8 @@ Las skills viven en `.claude/skills/`. Cada una es un flujo recurrente convertid
 
 Las skills se construyen orgánicamente. Para construir una: _"Construyamos la skill [nombre]"_.
 
+**`investigacion-producto` no es opcional.** Cualquier producto nuevo de dropshipping se lanza con ese método completo — barrido total de la biblioteca de anuncios, extracción de todo el material de las landings de la competencia, y 3 landings distintas. Aunque Fabián no lo mencione.
+
 **Backlog de skills identificadas en onboarding:** `references/skills-backlog.md`
 
 ---
