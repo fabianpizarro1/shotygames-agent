@@ -24,8 +24,8 @@ const { evaluar, precioParaMargen } = require('./calculadora');
 const RESTRINGIDO = [
   { patron: /adelgaz|slim|fat ?burn|quema ?grasa|dieta|cleanse|detox|fibra coli/i, motivo: 'pérdida de peso' },
   { patron: /shampoo|capilar|cabello|batana|alopecia|crecimiento de pelo/i, motivo: 'promesa estética' },
-  { patron: /suplement|colágeno|colageno|ashwagandha|shilajit|nad ?(\+|for men)|probiotic|bisglicinato|creatina|gomitas|vitamina|omega ?[0-9]|glucosamina|luteína|luteina|zeaxantina|caps\b|cápsulas|capsulas|complex|joint health/i, motivo: 'suplementos' },
-  { patron: /vigor|testosterona|libido|erecc|sexual|potencia masculina|mens? cup/i, motivo: 'salud sexual' },
+  { patron: /suplement|colágeno|colageno|ashwagandha|shilajit|nad ?(\+|for men)|probiotic|bisglicinato|creatina|gomitas|vitamina|omega ?[0-9]|glucosamina|luteína|luteina|zeaxantina|caps\b|cápsulas|capsulas|complex|joint health|inositol|clorofila|multivitamin|turmeric|curcuma|melaxin|forte/i, motivo: 'suplementos' },
+  { patron: /vigor|testosterona|testo\w*|libido|erecc|sexual|potencia masculina|mens? cup|retard\w*|macho|prostat/i, motivo: 'salud sexual' },
   { patron: /dolor|ortopéd|ortoped|artritis|dermatitis|psoriasis|várice|varice|diabet|blood sugar|presión arterial|vista|audífono para sordera/i, motivo: 'condición médica' },
   { patron: /parche|faja reductora|drenaje linfático|drenaje linfatico|rodillera|estimulador muscular|electroestimulador/i, motivo: 'tratamiento corporal' },
   { patron: /crema (facial|antiarrugas|blanqueadora)|rejuvenec|antiarrugas|esmalte dental|blanqueador dental/i, motivo: 'promesa estética' }
