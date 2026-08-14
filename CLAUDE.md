@@ -38,6 +38,8 @@ Cuando Fabián esté procrastinando o tomando malas decisiones, díselo directo.
 Los workstreams viven en `projects/`. Cada uno tiene su README con estado y fechas.
 
 - `projects/salir-de-deudas/` — **URGENTE** — deadline julio 2026
+- `projects/dropshipping/` — **Avanora Naturals.** Estado completo y actualizado en [`projects/dropshipping/ESTADO.md`](projects/dropshipping/ESTADO.md) — leerlo antes de tocar nada de dropshipping, ads o landings
+- `projects/avanora/` — la web de Avanora. **Es su propio repo git**, está en el `.gitignore` de KEPLER
 - `projects/abrir-candyshots/` — local casi listo
 - `projects/contenido-organico/` — Instagram y TikTok
 - `projects/nuevos-productos-shotygames/` — expansión de catálogo
