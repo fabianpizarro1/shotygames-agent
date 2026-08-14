@@ -8,6 +8,12 @@ description: Método completo para lanzar un producto de dropshipping — barrid
 Este es EL método. No se improvisa ni se recorta: cada paso existe porque saltárselo
 ya costó tiempo una vez.
 
+> **Los comandos, los IDs y las trampas concretas están en [`EJECUCION.md`](EJECUCION.md)**,
+> en esta misma carpeta. Ese archivo es el manual operativo: cómo sacar la ficha de DROPI, cómo
+> generar creativos con Higgsfield sin que se coma las tildes, qué campos lleva un producto en
+> `productos.ts`, la secuencia exacta para armar una campaña en Meta y qué herramientas NO están
+> habilitadas en la cuenta. Léelo antes de ejecutar.
+
 ## Las dos reglas que mandan sobre todo lo demás
 
 ### 1. "No se puede" hay que ganárselo
@@ -186,6 +192,10 @@ hasta la oferta, no el cierre.
 
 - **Precio de mercado**, no el de la calculadora. La calculadora dice si puede ser rentable; el
   mercado dice a cuánto se vende. El primer test mide el CPA real, no busca ganar plata.
+- **El CPA de equilibrio se divide por 1.2.** El gasto en Meta lleva ~20% de comisión bancaria,
+  así que el número que muestra el administrador tiene que ser un 20% menor que el que sale de
+  la calculadora. Se olvidó una vez y lo cazó una revisión externa. Para ganar plata, apuntar a
+  la MITAD del CPA de equilibrio.
 - **Los botones muestran el precio de UNA unidad**, y el checkout abre en la opción más barata.
   Pedir la decisión más cara antes de que el cliente confíe es lo que lo espanta. El upsell va
   adentro del checkout, con el ahorro a la vista.

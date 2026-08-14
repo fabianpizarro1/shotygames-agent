@@ -1,6 +1,6 @@
 # Estado del proyecto de dropshipping — Avanora Naturals
 
-_Última actualización: 2026-08-14_
+_Última actualización: 2026-08-14 (segunda revisión)_
 
 Este documento existe para que alguien (o algo) que llega sin contexto pueda entender dónde
 está todo sin leer el historial. Si trabajás acá, léelo entero antes de tocar nada.
@@ -60,7 +60,9 @@ perdidaDevuelto   = flete
 porPedidoGenerado = (entrega × margenEntregado) − ((1 − entrega) × perdidaDevuelto)
 ```
 
-Ese último número es el **CPA máximo**: pagar más que eso a Meta = perder plata en cada pedido.
+Ese último número es el CPA de equilibrio. **Y hay un paso más: dividirlo por 1.2**, porque el
+gasto en Meta lleva ~20% de comisión bancaria. Así que el CPA que muestra el administrador tiene
+que ser un 20% menor. Para ganar plata, apuntar a la **mitad** del de equilibrio.
 
 **La variable de riesgo ahora es la tasa de entrega.** Para 1 frasco de drenaje a $28:
 80% → CPA máx $11.32 · 70% → $9.11 · 60% → $6.90 · 50% → $4.69. Por debajo del 60% casi
@@ -89,9 +91,11 @@ Ver `project_avanora_productos` en la memoria para el detalle. Orden de testeo a
 
 | Combo | Precio | Por pedido generado | CPA máximo |
 |---|---|---|---|
-| 1 frasco | $28.00 | $9.11 | **$9.11** |
-| 2 frascos | $35.00 | $9.86 | **$9.86** |
-| 3 frascos | $50.00 | $16.25 | **$16.25** |
+| 1 frasco | $28.00 | $9.11 | **$7.59** |
+| 2 frascos | $35.00 | $9.86 | **$8.22** |
+| 3 frascos | $50.00 | $16.25 | **$13.54** |
+
+_(CPA máximo = por pedido generado ÷ 1.2, por la comisión bancaria del gasto en Meta)_
 
 Precio tachado $39.99. El rango real del mercado ecuatoriano era $23–$28 el frasco suelto.
 
@@ -134,9 +138,11 @@ magnesio glicinato 200 mg + zinc 10 mg + vitamina D3 1.000 UI.
 
 | Combo | Precio | Por pedido generado | CPA máximo |
 |---|---|---|---|
-| 1 frasco | $29.99 | $11.13 | **$11.13** |
-| 2 frascos | $37.99 | $13.23 | **$13.23** |
-| 3 frascos | $49.99 | $18.13 | **$18.13** |
+| 1 frasco | $29.99 | $11.13 | **$9.28** |
+| 2 frascos | $37.99 | $13.23 | **$11.03** |
+| 3 frascos | $49.99 | $18.13 | **$15.11** |
+
+_(CPA máximo = por pedido generado ÷ 1.2, por la comisión bancaria del gasto en Meta)_
 
 El tachado de $49.99 es **real**: es lo que cuesta un frasco en peachperfect.com.
 
@@ -230,6 +236,27 @@ Scripts relevantes:
 | `sheets-pedidos.js` | Lee y escribe el Sheet de pedidos **por título de columna**, no por índice |
 | `diario.js` | Rutina de las 5 AM: snapshot + ranking + aviso por Telegram |
 | `crear-sheet-productos.js` | Arma el Sheet de investigación, una hoja por producto |
+
+---
+
+## Correcciones del 2026-08-14
+
+Una revisión externa encontró tres errores. Los tres eran reales y están arreglados y desplegados:
+
+1. **La proporción "40:1" del Inositol estaba mal.** 4.000 mg de Myo entre 50 de D-Chiro dan
+   80:1; el 40:1 es del formato en cápsulas. Se quitó el ratio y quedaron las cantidades.
+2. **Había copy del drenaje escrito a mano en la estructura clásica** ("Fórmula botánica:
+   extractos líquidos de plantas", "Estas gotas") y salía en el Inositol, que es polvo. Ahora
+   viene del producto: `ingredientesIntro` y `comparativa.nuestro`.
+3. **En móvil el hero apilaba la foto antes del titular**, y la estructura visual no tenía H1 ni
+   CTA sobre el pliegue. Corregido con `order-*` / `md:order-*` y una barra de entrada.
+
+Se dejaron a propósito, por decisión de Fabián: la etiqueta "Compra verificada" en las reseñas,
+la calificación promedio, el sello "Más pedido" y el pie de página sin RUC ni políticas.
+
+**Queda abierto:** la revisión señaló que ARCSA (el regulador ecuatoriano) prohíbe atribuirle a
+un suplemento propiedades de tratamiento. Eso es distinto de una política de Meta — es ley local,
+y que la competencia lo haga no protege. Se le planteó y es su decisión.
 
 ---
 
