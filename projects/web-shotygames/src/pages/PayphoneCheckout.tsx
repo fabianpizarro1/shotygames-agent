@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
 export const PayphoneCheckout = () => {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ export const PayphoneCheckout = () => {
     // Get PayPhone credentials and build iframe URL
     const initialize = async () => {
       try {
-        const { data, error: fetchError } = await supabase.functions.invoke('payphone-config');
+        const { data, error: fetchError } = await invokeFunction<{ token: string; storeId: string; error?: string }>('payphone-config');
         
         if (fetchError || data?.error) {
           setError('Error al cargar configuración de pago');
@@ -86,8 +86,8 @@ export const PayphoneCheckout = () => {
         const responseUrl = `${window.location.origin}/payphone-success.html`;
         
         const params = new URLSearchParams({
-          token: data.token,
-          storeId: data.storeId,
+          token: data!.token,
+          storeId: data!.storeId,
           clientTransactionId: pedido.idPedido,
           amount: amountInCents.toString(),
           reference: `${pedido.productoPrincipal} - ${pedido.nombre}`,

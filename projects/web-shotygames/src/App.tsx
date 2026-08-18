@@ -1,16 +1,14 @@
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
+const Index = lazyWithRetry(() => import("./pages/Index"));
 const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
 const TorreNormalLanding = lazyWithRetry(() => import("./pages/TorreNormalLanding"));
 const TorrePicanteLanding = lazyWithRetry(() => import("./pages/TorrePicanteLanding"));
@@ -41,13 +39,9 @@ const PageLoader = () => (
   </div>
 );
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+  <TooltipProvider>
       <Toaster />
-      <Sonner />
       <BrowserRouter>
         <ScrollToTop />
         <RouteErrorBoundary>
@@ -84,7 +78,6 @@ const App = () => (
         </RouteErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
 );
 
 export default App;

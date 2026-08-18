@@ -1,7 +1,7 @@
 import ProductCard from "./ProductCard";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckoutModal } from "./CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "./LazyCheckoutModal";
 import torreNormal from "@/assets/torre-normal-brillo.webp";
 import torrePicante from "@/assets/torre-picante-1.webp";
 import torreParejas from "@/assets/torre-parejas-1.webp";

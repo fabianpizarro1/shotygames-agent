@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNavigate } from "react-router-dom";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 
@@ -66,6 +66,8 @@ import torreParejas11 from "@/assets/torre-parejas-11.webp";
 import ebook30Posiciones from "@/assets/ebook-30-posiciones.webp";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
 import emparejadosPortada from "@/assets/emparejados-portada.jpg";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 
 /** Planes de compra. El de 3 torres es el que se empuja. */
 type PlanId = "una" | "dos" | "tres";
@@ -1049,8 +1051,8 @@ const TresTorresLanding = () => {
         comboIncludes={planActivo.comboIncludes}
         torreSelection={planActivo.torreSelection}
         upsells={[
-          { id: "dadosPlacer", name: "Dados del Placer", price: 5, image: dadosDelPlacerImg },
-          { id: "emparejados", name: "Emparejados (juego digital)", price: 2.90, image: emparejadosPortada },
+          { id: "dadosPlacer", name: "Dados del Placer", price: 5, image: dadosDelPlacerImgThumb },
+          { id: "emparejados", name: "Emparejados (juego digital)", price: 2.90, image: emparejadosPortadaThumb },
         ]}
       />
     </div>

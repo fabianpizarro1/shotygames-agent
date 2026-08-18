@@ -17,7 +17,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Footer from "@/components/Footer";
 import {
   ShoppingCart,
@@ -50,6 +50,8 @@ import testimonial3 from "@/assets/testimonial-3.jpg";
 import testimonial4 from "@/assets/testimonial-4.jpg";
 import testimonial5 from "@/assets/testimonial-5.jpg";
 import testimonial6 from "@/assets/testimonial-6.jpg";
+import torreNormalUpsellThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteUpsellThumb from "@/assets/thumbs/torre-picante.webp";
 
 /**
  * Landing del COMBO PAREJAS ($35).
@@ -997,8 +999,8 @@ const ComboParejasLanding = () => {
         ]}
         originalPrice={49.9}
         upsells={[
-          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalUpsell },
-          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteUpsell },
+          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalUpsellThumb },
+          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteUpsellThumb },
         ]}
       />
     </div>

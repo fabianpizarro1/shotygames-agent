@@ -11,12 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import emparejadosPortada from "@/assets/emparejados-portada.jpg";
-import dadosDigitalesPrincipal from "@/assets/dados-digitales-principal.webp";
-import guiaPlacerPortada from "@/assets/guia-placer-portada.webp";
-import torreNormalImg from "@/assets/torre-normal-brillo.webp";
-import torrePicanteImg from "@/assets/torre-picante.jpg";
-import torreParejasImg from "@/assets/torre-parejas.jpg";
+import emparejadosPortada from "@/assets/thumbs/emparejados-portada.webp";
+import dadosDigitalesPrincipal from "@/assets/thumbs/dados-digitales-principal.webp";
+import guiaPlacerPortada from "@/assets/thumbs/guia-placer-portada.webp";
+import torreNormalImg from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteImg from "@/assets/thumbs/torre-picante.webp";
+import torreParejasImg from "@/assets/thumbs/torre-parejas.webp";
 import { Gift, Truck, ShoppingBag, CreditCard, Banknote } from "lucide-react";
 
 interface UpsellConfig {

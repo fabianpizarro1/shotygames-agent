@@ -7,7 +7,7 @@ import {
   ShoppingCart, Printer, Gift, Smartphone, Scissors, FileDown, Download,
   Infinity as InfinityIcon, Check, ArrowDown, Lock, Clock, Star, RotateCcw,
 } from "lucide-react";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import demoVideo from "@/assets/emparejados-demo.mp4";
 import heroImage from "@/assets/emparejados-hero-imprimible.jpg";
 import flatlayImage from "@/assets/emparejados-flatlay.jpg";
@@ -37,6 +37,11 @@ import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
+import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
+import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import { LazyVideo } from "@/components/LazyVideo";
 
 /*
   EMPAREJADOS — "IMPRIMIBLE" (variante de posicionamiento)
@@ -204,7 +209,7 @@ const EmparejadosImprimibleLanding = () => {
                 width={1448}
                 height={1086}
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
                 decoding="async"
               />
             </div>
@@ -554,13 +559,12 @@ const EmparejadosImprimibleLanding = () => {
 
             <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
               <div className="mx-auto w-full max-w-[200px] sm:max-w-[230px] rounded-[1.75rem] overflow-hidden shadow-2xl ring-1 ring-background/15 order-2 md:order-1">
-                <video
+                <LazyVideo
                   src={demoVideo}
                   autoPlay
                   loop
                   muted
                   playsInline
-                  preload="auto"
                   poster={appBarajea}
                   className="w-full h-full object-cover"
                   aria-label="Emparejados Digital funcionando en un celular: barajear, sacar una carta y cumplir el reto"
@@ -933,10 +937,10 @@ const EmparejadosImprimibleLanding = () => {
         productImage={portadaImage}
         productId="emparejados"
         upsells={[
-          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalImg },
-          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteImg },
-          { id: "torreParejas", name: "Torre de Shots Parejas", price: 10, image: torreParejasImg },
-          { id: "dadosPlacer", name: "Dados del Placer", price: 3.90, image: dadosDelPlacerImg },
+          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalImgThumb },
+          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteImgThumb },
+          { id: "torreParejas", name: "Torre de Shots Parejas", price: 10, image: torreParejasImgThumb },
+          { id: "dadosPlacer", name: "Dados del Placer", price: 3.90, image: dadosDelPlacerImgThumb },
         ]}
       />
     </div>

@@ -6,9 +6,9 @@ import { ShoppingCart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Gift, Truck, Clock, Heart, Zap, CheckCircle2, Banknote, Droplets, MapPin, Sparkles } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious , type CarouselApi } from "@/components/ui/carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
 import torreParejas1 from "@/assets/torre-parejas-1.webp";
 import torreNormalImg from "@/assets/torre-normal-brillo.webp";
@@ -28,11 +28,22 @@ import torreParejas11 from "@/assets/torre-parejas-11.webp";
 import lifestyleVelas from "@/assets/torre-parejas-lifestyle-velas.webp";
 import lifestyleJugando from "@/assets/torre-parejas-lifestyle-jugando.webp";
 import unboxingVideo from "@/assets/torre-parejas-unboxing.mp4";
+import unboxingPoster from "@/assets/torre-parejas-unboxing-poster.webp";
+import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
+import { LazyVideo } from "@/components/LazyVideo";
+import { CarouselImage } from "@/components/CarouselImage";
+import { useSlideActual } from "@/hooks/useSlideActual";
 
 const TorreParejasLanding = () => {
   const productName = "Torre de Shots Parejas";
   const productPrice = 28.00;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // Para saber qué foto de la galería está a la vista y no bajar las otras 10.
+  const [api, setApi] = useState<CarouselApi>();
+  const slideActual = useSlideActual(api);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
 
   useEffect(() => {
@@ -144,18 +155,17 @@ const TorreParejasLanding = () => {
 
             {/* Carrusel con retos reales */}
             <div className="relative mb-5 md:mb-6">
-              <Carousel opts={{ align: "center", loop: true }} className="w-full">
+              <Carousel opts={{ align: "center", loop: true }} setApi={setApi} className="w-full">
                 <CarouselContent>
                   {productImages.map((image, index) => (
                     <CarouselItem key={index}>
                       <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-2xl">
-                        <img
+                        <CarouselImage
                           src={image.src}
                           alt={image.alt}
+                          index={index}
+                          current={slideActual}
                           className="w-full h-full object-cover"
-                          /* solo la primera se carga ya; las otras 9 al deslizar */
-                          loading={index === 0 ? "eager" : "lazy"}
-                          fetchPriority={index === 0 ? "high" : "auto"}
                         />
                         <Badge className="absolute top-4 right-4 bg-[#e91e63] text-white border-none text-sm md:text-base px-3 py-1">
                           {image.badge}
@@ -354,13 +364,18 @@ const TorreParejasLanding = () => {
             {/* Video real de unboxing — sin audio, en loop. Confirma en video lo
                 que el bloque de arriba promete: la torre, el vaso, la guía QR. */}
             <div className="mt-6 md:mt-8 rounded-2xl overflow-hidden shadow-2xl mx-auto max-w-[320px]">
-              <video
+              {/* preload="none" + poster: con preload="metadata" el navegador
+                  se bajaba la cabecera del mp4 apenas cargaba la página, aunque
+                  el video esté muy abajo. Con autoPlay+muted igual arranca solo
+                  cuando el bloque entra en pantalla, y mientras tanto se ve el
+                  póster en vez de un rectángulo negro. */}
+              <LazyVideo
                 src={unboxingVideo}
                 autoPlay
                 loop
                 muted
                 playsInline
-                preload="metadata"
+                poster={unboxingPoster}
                 className="w-full h-full object-cover"
                 aria-label="Video real desempacando la Torre de Shots Parejas"
               />
@@ -594,10 +609,10 @@ const TorreParejasLanding = () => {
         productImage={torreParejas1}
         productId="torreParejas"
         upsells={[
-          { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImg },
-          { id: 'torrePicante', name: 'Torre Picante (para grupos)', price: 10, image: torrePicanteImg },
-          { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImg },
-          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortada },
+          { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImgThumb },
+          { id: 'torrePicante', name: 'Torre Picante (para grupos)', price: 10, image: torrePicanteImgThumb },
+          { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImgThumb },
+          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortadaThumb },
         ]}
       />
     </div>

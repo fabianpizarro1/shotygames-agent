@@ -6,9 +6,9 @@ import { ShoppingCart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Gift, Truck, Clock, Heart, Zap, CheckCircle2, Banknote, Flame, Users } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious , type CarouselApi } from "@/components/ui/carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
 import torrePicante1 from "@/assets/torre-picante-1.webp";
 import torreNormalImg from "@/assets/torre-normal-brillo.webp";
@@ -26,11 +26,20 @@ import torrePicante9 from "@/assets/torre-picante-9.webp";
 import torrePicante10 from "@/assets/torre-picante-10.webp";
 import torrePicanteLifeFuego from "@/assets/torre-picante-life-fuego.webp";
 import torrePicanteLifeGrupo from "@/assets/torre-picante-life-grupo.webp";
+import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
+import { CarouselImage } from "@/components/CarouselImage";
+import { useSlideActual } from "@/hooks/useSlideActual";
 
 const TorrePicanteLanding = () => {
   const productName = "Torre de Shots Picante";
   const productPrice = 28.00;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  // Para saber qué foto de la galería está a la vista y no bajar las otras 10.
+  const [api, setApi] = useState<CarouselApi>();
+  const slideActual = useSlideActual(api);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
 
   useEffect(() => {
@@ -141,18 +150,17 @@ const TorrePicanteLanding = () => {
 
             {/* Carrusel con retos reales */}
             <div className="relative mb-5 md:mb-6">
-              <Carousel opts={{ align: "center", loop: true }} className="w-full">
+              <Carousel opts={{ align: "center", loop: true }} setApi={setApi} className="w-full">
                 <CarouselContent>
                   {productImages.map((image, index) => (
                     <CarouselItem key={index}>
                       <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-2xl">
-                        <img
+                        <CarouselImage
                           src={image.src}
                           alt={image.alt}
+                          index={index}
+                          current={slideActual}
                           className="w-full h-full object-cover"
-                          /* solo la primera se carga ya; las otras 9 al deslizar */
-                          loading={index === 0 ? "eager" : "lazy"}
-                          fetchPriority={index === 0 ? "high" : "auto"}
                         />
                         <Badge className="absolute top-4 right-4 bg-[#ff3d00] text-white border-none text-sm md:text-base px-3 py-1">
                           {image.badge}
@@ -571,10 +579,10 @@ const TorrePicanteLanding = () => {
         productImage={torrePicante1}
         productId="torrePicante"
         upsells={[
-          { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImg },
-          { id: 'torreParejas', name: 'Torre de Shots Parejas', price: 10, image: torreParejasImg },
-          { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImg },
-          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortada },
+          { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImgThumb },
+          { id: 'torreParejas', name: 'Torre de Shots Parejas', price: 10, image: torreParejasImgThumb },
+          { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImgThumb },
+          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortadaThumb },
         ]}
       />
     </div>

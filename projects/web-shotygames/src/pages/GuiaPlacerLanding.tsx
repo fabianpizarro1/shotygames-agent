@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCart, Heart, Sparkles, CheckCircle2, Flame, BookOpen, MessageCircle, Users, Lock, Download, HelpCircle, ChevronDown } from "lucide-react";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import Footer from "@/components/Footer";
 import guiaPlacerPortada from "@/assets/guia-placer-portada.webp";

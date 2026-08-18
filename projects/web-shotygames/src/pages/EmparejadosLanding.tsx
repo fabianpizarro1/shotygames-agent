@@ -9,7 +9,7 @@ import {
   ShoppingCart, Gift, Heart, Sparkles, Clock, Printer, Timer,
   Smartphone, MessageCircle, KeyRound, CheckCircle2, Infinity as InfinityIcon, Star,
 } from "lucide-react";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import demoVideo from "@/assets/emparejados-demo.mp4";
 import portadaImage from "@/assets/emparejados-portada.jpg";
 import conexionImage from "@/assets/emparejados-conexion.jpg";
@@ -36,6 +36,11 @@ import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
+import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
+import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import { LazyVideo } from "@/components/LazyVideo";
 
 /*
   RESEÑAS ESPECÍFICAS DE EMPAREJADOS.
@@ -285,13 +290,12 @@ const EmparejadosLanding = () => {
         <section className="px-4 py-12 md:py-16 max-w-5xl mx-auto">
           <div className="grid md:grid-cols-2 gap-7 md:gap-12 items-center">
             <div className="mx-auto w-full max-w-[220px] sm:max-w-[260px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border">
-              <video
+              <LazyVideo
                 src={demoVideo}
                 autoPlay
                 loop
                 muted
                 playsInline
-                preload="none"
                 poster={appBarajea}
                 className="w-full h-full object-cover"
                 aria-label="Emparejados funcionando en un celular: barajear y sacar cartas"
@@ -801,10 +805,10 @@ const EmparejadosLanding = () => {
         productImage={portadaImage}
         productId="emparejados"
         upsells={[
-          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalImg },
-          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteImg },
-          { id: "torreParejas", name: "Torre de Shots Parejas", price: 10, image: torreParejasImg },
-          { id: "dadosPlacer", name: "Dados del Placer", price: 3.90, image: dadosDelPlacerImg },
+          { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalImgThumb },
+          { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteImgThumb },
+          { id: "torreParejas", name: "Torre de Shots Parejas", price: 10, image: torreParejasImgThumb },
+          { id: "dadosPlacer", name: "Dados del Placer", price: 3.90, image: dadosDelPlacerImgThumb },
         ]}
       />
     </div>

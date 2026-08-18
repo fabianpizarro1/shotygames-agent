@@ -8,13 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Gift, Truck, Clock, Users, Heart, Zap, CheckCircle2, MessageCircle, Target, Package, Grid3x3 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNavigate } from "react-router-dom";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import enganchados from "@/assets/enganchados-brillo.webp";
 import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import emparejadosPortada from "@/assets/emparejados-portada.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
+import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
+import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
+import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
+import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 import Footer from "@/components/Footer";
 import Testimonials from "@/components/Testimonials";
 const EnganchadosLanding = () => {
@@ -523,31 +528,31 @@ const EnganchadosLanding = () => {
             id: 'torreNormal',
             name: 'Torre La Previa (para grupos)',
             price: 10,
-            image: torreNormalImg
+            image: torreNormalImgThumb
           },
           {
             id: 'torrePicante',
             name: 'Torre Picante (para grupos)',
             price: 10,
-            image: torrePicanteImg
+            image: torrePicanteImgThumb
           },
           {
             id: 'torreParejas',
             name: 'Torre de Shots Parejas',
             price: 10,
-            image: torreParejasImg
+            image: torreParejasImgThumb
           },
           {
             id: 'dadosPlacer',
             name: 'Dados del Placer',
             price: 5,
-            image: dadosDelPlacerImg
+            image: dadosDelPlacerImgThumb
           },
           {
             id: 'emparejados',
             name: 'Emparejados (juego digital)',
             price: 2.90,
-            image: emparejadosPortada
+            image: emparejadosPortadaThumb
           }
         ]}
       />

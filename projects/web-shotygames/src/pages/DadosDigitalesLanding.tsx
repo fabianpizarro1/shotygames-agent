@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Gift, Heart, MessageCircle, Sparkles, Zap, Clock, Shield, Star, ChevronLeft, ChevronRight, Check, Smartphone, Wifi, Download, HelpCircle, Dice1 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import dadosPrincipal from "@/assets/dados-digitales-principal.webp";
 import dadosImg2 from "@/assets/dados-digitales-2.webp";
 import dadosImg3 from "@/assets/dados-digitales-3.webp";

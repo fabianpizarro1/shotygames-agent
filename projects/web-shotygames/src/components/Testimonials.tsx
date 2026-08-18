@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Star } from "lucide-react";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { CarouselImage } from "@/components/CarouselImage";
+import { useSlideActual } from "@/hooks/useSlideActual";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious , type CarouselApi } from "@/components/ui/carousel";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
@@ -26,6 +29,11 @@ const testimonialImages = [{
   alt: "Testimonio destacado - Profesionalismo y puntualidad 10/10"
 }];
 const Testimonials = () => {
+  // Sin esto el carrusel baja las 6 capturas de golpe: embla las pone todas
+  // en la misma fila y el navegador las considera "casi visibles".
+  const [api, setApi] = useState<CarouselApi>();
+  const slideActual = useSlideActual(api);
+
   return <section className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
@@ -43,20 +51,21 @@ const Testimonials = () => {
           <Carousel opts={{
           align: "start",
           loop: true
-        }} className="w-full max-w-5xl mx-auto">
+        }} setApi={setApi} className="w-full max-w-5xl mx-auto">
             <CarouselContent className="-ml-2 sm:-ml-4">
               {testimonialImages.map((testimonial, index) => <CarouselItem key={index} className="pl-2 sm:pl-4 md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     {/* aspect-ratio fijo (las 6 son 945x1181 = 4:5 real) para que el
                         carrusel no salte de alto mientras cargan las imágenes */}
                     <div className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-smooth">
-                      <img
+                      <CarouselImage
                         src={testimonial.image}
                         alt={testimonial.alt}
-                        width={945}
-                        height={1181}
+                        index={index}
+                        current={slideActual}
+                        /* se ven hasta 3 a la vez en escritorio */
+                        ventana={3}
                         className="w-full h-full object-cover"
-                        loading="lazy"
                       />
                     </div>
                   </div>

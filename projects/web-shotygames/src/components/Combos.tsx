@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Heart, Zap, ShoppingCart, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { CheckoutModal } from "./CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "./LazyCheckoutModal";
 import comboPromoHoyImg from "@/assets/combo-promo-hoy.webp";
 import comboTorresImg from "@/assets/combo-torres.webp";
 import comboChuchaquiImg from "@/assets/combo-chuchaqui.webp";

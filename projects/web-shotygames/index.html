@@ -39,14 +39,12 @@
     });
     </script>
     <!-- End Meta Pixel Code -->
-    
-    <!-- Preconnect to external domains for faster resource loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Load fonts asynchronously to prevent render blocking -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+    <!-- Las fuentes ya no vienen de Google: van self-hosteadas dentro del CSS
+         del bundle (ver src/index.css). Se precargan solo las dos que usa el
+         texto visible sin scrollear — el resto de los pesos los pide el
+         navegador cuando el CSS los necesita. -->
+    <link rel="preload" href="/fonts/poppins-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/poppins-700-latin.woff2" as="font" type="font/woff2" crossorigin>
     
     <!-- Nota: acá había un preload de /assets/hero-party-*.jpg (141 KB).
          Se quitó porque index.html es compartido por TODAS las rutas (SPA):
@@ -57,7 +55,11 @@
   <meta name="twitter:title" content="ShotyGames - Los juegos que prenden la fiesta | Entrega inmediata en Machala">
   <meta property="og:description" content="Torre de Shots, Enganchados y Cartas PartyShots. Juegos de mesa para beber. Entrega inmediata en Machala, envíos a todo Ecuador. Más de 3500 clientes satisfechos.">
   <meta name="twitter:description" content="Torre de Shots, Enganchados y Cartas PartyShots. Juegos de mesa para beber. Entrega inmediata en Machala, envíos a todo Ecuador. Más de 3500 clientes satisfechos.">
-  <link rel="icon" type="image/x-icon" href="https://storage.googleapis.com/gpt-engineer-file-uploads/MXJZZtrzG1YBewUxIH4YFw6Zqr73/uploads/1761438850591-LogoShotyGames_SOLO SIN SOMBRAS.png">
+  <!-- El favicon colgaba de storage.googleapis.com: un dominio externo más
+       que resolver (DNS + TLS) en cada visita, para un PNG de 148 KB que se
+       mostraba a 32 px. Ahora es local y pesa 2 KB. -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/logo-32.png">
+  <link rel="apple-touch-icon" href="/logo-180.png">
 </head>
 
   <body>

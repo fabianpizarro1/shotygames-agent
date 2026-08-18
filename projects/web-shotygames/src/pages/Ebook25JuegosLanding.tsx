@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCart, Download, Users, PartyPopper, Wine, Heart, Sparkles, CheckCircle2, Clock, Smartphone, MessageCircle, UserCheck, TreePine, Zap, Star, Gift } from "lucide-react";
-import { CheckoutModal } from "@/components/CheckoutModal";
+import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 
 import portadaEbook from "@/assets/ebook-25-juegos-portada.webp";
 import ejemploJuego from "@/assets/ebook-25-juegos-ejemplo.webp";

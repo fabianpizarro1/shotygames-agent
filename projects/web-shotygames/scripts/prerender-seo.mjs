@@ -43,9 +43,25 @@ const resolveImage = (srcRelativePath) => {
   return `${site}/${entry.file}`;
 };
 
+// Resuelve el chunk JS de una página + los chunks que ese chunk importa,
+// para poder precargarlos desde el HTML de la ruta.
+const resolveChunks = (srcRelativePath) => {
+  const seen = new Set();
+  const walk = (key) => {
+    const entry = manifest[key];
+    if (!entry || seen.has(entry.file)) return;
+    seen.add(entry.file);
+    (entry.imports ?? []).forEach(walk);
+  };
+  walk(srcRelativePath);
+  return [...seen];
+};
+
 const pages = [
   {
     route: "/landing/torre-normal",
+    chunk: "src/pages/TorreNormalLanding.tsx",
+    hero: "src/assets/torre-normal-brillo.webp",
     title: "Torre La Previa 🎉 - El Juego que Prende la Reunión | ShotyGames Ecuador",
     description:
       "51 retos que convierten cualquier reunión en fiesta. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
@@ -54,6 +70,8 @@ const pages = [
   },
   {
     route: "/landing/torre-picante",
+    chunk: "src/pages/TorrePicanteLanding.tsx",
+    hero: "src/assets/torre-picante-1.webp",
     title: "Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador",
     description:
       "51 retos atrevidos para grupos con confianza. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
@@ -62,6 +80,8 @@ const pages = [
   },
   {
     route: "/landing/torre-parejas",
+    chunk: "src/pages/TorreParejasLanding.tsx",
+    hero: "src/assets/torre-parejas-1.webp",
     title: "Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador",
     description:
       "51 retos para dos que convierten una noche cualquiera en uno que van a recordar. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
@@ -70,6 +90,8 @@ const pages = [
   },
   {
     route: "/landing/partyshots",
+    chunk: "src/pages/PartyshotsLanding.tsx",
+    hero: "src/assets/cartas-partyshots.jpg",
     title: "Cartas PartyShots - Juego de Cartas para Beber | ShotyGames Ecuador",
     description:
       "Las cartas más divertidas para tu próxima fiesta. Para grupos de 2-10 personas. Con retos, preguntas y penitencias. Envíos a todo Ecuador.",
@@ -78,6 +100,8 @@ const pages = [
   },
   {
     route: "/landing/enganchados",
+    chunk: "src/pages/EnganchadosLanding.tsx",
+    hero: "src/assets/enganchados-brillo.webp",
     title: "Enganchados - El Juego de Puntería para Fiestas | ShotyGames Ecuador",
     description:
       "Pon a prueba tu puntería, concentración y velocidad. El juego más adictivo para grupos. Envíos a todo Ecuador.",
@@ -86,6 +110,8 @@ const pages = [
   },
   {
     route: "/landing/emparejados",
+    chunk: "src/pages/EmparejadosLanding.tsx",
+    hero: "src/assets/emparejados-life-conexion.webp",
     title: "Emparejados — 72 cartas para jugar en pareja | ShotyGames Ecuador",
     description:
       "72 cartas de Conexión, Deseo y Diversión. Lo juegas desde el celular y además lo puedes imprimir. Lo recibes en minutos por $6.90.",
@@ -94,6 +120,8 @@ const pages = [
   },
   {
     route: "/landing/emparejados-imprimible",
+    chunk: "src/pages/EmparejadosImprimibleLanding.tsx",
+    hero: "src/assets/emparejados-hero-imprimible.jpg",
     title: "Emparejados — 72 cartas imprimibles para parejas | ShotyGames Ecuador",
     description:
       "72 cartas de Conexión, Deseo y Diversión listas para imprimir hoy. También incluye la versión digital y la Guía de 30 Posiciones gratis. $6.90, pago único.",
@@ -102,6 +130,7 @@ const pages = [
   },
   {
     route: "/landing/emparejados-internacional",
+    chunk: "src/pages/EmparejadosInternacionalLanding.tsx",
     title: "Emparejados Internacional - Juego Digital para Parejas | ShotyGames",
     description:
       "El juego digital para parejas con acceso inmediato vía Hotmart. Conexión, deseo y diversión. Solo $3.90.",
@@ -110,6 +139,7 @@ const pages = [
   },
   {
     route: "/landing/dados-digitales",
+    chunk: "src/pages/DadosDigitalesLanding.tsx",
     title: "Dados Digitales del Placer - Juego para Parejas | ShotyGames Ecuador",
     description:
       "Dados digitales con posiciones y retos para parejas. Acceso inmediato por solo $6.90. Enciende la pasión.",
@@ -118,6 +148,8 @@ const pages = [
   },
   {
     route: "/landing/promo-hoy",
+    chunk: "src/pages/PromoHoyLanding.tsx",
+    hero: "src/assets/combo-promo-hoy.webp",
     title: "Promo de Hoy - 2 Torres + Regalos con Envío Gratis | ShotyGames Ecuador",
     description:
       "Lleva 2 Torres de Shots a elegir + regalos digitales incluidos con envío gratis. Oferta por tiempo limitado.",
@@ -126,6 +158,8 @@ const pages = [
   },
   {
     route: "/landing/combo-torres",
+    chunk: "src/pages/ComboTorresLanding.tsx",
+    hero: "src/assets/combo-torres.webp",
     title: "Combo 2 Torres de Shots - Ahorra $12 | ShotyGames Ecuador",
     description:
       "Lleva 2 Torres de Shots + Shot Bidu de regalo + guías digitales. Ahorra $12 vs comprar por separado. Envíos a todo Ecuador.",
@@ -134,6 +168,7 @@ const pages = [
   },
   {
     route: "/landing/3-torres",
+    chunk: "src/pages/TresTorresLanding.tsx",
     title: "Las 3 Torres de Shots | Desde $28 con Envío Gratis | ShotyGames Ecuador",
     description:
       "La Previa, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador.",
@@ -142,6 +177,8 @@ const pages = [
   },
   {
     route: "/landing/combo-chuchaqui",
+    chunk: "src/pages/ComboChuchaquiLanding.tsx",
+    hero: "src/assets/combo-chuchaqui.webp",
     title: "Combo Chuchaqui - Pack Completo para tu Fiesta | ShotyGames Ecuador",
     description:
       "3 Torres + Enganchados + botella de regalo + guías digitales. El pack definitivo para fiestas épicas. Envíos a todo Ecuador.",
@@ -150,6 +187,8 @@ const pages = [
   },
   {
     route: "/landing/combo-la-previa",
+    chunk: "src/pages/ComboLaPreviaLanding.tsx",
+    hero: "src/assets/torre-normal-brillo.webp",
     title: "Combo La Previa - Kit de Fiesta Completo | ShotyGames Ecuador",
     description:
       "2 Torres + Enganchados + Shot Bidu + guías digitales. El kit perfecto para arrancar la noche. Envíos a todo Ecuador.",
@@ -158,6 +197,8 @@ const pages = [
   },
   {
     route: "/landing/combo-parejas",
+    chunk: "src/pages/ComboParejasLanding.tsx",
+    hero: "src/assets/combo-parejas-pareja-hero.webp",
     title: "Combo Parejas 🔥 3 juegos + 2 guías por $35 | ShotyGames Ecuador",
     description:
       "Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Reserva con $5 y paga el resto al recibir.",
@@ -166,6 +207,8 @@ const pages = [
   },
   {
     route: "/landing/25-juegos-fiestas",
+    chunk: "src/pages/Ebook25JuegosLanding.tsx",
+    hero: "src/assets/ebook-25-juegos-portada.webp",
     title: "Guía Digital de 20 Juegos para Fiestas | ShotyGames",
     description:
       "Guía práctica en PDF con 20 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90",
@@ -174,6 +217,8 @@ const pages = [
   },
   {
     route: "/landing/guia-del-placer",
+    chunk: "src/pages/GuiaPlacerLanding.tsx",
+    hero: "src/assets/guia-placer-portada.webp",
     title: "Guía Digital del Placer - Reconecta con tu pareja | ShotyGames",
     description:
       "Ideas prácticas y experiencias para encender la pasión en pareja. Guía digital PDF con descarga inmediata. Oferta de lanzamiento $6.90",
@@ -244,6 +289,30 @@ for (const page of pages) {
     );
   } else {
     html = html.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${escapeAttr(canonical)}">`);
+  }
+
+  // ── Precarga por ruta ────────────────────────────────────────────────
+  // index.html trae los modulepreload del chunk común (entry + react-vendor),
+  // pero el chunk de ESTA landing y su hero solo se descubren después de que
+  // React monta y resuelve el import dinámico: en 4G eso son dos viajes de red
+  // encadenados antes de que se vea la primera foto. Como acá ya hay un HTML
+  // por ruta, se anuncian desde el <head> y bajan en paralelo con el resto.
+  const preloads = [];
+  for (const file of page.chunk ? resolveChunks(page.chunk) : []) {
+    preloads.push(`<link rel="modulepreload" crossorigin href="/${file}">`);
+  }
+  if (page.hero) {
+    const heroEntry = manifest[page.hero];
+    if (heroEntry) {
+      preloads.push(
+        `<link rel="preload" as="image" fetchpriority="high" href="/${heroEntry.file}">`,
+      );
+    } else {
+      console.warn(`[prerender-seo] hero fuera del manifest: ${page.hero} (${page.route})`);
+    }
+  }
+  if (preloads.length) {
+    html = html.replace("</head>", `  ${preloads.join("\n  ")}\n  </head>`);
   }
 
   const outDir = path.join(distDir, page.route.replace(/^\//, ""));
