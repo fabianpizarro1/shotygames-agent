@@ -18,9 +18,15 @@ import diversionImage from "@/assets/emparejados-diversion.jpg";
 import ebookImage from "@/assets/ebook-30-posiciones.webp";
 import appBarajea from "@/assets/emparejados-app-barajea.webp";
 import appGuia from "@/assets/emparejados-app-guia.webp";
-import impresasCortando from "@/assets/emparejados-impresas-cortando.jpg";
 import impresasMesa from "@/assets/emparejados-impresas-mesa.jpg";
-import impresasMano from "@/assets/emparejados-impresas-mano.jpg";
+import realProblema from "@/assets/emparejados-real-problema.jpg";
+import realCambioRitmo from "@/assets/emparejados-real-cambio-ritmo.jpg";
+import realPaso1 from "@/assets/emparejados-real-paso1.jpg";
+import realPaso2 from "@/assets/emparejados-real-paso2.jpg";
+import realPaso3 from "@/assets/emparejados-real-paso3.jpg";
+import realPaso4 from "@/assets/emparejados-real-paso4.jpg";
+import realDigitalCartas from "@/assets/emparejados-real-digital-cartas.jpg";
+import realDigitalCelular from "@/assets/emparejados-real-digital-celular.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
@@ -87,31 +93,32 @@ const PASOS_IMPRIMIR = [
     t: "Recibes el PDF",
     d: "Las 72 cartas listas para imprimir, frente y dorso.",
     icon: FileDown,
-    img: null as string | null,
+    img: realPaso1,
+    alt: "El PDF de Emparejados abierto en la laptop, con las cartas listas para imprimir",
   },
   {
     n: "2",
     t: "Lo imprimes",
     d: "En casa o en cualquier centro de impresión. 9 cartas por hoja A4.",
     icon: Printer,
-    img: impresasCortando,
-    alt: "Hoja A4 con las cartas de Emparejados recién impresas, lista para cortar",
+    img: realPaso2,
+    alt: "Hoja A4 con las cartas de Emparejados recién impresas, saliendo de la impresora",
   },
   {
     n: "3",
     t: "Recortas",
     d: "Y arman su propio mazo, carta por carta.",
     icon: Scissors,
-    img: impresasMano,
-    alt: "Una carta de Emparejados ya recortada, sostenida en la mano",
+    img: realPaso3,
+    alt: "Recortando las cartas de Emparejados con tijera siguiendo las líneas de la hoja impresa",
   },
   {
     n: "4",
     t: "Juegan",
     d: "Sacan la primera carta y empiezan.",
     icon: Check,
-    img: impresasMesa,
-    alt: "Las cartas de Conexión, Deseo y Diversión ya impresas y recortadas sobre la mesa",
+    img: realPaso4,
+    alt: "El mazo de Emparejados ya armado, con una carta de Conexión en la mano, lista para jugar",
   },
 ];
 
@@ -193,12 +200,8 @@ const EmparejadosImprimibleLanding = () => {
               72 cartas para imprimir hoy y hacer algo diferente esta noche.
             </h1>
             <p className="text-muted-foreground text-[0.9rem] leading-snug sm:text-lg sm:leading-relaxed">
-              Conexión, deseo y diversión en un juego para parejas que pueden
-              imprimir y jugar como un mazo real.
-            </p>
-            <p className="text-[0.82rem] sm:text-base leading-snug text-foreground/70 mt-2">
-              Y si no quieren imprimir nada, también incluye la versión digital
-              para jugar directamente desde el celular.
+              72 cartas de Conexión, Deseo y Diversión listas para imprimir y
+              jugar. También incluye la versión digital para el celular.
             </p>
           </div>
 
@@ -252,7 +255,7 @@ const EmparejadosImprimibleLanding = () => {
       </section>
 
       {/* ── 2. IDENTIFICACIÓN ────────────────────────────────────────── */}
-      <section className="px-4 py-14 md:py-20 bg-muted/40">
+      <section className="px-4 py-10 md:py-16 bg-muted/40">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-display text-[1.6rem] sm:text-3xl md:text-4xl font-bold leading-snug mb-5">
             Quieren hacer algo juntos. Pero nadie propone nada.
@@ -265,6 +268,17 @@ const EmparejadosImprimibleLanding = () => {
             No necesariamente faltan ganas. A veces simplemente falta tener
             algo diferente para empezar.
           </p>
+
+          <div className="rounded-2xl overflow-hidden shadow-lg max-w-sm mx-auto mb-6 aspect-[4/3]">
+            <img
+              src={realProblema}
+              alt="Pareja sentada en el sofá, cada uno mirando su propio celular, sin hablarse"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
           <p className="font-display text-xl sm:text-2xl font-bold mb-1">
             Alguien tiene que sacar la primera carta.
           </p>
@@ -272,31 +286,31 @@ const EmparejadosImprimibleLanding = () => {
         </div>
       </section>
 
-      {/* ── 3. MOSTRAR EL PRODUCTO RÁPIDO ─────────────────────────────
-          Antes de explicar de más, que vean qué están comprando: muchas
-          cartas, buen papel, cortes limpios. */}
-      <section className="px-4 py-14 md:py-20 max-w-3xl mx-auto text-center">
-        <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
-          Este es Emparejados.
-        </h2>
-        <p className="text-muted-foreground text-base sm:text-lg mb-8">
-          72 cartas creadas para conversar, coquetear y divertirse juntos.
-        </p>
-        <div className="rounded-2xl overflow-hidden shadow-2xl aspect-square max-w-lg mx-auto">
-          <img
-            src={flatlayImage}
-            alt="Muchas cartas de Emparejados de las categorías Conexión, Deseo y Diversión, extendidas sobre la mesa"
-            className="w-full h-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
+      {/* ── 3+4. MOSTRAR EL PRODUCTO + LAS TRES CATEGORÍAS ────────────
+          Fusionadas a propósito: título → imagen → categorías, sin espacio
+          en blanco entre medio. Antes de explicar de más, que vean qué están
+          comprando: muchas cartas, buen papel, cortes limpios. */}
+      <section className="py-10 md:py-16 bg-muted/40">
+        <div className="px-4 max-w-3xl mx-auto text-center mb-6 md:mb-8">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+            Este es Emparejados.
+          </h2>
+          <p className="text-muted-foreground text-base sm:text-lg mb-5">
+            72 cartas creadas para conversar, coquetear y divertirse juntos.
+          </p>
+          <div className="rounded-2xl overflow-hidden shadow-2xl aspect-square max-w-lg mx-auto">
+            <img
+              src={flatlayImage}
+              alt="Muchas cartas de Emparejados de las categorías Conexión, Deseo y Diversión, extendidas sobre la mesa"
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
-      </section>
 
-      {/* ── 4. LAS TRES CATEGORÍAS ───────────────────────────────────── */}
-      <section className="py-14 md:py-20 bg-muted/40">
         <div className="px-4 max-w-6xl mx-auto">
-          <div className="text-center mb-8 md:mb-10">
+          <div className="text-center mb-6 md:mb-8">
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
               72 cartas. 3 tipos de momentos.
             </h2>
@@ -411,7 +425,7 @@ const EmparejadosImprimibleLanding = () => {
       </section>
 
       {/* ── 6. TANGIBILIDAD / PROPIEDAD ──────────────────────────────── */}
-      <section className="px-4 py-14 md:py-20 bg-muted/40">
+      <section className="px-4 py-10 md:py-16 bg-muted/40">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 md:gap-14 items-center">
           <div className="rounded-2xl overflow-hidden shadow-xl aspect-[4/3] order-2 md:order-1">
             <img
@@ -424,14 +438,11 @@ const EmparejadosImprimibleLanding = () => {
           </div>
           <div className="order-1 md:order-2 text-center md:text-left">
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-4 leading-snug">
-              No es un archivo que usas una vez y desaparece.
+              Imprímelo hoy. Y vuelve a imprimirlo cuando quieras.
             </h2>
-            <p className="text-muted-foreground text-base sm:text-lg mb-2">
-              Las cartas son tuyas para volver a imprimirlas cuando quieras.
-            </p>
             <ul className="text-muted-foreground text-base sm:text-lg space-y-1.5 mb-4 inline-block text-left">
-              <li className="flex items-start gap-2"><RotateCcw className="w-4 h-4 text-primary mt-1.5 shrink-0" /> ¿Se dañó alguna? Imprímela otra vez.</li>
-              <li className="flex items-start gap-2"><RotateCcw className="w-4 h-4 text-primary mt-1.5 shrink-0" /> ¿Quieren armar otro mazo? Lo vuelven a imprimir.</li>
+              <li className="flex items-start gap-2"><RotateCcw className="w-4 h-4 text-primary mt-1.5 shrink-0" /> ¿Se dañó una carta? La vuelves a imprimir.</li>
+              <li className="flex items-start gap-2"><RotateCcw className="w-4 h-4 text-primary mt-1.5 shrink-0" /> ¿Quieres armar otro mazo? Lo vuelves a imprimir.</li>
             </ul>
             <p className="font-display text-xl sm:text-2xl font-bold">
               Tu juego sigue disponible.
@@ -440,22 +451,22 @@ const EmparejadosImprimibleLanding = () => {
         </div>
       </section>
 
-      {/* ── 7. CAMBIO DE RITMO (emocional, sin producto) ─────────────── */}
+      {/* ── 7. CAMBIO DE RITMO (transición corta, sin producto) ──────── */}
       <section className="relative">
-        <div className="relative h-[420px] sm:h-[460px] md:h-[540px] overflow-hidden">
+        <div className="relative h-[260px] sm:h-[300px] md:h-[360px] overflow-hidden">
           <img
-            src={impresasMano}
-            alt="Pareja con una carta de Emparejados impresa en la mano, complicidad y sonrisas, ambiente casero"
-            className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
+            src={realCambioRitmo}
+            alt="Pareja recostada mirándose, sosteniendo el mazo de cartas de Emparejados en abanico, complicidad y sonrisas"
+            className="absolute inset-0 w-full h-full object-cover object-[center_35%]"
             loading="lazy"
             decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
-          <div className="relative h-full flex flex-col justify-end px-5 pb-10 md:pb-14 max-w-3xl mx-auto text-white">
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-3">
+          <div className="relative h-full flex flex-col justify-end px-5 pb-6 md:pb-8 max-w-3xl mx-auto text-white">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-1.5">
               Una carta cambia el plan.
             </h2>
-            <p className="text-white/85 text-base sm:text-lg max-w-md leading-relaxed">
+            <p className="text-white/85 text-sm sm:text-base max-w-md leading-snug">
               Ya no tienen que pensar qué hacer. Sacan una carta y dejan que
               el juego proponga lo siguiente.
             </p>
@@ -464,9 +475,12 @@ const EmparejadosImprimibleLanding = () => {
       </section>
 
       {/* ── 8. AHORA REVELAMOS LA VERSIÓN DIGITAL ────────────────────── */}
-      <section ref={digitalRef} className="px-4 py-14 md:py-20 bg-foreground text-background scroll-mt-4">
+      {/* ── 8+9. TODO EL BLOQUE DIGITAL EN UNA SOLA SECCIÓN ───────────
+          Revelación + demo real fusionadas: antes eran 2 pantallas grandes,
+          ahora es una sola sección continua con menos padding. */}
+      <section ref={digitalRef} className="px-4 py-10 md:py-16 bg-foreground text-background scroll-mt-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-9 md:mb-12">
+          <div className="text-center mb-7 md:mb-9">
             <p className="text-[0.7rem] font-bold tracking-[0.14em] text-primary mb-2">
               Y HAY OTRA FORMA DE JUGAR
             </p>
@@ -482,8 +496,8 @@ const EmparejadosImprimibleLanding = () => {
           <div className="grid md:grid-cols-[1fr_auto_1fr] gap-5 md:gap-6 items-center max-w-3xl mx-auto">
             <div className="rounded-2xl overflow-hidden bg-black/30 aspect-square">
               <img
-                src={impresasCortando}
-                alt="Mazo impreso de Emparejados"
+                src={realDigitalCartas}
+                alt="Mazo impreso de Emparejados y una carta de Conexión en la mano"
                 className="w-full h-full object-cover"
                 loading="lazy"
                 decoding="async"
@@ -496,8 +510,8 @@ const EmparejadosImprimibleLanding = () => {
 
             <div className="rounded-2xl overflow-hidden bg-black/30 aspect-square">
               <img
-                src={appBarajea}
-                alt="Emparejados Digital funcionando en el celular"
+                src={realDigitalCelular}
+                alt="Emparejados Digital funcionando en el celular, con el mazo de cartas y el cronómetro en pantalla"
                 className="w-full h-full object-cover"
                 loading="lazy"
                 decoding="async"
@@ -505,11 +519,11 @@ const EmparejadosImprimibleLanding = () => {
             </div>
           </div>
 
-          <p className="text-center text-xs text-background/50 mt-3 mb-8">
+          <p className="text-center text-xs text-background/50 mt-3 mb-6">
             IMPRIMIBLE + DIGITAL
           </p>
 
-          <ul className="grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto mb-9">
+          <ul className="grid sm:grid-cols-2 gap-3 max-w-2xl mx-auto mb-6">
             {[
               { icon: Smartphone, t: "Juegan desde el celular" },
               { icon: RotateCcw, t: "Barajado automático" },
@@ -522,56 +536,56 @@ const EmparejadosImprimibleLanding = () => {
             ))}
           </ul>
 
-          <p className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-center mb-6">
+          <p className="font-display text-lg sm:text-xl md:text-2xl font-bold text-center mb-7 md:mb-9">
             Un juego. Dos formas de jugar.
           </p>
 
-          <div className="text-center">
+          {/* Demo real, dentro de la misma sección */}
+          <div className="border-t border-background/10 pt-7 md:pt-9">
+            <div className="text-center mb-6 md:mb-7">
+              <h3 className="font-display text-xl sm:text-2xl md:text-3xl font-bold mb-1.5">
+                Así se ve cuando juegan desde el celular.
+              </h3>
+              <p className="text-background/70 text-sm sm:text-base">
+                Barajan. Sacan una carta. Cumplen el reto. Y siguen.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
+              <div className="mx-auto w-full max-w-[200px] sm:max-w-[230px] rounded-[1.75rem] overflow-hidden shadow-2xl ring-1 ring-background/15 order-2 md:order-1">
+                <video
+                  src={demoVideo}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  poster={appBarajea}
+                  className="w-full h-full object-cover"
+                  aria-label="Emparejados Digital funcionando en un celular: barajear, sacar una carta y cumplir el reto"
+                />
+              </div>
+
+              <div className="order-1 md:order-2">
+                <p className="text-background/70 text-sm sm:text-base mb-3">
+                  Eso es todo lo que tienen que aprender. No hay reglas complicadas
+                  ni tutoriales largos.
+                </p>
+                <div className="flex items-center gap-3 rounded-xl bg-background/10 p-3">
+                  <img src={appGuia} alt="La Guía de 30 Posiciones se descarga desde adentro del juego" className="w-12 h-16 object-cover rounded shadow shrink-0" loading="lazy" />
+                  <p className="text-xs sm:text-sm text-background/70">
+                    Y desde ahí mismo descargan la Guía de 30 Posiciones que viene de regalo.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-8 md:mt-9">
             <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full sm:w-auto sm:px-10">
               <ShoppingCart className="mr-2 h-5 w-5" />
               QUIERO LAS DOS VERSIONES
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 9. DEMOSTRACIÓN REAL DE LA VERSIÓN DIGITAL ───────────────── */}
-      <section className="px-4 py-14 md:py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-8 md:mb-10">
-          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
-            Así se ve cuando juegan desde el celular.
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Barajan. Sacan una carta. Cumplen el reto. Y siguen.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-          <div className="mx-auto w-full max-w-[230px] sm:max-w-[260px] rounded-[1.75rem] overflow-hidden shadow-2xl ring-1 ring-border order-2 md:order-1">
-            <video
-              src={demoVideo}
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="none"
-              poster={appBarajea}
-              className="w-full h-full object-cover"
-              aria-label="Emparejados Digital funcionando en un celular: barajear, sacar una carta y cumplir el reto"
-            />
-          </div>
-
-          <div className="order-1 md:order-2">
-            <p className="text-muted-foreground mb-4">
-              Eso es todo lo que tienen que aprender. No hay reglas complicadas
-              ni tutoriales largos.
-            </p>
-            <div className="flex items-center gap-3 rounded-xl border p-3">
-              <img src={appGuia} alt="La Guía de 30 Posiciones se descarga desde adentro del juego" className="w-14 h-20 object-cover rounded shadow shrink-0" loading="lazy" />
-              <p className="text-sm text-muted-foreground">
-                Y desde ahí mismo descargan la Guía de 30 Posiciones que viene de regalo.
-              </p>
-            </div>
           </div>
         </div>
       </section>
@@ -693,8 +707,8 @@ const EmparejadosImprimibleLanding = () => {
           a) reseñas de EMPAREJADOS — solo si `resenasEmparejados` tiene datos;
           b) prueba de MARCA — capturas reales de clientes de ShotyGames, con
              el subtítulo diciendo exactamente de qué son. No inventar. */}
-      <section className="px-4 py-14 md:py-20 bg-muted/40">
-        <div className="max-w-5xl mx-auto space-y-12">
+      <section className="px-4 py-10 md:py-16 bg-muted/40">
+        <div className="max-w-5xl mx-auto space-y-10">
           {resenasEmparejados.length > 0 && (
             <div>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8">
@@ -721,9 +735,8 @@ const EmparejadosImprimibleLanding = () => {
                 Estás comprando a ShotyGames
               </h2>
               <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-                +3.500 clientes ya compraron con nosotros. Estas son capturas
-                reales de sus conversaciones — la mayoría por nuestros juegos
-                físicos, que es con lo que empezamos 🇪🇨
+                +3.500 clientes ya han comprado con nosotros en Ecuador 🇪🇨
+                Estas son algunas conversaciones reales de nuestros clientes.
               </p>
             </div>
 
@@ -747,14 +760,14 @@ const EmparejadosImprimibleLanding = () => {
       </section>
 
       {/* ── 13. CÓMO LO RECIBES ──────────────────────────────────────── */}
-      <section className="px-4 py-14 md:py-20">
+      <section className="px-4 py-10 md:py-16">
         <div className="max-w-3xl mx-auto">
           <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
             De comprar a jugar, sin esperar un envío.
           </h2>
           <p className="text-center text-sm text-muted-foreground max-w-lg mx-auto mb-8 md:mb-10">
-            No se envían cartas físicas por courier: las imprimes tú mismo con
-            el PDF incluido, por eso no hay que esperar ningún paquete.
+            No tienes que esperar un paquete. Después de confirmar tu pago
+            recibes el PDF imprimible, la versión digital y tu regalo.
           </p>
 
           <ol className="grid sm:grid-cols-4 gap-5">
@@ -822,10 +835,6 @@ const EmparejadosImprimibleLanding = () => {
               {
                 q: "¿La Guía Digital de 30 Posiciones está incluida?",
                 a: "Sí. Comprando Emparejados hoy la recibes gratis.",
-              },
-              {
-                q: "¿Me envían algo físicamente?",
-                a: "No. Es un producto 100% digital: el PDF imprimible y el acceso a la versión digital te llegan por WhatsApp. Las cartas físicas las imprimes tú con el PDF incluido, y por eso no tienes que esperar ningún courier.",
               },
             ].map((f, i) => (
               <AccordionItem key={f.q} value={`q${i}`} className="bg-background rounded-xl px-5 border-0">
