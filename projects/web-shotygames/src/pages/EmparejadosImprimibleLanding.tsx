@@ -192,21 +192,9 @@ const EmparejadosImprimibleLanding = () => {
           pareja detrás, celular chico al lado. En ese orden. */}
       <section className="px-4 pt-4 pb-8 md:pt-12 md:pb-14 max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 md:grid-rows-[auto_auto] gap-4 md:gap-x-12 md:gap-y-5 md:items-center">
-          <div className="md:col-start-2 md:row-start-1 md:self-end">
-            <p className="text-[0.68rem] font-bold tracking-[0.14em] text-primary mb-1.5">
-              JUEGO PARA PAREJAS · 72 CARTAS
-            </p>
-            <h1 className="font-display text-[1.65rem] leading-[1.12] sm:text-4xl lg:text-[3rem] lg:leading-[1.1] font-bold mb-2">
-              72 cartas para imprimir hoy y hacer algo diferente esta noche.
-            </h1>
-            <p className="text-muted-foreground text-[0.9rem] leading-snug sm:text-lg sm:leading-relaxed">
-              72 cartas de Conexión, Deseo y Diversión listas para imprimir y
-              jugar. También incluye la versión digital para el celular.
-            </p>
-          </div>
-
-          {/* Visual: cartas impresas en primer plano, pareja detrás, celular
-              chico al lado. Es el LCP, por eso va eager y con fetchpriority alta. */}
+          {/* Visual primero: cartas impresas en primer plano, pareja detrás,
+              celular chico al lado. Es el LCP, por eso va eager y con
+              fetchpriority alta. */}
           <div className="md:col-start-1 md:row-start-1 md:row-span-2 md:self-center">
             <div className="relative rounded-2xl overflow-hidden bg-muted shadow-2xl aspect-[4/3]">
               <img
@@ -220,6 +208,19 @@ const EmparejadosImprimibleLanding = () => {
                 decoding="async"
               />
             </div>
+          </div>
+
+          <div className="md:col-start-2 md:row-start-1 md:self-end">
+            <p className="text-[0.68rem] font-bold tracking-[0.14em] text-primary mb-1.5">
+              JUEGO PARA PAREJAS · 72 CARTAS
+            </p>
+            <h1 className="font-display text-[1.65rem] leading-[1.12] sm:text-4xl lg:text-[3rem] lg:leading-[1.1] font-bold mb-2">
+              72 cartas para imprimir hoy y hacer algo diferente esta noche.
+            </h1>
+            <p className="text-muted-foreground text-[0.9rem] leading-snug sm:text-lg sm:leading-relaxed">
+              72 cartas de Conexión, Deseo y Diversión listas para imprimir y
+              jugar. También incluye la versión digital para el celular.
+            </p>
           </div>
 
           <div className="md:col-start-2 md:row-start-2 md:self-start space-y-3 md:space-y-4">
