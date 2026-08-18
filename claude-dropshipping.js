@@ -173,6 +173,7 @@ Costo proveedor: ${usd(r.costoProveedor)}
 Flete: ${usd(r.flete)}
 Ganas al entregarse: ${usd(r.gananciaEsperada)}
 Bodega: ${r.bodega.nombre || r.bodega.id}
+Transportadora: ${r.transportadora}
 Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
     }
 

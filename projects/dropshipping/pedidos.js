@@ -28,6 +28,19 @@ const { resolverCiudad } = require('./ciudades');
 
 const USER_ID = 12054;   // cuenta dropshipper de Fabián
 
+/**
+ * Transportadoras de DROPI Ecuador, en el orden que el proveedor recomienda
+ * (verificado contra GET /distribution_companies el 2026-08-18 — no hay
+ * endpoint de cotización previa, DROPI solo calcula el flete real al crear
+ * la orden). Por eso no se puede comparar el costo de las 3 antes de crear
+ * nada: se intenta en este orden y se usa la primera que DROPI acepte.
+ */
+const TRANSPORTADORAS = [
+  { id: 4, name: 'GINTRACOM' },
+  { id: 1, name: 'LAARCOURIER' },
+  { id: 2, name: 'SERVIENTREGA' }
+];
+
 // El token se maneja con `conToken` de catalogo.js: hace login solo con las
 // credenciales del .env y reintenta si expira. La primera versión de este
 // archivo leía el token de un archivo en /tmp — que solo existía en la máquina
@@ -91,7 +104,7 @@ function bodegaDe(producto) {
  * Por eso valida la bodega y revienta con un mensaje claro en vez de mandar una
  * orden que DROPI acepta a medias.
  */
-function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true, ciudadDropi = null, regalo = null, cantidadRegalo = 1 }) {
+function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true, ciudadDropi = null, regalo = null, cantidadRegalo = 1, transportadora = TRANSPORTADORAS[0] }) {
   const partes = (cliente.nombre || '').trim().split(' ');
   const nombre = partes[0] || '';
   const apellido = partes.slice(1).join(' ') || nombre;
@@ -188,7 +201,7 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
       type: regalo.type || 'SIMPLE',
       user_id: regalo.user_id
     }] : [])],
-    distributionCompany: { id: 2, name: 'SERVIENTREGA' },
+    distributionCompany: { id: transportadora.id, name: transportadora.name },
     type_service: 'normal',
     zip_code: null,
     colonia: '',
@@ -234,16 +247,37 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     return { ok: false, error: e.message, tipo: 'ciudad' };
   }
 
-  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi, regalo, cantidadRegalo });
+  // No hay endpoint de DROPI para cotizar flete antes de crear la orden (se
+  // buscó — ver TRANSPORTADORAS arriba), así que no se puede elegir "la más
+  // barata" comparando números. Se intenta en el orden que recomienda el
+  // proveedor y se usa la primera que DROPI acepte; si una no cubre la ruta,
+  // rechaza la orden y se prueba con la siguiente.
+  let orderId, data, transportadoraUsada;
+  const rechazos = [];
 
-  const data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
-  const orderId = data?.id || data?.objects?.id || data?.data?.id;
+  for (const transportadora of TRANSPORTADORAS) {
+    const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi, regalo, cantidadRegalo, transportadora });
+    data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
+    const id = data?.id || data?.objects?.id || data?.data?.id;
+
+    if (id) {
+      orderId = id;
+      transportadoraUsada = transportadora.name;
+      break;
+    }
+
+    // DROPI devuelve 200 con isSuccess:false y el motivo real adentro.
+    const motivo = data?.data_error || data?.message || 'DROPI no devolvió id de orden';
+    rechazos.push(`${transportadora.name}: ${motivo}`);
+  }
 
   if (!orderId) {
-    // DROPI devuelve 200 con isSuccess:false y el motivo real adentro. Sin
-    // sacarlo a la superficie, el bot solo puede decir "no funcionó".
-    const motivo = data?.data_error || data?.message || 'DROPI no devolvió id de orden';
-    return { ok: false, error: motivo, respuesta: data, ciudadEnviada: ciudadDropi };
+    return {
+      ok: false,
+      error: `Ninguna transportadora aceptó el pedido:\n${rechazos.join('\n')}`,
+      respuesta: data,
+      ciudadEnviada: ciudadDropi
+    };
   }
 
   // Releer la orden para tomar el flete y la ganancia que DROPI ya calculó.
@@ -274,7 +308,8 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     gananciaEsperada,
     proveedor: producto.user_id,
     bodega: bodegaDe(producto),
-    regalo: regalo ? regalo.name : null
+    regalo: regalo ? regalo.name : null,
+    transportadora: transportadoraUsada
   };
 }
 
