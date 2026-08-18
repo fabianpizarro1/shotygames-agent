@@ -228,7 +228,7 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
  * El número de guía y el costo real de envío aparecen después — los recoge el
  * cron de seguimiento (sincronizarGuias) y los escribe en el Sheet.
  */
-async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVenta, cliente, notas, contraEntrega = true, regaloProductoId = null, cantidadRegalo = 1 }) {
+async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVenta, cliente, notas, contraEntrega = true, regaloProductoId = null, cantidadRegalo = 1, transportadora = null }) {
   const producto = nombreProducto
     ? await getProductoPorNombre(nombreProducto, productoId)
     : await getProducto(productoId);
@@ -249,26 +249,36 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
 
   // No hay endpoint de DROPI para cotizar flete antes de crear la orden (se
   // buscó — ver TRANSPORTADORAS arriba), así que no se puede elegir "la más
-  // barata" comparando números. Se intenta en el orden que recomienda el
-  // proveedor y se usa la primera que DROPI acepte; si una no cubre la ruta,
-  // rechaza la orden y se prueba con la siguiente.
+  // barata" comparando números. Por default se intenta en el orden que
+  // recomienda el proveedor y se usa la primera que DROPI acepte; si Fabián
+  // pide una transportadora puntual, se usa esa sola — sin probar las otras,
+  // porque ahí la decisión ya no es "la más barata", es la que él eligió.
+  const nombreForzado = transportadora ? String(transportadora).toUpperCase() : null;
+  const candidatas = nombreForzado
+    ? TRANSPORTADORAS.filter((t) => t.name === nombreForzado)
+    : TRANSPORTADORAS;
+
+  if (nombreForzado && !candidatas.length) {
+    return { ok: false, error: `Transportadora "${transportadora}" no reconocida. Usa: ${TRANSPORTADORAS.map((t) => t.name).join(', ')}` };
+  }
+
   let orderId, data, transportadoraUsada;
   const rechazos = [];
 
-  for (const transportadora of TRANSPORTADORAS) {
-    const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi, regalo, cantidadRegalo, transportadora });
+  for (const t of candidatas) {
+    const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi, regalo, cantidadRegalo, transportadora: t });
     data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
     const id = data?.id || data?.objects?.id || data?.data?.id;
 
     if (id) {
       orderId = id;
-      transportadoraUsada = transportadora.name;
+      transportadoraUsada = t.name;
       break;
     }
 
     // DROPI devuelve 200 con isSuccess:false y el motivo real adentro.
     const motivo = data?.data_error || data?.message || 'DROPI no devolvió id de orden';
-    rechazos.push(`${transportadora.name}: ${motivo}`);
+    rechazos.push(`${t.name}: ${motivo}`);
   }
 
   if (!orderId) {

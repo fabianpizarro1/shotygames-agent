@@ -47,7 +47,14 @@ const TOOLS = [
     description: 'Crea en DROPI un pedido que el cliente ya confirmó por WhatsApp, y actualiza el Sheet a EN_DROPI. Úsalo cuando Fabián diga que un pedido se confirmó.',
     input_schema: {
       type: 'object',
-      properties: { idPedido: { type: 'string', description: 'ID del pedido, ej. TRQ-12345' } },
+      properties: {
+        idPedido: { type: 'string', description: 'ID del pedido, ej. TRQ-12345' },
+        transportadora: {
+          type: 'string',
+          enum: ['GINTRACOM', 'LAARCOURIER', 'SERVIENTREGA', 'VELOCES', 'URBANO', 'ROCKET'],
+          description: 'Opcional. Si Fabián pide una transportadora específica ("mándalo por Servientrega", "usa Laar"), pasarla acá. Si no se especifica, se prueba GINTRACOM → LAARCOURIER → SERVIENTREGA en ese orden y se usa la primera que DROPI acepte.'
+        }
+      },
       required: ['idPedido']
     }
   },
@@ -148,7 +155,10 @@ async function executeTool(name, input) {
         // Regalo de promoción (columnas PRODUCTO2 / IDDROPI2 / CANTIDAD2): va en
         // la misma guía a precio 0 cuando el cliente eligió el combo que califica.
         regaloProductoId: d.dropiProductId2 ? Number(d.dropiProductId2) : null,
-        cantidadRegalo: d.cantidad2
+        cantidadRegalo: d.cantidad2,
+        // Si Fabián pide una transportadora puntual, esa se usa tal cual (sin
+        // probar las otras). Si no, crearPedido prueba en el orden por defecto.
+        transportadora: input.transportadora || null
       });
 
       if (!r.ok) return `Falló la creación en DROPI: ${r.error}`;
