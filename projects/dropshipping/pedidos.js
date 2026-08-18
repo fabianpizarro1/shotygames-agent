@@ -157,8 +157,14 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
       type: producto.type || 'SIMPLE',
       user_id: producto.user_id
     },
-    // El regalo va a price 0: el cliente no lo paga, pero el proveedor tiene que
-    // verlo en la orden para separarlo del stock y meterlo en la caja.
+    // El regalo NO va a price 0: DROPI rechaza la orden entera si un producto
+    // se vende por debajo del costo del proveedor ("no permite vender un
+    // producto por debajo del costo del proveedor, incluso si es un regalo" —
+    // error real del 2026-08-18). `total_order` (arriba) es lo único que se le
+    // cobra al cliente y NO se arma sumando el price de cada línea, así que
+    // ponerle el costo real acá no le cobra un centavo extra al cliente —
+    // solo hace que DROPI acepte la línea y que el costo del regalo quede
+    // reflejado en lo que el proveedor factura.
     ...(regalo ? [{
       id: regalo.id,
       name: regalo.name,
@@ -166,7 +172,7 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
       quantity: cantidadRegalo,
       stock: regalo.stock ?? 999,
       variation_id: null,
-      price: 0,
+      price: parseFloat(regalo.sale_price) || 0,
       suggested_price: String(regalo.suggested_price || '1.00'),
       sale_price: String(regalo.sale_price || '1.00'),
       variations: [],
@@ -245,12 +251,16 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     // tumbar un pedido ya creado por no poder leer un monto.
   }
 
+  const costoRegalo = regalo ? (parseFloat(regalo.sale_price) || 0) * cantidadRegalo : 0;
+
   return {
     ok: true,
     orderId,
     estado: 'EN_DROPI',
     producto: producto.name,
-    costoProveedor: parseFloat(producto.sale_price) * cantidad,
+    // Incluye el costo del regalo: es plata real que sale de la bodega del
+    // proveedor aunque el cliente no la vea en su factura.
+    costoProveedor: parseFloat(producto.sale_price) * cantidad + costoRegalo,
     flete,
     gananciaEsperada,
     proveedor: producto.user_id,

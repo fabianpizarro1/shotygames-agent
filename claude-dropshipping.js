@@ -113,6 +113,11 @@ const usd = (n) => '$' + (Number(n) || 0).toFixed(2);
  */
 const ESTADOS_ENTREGADO = ['ENTREGADO', 'DELIVERED'];
 const ESTADOS_PAGADO = ['PAGADO', 'PAGADO_PROVEEDOR', 'LIQUIDADO', 'COMPLETADO'];
+// DROPI usa literalmente 'CANCELADO' (verificado 2026-08-18 contra
+// /orders/myorders de la cuenta 12054). sincronizar_guias nunca lo miraba, así
+// que un pedido cancelado en DROPI se quedaba EN_DROPI en el Sheet para
+// siempre — nada lo hacía avanzar ni retroceder.
+const ESTADOS_CANCELADO = ['CANCELADO', 'CANCELLED', 'CANCELED', 'ANULADO'];
 
 async function executeTool(name, input) {
   switch (name) {
@@ -263,6 +268,11 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
             // Respaldo: DROPI dice liquidado pero el movimiento aún no aparece
             nuevo = 'PAGADO';
             if (d.estado !== 'PAGADO') campos.F_PAGO = ahora;
+          } else if (ESTADOS_CANCELADO.some((e) => estadoDropi.includes(e))) {
+            nuevo = 'CANCELADO';
+            if (d.estado !== 'CANCELADO') {
+              campos.NOTAS = `Cancelado en DROPI (orden ${d.ordenDropi})`;
+            }
           } else if (ESTADOS_ENTREGADO.some((e) => estadoDropi.includes(e))) {
             nuevo = 'ENTREGADO';
             if (d.estado !== 'ENTREGADO') campos.F_ENTREGA = ahora;
