@@ -208,13 +208,13 @@ const EmparejadosImprimibleLanding = () => {
           {/* Visual: cartas impresas en primer plano, pareja detrás, celular
               chico al lado. Es el LCP, por eso va eager y con fetchpriority alta. */}
           <div className="md:col-start-1 md:row-start-1 md:row-span-2 md:self-center">
-            <div className="relative rounded-2xl overflow-hidden bg-muted shadow-2xl aspect-[4/5]">
+            <div className="relative rounded-2xl overflow-hidden bg-muted shadow-2xl aspect-[4/3]">
               <img
                 src={heroImage}
-                alt="Cartas de Emparejados impresas (Conexión, Deseo y Diversión) en primer plano sobre la mesa, con una pareja jugando de fondo y el celular con la versión digital al lado"
+                alt="Pareja recostada mirándose, sosteniendo en abanico el mazo de Emparejados con las cartas de Conexión, Deseo y Diversión en primer plano"
                 className="w-full h-full object-cover"
-                width={928}
-                height={1152}
+                width={1448}
+                height={1086}
                 loading="eager"
                 fetchpriority="high"
                 decoding="async"
@@ -298,10 +298,10 @@ const EmparejadosImprimibleLanding = () => {
           <p className="text-muted-foreground text-base sm:text-lg mb-5">
             72 cartas creadas para conversar, coquetear y divertirse juntos.
           </p>
-          <div className="rounded-2xl overflow-hidden shadow-2xl aspect-square max-w-lg mx-auto">
+          <div className="rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] max-w-lg mx-auto">
             <img
               src={flatlayImage}
-              alt="Muchas cartas de Emparejados de las categorías Conexión, Deseo y Diversión, extendidas sobre la mesa"
+              alt="Todo lo que incluye Emparejados: la Guía Digital de 30 Posiciones, el mazo, las cartas de Conexión, Deseo y Diversión, y la versión digital en el celular"
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
