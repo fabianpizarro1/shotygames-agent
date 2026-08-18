@@ -93,6 +93,14 @@ const pages = [
     type: "product",
   },
   {
+    route: "/landing/emparejados-imprimible",
+    title: "Emparejados — 72 cartas imprimibles para parejas | ShotyGames Ecuador",
+    description:
+      "72 cartas de Conexión, Deseo y Diversión listas para imprimir hoy. También incluye la versión digital y la Guía de 30 Posiciones gratis. $6.90, pago único.",
+    image: resolveImage("src/assets/emparejados-hero-imprimible.jpg"),
+    type: "product",
+  },
+  {
     route: "/landing/emparejados-internacional",
     title: "Emparejados Internacional - Juego Digital para Parejas | ShotyGames",
     description:
