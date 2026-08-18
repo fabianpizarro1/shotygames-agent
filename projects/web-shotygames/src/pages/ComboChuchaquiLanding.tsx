@@ -373,6 +373,7 @@ const ComboChuchaquiLanding = () => {
         productId="chuchaqui"
         upsells={[]}
         isCombo={true}
+        incluyeShotBidu={true}
         comboIncludes={comboIncludes}
         originalPrice={105}
       />

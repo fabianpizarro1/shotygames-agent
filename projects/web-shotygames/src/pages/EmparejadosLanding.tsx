@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
-  ShoppingCart, Gift, Heart, Sparkles, Zap, Clock, Printer, Timer,
+  ShoppingCart, Gift, Heart, Sparkles, Clock, Printer, Timer,
   Smartphone, MessageCircle, KeyRound, CheckCircle2, Infinity as InfinityIcon, Star,
 } from "lucide-react";
 import { CheckoutModal } from "@/components/CheckoutModal";
@@ -15,7 +15,9 @@ import portadaImage from "@/assets/emparejados-portada.jpg";
 import conexionImage from "@/assets/emparejados-conexion.jpg";
 import deseoImage from "@/assets/emparejados-deseo.jpg";
 import diversionImage from "@/assets/emparejados-diversion.jpg";
-import productImage1 from "@/assets/emparejados-prod-1.webp";
+import impresasCortando from "@/assets/emparejados-impresas-cortando.jpg";
+import impresasMesa from "@/assets/emparejados-impresas-mesa.jpg";
+import impresasMano from "@/assets/emparejados-impresas-mano.jpg";
 import ebookImage from "@/assets/ebook-30-posiciones.webp";
 import appCrono from "@/assets/emparejados-app-crono.webp";
 import appBarajea from "@/assets/emparejados-app-barajea.webp";
@@ -34,6 +36,18 @@ import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/torre-picante.jpg";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
+
+/*
+  RESEÑAS ESPECÍFICAS DE EMPAREJADOS.
+
+  Hoy está vacío a propósito: las capturas que tenemos en /assets son de
+  clientes de la marca (torres, envíos), no de gente hablando de Emparejados.
+  Meterlas bajo un título tipo "esto dicen quienes ya jugaron Emparejados"
+  sería mentir. Cuando tengas capturas REALES de conversaciones sobre
+  Emparejados: guárdalas en src/assets, impórtalas y agrégalas acá.
+  La sección se renderiza sola en cuanto este array tenga elementos.
+*/
+const resenasEmparejados: { img: string; alt: string }[] = [];
 
 const EmparejadosLanding = () => {
   const productName = "Emparejados";
@@ -94,8 +108,8 @@ const EmparejadosLanding = () => {
       titulo: "Conexión",
       color: "#d63384",
       emoji: "💗",
-      desc: "Preguntas que abren conversaciones que nunca tuvieron.",
-      ejemplo: "Dile una fantasía romántica que no hayas vivido.",
+      desc: "Preguntas que abren conversaciones que normalmente no tienen.",
+      ejemplo: "Dile una fantasía romántica que aún no hayas vivido.",
     },
     {
       img: deseoImage,
@@ -110,41 +124,70 @@ const EmparejadosLanding = () => {
       titulo: "Diversión",
       color: "#0077b6",
       emoji: "🎯",
-      desc: "Dinámicas para reír juntos y romper el hielo.",
+      desc: "Dinámicas para reír juntos y romper la rutina.",
       ejemplo: "Elige una canción y tu pareja deberá bailarla.",
     },
   ];
 
+  // Los textos tienen que coincidir con el flujo real: el pedido entra por el
+  // formulario, se coordina el pago por WhatsApp y el acceso se manda cuando
+  // el pago está confirmado. No es entrega automática — no prometer "inmediato".
   const pasosEntrega = [
     { icon: ShoppingCart, titulo: "Haces tu pedido", desc: "Llenas el formulario acá. Toma menos de 1 minuto." },
     { icon: MessageCircle, titulo: "Te escribo por WhatsApp", desc: "Te llega el resumen del pedido y los datos para pagar." },
-    { icon: KeyRound, titulo: "Pagas y recibes todo", desc: "Link del juego, tu clave, el PDF imprimible y las instrucciones de acceso." },
+    { icon: KeyRound, titulo: "Pagas y te mando el acceso", desc: "Apenas confirmo el pago te llega el link, tu clave, el PDF imprimible y las instrucciones." },
     { icon: Smartphone, titulo: "Lo guardas y juegan", desc: "Lo guardas en tu dispositivo y ya pueden jugar sin conexión." },
   ];
 
+  const ventajasDigital = [
+    {
+      img: appCrono,
+      icon: Timer,
+      titulo: "Cronómetro adentro",
+      desc: 'Cuando la carta dice "por 5 minutos", el cronómetro está dentro del juego. No hay que salir a buscar el reloj del celular.',
+      alt: "Carta de Deseo con el botón Iniciar Cronómetro dentro del juego",
+    },
+    {
+      img: appBarajea,
+      icon: Sparkles,
+      titulo: "Nunca sale en el mismo orden",
+      desc: "Las 72 cartas se mezclan solas cada vez que juegan, así que la décima partida no se siente como la primera.",
+      alt: "Pantalla del juego barajeando las cartas",
+    },
+    {
+      img: appGuia,
+      icon: Gift,
+      titulo: "El regalo ya viene adentro",
+      desc: "La Guía de 30 Posiciones se descarga con un botón desde el mismo juego. No tienes que pedirla ni esperarla.",
+      alt: "Pantalla principal del juego con el botón para descargar la Guía de 30 Posiciones",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Seo
         title="Emparejados — 72 cartas para jugar en pareja | ShotyGames Ecuador"
-        description="72 cartas de Conexión, Deseo y Diversión. Lo juegas desde el celular y además lo puedes imprimir. Acceso inmediato por $6.90."
+        description={`72 cartas de Conexión, Deseo y Diversión. Lo juegas desde el celular y además lo puedes imprimir. Lo recibes en minutos por $${productPrice.toFixed(2)}.`}
         canonical="https://www.shotygames.com/landing/emparejados"
         image={`https://www.shotygames.com${portadaImage}`}
         type="product"
       />
 
-      {/* ── Barra fija ─────────────────────────────────────────────── */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-primary text-primary-foreground py-2.5 px-3 shadow-lg">
+      {/* ── Barra de beneficios ───────────────────────────────────────
+          Ya NO es fixed: se ve al entrar y se va con el scroll. En móvil
+          el CTA de abajo es el que tiene que quedarse, no dos barras. */}
+      <div className="bg-primary text-primary-foreground py-2.5 px-3">
         <div className="flex items-center justify-center gap-x-5 gap-y-1 flex-wrap text-xs sm:text-sm font-semibold">
-          <span className="flex items-center gap-1.5"><Zap className="w-4 h-4" /> Acceso inmediato</span>
+          <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Lo recibes en minutos</span>
           <span className="flex items-center gap-1.5"><Printer className="w-4 h-4" /> También lo imprimes</span>
           <span className="flex items-center gap-1.5"><Gift className="w-4 h-4" /> Guía de regalo</span>
         </div>
       </div>
 
-      <div className="pt-14">
+      <div>
         {/* ── 1. HERO ──────────────────────────────────────────────── */}
-        <section className="px-4 py-8 md:py-14 max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+        <section className="px-4 py-7 md:py-14 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-7 md:gap-12 items-center">
             {/* Carrusel de imágenes — se entiende qué es en 1 segundo */}
             <div className="order-1 md:order-1">
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-2xl">
@@ -178,24 +221,23 @@ const EmparejadosLanding = () => {
             </div>
 
             {/* Copy + precio */}
-            <div className="order-2 md:order-2 space-y-5">
+            <div className="order-2 md:order-2 space-y-4">
               <Badge variant="secondary" className="text-xs">
                 <Heart className="w-3.5 h-3.5 mr-1.5" /> Juego digital para parejas
               </Badge>
 
               <h1 className="font-display font-bold leading-tight">
-                <span className="block text-4xl sm:text-5xl lg:text-6xl text-primary mb-2">
+                <span className="block text-4xl sm:text-5xl lg:text-6xl text-primary mb-1.5">
                   Emparejados
                 </span>
-                <span className="block text-2xl sm:text-3xl lg:text-4xl">
+                <span className="block text-[1.6rem] leading-snug sm:text-3xl lg:text-4xl">
                   72 cartas para que esta noche no sea igual a las anteriores
                 </span>
               </h1>
 
-              <p className="text-lg text-muted-foreground">
-                Conexión, Deseo y Diversión. Lo abren en el celular y ya están jugando —
-                sin instalar nada, sin esperar que llegue nada. Y lo pueden guardar en su
-                dispositivo para jugar sin conexión.
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Conexión, Deseo y Diversión. Lo abren en el celular y ya están jugando.
+                No hay que instalar nada ni esperar que llegue nada.
               </p>
 
               <div className="bg-muted/50 rounded-2xl p-5 border-2 border-primary/20">
@@ -211,21 +253,21 @@ const EmparejadosLanding = () => {
                   LO QUIERO AHORA
                 </Button>
                 <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
-                  <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Acceso inmediato</span>
+                  <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Lo recibes en minutos</span>
                   <span className="flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Uso ilimitado</span>
                 </div>
               </div>
 
               <p className="text-sm text-muted-foreground">
-                +3.500 clientes ya compraron en ShotyGames 🇪🇨
+                +800 parejas ya están jugando Emparejados 🇪🇨
               </p>
             </div>
           </div>
         </section>
 
         {/* ── 2. EL PROBLEMA ───────────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 bg-muted/30">
-          <div className="max-w-2xl mx-auto text-center space-y-5">
+        <section className="px-4 py-12 md:py-16 bg-muted/30">
+          <div className="max-w-2xl mx-auto text-center space-y-4">
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
               Se sientan en el sofá. Cada uno con su celular. Otra vez.
             </h2>
@@ -239,193 +281,215 @@ const EmparejadosLanding = () => {
           </div>
         </section>
 
-        {/* ── 3. LAS 3 CATEGORÍAS ──────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 max-w-6xl mx-auto">
-          <div className="text-center mb-10 md:mb-14">
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-              72 cartas, 3 intensidades
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Ustedes deciden hasta dónde llegar. La carta solo propone.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {categorias.map((c) => (
-              <Card key={c.titulo} className="overflow-hidden">
-                <div className="aspect-[2/3] bg-muted">
-                  <img
-                    src={c.img}
-                    alt={`Cartas de la categoría ${c.titulo}`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-                <CardContent className="pt-5 pb-6">
-                  <h3 className="font-bold text-lg mb-2" style={{ color: c.color }}>
-                    {c.emoji} {c.titulo.toUpperCase()}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">{c.desc}</p>
-                  <div className="rounded-lg bg-muted/60 px-3 py-2.5 border-l-2" style={{ borderColor: c.color }}>
-                    <p className="text-xs text-muted-foreground mb-0.5">Ejemplo real:</p>
-                    <p className="text-sm italic">"{c.ejemplo}"</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* ── 3b. VIDEO DEMO — prueba de que el juego existe ───────── */}
-        <section className="px-4 pb-14 md:pb-20 max-w-5xl mx-auto">
-          <div className="bg-muted/30 rounded-2xl md:rounded-3xl px-4 py-10 md:p-12">
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-              <div className="mx-auto w-full max-w-[240px] sm:max-w-[270px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border">
-                <video
-                  src={demoVideo}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="none"
-                  poster={appBarajea}
-                  className="w-full h-full object-cover"
-                  aria-label="Emparejados funcionando en un celular: barajear y sacar cartas"
-                />
-              </div>
-
-              <div className="text-center md:text-left space-y-4">
-                <Badge variant="secondary" className="text-xs">
-                  <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Video real
-                </Badge>
-                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
-                  Así se ve funcionando
-                </h2>
-                <p className="text-muted-foreground text-lg">
-                  Sin edición ni maquetas: es el juego corriendo en un celular.
-                  Barajeas, sacas una carta, cumples el reto. Eso es todo lo que hay que aprender.
-                </p>
-                <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full sm:w-auto">
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  LO QUIERO AHORA
-                </Button>
-              </div>
+        {/* ── 3. VIDEO REAL — sube apenas después del problema ─────── */}
+        <section className="px-4 py-12 md:py-16 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-7 md:gap-12 items-center">
+            <div className="mx-auto w-full max-w-[220px] sm:max-w-[260px] rounded-3xl overflow-hidden shadow-2xl ring-1 ring-border">
+              <video
+                src={demoVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="none"
+                poster={appBarajea}
+                className="w-full h-full object-cover"
+                aria-label="Emparejados funcionando en un celular: barajear y sacar cartas"
+              />
             </div>
-          </div>
-        </section>
 
-        {/* ── 4. POR QUÉ DIGITAL GANA ──────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 bg-muted/30">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-10 md:mb-14">
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-                Lo que un mazo de cartas no puede hacer
+            <div className="text-center md:text-left space-y-4">
+              <Badge variant="secondary" className="text-xs">
+                <Smartphone className="w-3.5 h-3.5 mr-1.5" /> Video real
+              </Badge>
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
+                Así se ve funcionando
               </h2>
+              <p className="text-muted-foreground text-lg">
+                Es el juego real corriendo en un celular. Barajeas, sacas una carta
+                y cumplen el reto. No hay nada complicado que aprender.
+              </p>
+              <Button onClick={handleBuyClick} size="lg" variant="hero" className="w-full sm:w-auto">
+                <ShoppingCart className="mr-2 h-5 w-5" />
+                LO QUIERO AHORA
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 4. LAS 3 CATEGORÍAS (compacto) ───────────────────────────
+            Antes cada categoría se comía casi una pantalla. Ahora: carrusel
+            horizontal en móvil, 3 columnas en desktop. */}
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="px-4 max-w-6xl mx-auto">
+            <div className="text-center mb-7 md:mb-10">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+                72 cartas. 3 formas de cambiar la noche.
+              </h2>
+              <p className="text-muted-foreground">
+                Ustedes deciden hasta dónde llegar. La carta solo propone.
+              </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  img: appCrono,
-                  icon: Timer,
-                  titulo: "Cronómetro adentro",
-                  desc: 'Cuando la carta dice "durante 3 rondas" o "por 5 minutos", el juego te pone el cronómetro ahí mismo. No hay que buscar el reloj del celular y cortar el momento.',
-                  alt: "Carta de Deseo con el botón Iniciar Cronómetro dentro del juego",
-                },
-                {
-                  img: appBarajea,
-                  icon: Sparkles,
-                  titulo: "Nunca sale en el mismo orden",
-                  desc: "Barajan de nuevo cada vez que juegan. Las 72 cartas se mezclan solas, así que la décima partida no se siente como la primera.",
-                  alt: "Pantalla del juego barajeando las cartas",
-                },
-                {
-                  img: appGuia,
-                  icon: Gift,
-                  titulo: "El regalo ya viene adentro",
-                  desc: "La Guía de 30 Posiciones se descarga con un botón desde el mismo juego. No tienes que pedirla ni esperar que alguien te la mande.",
-                  alt: "Pantalla principal del juego con el botón para descargar la Guía de 30 Posiciones",
-                },
-              ].map((f) => (
-                <Card key={f.titulo} className="overflow-hidden">
-                  <div className="bg-[#0d0d0d] flex justify-center pt-5 px-5">
+            <div
+              className="flex gap-4 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-2 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:mx-0 md:px-0 md:pb-0 max-w-5xl md:mx-auto [&::-webkit-scrollbar]:hidden"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {categorias.map((c) => (
+                <Card
+                  key={c.titulo}
+                  className="overflow-hidden shrink-0 w-[74vw] max-w-[300px] snap-center md:w-auto md:max-w-none"
+                >
+                  <div className="aspect-[3/4] bg-muted">
                     <img
-                      src={f.img}
-                      alt={f.alt}
-                      className="w-full max-w-[190px] rounded-t-xl shadow-2xl"
+                      src={c.img}
+                      alt={`Carta de la categoría ${c.titulo}`}
+                      className="w-full h-full object-cover"
                       loading="lazy"
                     />
                   </div>
-                  <CardContent className="pt-5 pb-6">
-                    <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                      <f.icon className="w-5 h-5 text-primary" />
+                  <CardContent className="pt-4 pb-5">
+                    <h3 className="font-bold text-base mb-1.5" style={{ color: c.color }}>
+                      {c.emoji} {c.titulo.toUpperCase()}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
+                    <div className="rounded-lg bg-muted/60 px-3 py-2 border-l-2" style={{ borderColor: c.color }}>
+                      <p className="text-[0.7rem] text-muted-foreground mb-0.5">Ejemplo real:</p>
+                      <p className="text-sm italic">"{c.ejemplo}"</p>
                     </div>
-                    <h3 className="font-bold text-lg mb-2">{f.titulo}</h3>
-                    <p className="text-sm text-muted-foreground">{f.desc}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <p className="text-center text-xs text-muted-foreground mt-6">
-              Capturas reales del juego, no ilustraciones
+            <p className="text-center text-xs text-muted-foreground mt-4 md:hidden">
+              Desliza para ver las tres →
             </p>
           </div>
         </section>
 
-        {/* ── 5. EL PDF IMPRIMIBLE (mecanismo único) ───────────────── */}
-        <section className="px-4 py-14 md:py-20 max-w-5xl mx-auto">
-          <Card className="overflow-hidden border-2 border-primary/30">
+        {/* ── 5. POR QUÉ DIGITAL GANA ──────────────────────────────────
+            En móvil cada bloque es una fila compacta (captura chica a la
+            izquierda), en desktop se mantienen las 3 tarjetas. */}
+        <section className="px-4 py-12 md:py-16 max-w-5xl mx-auto">
+          <div className="text-center mb-7 md:mb-10">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold">
+              Lo que un mazo de cartas no puede hacer
+            </h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3 md:gap-6">
+            {ventajasDigital.map((f) => (
+              <Card key={f.titulo} className="overflow-hidden flex md:block">
+                <div className="bg-[#0d0d0d] flex justify-center items-end shrink-0 w-28 md:w-full pt-4 px-3 md:pt-5 md:px-5">
+                  <img
+                    src={f.img}
+                    alt={f.alt}
+                    className="w-full max-w-[170px] rounded-t-lg md:rounded-t-xl shadow-2xl"
+                    loading="lazy"
+                  />
+                </div>
+                <CardContent className="p-4 md:pt-5 md:pb-6 md:px-6 flex flex-col justify-center">
+                  <div className="hidden md:flex w-11 h-11 rounded-full bg-primary/10 items-center justify-center mb-3">
+                    <f.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-base md:text-lg mb-1.5 flex items-start gap-2">
+                    <f.icon className="w-4 h-4 mt-1 shrink-0 text-primary md:hidden" />
+                    {f.titulo}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{f.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground mt-5">
+            Capturas reales del juego, no ilustraciones
+          </p>
+        </section>
+
+        {/* ── 6. EL PDF IMPRIMIBLE ─────────────────────────────────── */}
+        <section className="px-4 py-12 md:py-16 bg-muted/30">
+          <Card className="overflow-hidden border-2 border-primary/30 max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2">
-              {/*
-                SLOT PARA LA FOTO REAL DE LAS CARTAS IMPRESAS.
-                Cuando tengas la foto: guárdala como
-                src/assets/emparejados-cartas-impresas.webp, impórtala arriba
-                y reemplaza `productImage1` por ese import en el <img> de abajo.
-              */}
-              {/* La imagen es 2:3 vertical — en móvil el contenedor tiene que
-                  ser vertical también, si no se recorta media foto */}
-              <div className="aspect-[4/5] md:aspect-auto bg-muted">
+              {/* Foto principal: el proceso real (hoja A4 + tijera + cartas
+                  cortadas). En móvil respeta su proporción nativa 4/5; en
+                  desktop se estira a la altura de la columna de texto para que
+                  no queden 500px de vacío al lado. */}
+              <div className="aspect-[4/5] md:aspect-auto md:h-full bg-muted">
                 <img
-                  src={productImage1}
-                  alt="Las 72 cartas de Emparejados impresas en casa"
+                  src={impresasCortando}
+                  alt="La hoja A4 con las cartas de Emparejados recién impresas, una tijera y las primeras cartas ya recortadas"
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
               </div>
 
-              <CardContent className="p-6 md:p-10 flex flex-col justify-center">
-                <Badge className="w-fit mb-4 bg-primary text-primary-foreground">
+              <CardContent className="p-6 md:p-9 flex flex-col justify-center">
+                <Badge className="w-fit mb-3 bg-primary text-primary-foreground">
                   <Printer className="w-3.5 h-3.5 mr-1.5" /> INCLUIDO
                 </Badge>
-                <h2 className="font-display text-2xl md:text-3xl font-bold mb-4 leading-snug">
+                <h2 className="font-display text-2xl md:text-3xl font-bold mb-3 leading-snug">
                   Es digital. Pero si quieren, lo tienen en la mano.
                 </h2>
-                <p className="text-muted-foreground mb-4">
-                  Con tu compra te mando también el <strong className="text-foreground">PDF imprimible
-                  de las 72 cartas</strong>, listo para imprimir en hojas A4 y cortar en casa.
-                  Frente y dorso, 9 cartas por hoja, con las instrucciones incluidas.
+                <p className="text-muted-foreground mb-3">
+                  Con tu compra también recibes el <strong className="text-foreground">PDF imprimible
+                  de las 72 cartas</strong>: frente y dorso, 9 cartas por hoja A4, listo para
+                  imprimir y cortar en casa.
                 </p>
-                <p className="text-muted-foreground">
-                  Así lo juegan del celular cuando están en la cama, y lo juegan con las
-                  cartas físicas cuando quieren algo más real. Los dos formatos, un solo precio.
+                <p className="text-muted-foreground mb-5">
+                  Juéguenlo desde el celular cuando quieran algo rápido. Impriman las cartas
+                  cuando prefieran tenerlas en la mano. Los dos formatos vienen incluidos.
                 </p>
+
+                <ul className="space-y-2.5 mb-5">
+                  {[
+                    "Lo juegan desde el celular, sin instalar nada",
+                    "Lo imprimen en hojas A4 y lo cortan en casa",
+                    "Se queda guardado: es suyo, no se vence",
+                  ].map((t) => (
+                    <li key={t} className="flex items-start gap-2.5 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Las dos fotos del resultado ya impreso */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={impresasMesa}
+                      alt="Las cartas de Conexión, Deseo y Diversión impresas sobre la mesa junto a dos copas de vino"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={impresasMano}
+                      alt="Una carta de Diversión impresa sostenida en la mano, con el mazo al fondo"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </div>
               </CardContent>
             </div>
           </Card>
         </section>
 
-        {/* ── 6. QUÉ RECIBES ───────────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 bg-muted/30">
+        {/* ── 7. QUÉ RECIBES ───────────────────────────────────────── */}
+        <section className="px-4 py-12 md:py-16">
           <div className="max-w-2xl mx-auto">
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-7 md:mb-10">
               Qué recibes exactamente
             </h2>
 
             <Card className="shadow-xl">
-              <CardContent className="p-6 md:p-8">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+              <CardContent className="p-5 md:p-8">
+                <div className="space-y-3.5">
+                  <div className="flex items-start justify-between gap-4 pb-3.5 border-b">
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
@@ -433,10 +497,10 @@ const EmparejadosLanding = () => {
                         <p className="text-sm text-muted-foreground">Conexión, Deseo y Diversión, con cronómetro</p>
                       </div>
                     </div>
-                    <span className="text-muted-foreground line-through whitespace-nowrap">$15.00</span>
+                    <span className="text-muted-foreground line-through whitespace-nowrap">${originalPrice.toFixed(2)}</span>
                   </div>
 
-                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                  <div className="flex items-start justify-between gap-4 pb-3.5 border-b">
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
@@ -447,7 +511,7 @@ const EmparejadosLanding = () => {
                     <span className="text-primary font-semibold whitespace-nowrap">Incluido</span>
                   </div>
 
-                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                  <div className="flex items-start justify-between gap-4 pb-3.5 border-b">
                     <div className="flex items-start gap-3">
                       <img src={ebookImage} alt="Guía de 30 Posiciones" className="w-10 h-14 object-cover rounded shadow flex-shrink-0" loading="lazy" />
                       <div>
@@ -461,7 +525,7 @@ const EmparejadosLanding = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start justify-between gap-4 pb-4 border-b">
+                  <div className="flex items-start justify-between gap-4 pb-3.5 border-b">
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
@@ -472,19 +536,17 @@ const EmparejadosLanding = () => {
                     <span className="text-primary font-semibold whitespace-nowrap">Incluido</span>
                   </div>
 
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold">Acceso de por vida</p>
-                        <p className="text-sm text-muted-foreground">Sin suscripción, sin límite de veces</p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold">Acceso de por vida</p>
+                      <p className="text-sm text-muted-foreground">Sin suscripción, sin límite de veces</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-6 border-t-2 border-primary/20">
-                  <div className="flex items-baseline justify-between mb-5">
+                <div className="mt-5 pt-5 border-t-2 border-primary/20">
+                  <div className="flex items-baseline justify-between mb-4">
                     <span className="text-lg font-semibold">Hoy pagas</span>
                     <span className="text-4xl font-bold text-primary">${productPrice.toFixed(2)}</span>
                   </div>
@@ -498,10 +560,68 @@ const EmparejadosLanding = () => {
           </div>
         </section>
 
-        {/* ── 7. CÓMO LO RECIBES ───────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 max-w-5xl mx-auto">
-          <div className="text-center mb-10 md:mb-14">
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+        {/* ── 8. PRUEBA SOCIAL ─────────────────────────────────────────
+            Dos cosas distintas y separadas a propósito:
+            a) prueba de MARCA (capturas reales de clientes de ShotyGames);
+            b) prueba de PRODUCTO (reseñas de Emparejados) — solo se muestra
+               cuando el array `resenasEmparejados` tenga capturas reales. */}
+        <section className="px-4 py-12 md:py-16 bg-muted/30">
+          <div className="max-w-5xl mx-auto space-y-12">
+            {resenasEmparejados.length > 0 && (
+              <div>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-7">
+                  Esto dicen quienes ya jugaron Emparejados
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+                  {resenasEmparejados.map((r) => (
+                    <div key={r.alt} className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg bg-muted">
+                      <img src={r.img} alt={r.alt} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <div className="text-center mb-6 md:mb-8">
+                <div className="flex items-center justify-center gap-1.5 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 md:w-6 md:h-6 fill-primary text-primary" />
+                  ))}
+                </div>
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+                  +800 parejas ya están jugando Emparejados
+                </h2>
+                {/* Framing honesto: las capturas de abajo son de clientes de la
+                    marca (productos físicos), no reseñas de Emparejados. Por eso
+                    el subtítulo aclara de qué son. No inventar testimonios. */}
+                <p className="text-muted-foreground">
+                  Y +3.500 clientes ya compraron en ShotyGames — estas son capturas reales de sus mensajes 🇪🇨
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
+                {[testimonial1, testimonial2, testimonial3, testimonial4, testimonial5, testimonial6].map((src, i) => (
+                  <div key={i} className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg bg-muted">
+                    <img
+                      src={src}
+                      alt={`Captura real de conversación con un cliente de ShotyGames (${i + 1} de 6)`}
+                      width={945}
+                      height={1181}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 9. CÓMO TE LLEGA ─────────────────────────────────────── */}
+        <section className="px-4 py-12 md:py-16 max-w-5xl mx-auto">
+          <div className="text-center mb-7 md:mb-10">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
               Cómo te llega
             </h2>
             <p className="text-muted-foreground text-lg">
@@ -509,17 +629,17 @@ const EmparejadosLanding = () => {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {pasosEntrega.map((p, i) => (
               <Card key={p.titulo} className="relative">
-                <CardContent className="pt-6 pb-6">
-                  <div className="absolute top-4 right-4 text-3xl font-bold text-primary/15">
+                <CardContent className="pt-5 pb-5">
+                  <div className="absolute top-3 right-4 text-3xl font-bold text-primary/15">
                     {i + 1}
                   </div>
-                  <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                     <p.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="font-bold mb-2">{p.titulo}</h3>
+                  <h3 className="font-bold mb-1.5">{p.titulo}</h3>
                   <p className="text-sm text-muted-foreground">{p.desc}</p>
                 </CardContent>
               </Card>
@@ -527,49 +647,10 @@ const EmparejadosLanding = () => {
           </div>
         </section>
 
-        {/* ── 7b. RESEÑAS REALES ───────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 bg-muted/30">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-8 md:mb-12">
-              <div className="flex items-center justify-center gap-1.5 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 md:w-7 md:h-7 fill-primary text-primary" />
-                ))}
-              </div>
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-                +3.500 clientes en ShotyGames
-              </h2>
-              {/* Framing honesto: son capturas reales de clientes de la marca,
-                  no reseñas específicas de Emparejados. No inventar testimonios. */}
-              <p className="text-muted-foreground">
-                Capturas reales de clientes que ya compraron con nosotros 🇪🇨
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
-              {[testimonial1, testimonial2, testimonial3, testimonial4, testimonial5, testimonial6].map((src, i) => (
-                <div
-                  key={i}
-                  className="aspect-[4/5] rounded-lg overflow-hidden shadow-lg bg-muted"
-                >
-                  <img
-                    src={src}
-                    alt={`Captura real de conversación con un cliente de ShotyGames (${i + 1} de 6)`}
-                    width={945}
-                    height={1181}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── 8. FAQ ───────────────────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 bg-muted/30">
+        {/* ── 10. FAQ ──────────────────────────────────────────────── */}
+        <section className="px-4 py-12 md:py-16 bg-muted/30">
           <div className="max-w-3xl mx-auto">
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-7 md:mb-10">
               Preguntas frecuentes
             </h2>
 
@@ -580,7 +661,7 @@ const EmparejadosLanding = () => {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   Después de hacer el pedido te escribo por WhatsApp con los datos para pagar.
-                  Apenas confirmas el pago te mando el link del juego, tu clave y el PDF imprimible.
+                  Apenas confirmo el pago te mando el link del juego, tu clave y el PDF imprimible.
                   El correo que pones en el formulario es el usuario con el que vas a entrar al juego.
                 </AccordionContent>
               </AccordionItem>
@@ -601,9 +682,8 @@ const EmparejadosLanding = () => {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   No. Puedes guardarlo en tu dispositivo y jugar sin conexión.
-                  <br /><br />
-                  Con tu compra te mando un PDF con las instrucciones de acceso y un
-                  mini tutorial para guardarlo, paso a paso. Toma menos de un minuto.
+                  Con tu compra va un PDF con las instrucciones de acceso y un mini tutorial
+                  para guardarlo, paso a paso. Toma menos de un minuto.
                 </AccordionContent>
               </AccordionItem>
 
@@ -628,6 +708,26 @@ const EmparejadosLanding = () => {
                 </AccordionContent>
               </AccordionItem>
 
+              <AccordionItem value="q6" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿Lo pago una vez o es suscripción?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Una sola vez. Pagas los ${productPrice.toFixed(2)} y el acceso es tuyo,
+                  sin cobros mensuales ni límite de partidas.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="q7" className="bg-background rounded-xl px-5 border">
+                <AccordionTrigger className="text-left font-semibold">
+                  ¿El acceso caduca?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  No. El acceso es de por vida y lo puedes usar las veces que quieras.
+                  Además, si lo guardas en tu dispositivo, lo tienes ahí aunque estés sin internet.
+                </AccordionContent>
+              </AccordionItem>
+
               <AccordionItem value="q5" className="bg-background rounded-xl px-5 border">
                 <AccordionTrigger className="text-left font-semibold">
                   ¿Es discreto?
@@ -637,32 +737,22 @@ const EmparejadosLanding = () => {
                   ni nadie ve qué compraste. Todo el proceso es entre tú y yo por WhatsApp.
                 </AccordionContent>
               </AccordionItem>
-
-              <AccordionItem value="q6" className="bg-background rounded-xl px-5 border">
-                <AccordionTrigger className="text-left font-semibold">
-                  ¿Lo pago una vez o es suscripción?
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
-                  Una sola vez. Pagas los $6.90 y el acceso es tuyo para siempre,
-                  sin cobros mensuales ni límite de partidas.
-                </AccordionContent>
-              </AccordionItem>
             </Accordion>
           </div>
         </section>
 
-        {/* ── 9. CTA FINAL ─────────────────────────────────────────── */}
-        <section className="px-4 py-14 md:py-20 max-w-3xl mx-auto">
+        {/* ── 11. CTA FINAL ────────────────────────────────────────── */}
+        <section className="px-4 py-12 md:py-16 max-w-3xl mx-auto">
           <Card className="bg-gradient-to-br from-primary via-primary to-primary/85 text-primary-foreground shadow-2xl">
-            <CardContent className="p-8 md:p-12 text-center space-y-6">
-              <h2 className="font-display text-3xl md:text-4xl font-bold leading-snug">
-                Pueden seguir con el celular cada uno por su lado
+            <CardContent className="p-7 md:p-12 text-center space-y-5">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-snug">
+                Pueden seguir cada uno en su celular.
               </h2>
               <p className="text-lg opacity-90">
-                O en cinco minutos estar sacando la primera carta.
+                O sacar la primera carta esta noche.
               </p>
 
-              <div className="py-2">
+              <div className="py-1">
                 <div className="text-xl line-through opacity-70">${originalPrice.toFixed(2)}</div>
                 <div className="text-6xl font-bold my-1">${productPrice.toFixed(2)}</div>
                 <p className="opacity-90">+ PDF imprimible + Guía de 30 Posiciones gratis</p>
@@ -679,7 +769,7 @@ const EmparejadosLanding = () => {
               </Button>
 
               <p className="text-sm opacity-80 flex items-center justify-center gap-4 flex-wrap">
-                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Acceso inmediato</span>
+                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> Acceso apenas confirmo tu pago</span>
                 <span className="flex items-center gap-1"><InfinityIcon className="w-4 h-4" /> Uso ilimitado</span>
               </p>
             </CardContent>
@@ -689,10 +779,10 @@ const EmparejadosLanding = () => {
 
       {/* ── Sticky móvil ───────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur border-t shadow-2xl">
-        <div className="px-3 py-2.5 flex items-center gap-3">
-          <img src={portadaImage} alt="Emparejados" className="w-10 h-10 rounded object-cover flex-shrink-0" />
+        <div className="px-3 py-2 flex items-center gap-2.5">
+          <img src={portadaImage} alt="Emparejados" className="w-9 h-9 rounded object-cover flex-shrink-0" />
           <div className="flex-shrink-0 leading-tight">
-            <div className="text-xs text-muted-foreground line-through">${originalPrice.toFixed(2)}</div>
+            <div className="text-[0.65rem] text-muted-foreground line-through">${originalPrice.toFixed(2)}</div>
             <div className="text-base font-bold text-primary">${productPrice.toFixed(2)}</div>
           </div>
           <Button onClick={handleBuyClick} size="sm" variant="hero" className="flex-1 min-w-0">

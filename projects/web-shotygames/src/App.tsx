@@ -18,6 +18,8 @@ const TorreParejasLanding = lazyWithRetry(() => import("./pages/TorreParejasLand
 const PartyshotsLanding = lazyWithRetry(() => import("./pages/PartyshotsLanding"));
 const EnganchadosLanding = lazyWithRetry(() => import("./pages/EnganchadosLanding"));
 const EmparejadosLanding = lazyWithRetry(() => import("./pages/EmparejadosLanding"));
+const EmparejadosV2Landing = lazyWithRetry(() => import("./pages/EmparejadosV2Landing"));
+const EmparejadosImprimibleLanding = lazyWithRetry(() => import("./pages/EmparejadosImprimibleLanding"));
 const EmparejadosInternacionalLanding = lazyWithRetry(() => import("./pages/EmparejadosInternacionalLanding"));
 const DadosDigitalesLanding = lazyWithRetry(() => import("./pages/DadosDigitalesLanding"));
 const PromoHoyLanding = lazyWithRetry(() => import("./pages/PromoHoyLanding"));
@@ -25,6 +27,7 @@ const ComboTorresLanding = lazyWithRetry(() => import("./pages/ComboTorresLandin
 const TresTorresLanding = lazyWithRetry(() => import("./pages/TresTorresLanding"));
 const ComboChuchaquiLanding = lazyWithRetry(() => import("./pages/ComboChuchaquiLanding"));
 const ComboLaPreviaLanding = lazyWithRetry(() => import("./pages/ComboLaPreviaLanding"));
+const ComboParejasLanding = lazyWithRetry(() => import("./pages/ComboParejasLanding"));
 const Ebook25JuegosLanding = lazyWithRetry(() => import("./pages/Ebook25JuegosLanding"));
 const GuiaPlacerLanding = lazyWithRetry(() => import("./pages/GuiaPlacerLanding"));
 const ConfirmacionContraentrega = lazyWithRetry(() => import("./pages/ConfirmacionContraentrega"));
@@ -57,6 +60,8 @@ const App = () => (
         <Route path="/landing/partyshots" element={<PartyshotsLanding />} />
         <Route path="/landing/enganchados" element={<EnganchadosLanding />} />
         <Route path="/landing/emparejados" element={<EmparejadosLanding />} />
+          <Route path="/landing/emparejados-v2" element={<EmparejadosV2Landing />} />
+          <Route path="/landing/emparejados-imprimible" element={<EmparejadosImprimibleLanding />} />
           <Route path="/landing/emparejados-internacional" element={<EmparejadosInternacionalLanding />} />
           <Route path="/landing/dados-digitales" element={<DadosDigitalesLanding />} />
           <Route path="/landing/promo-hoy" element={<PromoHoyLanding />} />
@@ -64,6 +69,7 @@ const App = () => (
           <Route path="/landing/3-torres" element={<TresTorresLanding />} />
           <Route path="/landing/combo-chuchaqui" element={<ComboChuchaquiLanding />} />
           <Route path="/landing/combo-la-previa" element={<ComboLaPreviaLanding />} />
+          <Route path="/landing/combo-parejas" element={<ComboParejasLanding />} />
           <Route path="/landing/25-juegos-fiestas" element={<Ebook25JuegosLanding />} />
           <Route path="/landing/guia-del-placer" element={<GuiaPlacerLanding />} />
           <Route path="/producto/:id" element={<ProductDetail />} />

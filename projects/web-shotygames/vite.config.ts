@@ -15,4 +15,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // El manifest resuelve "src/assets/foo.webp" -> "/assets/foo-<hash>.webp":
+  // scripts/prerender-seo.mjs lo usa para armar el og:image real de cada
+  // landing sin tener que hardcodear hashes que cambian en cada build.
+  build: {
+    manifest: true,
+  },
 }));

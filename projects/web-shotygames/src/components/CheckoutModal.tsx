@@ -32,7 +32,7 @@ interface CheckoutModalProps {
   productName: string;
   productPrice: number;
   productImage: string;
-  productId?: 'torreNormal' | 'torrePicante' | 'torreParejas' | 'enganchados' | 'emparejados' | 'dadosDigitales' | 'partyshots' | 'promo-hoy' | 'torres' | 'chuchaqui' | 'previa' | 'ebook-25-juegos' | 'guia-placer';
+  productId?: 'torreNormal' | 'torrePicante' | 'torreParejas' | 'enganchados' | 'emparejados' | 'dadosDigitales' | 'partyshots' | 'promo-hoy' | 'torres' | 'chuchaqui' | 'previa' | 'ebook-25-juegos' | 'guia-placer' | 'comboParejas';
   upsells?: UpsellConfig[];
   isCombo?: boolean;
   comboIncludes?: string[];
@@ -41,6 +41,12 @@ interface CheckoutModalProps {
     required: boolean;
     count: number;
   };
+  // Antes esto se inferia de `isCombo`, pero eso metia el Shot Bidu de regalo
+  // en CUALQUIER combo (ej. Combo Parejas, que no lo promete en ningun lado).
+  // Ahora cada landing lo declara a proposito. Los combos de 2+ torres siguen
+  // funcionando solos via `torreSelection.count >= 2` (ver mas abajo), esto
+  // es solo para combos SIN selector de torres (ej. Chuchaqui, Combo Torres).
+  incluyeShotBidu?: boolean;
 }
 
 interface FormData {
@@ -88,7 +94,7 @@ const ciudadesPorProvincia: Record<string, string[]> = {
   "Zamora Chinchipe": ["Zamora", "Yantzaza", "Zumbi", "Chinchipe", "El Pangui", "Nangaritza", "Palanda", "Paquisha", "Centinela del Cóndor"]
 };
 
-export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, productImage, productId, upsells = [], isCombo = false, comboIncludes = [], originalPrice, torreSelection }: CheckoutModalProps) => {
+export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, productImage, productId, upsells = [], isCombo = false, comboIncludes = [], originalPrice, torreSelection, incluyeShotBidu: incluyeShotBiduProp = false }: CheckoutModalProps) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -307,10 +313,16 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         precioPrincipal: productPrice,
         // Torres seleccionadas del combo (si aplica)
         torresSeleccionadas: torreSelection?.required ? selectedTorres.join(', ') : '',
-        // El Shot Bidu solo va con combos reales (2+ torres o combo fijo tipo
-        // Chuchaqui/La Previa) — NO con un producto individual al que solo le
-        // agregaron un upsell suelto (ej. Torre Picante + Emparejados digital).
-        incluyeShotBidu: isCombo || (torreSelection?.required && (torreSelection?.count ?? 0) >= 2),
+        // El Shot Bidu solo va con combos que lo prometen a proposito
+        // (declarado por la landing con `incluyeShotBidu`) o con 2+ torres
+        // seleccionadas — NO con cualquier `isCombo` (Combo Parejas es un
+        // combo real y no lo incluye).
+        // Boolean(...) a propósito: sin esto, cuando torreSelection es
+        // undefined el `&&` corta en `undefined` (no en `false`) y
+        // JSON.stringify BORRA la key completa del payload en vez de mandar
+        // `false` — bug preexistente que dejaba el campo ausente en el
+        // webhook de cualquier producto sin combo ni selector de torres.
+        incluyeShotBidu: Boolean(incluyeShotBiduProp || (torreSelection?.required && (torreSelection?.count ?? 0) >= 2)),
         // Campos de upsells (siempre presentes en el webhook)
         upsellTorreNormalSelected: selectedUpsells['torreNormal'] || false,
         upsellTorreNormalPrice: upsellTorreNormal?.price || 0,
@@ -483,7 +495,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <div className="bg-primary/10 rounded-full p-1.5">
                   <Gift className="w-4 h-4 text-primary animate-pulse" />
                 </div>
-                <span className="text-sm font-semibold">Acceso inmediato al juego digital</span>
+                {/* La entrega no es automática: el acceso se manda por WhatsApp
+                    apenas se confirma el pago. No prometer "inmediato". */}
+                <span className="text-sm font-semibold">Recibes el acceso apenas confirmamos tu pago</span>
               </div>
               {productId === 'emparejados' && (
                 <div className="flex items-center gap-3">
@@ -1216,6 +1230,16 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                       Reservas tu pedido con ${RESERVA_MIXTO} y pagas el resto en efectivo cuando lo recibes.
                       Te coordinamos la reserva por WhatsApp.
                     </p>
+                    {/* Solo Combo Parejas: acá lo digital NO se manda por
+                        WhatsApp, viaja dentro del paquete en tarjetas QR —
+                        hay que dejarlo claro en el momento en que se elige el
+                        método de pago, no solo en la landing. */}
+                    {productId === 'comboParejas' && (
+                      <p className="text-xs text-muted-foreground/80 mt-2 flex items-start gap-1.5">
+                        <span aria-hidden>📦</span>
+                        Emparejados y las 2 guías digitales te llegan dentro del paquete, en tarjetas con código QR.
+                      </p>
+                    )}
                   </div>
                 </Label>
 
@@ -1230,6 +1254,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     <p className="text-sm text-muted-foreground mt-1">
                       Pagas antes del envío y tu pedido sale primero: te llega en 24-48 horas laborables.
                     </p>
+                    {productId === 'comboParejas' && (
+                      <p className="text-xs font-semibold text-green-700 mt-2 flex items-start gap-1.5">
+                        <span aria-hidden>⚡</span>
+                        Emparejados y las 2 guías digitales te llegan por WhatsApp de inmediato, sin esperar el paquete.
+                      </p>
+                    )}
                   </div>
                 </Label>
 
@@ -1243,6 +1273,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     <p className="text-sm text-muted-foreground mt-1">
                       Pago seguro con tarjeta de crédito o débito a través de PayPhone
                     </p>
+                    {productId === 'comboParejas' && (
+                      <p className="text-xs font-semibold text-primary mt-2 flex items-start gap-1.5">
+                        <span aria-hidden>⚡</span>
+                        Emparejados y las 2 guías digitales te llegan por WhatsApp de inmediato, sin esperar el paquete.
+                      </p>
+                    )}
                   </div>
                 </Label>
               </RadioGroup>

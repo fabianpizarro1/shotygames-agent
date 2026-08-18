@@ -78,6 +78,13 @@ export const ConfirmacionTransferencia = () => {
               ) : (
                 <>
                   <li>🚀 Envío <strong>PRIORITARIO</strong> en 24 a 48 horas laborables</li>
+                  {pedido.productoPrincipal === "Combo Parejas" && (
+                    <>
+                      <li>⚡ Emparejados y las <strong>2 guías digitales</strong> por WhatsApp <strong>de inmediato</strong>, sin esperar el paquete</li>
+                      <li>🎁 Guía 30 Posiciones — <strong>incluida</strong></li>
+                      <li>🎁 Guía Digital del Placer — <strong>incluida</strong></li>
+                    </>
+                  )}
                   {pedido.incluyeShotBidu && <li>🎁 Regalo incluido: <strong>Shot BIDU</strong></li>}
                   <li>✨ Prioridad en despacho</li>
                 </>

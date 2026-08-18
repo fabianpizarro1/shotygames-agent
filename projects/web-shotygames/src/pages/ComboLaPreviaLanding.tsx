@@ -356,6 +356,7 @@ const ComboLaPreviaLanding = () => {
         productId="previa"
         upsells={[]}
         isCombo={true}
+        incluyeShotBidu={true}
         comboIncludes={comboIncludes}
         originalPrice={originalPrice}
         torreSelection={{ required: true, count: 2 }}

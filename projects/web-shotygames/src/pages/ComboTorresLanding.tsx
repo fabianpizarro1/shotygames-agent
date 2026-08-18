@@ -349,6 +349,7 @@ const ComboTorresLanding = () => {
         productId="torres"
         upsells={[]}
         isCombo={true}
+        incluyeShotBidu={true}
         comboIncludes={comboIncludes}
         originalPrice={75}
       />

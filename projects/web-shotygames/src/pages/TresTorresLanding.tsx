@@ -83,6 +83,7 @@ interface Plan {
   cta: string;
   torreSelection?: { required: boolean; count: number };
   isCombo?: boolean;
+  incluyeShotBidu?: boolean;
   comboIncludes?: string[];
   imagen: string;
   microcopy?: string;
@@ -140,6 +141,7 @@ const PLANES: Plan[] = [
     imagen: torreNormalBrillo,
     etiqueta: "PACK COMPLETO",
     isCombo: true,
+    incluyeShotBidu: true,
     comboIncludes: [
       "Torre La Previa",
       "Torre de Shots Picante",
@@ -1043,6 +1045,7 @@ const TresTorresLanding = () => {
         productId={planActivo.productId}
         originalPrice={planActivo.precioAntes}
         isCombo={planActivo.isCombo}
+        incluyeShotBidu={planActivo.incluyeShotBidu}
         comboIncludes={planActivo.comboIncludes}
         torreSelection={planActivo.torreSelection}
         upsells={[

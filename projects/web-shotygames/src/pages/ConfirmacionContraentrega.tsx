@@ -64,7 +64,15 @@ export const ConfirmacionContraentrega = () => {
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>🚀 Entrega en 2-4 días hábiles</li>
-                <li>🎁 Regalo incluido: <strong>Guía Digital</strong></li>
+                {pedido.productoPrincipal === "Combo Parejas" ? (
+                  <>
+                    <li>🎁 Guía 30 Posiciones — <strong>incluida</strong></li>
+                    <li>🎁 Guía Digital del Placer — <strong>incluida</strong></li>
+                    <li>📦 Emparejados y las guías llegan dentro del paquete, en tarjetas con código QR</li>
+                  </>
+                ) : (
+                  <li>🎁 Regalo incluido: <strong>Guía Digital</strong></li>
+                )}
               </ul>
             </div>
           )}
