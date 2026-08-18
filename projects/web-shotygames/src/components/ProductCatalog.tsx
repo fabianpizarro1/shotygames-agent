@@ -167,7 +167,7 @@ const ProductCatalog = () => {
       "torre-parejas": "/landing/torre-parejas",
       "enganchados": "/landing/enganchados",
       "cartas-partyshots": "/landing/partyshots",
-      "emparejados": "/landing/emparejados",
+      "emparejados": "/landing/emparejados-imprimible",
       "dados-digitales": "/landing/dados-digitales"
     };
     navigate(landingRoutes[productId] || `/producto/${productId}`);

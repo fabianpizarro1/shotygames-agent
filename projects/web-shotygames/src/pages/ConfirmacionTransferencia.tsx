@@ -67,6 +67,13 @@ export const ConfirmacionTransferencia = () => {
                     <li>⚡ Descarga <strong>INSTANTÁNEA</strong> una vez confirmado el pago</li>
                     <li>♾️ Tuyo <strong>PARA SIEMPRE</strong></li>
                   </>
+                ) : pedido.productoPrincipal === "Emparejados" ? (
+                  <>
+                    <li>🖨 <strong>PDF imprimible</strong> de las 72 cartas incluido</li>
+                    <li>📱 Versión <strong>digital</strong> incluida — juega desde el celular</li>
+                    <li>🎁 Guía de 30 Posiciones — <strong>GRATIS</strong> por tu compra de hoy</li>
+                    <li>♾️ Acceso <strong>DE POR VIDA</strong>, sin suscripción</li>
+                  </>
                 ) : (
                   <>
                     <li>⚡ Acceso <strong>INMEDIATO</strong> una vez confirmado el pago</li>
@@ -154,13 +161,13 @@ export const ConfirmacionTransferencia = () => {
                 )}
                 {pedido.upsellDadosDigital && (
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-muted-foreground flex-1">+ Dados Digitales de Posiciones</span>
+                    <span className="text-muted-foreground flex-1">+ Dados Digitales</span>
                     <span className="whitespace-nowrap">${pedido.upsellDadosDigitalPrice.toFixed(2)}</span>
                   </div>
                 )}
                 {pedido.upsellGuiaPlacerDigital && (
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-muted-foreground flex-1">+ Guía Digital del Placer</span>
+                    <span className="text-muted-foreground flex-1">+ [EBOOK] Guía Digital del Placer</span>
                     <span className="whitespace-nowrap">${pedido.upsellGuiaPlacerDigitalPrice.toFixed(2)}</span>
                   </div>
                 )}

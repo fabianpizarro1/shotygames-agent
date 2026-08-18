@@ -878,7 +878,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     className="w-16 h-16 object-cover rounded-md border"
                   />
                   <span className="flex-1 font-normal">
-                    Agregar <strong>Dados Digitales de Posiciones + Dados Digitales de Acciones</strong> (8.942 combinaciones) por solo <strong className="text-primary">$2,90</strong> adicionales.
+                    <span className="block font-semibold text-foreground">
+                      Agregar Dados Digitales <span className="text-primary">+$2,90</span>
+                    </span>
+                    <span className="block text-sm text-muted-foreground mt-0.5">
+                      Posiciones y acciones — 8.942 combinaciones.
+                    </span>
                   </span>
                 </Label>
 
@@ -900,7 +905,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     className="w-16 h-16 object-cover rounded-md border"
                   />
                   <span className="flex-1 font-normal">
-                    Agregar <strong>Guía Digital del Placer</strong> (guía completa para recuperar la chispa y salir de la rutina) por solo <strong className="text-primary">$2,90</strong> adicionales.
+                    <span className="block font-semibold text-foreground">
+                      [EBOOK] Guía Digital del Placer <span className="text-primary">+$2,90</span>
+                    </span>
+                    <span className="block text-sm text-muted-foreground mt-0.5">
+                      Para recuperar la chispa y salir de la rutina.
+                    </span>
                   </span>
                 </Label>
               </div>
@@ -932,7 +942,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   )}
                   {selectedUpsells['guia-placer-digital'] && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">+ Guía Digital del Placer</span>
+                      <span className="text-muted-foreground">+ [EBOOK] Guía Digital del Placer</span>
                       <span className="font-semibold">$2.90</span>
                     </div>
                   )}
