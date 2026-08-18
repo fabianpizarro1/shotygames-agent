@@ -123,7 +123,16 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
   }
 
   const total = contraEntrega ? Number(precioVenta) : 0;
-  const precioUnitario = parseFloat((Number(precioVenta) / cantidad).toFixed(2));
+
+  // DROPI arma el "Total Orden" que se cobra al cliente sumando price × cantidad
+  // de CADA línea, no el campo total_order de acá abajo (comprobado el
+  // 2026-08-18 con la orden #6587069: se mandó total_order=35 y DROPI cobró
+  // 36.99 — el precio del regalo se sumó aparte). Por eso, cuando hay regalo,
+  // su costo se le resta al precio unitario del producto principal: así la
+  // suma de las líneas cierra en precioVenta exacto y al cliente no le sube
+  // ni un centavo por el regalo que "no paga".
+  const costoRegaloEnLinea = regalo ? (parseFloat(regalo.sale_price) || 0) * cantidadRegalo : 0;
+  const precioUnitario = parseFloat(((Number(precioVenta) - costoRegaloEnLinea) / cantidad).toFixed(2));
 
   const phone = (cliente.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
 
