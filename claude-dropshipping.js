@@ -139,7 +139,11 @@ async function executeTool(name, input) {
           ciudad: d.ciudad,
           direccion: `${d.direccion}${d.referencias ? ' — ' + d.referencias : ''}`
         },
-        notas: `${d.idPedido} · ${d.tienda}`
+        notas: `${d.idPedido} · ${d.tienda}`,
+        // Regalo de promoción (columnas PRODUCTO2 / IDDROPI2 / CANTIDAD2): va en
+        // la misma guía a precio 0 cuando el cliente eligió el combo que califica.
+        regaloProductoId: d.dropiProductId2 ? Number(d.dropiProductId2) : null,
+        cantidadRegalo: d.cantidad2
       });
 
       if (!r.ok) return `Falló la creación en DROPI: ${r.error}`;
@@ -158,7 +162,7 @@ async function executeTool(name, input) {
 
       return `Pedido ${d.idPedido} creado en DROPI.
 Orden: ${r.orderId}
-Producto: ${r.producto} x${d.cantidad}
+Producto: ${r.producto} x${d.cantidad}${r.regalo ? `\nRegalo: ${r.regalo} x${d.cantidad2} (gratis, misma caja)` : ''}
 Cobrar al entregar: ${usd(d.total)}
 Costo proveedor: ${usd(r.costoProveedor)}
 Flete: ${usd(r.flete)}

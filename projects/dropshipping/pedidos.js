@@ -200,10 +200,14 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
  * El número de guía y el costo real de envío aparecen después — los recoge el
  * cron de seguimiento (sincronizarGuias) y los escribe en el Sheet.
  */
-async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVenta, cliente, notas, contraEntrega = true }) {
+async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVenta, cliente, notas, contraEntrega = true, regaloProductoId = null, cantidadRegalo = 1 }) {
   const producto = nombreProducto
     ? await getProductoPorNombre(nombreProducto, productoId)
     : await getProducto(productoId);
+
+  // El regalo se busca en el catálogo igual que el producto principal: la
+  // orden necesita su weight/stock/user_id reales, no solo el id de la columna.
+  const regalo = regaloProductoId ? await getProducto(regaloProductoId) : null;
 
   // Traducir la ciudad al nombre de la transportadora ANTES de mandar nada:
   // si no la reconoce, DROPI rechaza el pedido entero.
@@ -215,7 +219,7 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     return { ok: false, error: e.message, tipo: 'ciudad' };
   }
 
-  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi });
+  const body = armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega, ciudadDropi, regalo, cantidadRegalo });
 
   const data = await conToken(async (c) => (await c.post('/orders/myorders', body)).data);
   const orderId = data?.id || data?.objects?.id || data?.data?.id;
@@ -250,7 +254,8 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
     flete,
     gananciaEsperada,
     proveedor: producto.user_id,
-    bodega: bodegaDe(producto)
+    bodega: bodegaDe(producto),
+    regalo: regalo ? regalo.name : null
   };
 }
 

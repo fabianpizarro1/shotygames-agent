@@ -37,6 +37,13 @@ const TITULOS = {
   PRODUCTO: 'producto',
   ID_DROPI: 'id dropi',
   CANTIDAD: 'cantidad',
+  // Regalo de promoción (ej. la freidora de Truquito con el cuchillo desde 2
+  // unidades): un segundo producto opcional que va en la MISMA guía a precio 0.
+  // Sin columnas propias el bot no tenía forma de saber que un pedido llevaba
+  // regalo — dependía de que la nota de texto de n8n lo mencionara.
+  PRODUCTO2: 'producto2',
+  ID_DROPI2: 'iddropi2',
+  CANTIDAD2: 'cantidad2',
   TOTAL: 'total cobrar',
   COSTO: 'costo proveedor',
   FLETE: 'flete',
@@ -232,6 +239,11 @@ function aObjeto(p) {
     producto: val('PRODUCTO'),
     dropiProductId: val('ID_DROPI'),
     cantidad: Number(val('CANTIDAD')) || 1,
+    // Regalo: solo existe si la columna ID DROPI2 trae algo. Vacío es el caso
+    // normal (la mayoría de pedidos no llevan regalo).
+    producto2: val('PRODUCTO2') || null,
+    dropiProductId2: val('ID_DROPI2') || null,
+    cantidad2: Number(val('CANTIDAD2')) || 1,
     total: num(val('TOTAL')),
     // Números de la unidad económica. Se escriben al confirmar el pedido
     // (COSTO y FLETE salen de la respuesta de DROPI) pero no se estaban
