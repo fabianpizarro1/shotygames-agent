@@ -80,7 +80,18 @@ function bodegaDe(producto) {
  * Arma el cuerpo de la orden. Separado de la creación para poder inspeccionarlo
  * sin mandar nada — el primer pedido real no es lugar para descubrir un typo.
  */
-function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true, ciudadDropi = null }) {
+/**
+ * `regalo` es un SEGUNDO producto que va en la misma orden a precio 0.
+ *
+ * Solo funciona si sale de la MISMA bodega que el producto principal: la orden
+ * lleva un único `supplier_id` y un único `warehouses_selected_id`, así que dos
+ * proveedores distintos son dos órdenes distintas — y dos fletes de $6.36, que
+ * es justo lo que hace inviable el regalo.
+ *
+ * Por eso valida la bodega y revienta con un mensaje claro en vez de mandar una
+ * orden que DROPI acepta a medias.
+ */
+function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntrega = true, ciudadDropi = null, regalo = null, cantidadRegalo = 1 }) {
   const partes = (cliente.nombre || '').trim().split(' ');
   const nombre = partes[0] || '';
   const apellido = partes.slice(1).join(' ') || nombre;
@@ -94,6 +105,21 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
   const bodega = bodegaDe(producto);
   if (!bodega.id) {
     throw new Error(`El producto ${producto.id} no expone bodega (warehouse_product vacío). No se puede despachar.`);
+  }
+
+  if (regalo) {
+    if (regalo.user_id !== producto.user_id) {
+      throw new Error(
+        `El regalo ${regalo.id} es del proveedor ${regalo.user_id} y el producto del ${producto.user_id}. ` +
+        `Una orden solo admite un proveedor — serían dos envíos y dos fletes.`
+      );
+    }
+    const bodegaRegalo = bodegaDe(regalo);
+    if (bodegaRegalo.id && bodegaRegalo.id !== bodega.id) {
+      throw new Error(
+        `El regalo ${regalo.id} despacha desde la bodega ${bodegaRegalo.id} y el producto desde la ${bodega.id}.`
+      );
+    }
   }
 
   const total = contraEntrega ? Number(precioVenta) : 0;
@@ -130,7 +156,23 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
       variations: [],
       type: producto.type || 'SIMPLE',
       user_id: producto.user_id
-    }],
+    },
+    // El regalo va a price 0: el cliente no lo paga, pero el proveedor tiene que
+    // verlo en la orden para separarlo del stock y meterlo en la caja.
+    ...(regalo ? [{
+      id: regalo.id,
+      name: regalo.name,
+      weight: regalo.weight || '1.00',
+      quantity: cantidadRegalo,
+      stock: regalo.stock ?? 999,
+      variation_id: null,
+      price: 0,
+      suggested_price: String(regalo.suggested_price || '1.00'),
+      sale_price: String(regalo.sale_price || '1.00'),
+      variations: [],
+      type: regalo.type || 'SIMPLE',
+      user_id: regalo.user_id
+    }] : [])],
     distributionCompany: { id: 2, name: 'SERVIENTREGA' },
     type_service: 'normal',
     zip_code: null,

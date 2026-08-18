@@ -22,12 +22,25 @@ const { evaluar, precioParaMargen } = require('./calculadora');
 // un rechazo de anuncio cuesta un día; una cuenta publicitaria caída cuesta el
 // negocio. Con la etiqueta a la vista, la decisión es suya y es informada.
 const RESTRINGIDO = [
-  { patron: /adelgaz|slim|fat ?burn|quema ?grasa|dieta|cleanse|detox|fibra coli/i, motivo: 'pérdida de peso' },
+  // "burn" (sin exigir "fat" antes, sin límite de palabra) atrapa Lemme Burn /
+  // Metaburn / Burnify / Heatburn — verificado contra el catálogo del
+  // 2026-08-15: las 50 coincidencias de "burn" son quemadores de grasa o
+  // acidez (Metaburn y Heatburn van pegados sin espacio, \b los perdía).
+  // "burm" es un typo real de 2 fichas de Lemme Burn ("PROMOCION 2 PRODUCTOS
+  // LEMME BURM") — único typo de ese tipo en el catálogo, sin falsos positivos.
+  { patron: /adelgaz|slim|burn|burm|quema ?grasa|dieta|cleanse|detox|fibra coli/i, motivo: 'pérdida de peso' },
   { patron: /shampoo|capilar|cabello|batana|alopecia|crecimiento de pelo/i, motivo: 'promesa estética' },
   { patron: /suplement|colágeno|colageno|ashwagandha|shilajit|nad ?(\+|for men)|probiotic|bisglicinato|creatina|gomitas|vitamina|omega ?[0-9]|glucosamina|luteína|luteina|zeaxantina|caps\b|cápsulas|capsulas|complex|joint health|inositol|clorofila|multivitamin|turmeric|curcuma|melaxin|forte/i, motivo: 'suplementos' },
   { patron: /vigor|testosterona|testo\w*|libido|erecc|sexual|potencia masculina|mens? cup|retard\w*|macho|prostat/i, motivo: 'salud sexual' },
   { patron: /dolor|ortopéd|ortoped|artritis|dermatitis|psoriasis|várice|varice|diabet|blood sugar|presión arterial|vista|audífono para sordera/i, motivo: 'condición médica' },
-  { patron: /parche|faja reductora|drenaje linfático|drenaje linfatico|rodillera|estimulador muscular|electroestimulador/i, motivo: 'tratamiento corporal' },
+  { patron: /parche|faja reductora|rodillera|estimulador muscular|electroestimulador/i, motivo: 'tratamiento corporal' },
+  // Entrada aparte (no metida en la de arriba) porque necesita mirar las DOS
+  // palabras sin importar el orden: "Aurelys Drenaje Linfatico" vs "Linfatico
+  // Drenaje Aurelys" son el mismo producto con el nombre armado al revés. Con
+  // "limf" además de "linf" agarra el typo real "DRENAJE LIMFATICO". "drenaje"
+  // solo NO sirve — el catálogo tiene escurridores, destapacaños y organizadores
+  // de cocina con esa palabra (16 de 23 casos el 2026-08-15).
+  { patron: /(?=.*drenaje)(?=.*(linf|limf))/i, motivo: 'tratamiento corporal' },
   { patron: /crema (facial|antiarrugas|blanqueadora)|rejuvenec|antiarrugas|esmalte dental|blanqueador dental/i, motivo: 'promesa estética' }
 ];
 
@@ -193,4 +206,4 @@ if (require.main === module) {
   imprimir({ top, soloSeguros: args.includes('--solo-seguros') });
 }
 
-module.exports = { analizar, restriccion, precioObjetivo };
+module.exports = { analizar, restriccion, precioObjetivo, detectarAjustesMasivos };

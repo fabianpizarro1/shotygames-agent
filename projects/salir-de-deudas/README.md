@@ -1,23 +1,50 @@
 # Salir de Deudas
 
 **Descripción:** Poner al día todas las deudas de Fabián — sin atrasos, aunque no queden en cero.
-**Estado:** Activo — urgente
-**Deadline:** 31 de julio de 2026 (8 días desde el 23 de julio)
+**Estado:** Activo — urgente. El deadline original (31 jul) se venció sin cerrarse; sprint reabierto el 2026-08-14 con datos frescos.
+**Fuente de la verdad:** Google Sheet **"2026 de CONTABILIDAD SG - PRIVADO"** (id `1ytgbZHrfLc8MxoAOxcTATOzNKTw7gd24UWdoTpL5EaY`), hojas **DEUDAS** y **SALDOS_REALES**. Consultar ahí siempre antes de repetir el estado de memoria — se actualiza directo por Fabián.
 
-## Meta redefinida (2026-07-23)
-"Salir de deudas" **no** significa saldo cero el 31 de julio — con los números reales, eso no es alcanzable en 8 días. Significa: **tarjetas sin mora, Arturo resuelto (pagado o renegociado con nueva fecha)**. Las deudas familiares (mamá, papá, Joselin) quedan fuera de este sprint — sin fecha límite propia, se retoman después del 31.
+## El 31 de julio pasó sin resolverse
+Arturo NO se pagó a tiempo. Fabián le habló el 2026-08-14 (2 semanas tarde) y Arturo aceptó esperar, **sin fecha exacta acordada** — eso es un riesgo abierto, no un cierre. Las tarjetas siguen en mora: 2 cuotas vencidas sin pagar, confirmado por Fabián el 2026-08-14.
 
-## Las deudas (números reales, 2026-07-23)
+## Meta redefinida (2026-07-23, sigue vigente)
+"Salir de deudas" **no** significa saldo cero. Significa: **tarjetas sin mora, Arturo resuelto**. Las deudas familiares (mamá, Joselin, etc.) no tienen fecha propia.
 
-| Deuda | Monto | Estado |
+## Las deudas — snapshot del Sheet, hoja DEUDAS (2026-08-14)
+
+| Acreedor | Monto | Fecha límite | Nota |
+|---|---|---|---|
+| Mamá | $2,301.00 | 2026-06-30 (vencida) | Sin abonos |
+| Arturo | $520.00 | Sin fecha fija | Aceptó esperar, sin fecha acordada (14-ago) |
+| Joselin | $500.00 | Sin fecha | Subió de $400 a $500 desde julio |
+| Margarito (= su papá, Fabián Pizarro) | $1,000.00 | Sin fecha | Prestó para comprar laminadora + cortadora de tarjetas + redondeadora de esquinas, para hacer los juegos de cartas él mismo. **Nunca se usaron — máquinas paradas, deuda viva sin retorno** |
+| Tarjeta de crédito (Pichincha Titanium) | $590.00 | 2026-08-19 | Coincide con el corte de la pestaña CONTABILIDAD ($590.97 a pagar) |
+| **Subtotal en el Sheet** | **$4,911.00** | | |
+
+**Cuotas atrasadas de Pacífico y Bolivariano — confirmado por Fabián, 2026-08-14:**
+
+| Tarjeta | Cuotas atrasadas | Monto atrasado |
 |---|---|---|
-| Banco Pacífico (tarjeta) | $4,642.35 | Mínimo de $235 atrasado 14 días |
-| Banco Bolivariano (tarjeta) | $1,357.26 | Mínimo de $38.96 atrasado 8 días |
-| Arturo (amigo) | $540.00 | Vence 31 de julio — fecha dura |
-| Mamá | $2,300.00 | Sin fecha — fuera de este sprint |
-| Joselin | $400.00 | Sin fecha — fuera de este sprint |
-| Papá | $1,000.00 | Sin fecha — fuera de este sprint |
-| **TOTAL** | **$10,239.61** | |
+| Pacífico | 2 | $476.19 |
+| Bolivariano | 2 | $77.36 |
+| **Total en mora (riesgo Buró de Crédito)** | | **$553.55** |
+
+Esto es solo lo atrasado, no el saldo total de las tarjetas — el saldo completo (última cifra conocida, 23-jul: Pacífico $4,642.35, Bolivariano $1,357.26) sigue sin confirmar con el estado de cuenta actual y **no está cargado en la hoja DEUDAS del Sheet.**
+
+## Liquidez real — snapshot del Sheet, hoja SALDOS_REALES (2026-08-13/14)
+
+| Cuenta | Saldo |
+|---|---|
+| Caja | $0.55 |
+| Payphone | $52.78 |
+| Produbanco | $0.00 |
+| DROPI | $202.57 |
+| Pacífico | $0.00 |
+| Pichincha (cuenta) | $235.13 |
+| Pichincha (TDS) | $0.00 |
+| **TOTAL disponible** | **≈ $491.03** |
+
+Subió de los $100 registrados el 23-jul a ~$491 — mejora real, pero sigue sin cubrir ni una sola de las dos tarjetas grandes.
 
 ## Liquidez real (actualizado 2026-07-23, con datos de Sheets)
 - Efectivo hoy: **$100** (saldo DROPI revisado — no hay cash adicional ahí)
@@ -37,13 +64,42 @@
 4. **Martes 28 de julio — checkpoint fijo:** si no se tienen los $540 completos para Arturo, ese día (no el 31) se le avisa y se negocia nueva fecha o abono parcial. Fabián decidió esperar hasta esa fecha en vez de avisar ahora; este es el límite acordado para que "esperar a ver" no se convierta en silencio hasta el día del vencimiento.
 5. Mamá, papá, Joselin: nada esta semana. Se retoman después del 31.
 
-## Pendiente para después del 31 de julio
+## Crunch de caja — próximos 5 días (2026-08-14)
+
+Tres pagos fijos caen casi encima uno del otro, contra ~$491 disponibles:
+
+| Fecha | Pago | Monto | Tipo de riesgo |
+|---|---|---|---|
+| 15-ago (mañana) | Arriendo | $300.00 | Fijo, no negociable |
+| 19-ago | Tarjeta de Joselin (Pichincha) | $590.00 | **Es tarjeta a nombre de Joselin, no propia** — fallar no solo daña el crédito de Fabián, daña el de ella y la relación de confianza. No negociable para Fabián. |
+| Lo antes posible | Mora Pacífico + Bolivariano | $553.55 | Buró de Crédito propio — ya está en mora |
+| **TOTAL necesario** | | **$1,443.55** | |
+
+**Disponible hoy: ~$491.03. Falta reunir ~$952.52 en 5 días.** Con el ritmo de utilidad neta que se midió en julio (~$15-25/día), esto no se cierra solo con ventas — hay que decidir un orden de pago y aceptar que algo se atrasa más.
+
+**Orden de prioridad (2026-08-14, revisado con Fabián):**
+1. **Arriendo ($300, mañana)** — perder el local no se revierte, va primero.
+2. **Tarjeta de Joselin ($590, 19-ago)** — Fabián la marcó como innegociable: es crédito de otra persona, no el suyo. Fallar ahí no es solo un número, es quedar mal con alguien que confió su tarjeta.
+3. **Mora de tarjetas propias ($553.55)** — sigue siendo la que corre hacia el Buró de Crédito propio, pero queda tercera en la cola de caja porque el daño social del punto 2 pesa más para Fabián.
+
+Nota: la deuda de $500 con Joselin ("DEBO TJ" en el Sheet) es un préstamo aparte, distinto de esta tarjeta de $590 — confirmado con Fabián el 2026-08-14.
+
+**Esto no resuelve el hueco de $952.** Solo reordena quién se atrasa si no alcanza: con este orden, si la caja no crece, lo que se atrasa más es la mora de Pacífico/Bolivariano — y eso sigue corriendo hacia el Buró mientras tanto. No es gratis, es la consecuencia de la prioridad elegida.
+
+## Pendiente ahora (2026-08-14)
+- [ ] **Pagar los $553.55 en mora** (Pacífico $476.19 + Bolivariano $77.36) — única prioridad con riesgo real de Buró de Crédito. Con ~$491 disponibles hoy, falta cubrir el resto con venta de los próximos días
+- [ ] Agregar Pacífico y Bolivariano a la hoja DEUDAS con el saldo TOTAL (no solo lo atrasado) — falta confirmar contra el estado de cuenta actual
+- [x] ~~Confirmar quién es "Margarito"~~ — es su papá, Fabián Pizarro. Le prestó $1,000 para máquinas de juegos de cartas (laminadora, cortadora, redondeadora) que nunca se usaron
+- [ ] Cerrar con Arturo una fecha exacta — dijo "no te preocupes, ve pagando cuando puedas", sin fecha. Fabián mismo quiere pagarle lo antes posible; falta convertir esa intención en un monto y fecha concretos, no dejarlo abierto otra vez
+- [ ] Decidir qué hacer con las máquinas de Margarito: si no se van a usar para cartas, ¿se venden para abonar la deuda o se les da otro uso?
+
+## Pendiente para después (histórico, del sprint de julio)
 - [x] ~~Calcular margen real de Shotygames~~ — hecho 2026-07-23: margen bruto 63-69% constante, pero la utilidad neta después de ads cae a $15-25/día
-- [ ] Entender por qué hay días con pérdida neta (06, 07, 16 de julio) — patrón de gasto en ads sin venta suficiente ese día
-- [ ] Plan de pago para el saldo restante de Pacífico ($4,407.35) y Bolivariano ($1,318.30) una vez fuera de mora
-- [ ] Plan de pago para mamá, papá y Joselin
+- [ ] Entender por qué hay días con pérdida neta — patrón de gasto en ads sin venta suficiente ese día
 - [ ] Revisar si "reducir gasto en META ADS" es viable sin matar las ventas que ya son bajas
 
 ## Notas
 - 2026-05-26: proyecto creado, sin números reales.
 - 2026-07-23: primera vez que se ponen números reales — 58 días después de creado el proyecto, con el deadline a 8 días. Ver [decisions/log.md](../../decisions/log.md).
+- **2026-07-31: el deadline pasó sin cerrarse.** No quedó registrado en su momento — se detectó recién el 2026-08-14 al revisar el estado general de KEPLER.
+- 2026-08-14: Fabián le contó la situación a Arturo (2 semanas tarde); Arturo acepta esperar sin fecha exacta. Tarjetas siguen con 2 cuotas vencidas. Se localizó el Sheet "2026 de CONTABILIDAD SG - PRIVADO" (hojas DEUDAS y SALDOS_REALES) como fuente de verdad — consultarlo ahí en vez de repetir números en KEPLER de memoria.
