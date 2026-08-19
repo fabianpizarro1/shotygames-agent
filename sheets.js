@@ -160,7 +160,11 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
     const idxFbc = headers.indexOf('FBC');
     const idxFbp = headers.indexOf('FBP');
     const idxFbclid = headers.indexOf('FBCLID');
+    const idxEstado = headers.indexOf('ESTADO');
     if (idxTel === -1) return null;
+
+    let match = null;
+    let matchRowNum = null;
 
     if (idPedido) {
       const idBuscado = String(idPedido).trim().toUpperCase();
@@ -170,23 +174,46 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
         const fbc = row[idxFbc] || '';
         const fbp = row[idxFbp] || '';
         if (!fbc && !fbp) continue;
-        return { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+        matchRowNum = i + 1;
+        break;
       }
       // No matcheó por idPedido — sigue abajo con teléfono como respaldo.
     }
 
-    if (!telefono) return null;
-    const telNormalizado = normalizarTelefono(telefono);
-    let match = null;
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row || !row[idxTel]) continue;
-      if (normalizarTelefono(row[idxTel]) !== telNormalizado) continue;
-      const fbc = row[idxFbc] || '';
-      const fbp = row[idxFbp] || '';
-      if (!fbc && !fbp) continue;
-      match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+    if (!match && telefono) {
+      const telNormalizado = normalizarTelefono(telefono);
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[idxTel]) continue;
+        if (normalizarTelefono(row[idxTel]) !== telNormalizado) continue;
+        const fbc = row[idxFbc] || '';
+        const fbp = row[idxFbp] || '';
+        if (!fbc && !fbp) continue;
+        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+        matchRowNum = i + 1; // sigue iterando — se queda con el más reciente
+      }
     }
+
+    // El pedido matcheó acá porque se está registrando como venta real en
+    // PEDIDOS — reflejarlo en PEDIDOS LOVABLE para que deje de contar como
+    // carrito abandonado (reactivación de carritos filtra por ESTADO).
+    if (match && matchRowNum && idxEstado !== -1) {
+      const estadoActual = rows[matchRowNum - 1][idxEstado] || '';
+      if (estadoActual !== 'COMPRADO') {
+        try {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+            range: `${idxToCol(idxEstado)}${matchRowNum}`,
+            valueInputOption: 'RAW',
+            resource: { values: [['COMPRADO']] }
+          });
+        } catch (e) {
+          console.error('buscarAtribucionWeb: no se pudo marcar COMPRADO:', e.message);
+        }
+      }
+    }
+
     return match;
   } catch (e) {
     console.error('buscarAtribucionWeb error:', e.message);
