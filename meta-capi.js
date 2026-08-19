@@ -1,18 +1,24 @@
-// Manda el Purchase real a Meta por Conversions API, leyendo directo de la
-// hoja "PEDIDOS" — la regla de Fabián es que todo lo que entra ahí ES una
-// venta. Solo se procesan filas que tengan fbc o fbp guardado (o sea, que
-// sí vinieron del checkout de la web); pedidos registrados manualmente de
+// Manda el Purchase real a Meta por Conversions API, leyendo de las hojas
+// donde se registran las ventas reales — la regla de Fabián es que todo lo
+// que entra ahí ES una venta. Solo se procesan filas que tengan fbc o fbp
+// guardado (o sea, que sí vinieron del checkout de la web); pedidos de
 // otras fuentes no tienen esos datos y se saltan solos.
 //
-// La columna CAPI es el flag de "ya se mandó" — se marca TRUE después de
-// un envío exitoso para no duplicar la conversión si el cron corre de nuevo.
+// Dos fuentes, arquitecturas distintas:
+// - PEDIDOS (físicos): una sola hoja oficial, se registra cuando la venta ya
+//   se confirmó por WhatsApp — cualquier fila con fbc/fbp cuenta.
+// - VENTAS DIGITALES: se registra al momento del checkout (PENDIENTE) y la
+//   MISMA fila pasa a PAGADO cuando se cobra — solo se manda si ESTADO=PAGADO.
+//
+// En ambas, la columna CAPI es el flag de "ya se mandó" — se marca TRUE
+// después de un envío exitoso para no duplicar la conversión si el cron
+// corre de nuevo.
 if (require.main === module) require('dotenv').config();
 
 const { google } = require('googleapis');
 const crypto = require('crypto');
 const { parseMonto, idxToCol } = require('./sheets.js');
 
-const SHEETS_ID = process.env.SHEETS_ID;
 const PIXEL_ID = process.env.META_PIXEL_ID;
 const CAPI_TOKEN = process.env.META_CAPI_TOKEN;
 const GRAPH_VERSION = 'v20.0';
@@ -39,12 +45,13 @@ function telefonoE164(tel) {
   return '593' + s;
 }
 
-async function enviarPurchase({ idPedido, nombre, telefono, ciudad, value, fbc, fbp }, { testEventCode } = {}) {
+async function enviarPurchase({ idPedido, nombre, telefono, email, ciudad, value, fbc, fbp }, { testEventCode } = {}) {
   const [firstName, ...resto] = String(nombre || '').trim().split(/\s+/);
   const lastName = resto.join(' ');
 
   const userData = {};
   if (telefono) userData.ph = [sha256(telefonoE164(telefono))];
+  if (email) userData.em = [sha256(email)];
   if (firstName) userData.fn = [sha256(firstName)];
   if (lastName) userData.ln = [sha256(lastName)];
   if (ciudad) userData.ct = [sha256(ciudad)];
@@ -80,71 +87,111 @@ async function enviarPurchase({ idPedido, nombre, telefono, ciudad, value, fbc, 
   return json;
 }
 
-async function procesarPendientes({ dryRun = false, testEventCode } = {}) {
-  const sheets = google.sheets({ version: 'v4', auth: getAuth() });
-  const res = await sheets.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AN' });
+// Config de cada hoja: cómo leerla, cómo filtrarla, cómo armar el pedido.
+const FUENTES = [
+  {
+    nombre: 'PEDIDOS (físicos)',
+    spreadsheetId: process.env.SHEETS_ID,
+    range: 'PEDIDOS!A:AN',
+    columnasRequeridas: ['TELEFONO', 'CAPI', 'IDPEDIDO', 'FBC', 'FBP'],
+    extraer(row, idx, i) {
+      const fbc = row[idx('FBC')] || '';
+      const fbp = row[idx('FBP')] || '';
+      if (!row[idx('TELEFONO')] || (!fbc && !fbp)) return null; // no vino de la web
+      return {
+        idPedido: row[idx('IDPEDIDO')] || `SG-ROW-${i + 1}`,
+        nombre: row[idx('NOMBRE')] || '',
+        telefono: row[idx('TELEFONO')] || '',
+        ciudad: row[idx('CIUDAD')] || '',
+        value: (parseMonto(row[idx('ANTICIPO')]) || 0) + (parseMonto(row[idx('SALDO')]) || 0),
+        fbc,
+        fbp
+      };
+    }
+  },
+  {
+    nombre: 'VENTAS DIGITALES',
+    spreadsheetId: process.env.SHEETS_ID_VENTAS_DIGITALES,
+    range: 'VENTAS!A:P',
+    columnasRequeridas: ['ESTADO', 'CAPI', 'ID', 'FBC', 'FBP'],
+    extraer(row, idx, i) {
+      const fbc = row[idx('FBC')] || '';
+      const fbp = row[idx('FBP')] || '';
+      const estado = String(row[idx('ESTADO')] || '').toUpperCase();
+      if (estado !== 'PAGADO' || (!fbc && !fbp)) return null; // todavía no se cobró, o no vino de la web
+      return {
+        idPedido: row[idx('ID')] || `SGD-ROW-${i + 1}`,
+        email: row[idx('CORREO')] || '',
+        telefono: row[idx('NUMERO')] || '',
+        value: parseMonto(row[idx('INGRESOS')]) || 0,
+        fbc,
+        fbp
+      };
+    }
+  }
+];
+
+async function procesarHoja(sheetsApi, fuente, { dryRun, testEventCode }) {
+  if (!fuente.spreadsheetId) {
+    console.log(`meta-capi [${fuente.nombre}]: desactivado (falta el spreadsheetId en env)`);
+    return [];
+  }
+
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: fuente.spreadsheetId, range: fuente.range });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
   const idx = (nombre) => headers.indexOf(nombre);
+  const iCapi = idx('CAPI');
 
-  const iNombre = idx('NOMBRE'), iTel = idx('TELEFONO'), iCiudad = idx('CIUDAD'),
-        iAnticipo = idx('ANTICIPO'), iSaldo = idx('SALDO'),
-        iCapi = idx('CAPI'), iIdPedido = idx('IDPEDIDO'), iFbc = idx('FBC'), iFbp = idx('FBP');
-
-  if ([iTel, iCapi, iIdPedido, iFbc, iFbp].includes(-1)) {
-    throw new Error('meta-capi: faltan columnas esperadas en PEDIDOS (TELEFONO/CAPI/IDPEDIDO/FBC/FBP)');
+  const faltantes = fuente.columnasRequeridas.filter((c) => idx(c) === -1);
+  if (faltantes.length) {
+    throw new Error(`meta-capi [${fuente.nombre}]: faltan columnas ${faltantes.join(', ')}`);
   }
 
   const pendientes = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row || !row[iTel]) continue;
-
-    const fbc = row[iFbc] || '';
-    const fbp = row[iFbp] || '';
-    if (!fbc && !fbp) continue; // no vino de la web, no hay nada que atribuir
-
+    if (!row) continue;
     if (String(row[iCapi] || '').toUpperCase() === 'TRUE') continue; // ya enviado
 
-    const idPedido = row[iIdPedido] || `SG-ROW-${i + 1}`;
-    const value = (parseMonto(row[iAnticipo]) || 0) + (parseMonto(row[iSaldo]) || 0);
-
-    pendientes.push({
-      rowNum: i + 1,
-      idPedido,
-      nombre: row[iNombre] || '',
-      telefono: row[iTel] || '',
-      ciudad: row[iCiudad] || '',
-      value,
-      fbc,
-      fbp
-    });
+    const pedido = fuente.extraer(row, idx, i);
+    if (!pedido) continue;
+    pendientes.push({ ...pedido, rowNum: i + 1 });
   }
 
-  console.log(`meta-capi: ${pendientes.length} pedido(s) pendiente(s) de enviar.`);
+  console.log(`meta-capi [${fuente.nombre}]: ${pendientes.length} pedido(s) pendiente(s) de enviar.`);
 
   const enviados = [];
   for (const p of pendientes) {
     try {
       if (dryRun) {
-        console.log('[DRY RUN] mandaría Purchase:', { idPedido: p.idPedido, value: p.value, telefono: p.telefono, fbc: !!p.fbc, fbp: !!p.fbp });
+        console.log(`[DRY RUN][${fuente.nombre}] mandaría Purchase:`, { idPedido: p.idPedido, value: p.value, fbc: !!p.fbc, fbp: !!p.fbp });
       } else {
         const resp = await enviarPurchase(p, { testEventCode });
-        console.log(`meta-capi: enviado ${p.idPedido} (fila ${p.rowNum}) — events_received=${resp.events_received}`);
-        await sheets.spreadsheets.values.update({
-          spreadsheetId: SHEETS_ID,
-          range: `PEDIDOS!${idxToCol(iCapi)}${p.rowNum}`,
+        console.log(`meta-capi [${fuente.nombre}]: enviado ${p.idPedido} (fila ${p.rowNum}) — events_received=${resp.events_received}`);
+        await sheetsApi.spreadsheets.values.update({
+          spreadsheetId: fuente.spreadsheetId,
+          range: `${fuente.range.split('!')[0]}!${idxToCol(iCapi)}${p.rowNum}`,
           valueInputOption: 'RAW',
           resource: { values: [['TRUE']] }
         });
       }
       enviados.push(p.idPedido);
     } catch (e) {
-      console.error(`meta-capi: error enviando ${p.idPedido} (fila ${p.rowNum}):`, e.message);
+      console.error(`meta-capi [${fuente.nombre}]: error enviando ${p.idPedido} (fila ${p.rowNum}):`, e.message);
     }
   }
 
   return enviados;
+}
+
+async function procesarPendientes({ dryRun = false, testEventCode } = {}) {
+  const sheetsApi = google.sheets({ version: 'v4', auth: getAuth() });
+  const resultados = {};
+  for (const fuente of FUENTES) {
+    resultados[fuente.nombre] = await procesarHoja(sheetsApi, fuente, { dryRun, testEventCode });
+  }
+  return resultados;
 }
 
 module.exports = { procesarPendientes, enviarPurchase };
@@ -155,6 +202,6 @@ if (require.main === module) {
   const testEventCode = testEventCodeArg ? testEventCodeArg.split('=')[1] : undefined;
 
   procesarPendientes({ dryRun, testEventCode })
-    .then((r) => console.log('meta-capi: listo.', r))
+    .then((r) => console.log('meta-capi: listo.', JSON.stringify(r)))
     .catch((e) => { console.error('meta-capi: fallo general:', e); process.exit(1); });
 }
