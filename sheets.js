@@ -2,6 +2,7 @@ const { google } = require('googleapis');
 
 const SHEETS_ID = process.env.SHEETS_ID;
 const SHEETS_ID_FINANZAS = process.env.SHEETS_ID_FINANZAS;
+const SHEETS_ID_PEDIDOS_WEB = process.env.SHEETS_ID_PEDIDOS_WEB;
 
 // Convierte strings de monto a número para que Sheets pueda sumar
 // Soporta: "45,00" / "45.00" / "$16,50" / "1.234,56" / "1,234.56"
@@ -135,6 +136,48 @@ async function getSheets() {
   return google.sheets({ version: 'v4', auth });
 }
 
+// Cuando alguien compra por WhatsApp, no llega con fbc/fbp/fbclid a mano —
+// esos datos quedaron guardados en "PEDIDOS LOVABLE" desde que la persona
+// pasó por el checkout de la web. Este matching por teléfono es lo que
+// conecta esa visita con la venta real, para poder mandar el Purchase por
+// Conversions API con la atribución correcta más adelante.
+// Si hay varios pedidos del mismo teléfono, se usa el más reciente que sí
+// tenga fbc o fbp (no sirve de nada matchear contra un lead sin atribución).
+async function buscarAtribucionWeb(telefono) {
+  if (!SHEETS_ID_PEDIDOS_WEB || !telefono) return null;
+  try {
+    const sheets = await getSheets();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+      range: 'A:X'
+    });
+    const rows = res.data.values || [];
+    const headers = rows[0] || [];
+    const idxPedido = headers.indexOf('PEDIDO');
+    const idxTel = headers.indexOf('TELEFONO');
+    const idxFbc = headers.indexOf('FBC');
+    const idxFbp = headers.indexOf('FBP');
+    const idxFbclid = headers.indexOf('FBCLID');
+    if (idxTel === -1) return null;
+
+    const telNormalizado = normalizarTelefono(telefono);
+    let match = null;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || !row[idxTel]) continue;
+      if (normalizarTelefono(row[idxTel]) !== telNormalizado) continue;
+      const fbc = row[idxFbc] || '';
+      const fbp = row[idxFbp] || '';
+      if (!fbc && !fbp) continue;
+      match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+    }
+    return match;
+  } catch (e) {
+    console.error('buscarAtribucionWeb error:', e.message);
+    return null;
+  }
+}
+
 async function appendPedido(pedido) {
   const sheets = await getSheets();
   const TZ = { timeZone: 'America/Guayaquil' };
@@ -192,6 +235,22 @@ async function appendPedido(pedido) {
     valueInputOption: 'USER_ENTERED',
     resource: { values: [row] }
   });
+
+  // Atribución de Meta (cols AK:AN) — best-effort: si esto falla, el pedido
+  // ya quedó registrado arriba y no hay que bloquear la venta por esto.
+  try {
+    const atribucion = await buscarAtribucionWeb(pedido.telefono);
+    if (atribucion) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID,
+        range: `PEDIDOS!AK${nextRow}:AN${nextRow}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [[atribucion.idPedido, atribucion.fbc, atribucion.fbp, atribucion.fbclid]] }
+      });
+    }
+  } catch (e) {
+    console.error('appendPedido: fallo al guardar atribución Meta:', e.message);
+  }
 
   return result.data.updates;
 }
@@ -883,4 +942,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock, buscarAtribucionWeb, parseMonto, idxToCol };

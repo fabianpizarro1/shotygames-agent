@@ -519,6 +519,28 @@ try {
   console.error('[CRON] Error al iniciar seguimiento de dropshipping:', e.message);
 }
 
+// ── META CAPI: Purchase real desde PEDIDOS ────────────────────
+// Manda el Purchase por Conversions API en cuanto el pedido queda registrado
+// en la hoja oficial (con atribución fbc/fbp), reemplazando el Purchase falso
+// que salía del navegador al llenar el checkout. Corre 24/7 cada 15 min —a
+// diferencia del seguimiento de DROPI, acá no hay horario de proveedor que
+// respetar: cuanto antes le llegue la señal a Meta, mejor optimiza.
+try {
+  const cron = require('node-cron');
+  const { procesarPendientes } = require('./meta-capi');
+
+  if (process.env.META_CAPI_TOKEN && process.env.META_PIXEL_ID) {
+    cron.schedule('*/15 * * * *', () => {
+      procesarPendientes().catch(e => console.error('[META-CAPI] Falló:', e.message));
+    });
+    console.log('[CRON] Meta CAPI: Purchase real cada 15 min');
+  } else {
+    console.log('[CRON] Meta CAPI: desactivado (falta META_CAPI_TOKEN o META_PIXEL_ID)');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar Meta CAPI:', e.message);
+}
+
 // ── CONTENIDO DIARIO (Instagram, manual — bot solo genera y envía) ──
 try {
   const cron = require('node-cron');
