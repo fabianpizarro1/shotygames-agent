@@ -386,15 +386,15 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         body: JSON.stringify(pedido),
       });
 
-      // Meta Pixel - Lead + Purchase
-      // Decisión explícita de Fabián (2026-08-04): disparar Purchase al
-      // completar el pedido en la web, sin esperar confirmación de pago real.
-      // Esto es más simple (no requiere backend/CAPI) pero mete señal falsa:
-      // ~20-22% de los pedidos de pago mixto no se cobran al final (ver
-      // decisions/log.md). Si más adelante se arma el envío por Conversions
-      // API cuando se llena GUIA en Sheets, hay que quitar este Purchase de
-      // acá para no duplicar la conversión — o reusar el mismo eventID
-      // (idPedido) para que Meta deduplique entre pixel y CAPI.
+      // Meta Pixel - Lead
+      // El Purchase del navegador se sacó de acá (2026-08-19) — mandaba señal
+      // falsa al completar el checkout, sin esperar confirmación de pago real
+      // (~20-22% de los pedidos de pago mixto no se cobraban al final, ver
+      // decisions/log.md). El Purchase real ahora se manda por Conversions
+      // API cuando el pedido se confirma vendido en el Sheet oficial — ver
+      // meta-capi.js en el repo de KEPLER. Reusa el mismo idPedido como
+      // eventID, así que si algún día vuelve este Purchase, Meta deduplica
+      // solo entre pixel y CAPI.
       if (typeof (window as any).fbq !== 'undefined') {
         (window as any).fbq('track', 'Lead', {
           value: getFinalTotal(metodoPagoFinal),
@@ -402,12 +402,6 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           content_name: productName,
           content_type: 'product'
         });
-        (window as any).fbq('track', 'Purchase', {
-          value: getFinalTotal(metodoPagoFinal),
-          currency: 'USD',
-          content_name: productName,
-          content_type: 'product'
-        }, { eventID: idPedido });
       }
 
       // Redirigir según método de pago
