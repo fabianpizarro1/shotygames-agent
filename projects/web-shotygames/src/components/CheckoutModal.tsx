@@ -94,6 +94,23 @@ const ciudadesPorProvincia: Record<string, string[]> = {
   "Zamora Chinchipe": ["Zamora", "Yantzaza", "Zumbi", "Chinchipe", "El Pangui", "Nangaritza", "Palanda", "Paquisha", "Centinela del Cóndor"]
 };
 
+// Atribución de Meta Ads para poder mandar el Purchase real por Conversions
+// API cuando el pedido se confirma (no cuando se llena este formulario).
+// _fbc/_fbp los pone el pixel solo; fbclid de la URL es el respaldo por si
+// el navegador bloquea cookies de terceros y el pixel no llegó a setear _fbc.
+function leerCookie(nombre: string): string {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${nombre}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
+function getAtribucionMeta() {
+  return {
+    fbc: leerCookie('_fbc'),
+    fbp: leerCookie('_fbp'),
+    fbclid: new URLSearchParams(window.location.search).get('fbclid') || '',
+  };
+}
+
 export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, productImage, productId, upsells = [], isCombo = false, comboIncludes = [], originalPrice, torreSelection, incluyeShotBidu: incluyeShotBiduProp = false }: CheckoutModalProps) => {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
   const navigate = useNavigate();
@@ -296,7 +313,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         email: data.email,
         metodoPago: metodoPagoFinal,
         esProductoDigital: true,
-        fechaHoraPedido: new Date().toISOString()
+        fechaHoraPedido: new Date().toISOString(),
+        ...getAtribucionMeta()
       };
     } else {
       // Crear objeto con todos los campos de upsells (siempre presentes)
@@ -351,7 +369,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         referencias: data.referencias,
         metodoPago: metodoPagoFinal,
         esProductoDigital: false,
-        fechaHoraPedido: new Date().toISOString()
+        fechaHoraPedido: new Date().toISOString(),
+        ...getAtribucionMeta()
       };
     }
 
