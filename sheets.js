@@ -141,10 +141,12 @@ async function getSheets() {
 // pasó por el checkout de la web. Este matching por teléfono es lo que
 // conecta esa visita con la venta real, para poder mandar el Purchase por
 // Conversions API con la atribución correcta más adelante.
-// Si hay varios pedidos del mismo teléfono, se usa el más reciente que sí
+// Si se pasa idPedido, matchea por ahí primero (llave exacta — cubre el caso
+// de un cliente que hizo más de un pedido con el mismo teléfono). Si no hay
+// idPedido o no matchea nada, cae a teléfono y usa el más reciente que sí
 // tenga fbc o fbp (no sirve de nada matchear contra un lead sin atribución).
-async function buscarAtribucionWeb(telefono) {
-  if (!SHEETS_ID_PEDIDOS_WEB || !telefono) return null;
+async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
+  if (!SHEETS_ID_PEDIDOS_WEB || (!idPedido && !telefono)) return null;
   try {
     const sheets = await getSheets();
     const res = await sheets.spreadsheets.values.get({
@@ -160,6 +162,20 @@ async function buscarAtribucionWeb(telefono) {
     const idxFbclid = headers.indexOf('FBCLID');
     if (idxTel === -1) return null;
 
+    if (idPedido) {
+      const idBuscado = String(idPedido).trim().toUpperCase();
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || String(row[idxPedido] || '').trim().toUpperCase() !== idBuscado) continue;
+        const fbc = row[idxFbc] || '';
+        const fbp = row[idxFbp] || '';
+        if (!fbc && !fbp) continue;
+        return { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+      }
+      // No matcheó por idPedido — sigue abajo con teléfono como respaldo.
+    }
+
+    if (!telefono) return null;
     const telNormalizado = normalizarTelefono(telefono);
     let match = null;
     for (let i = 1; i < rows.length; i++) {
@@ -239,7 +255,7 @@ async function appendPedido(pedido) {
   // Atribución de Meta (cols AK:AN) — best-effort: si esto falla, el pedido
   // ya quedó registrado arriba y no hay que bloquear la venta por esto.
   try {
-    const atribucion = await buscarAtribucionWeb(pedido.telefono);
+    const atribucion = await buscarAtribucionWeb({ idPedido: pedido.idPedido, telefono: pedido.telefono });
     if (atribucion) {
       await sheets.spreadsheets.values.update({
         spreadsheetId: SHEETS_ID,

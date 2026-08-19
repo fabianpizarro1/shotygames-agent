@@ -62,6 +62,7 @@ Del texto que te mande Fabián saca:
 - **pvp_total** — precio total del pedido (lo que diga "POR X" o suma de productos)
 - **anticipo** — cuánto pagó de anticipo (si aplica)
 - **cuenta** — banco o método: PICHINCHA, PAYPHONE, etc.
+- **idPedido** — código del pedido si Fabián lo menciona, formato PED-XXXXX (viene del resumen que él le manda al cliente junto con las cuentas para pagar). Si no aparece en el mensaje, omitir el campo — nunca inventarlo.
 
 **Cantidades por producto** — extrae siempre cada una como campo separado (número entero; omitir si no hay):
 - **normal** → Torres Normales

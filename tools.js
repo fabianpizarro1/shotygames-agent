@@ -21,7 +21,8 @@ const tools = [
         estado: { type: "string", description: "PAGADO, PENDIENTE o ANTICIPO" },
         envio: { type: "string", description: "Costo del envío" },
         transportadora: { type: "string", description: "SERVIENTREGA u otra transportadora" },
-        notas: { type: "string", description: "Notas adicionales del pedido" }
+        notas: { type: "string", description: "Notas adicionales del pedido" },
+        idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." }
       },
       required: ["nombre", "telefono", "ciudad", "anticipo", "cuenta", "estado"]
     }
