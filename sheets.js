@@ -155,7 +155,10 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
     });
     const rows = res.data.values || [];
     const headers = rows[0] || [];
-    const idxPedido = headers.indexOf('PEDIDO');
+    // La col A de "PEDIDOS LOVABLE" guarda el idPedido pero su celda de
+    // encabezado está en blanco (no dice "PEDIDO") — headers.indexOf()
+    // devolvía -1 y esto nunca matcheaba por idPedido. Es siempre col A (0).
+    const idxPedido = headers.indexOf('PEDIDO') !== -1 ? headers.indexOf('PEDIDO') : 0;
     const idxTel = headers.indexOf('TELEFONO');
     const idxFbc = headers.indexOf('FBC');
     const idxFbp = headers.indexOf('FBP');
