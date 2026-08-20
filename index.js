@@ -327,6 +327,20 @@ async function procesarBatchVentas(from, items, firstMessageId) {
 
 
 
+// Backfill: pedidos ya registrados en PEDIDOS que quedaron sin fbc/fbp
+// (porque SHEETS_ID_PEDIDOS_WEB no existía en EasyPanel cuando se registraron).
+// ?dryRun=1 para ver qué matchearía sin escribir nada.
+app.get('/admin/backfill-atribucion', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const sheets = require('./sheets');
+    const dryRun = req.query.dryRun === '1';
+    const resultado = await sheets.backfillAtribucion({ dryRun });
+    res.json({ dryRun, ...resultado });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Diagnóstico: probar marcar orden DROPI como impresa
 app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';

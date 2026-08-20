@@ -224,6 +224,55 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
   }
 }
 
+// Backfill: recorre PEDIDOS y para las filas que ya tienen TELEFONO pero
+// nunca recibieron atribución (columnas AK:AN vacías — pedidos registrados
+// antes de que SHEETS_ID_PEDIDOS_WEB existiera en EasyPanel), intenta
+// matchear ahora contra PEDIDOS LOVABLE por idPedido o teléfono.
+async function backfillAtribucion({ dryRun = false } = {}) {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AN'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const idxTel = headers.indexOf('TELEFONO');
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxIdPedido = headers.indexOf('IDPEDIDO');
+  const idxFbc = headers.indexOf('FBC');
+  const idxFbp = headers.indexOf('FBP');
+  const idxFbclid = headers.indexOf('FBCLID');
+
+  const resultado = { revisados: 0, matcheados: [], sinMatch: 0 };
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxTel]) continue; // fila vacía o sin teléfono
+    const yaTieneAtribucion = (row[idxFbc] || row[idxFbp]);
+    if (yaTieneAtribucion) continue; // no tocar lo que ya está lleno
+
+    resultado.revisados++;
+    const rowNum = i + 1;
+    const idPedidoExistente = row[idxIdPedido] || undefined;
+
+    const atribucion = await buscarAtribucionWeb({ idPedido: idPedidoExistente, telefono: row[idxTel] });
+    if (!atribucion) { resultado.sinMatch++; continue; }
+
+    resultado.matcheados.push({ fila: rowNum, nombre: row[idxNombre] || '', idPedido: atribucion.idPedido });
+
+    if (!dryRun) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID,
+        range: `PEDIDOS!AK${rowNum}:AN${rowNum}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [[atribucion.idPedido, atribucion.fbc, atribucion.fbp, atribucion.fbclid]] }
+      });
+    }
+  }
+
+  return resultado;
+}
+
 async function appendPedido(pedido) {
   const sheets = await getSheets();
   const TZ = { timeZone: 'America/Guayaquil' };
@@ -988,4 +1037,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock, buscarAtribucionWeb, parseMonto, idxToCol };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
