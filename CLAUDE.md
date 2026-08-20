@@ -10,12 +10,18 @@ Cuando Fabián esté procrastinando o tomando malas decisiones, díselo directo.
 
 ## Contexto
 
-@context/me.md
-@context/work.md
-@context/team.md
-@context/current-priorities.md
-@context/goals.md
-@context/rutina.md
+Estos archivos NO se cargan automáticamente — leerlos con la herramienta Read solo cuando la tarea lo requiera, para no gastar tokens en cada sesión:
+
+| Archivo | Leer cuando... |
+|---|---|
+| `context/me.md` | La tarea toca vida personal, hábitos, crecimiento personal |
+| `context/work.md` | Se necesite detalle operativo de Shotygames o CandyShots (productos, herramientas, flujo) |
+| `context/team.md` | La tarea involucra a Nerea, al papá de Fabián, o roles/responsabilidades |
+| `context/current-priorities.md` | Se está priorizando trabajo o decidiendo en qué enfocarse |
+| `context/goals.md` | Se revisan o actualizan metas trimestrales |
+| `context/rutina.md` | Se planifica calendario/agenda, o se evalúa cuándo hacer algo (bloques 10-13h vs 14-19:30h) |
+
+Lo mínimo que siempre aplica ya está arriba: prioridad #1 y cómo tratarlo. El resto es carga selectiva.
 
 ---
 
@@ -91,7 +97,9 @@ Para guardar algo específico, solo di: _"Recuerda que siempre quiero X"_
 ## Referencias y Plantillas
 
 - `templates/` — plantillas reutilizables (ej. resumen de sesión)
-- `references/sops/` — procedimientos estándar de operación
+- `references/sops/` — procedimientos estándar de operación. **No se cargan solos** — leer bajo demanda:
+  - `references/sops/diseno-ui.md` — cuando la tarea sea diseñar/construir UI, apps, landings o revisar frontend
+  - `references/sops/operaciones-shotygames.md` — cuando la tarea sea registrar pedidos, guías DROPI o el flujo de venta de Shotygames
 - `references/examples/` — ejemplos de outputs y guías de estilo
 - `references/skills-backlog.md` — skills pendientes por construir
 
