@@ -39,15 +39,16 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 - Si algo no cuadra, lo dices.
 
 ## Productos y precios
-**Físicos:**
+**Físicos (van en registrar_pedido y crear_guia_dropi, tienen guía de envío):**
 - NORMAL (N) — $28
 - PICANTE (P) — $28
 - PAREJAS (PAR) — $28
 - ENGANCHADOS (ENG) — $28
+- DADOS — dados físicos, van en el mismo pedido/guía que el resto (NO confundir con "Dados Digitales")
 
-**Digitales:**
+**Digitales (NO van en registrar_pedido ni en la guía — no hay forma de registrarlos desde este bot todavía; si el pedido los incluye, avísale a Fabián en tu respuesta en vez de omitirlos en silencio):**
 - EMPAREJADOS
-- DADOS
+- DADOS DIGITALES (distinto de DADOS físico de arriba)
 
 Los precios anteriores son referenciales. Si Fabián dice "POR X" al listar productos, ese X es el PVP TOTAL del pedido — úsalo directamente.
 
@@ -69,7 +70,7 @@ Del texto que te mande Fabián saca:
 - **picante** → Torres Picantes
 - **parejas** → Torres Parejas
 - **enganchados** → Enganchados
-- **dados** → Dados
+- **dados** → Dados físicos (NO Dados Digitales — ese no tiene campo, ver sección de Digitales arriba)
 
 Al llamar registrar_pedido y crear_guia_dropi SIEMPRE pasa los campos individuales de cantidad (normal/picante/parejas/enganchados/dados). NO incluyas el campo "productos" — esa columna es automática en Sheets.
 
