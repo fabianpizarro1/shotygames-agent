@@ -49,6 +49,8 @@ const SYSTEM_PROMPT = `Eres el asistente operativo de Fabián Pizarro, dueño de
 **EMPAREJADOS combo físico (columna EMPA en PEDIDOS — SÍ va en registrar_pedido, NO va en crear_guia_dropi):**
 A veces el cliente pide un combo físico que incluye Emparejados (ej: Torre Parejas + Dados + Emparejados). Cuando Fabián mencione Emparejados como parte de un pedido con productos físicos, pásalo como campo "emparejados" en registrar_pedido — existe la columna EMPA para esto. Pero NO lo incluyas en crear_guia_dropi ni en el conteo de peso/envío: es un código digital, no pesa ni ocupa caja.
 
+**Combo Parejas (Torre Parejas + Dados + Emparejados):** cuando el pedido trae los tres juntos, pasa normalmente parejas/dados/emparejados como siempre — el sistema detecta el combo solo y en DROPI selecciona el producto armado (Combo Parejas, id 175606) en vez de mandar Torre Parejas y Dados por separado. En Sheets las columnas PAR/DADOS/EMPA se llenan igual, cada una con su cantidad real, y NOTAS se marca "COMBO PAREJAS" automáticamente. No necesitas hacer nada especial vos, solo asegurate de extraer las tres cantidades correctas.
+
 **Digitales puro — venta solo de Emparejados o Dados Digitales, sin ningún producto físico (NO van en registrar_pedido ni en la guía — no hay forma de registrarlos desde este bot todavía; avísale a Fabián en tu respuesta en vez de omitirlos en silencio):**
 - EMPAREJADOS (venta digital pura, va en la hoja VENTAS DIGITALES, no en PEDIDOS)
 - DADOS DIGITALES (distinto de DADOS físico de arriba)
@@ -245,9 +247,18 @@ Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y m
 
 async function executeTool(toolName, input) {
   switch (toolName) {
-    case 'registrar_pedido':
-      const result = await sheets.appendPedido(input);
+    case 'registrar_pedido': {
+      // Combo Parejas: Torre Parejas + Dados + Emparejados juntos → marcar en NOTAS
+      // aunque en Sheets cada columna (PAR/DADOS/EMPA) se siga llenando por separado.
+      const esComboParejas = (parseInt(input.parejas) || 0) > 0
+        && (parseInt(input.dados) || 0) > 0
+        && (parseInt(input.emparejados) || 0) > 0;
+      const inputConNotas = esComboParejas
+        ? { ...input, notas: ['COMBO PAREJAS', input.notas].filter(Boolean).join(' — ') }
+        : input;
+      const result = await sheets.appendPedido(inputConNotas);
       return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.`;
+    }
 
     case 'buscar_pedido':
       const pedidos = await sheets.buscarPedido(input.nombre);

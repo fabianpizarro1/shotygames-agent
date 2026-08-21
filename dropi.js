@@ -14,7 +14,8 @@ const PRODUCTS = {
   picante:     { id: 6008,   name: 'Torre de Shots PICANTE', weight: '1.00' },
   parejas:     { id: 76998,  name: 'Torre de Shots PAREJAS', weight: '1.00' },
   enganchados: { id: 6010,   name: 'Enganchados',            weight: '0.50' },
-  dados:       { id: 139461, name: 'Dados',                  weight: '0.10' }
+  dados:       { id: 139461, name: 'Dados',                  weight: '0.10' },
+  comboParejas: { id: 175606, name: 'Combo Parejas',          weight: '1.10' }
 };
 
 const PROVINCIAS = {
@@ -206,10 +207,28 @@ async function crearOrden(pedido) {
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
   // Productos
+  // Combo Parejas: si el pedido trae Torre Parejas + Dados juntos, ya no se
+  // mandan como 2 productos sueltos a DROPI — hay un SKU armado para esto
+  // (id 175606). Emparejados no cuenta para el combo, es digital, no pesa.
+  const cantidades = {
+    normal: parseInt(pedido.normal) || 0,
+    picante: parseInt(pedido.picante) || 0,
+    parejas: parseInt(pedido.parejas) || 0,
+    enganchados: parseInt(pedido.enganchados) || 0,
+    dados: parseInt(pedido.dados) || 0
+  };
+
   const productosRaw = [];
+  const comboQty = Math.min(cantidades.parejas, cantidades.dados);
+  if (comboQty > 0) {
+    productosRaw.push({ ...PRODUCTS.comboParejas, quantity: comboQty });
+    cantidades.parejas -= comboQty;
+    cantidades.dados -= comboQty;
+  }
+
   const campos = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
   for (const campo of campos) {
-    const qty = parseInt(pedido[campo]) || 0;
+    const qty = cantidades[campo];
     if (qty > 0) productosRaw.push({ ...PRODUCTS[campo], quantity: qty });
   }
 
