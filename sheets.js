@@ -291,7 +291,7 @@ async function appendPedido(pedido) {
     pedido.parejas || '',                    // col 9:  PAR
     pedido.enganchados || '',               // col 10: ENG
     pedido.dados || '',                     // col 11: DADOS
-    '',                                     // col 12: (vacía)
+    pedido.emparejados || '',               // col 12: EMPA (combo físico con Emparejados digital incluido)
     '',                                     // col 13: (vacía)
     '',                                     // col 14: (vacía)
     '',                                     // col 15: (vacía)
