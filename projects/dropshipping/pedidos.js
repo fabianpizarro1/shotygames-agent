@@ -412,12 +412,21 @@ async function getOrden(orderId) {
     estadoDropi: o.status || o.state || null,
     guia,
     costoEnvio: envio,
+    // Acá el proveedor puede despachar por GINTRACOM, LAARCOURIER o SERVIENTREGA
+    // (a diferencia de dropi.js, que es la cuenta propia de Shotygames y siempre
+    // usa Servientrega) — hay que leer la que DROPI realmente asignó.
+    transportadora: o.shipping_company || null,
     // Lo que DROPI calcula que se va a ganar con esta orden, y lo que
     // efectivamente acreditó. Comparar ambos revela cualquier diferencia entre
     // lo prometido y lo cobrado, sin tener que estimar nada.
     gananciaEsperada: parseFloat(o.dropshipper_amount_to_win || 0) || 0,
     gananciaAcreditada: parseFloat(o.amount_earned_dropshipper || 0) || 0,
-    pdf: guia ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf` : null
+    // guia_urls3 es la ruta real del PDF que da DROPI — varía según la
+    // transportadora (antes esto asumía siempre "servientrega" y el link
+    // salía roto para pedidos despachados por GINTRACOM o LAARCOURIER).
+    pdf: o.guia_urls3
+      ? `https://d39ru7awumhhs2.cloudfront.net/${o.guia_urls3}`
+      : (guia ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf` : null)
   };
 }
 

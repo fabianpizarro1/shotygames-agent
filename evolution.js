@@ -16,11 +16,22 @@ const clientVentas = axios.create({
   }
 });
 
+const clientPersonal = axios.create({
+  baseURL: process.env.EVOLUTION_API_URL,
+  headers: {
+    'apikey': process.env.EVOLUTION_API_KEY_PERSONAL || process.env.EVOLUTION_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+
 const INSTANCE = process.env.EVOLUTION_INSTANCE;
 const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
+const INSTANCE_PERSONAL = process.env.EVOLUTION_INSTANCE_PERSONAL;
 
 function getClient(instance) {
-  return instance === INSTANCE_VENTAS ? clientVentas : client;
+  if (instance === INSTANCE_VENTAS) return clientVentas;
+  if (instance === INSTANCE_PERSONAL) return clientPersonal;
+  return client;
 }
 
 async function sendText(to, text, instance = INSTANCE) {

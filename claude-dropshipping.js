@@ -17,6 +17,7 @@ const pedidosDropi = require('./projects/dropshipping/pedidos');
 const hoja = require('./projects/dropshipping/sheets-pedidos');
 const { buscar } = require('./projects/dropshipping/catalogo');
 const { evaluar, precioParaMargen } = require('./projects/dropshipping/calculadora');
+const { notificarGuiaLista } = require('./projects/dropshipping/notificar-guia');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -292,10 +293,29 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
           }
 
           // La guía y el flete se escriben apenas aparecen, en cualquier estado
+          let notificado = null;
           if (o.guia && !d.guia) {
             campos.GUIA = o.guia;
             campos.FLETE = o.costoEnvio;
             campos.F_GUIA = ahora;
+
+            // Guía recién generada → avisarle al cliente por WhatsApp con
+            // transportadora, número, link de rastreo, PDF y valor a pagar.
+            // Un fallo acá no debe tumbar el resto del sync: se reporta como
+            // error y el pedido queda con la guía igual escrita en el Sheet.
+            try {
+              await notificarGuiaLista({
+                nombre: d.nombre,
+                telefono: d.telefono,
+                transportadora: o.transportadora,
+                guia: o.guia,
+                valor: d.total,
+                pdfUrl: o.pdf
+              });
+              notificado = '📲 cliente notificado por WhatsApp';
+            } catch (e) {
+              errores.push(`${d.idPedido}: guía generada pero no se pudo notificar al cliente (${e.message})`);
+            }
           }
 
           if (nuevo !== d.estado) campos.ESTADO = nuevo;
@@ -305,7 +325,8 @@ Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
             cambios.push(
               `${d.idPedido}: ${d.estado} → ${nuevo}` +
               (campos.GUIA ? ` · guía ${campos.GUIA} (flete ${usd(campos.FLETE)})` : '') +
-              (pago ? ` · acreditado ${usd(pago.total)}` : '')
+              (pago ? ` · acreditado ${usd(pago.total)}` : '') +
+              (notificado ? ` · ${notificado}` : '')
             );
           } else {
             sinNovedad.push(`${d.idPedido} (${estadoDropi || 'sin estado en DROPI'})`);
