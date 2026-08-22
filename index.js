@@ -533,6 +533,46 @@ try {
   console.error('[CRON] Error al iniciar seguimiento de dropshipping:', e.message);
 }
 
+// ── SHOTYGAMES: sincronizar pagos DROPI ──────────────────────
+// DROPI marca la orden como entregada horas o días antes de acreditar la
+// plata en la wallet. Sin este cron, el ESTADO en Sheets se quedaba en
+// ENVIADO/ENTREGADO para siempre — nadie revisaba la wallet a mano para
+// saber cuáles ya se cobraron de verdad.
+try {
+  const cron = require('node-cron');
+  const { executeTool: executeToolDropi } = require('./claude-dropi');
+  const axios = require('axios');
+
+  async function sincronizarPagosShotygames() {
+    try {
+      const salida = await executeToolDropi('sincronizar_pagos_dropi', {});
+      console.log('[SHOTYGAMES] Sincronización de pagos:', salida.slice(0, 200));
+
+      // Solo avisa si algo cambió — igual que el cron de dropshipping.
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      const chatIds = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+      const huboNovedad = salida.includes('Marcados como PAGADO') || salida.includes('Marcados como ENTREGADO');
+      if (token && chatIds.length && huboNovedad) {
+        for (const chatId of chatIds) {
+          await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+            chat_id: chatId,
+            text: `💰 Pagos DROPI\n\n${salida}`
+          }).catch(e => console.error('[SHOTYGAMES] Telegram:', e.message));
+        }
+      }
+    } catch (e) {
+      console.error('[SHOTYGAMES] Error sincronizando pagos:', e.message);
+    }
+  }
+
+  // Cada 2h entre 8am y 8pm de Ecuador (13:00-01:00 UTC) — mismo horario que
+  // el cron de guías, no hace falta revisar más seguido que eso.
+  cron.schedule('0 13,15,17,19,21,23,1 * * *', sincronizarPagosShotygames);
+  console.log('[CRON] Shotygames: sincronizar pagos DROPI cada 2h (8am-8pm Ecuador)');
+} catch (e) {
+  console.error('[CRON] Error al iniciar sincronización de pagos Shotygames:', e.message);
+}
+
 // ── META CAPI: Purchase real desde PEDIDOS ────────────────────
 // Manda el Purchase por Conversions API en cuanto el pedido queda registrado
 // en la hoja oficial (con atribución fbc/fbp), reemplazando el Purchase falso

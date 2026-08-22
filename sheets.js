@@ -966,6 +966,61 @@ async function marcarEntregado(fila) {
   });
 }
 
+// Marca un pedido como PAGADO en Sheets por número de fila (DROPI ya acreditó
+// la plata en la wallet — se llama desde sincronizar_pagos_dropi).
+async function marcarPagado(fila) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A1:AJ1' });
+  const headers = res.data.values?.[0] || [];
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxEstado === -1) throw new Error('Columna ESTADO no encontrada');
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(idxEstado)}${fila}`,
+    valueInputOption: 'RAW',
+    resource: { values: [['PAGADO']] }
+  });
+}
+
+// Pedidos con orden en DROPI que todavía no están PAGADO ni CANCELADO —
+// el universo a revisar contra la wallet en cada corrida del cron.
+// A diferencia de getOrdenesEnviadas (solo ENVIADO/PENDIENTE, para el chequeo
+// de entrega), acá entra también ENTREGADO: la plata se acredita después de
+// la entrega, así que un pedido ya entregado sigue siendo candidato a pago.
+async function getOrdenesConDropi() {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxTel    = headers.indexOf('TELEFONO');
+  const idxEstado = headers.indexOf('ESTADO');
+  const idxGuia   = headers.indexOf('GUIA');
+  const idxDropiId = 33; // columna AH, guardado como "DROPI:XXXXX"
+
+  const EXCLUIR = ['PAGADO', 'CANCELADO'];
+  const resultado = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxNombre]) continue;
+    const estado = row[idxEstado] || '';
+    if (EXCLUIR.includes(estado)) continue;
+    const dropiCell = row[idxDropiId] || '';
+    const dropiId = dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null;
+    if (!dropiId) continue;
+    resultado.push({
+      fila: i + 1,
+      nombre: row[idxNombre] || '',
+      telefono: row[idxTel] || '',
+      estado,
+      guia: row[idxGuia] || '',
+      dropiId
+    });
+  }
+  return resultado;
+}
+
 // ── STOCK (hoja PEND) ─────────────────────────────────────────
 async function leerStock() {
   const sheetsApi = await getSheets();
@@ -1037,4 +1092,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };

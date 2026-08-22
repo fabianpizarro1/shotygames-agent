@@ -676,4 +676,70 @@ async function getSaldoDropi() {
   }
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
+// Historial de movimientos de la wallet — hace falta para saber cuándo se
+// acredita REALMENTE la plata de un pedido. o.status dice "ENTREGADO" horas
+// o días antes de que DROPI pague; solo la wallet dice cuándo entró la plata.
+// Mismo endpoint y misma lógica que projects/dropshipping/pedidos.js, pero
+// con el USER_ID de la cuenta propia de Shotygames.
+async function getMovimientosWallet({ desde, hasta, limite = 100 } = {}) {
+  const token = await getToken();
+  let client = makeClient(token);
+  const hoy = new Date();
+  const haceUnMes = new Date(hoy.getTime() - 45 * 86400000);
+  const from = desde || haceUnMes.toISOString().slice(0, 10);
+  const until = hasta || hoy.toISOString().slice(0, 10);
+  const url = `/historywallet?orderBy=id&orderDirection=desc&result_number=${limite}&start=0` +
+              `&textToSearch=&type=null&id=null&identification_code=null` +
+              `&user_id=${USER_ID}&from=${from}&until=${until}&wallet_id=0`;
+
+  async function doGet(c) {
+    const r = await c.get(url);
+    return (r.data?.objects || []).map((m) => ({
+      id: m.id,
+      orderId: m.order_id,
+      tipo: m.type,                       // ENTRADA | SALIDA
+      monto: parseFloat(m.amount) || 0,
+      descripcion: m.description || '',
+      fecha: m.created_at
+    }));
+  }
+  try {
+    return await doGet(client);
+  } catch (e) {
+    if (e.response?.status === 401 || e.response?.status === 403) {
+      client = makeClient(await autoLogin());
+      return await doGet(client);
+    }
+    throw e;
+  }
+}
+
+/**
+ * ¿Ya se acreditó la plata de esta orden? Busca la ENTRADA por GANANCIA —
+ * no sirve cualquier ENTRADA: la devolución de flete y el reembolso por
+ * cancelación también son ENTRADA, y ninguna significa que se cobró la venta.
+ */
+function pagoDeOrden(movimientos, orderId) {
+  const id = String(orderId);
+  // En la cuenta propia de Shotygames, Fabián es dropshipper Y proveedor del
+  // mismo producto — DROPI acredita DOS entradas por GANANCIA por pedido
+  // pagado ("...COMO DROPSHIPPER" + "...COMO PROVEEDOR"), no una. Con find()
+  // se perdía la mitad de la plata real acreditada; hay que sumar todas.
+  const pagos = movimientos.filter(
+    (m) => String(m.orderId) === id && m.tipo === 'ENTRADA' && /GANANCIA/i.test(m.descripcion)
+  );
+  if (!pagos.length) return null;
+  const fletes = movimientos.filter(
+    (m) => String(m.orderId) === id && m.tipo === 'ENTRADA' && /DEVOLUCION DE FLETE/i.test(m.descripcion)
+  );
+  const monto = pagos.reduce((s, p) => s + p.monto, 0);
+  const fleteDevuelto = fletes.reduce((s, f) => s + f.monto, 0);
+  return {
+    monto,
+    fleteDevuelto,
+    total: monto + fleteDevuelto,
+    fecha: pagos[0].fecha
+  };
+}
+
+module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
