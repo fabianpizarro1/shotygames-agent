@@ -118,20 +118,11 @@ Al llamar registrar_pedido SIEMPRE pasa los campos individuales de cantidad (nor
 No hagas nada hasta que Fabián confirme.
 
 ### Paso 4 — Cuando Fabián confirme
-Ejecuta según la transportadora:
+Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 (nombre, telefono, ciudad, direccion, cantidades, anticipo, saldo, cuenta, transportadora, notas, idPedido si aplica).
 
-**Si transportadora = SERVIENTREGA** (o no se especificó ninguna):
-1. registrar_pedido — registra en Google Sheets
-2. crear_guia_dropi — crea la guía en DROPI
-   - Incluye siempre pvp_total (precio de venta total) y saldo
-   - Si saldo > 0: pedido CON RECAUDO, DROPI cobra al entregar
-   - Si saldo = 0: pedido SIN RECAUDO, pvp_total se usa para calcular precio por unidad
-   - Incluye siempre el campo "provincia" usando tu conocimiento de geografía de Ecuador. Nunca preguntes la provincia — deducirla tú mismo.
-Responde con una línea resumida + el link del PDF de la guía.
+→ NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la guía en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte generaría una guía DUPLICADA con flete cobrado dos veces. crear_guia_dropi es SOLO para la sección "Crear guía en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin guía.
 
-**Si transportadora = COOPERATIVA, DOMICILIO o cualquier otra distinta de SERVIENTREGA:**
-1. registrar_pedido — solo registra en Google Sheets. NO crear guía en DROPI.
-Responde confirmando el registro sin mencionar guía ni DROPI.
+La respuesta de registrar_pedido ya trae el resultado completo — reenvíasela a Fabián tal cual (confirmación + guía si se creó, o el aviso de qué faltó).
 
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
@@ -245,19 +236,101 @@ Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y m
 - **Ver pedidos del día**
 - **Responder preguntas** del negocio`;
 
+// Compartida entre crear_guia_dropi (pedido ya existente) y el auto-chain de
+// registrar_pedido (pedido nuevo) — así ambos caminos usan exactamente la
+// misma lógica de creación/errores en vez de mantenerla duplicada.
+async function crearGuiaDropiYActualizar(input) {
+  console.log('crear_guia_dropi input:', JSON.stringify(input));
+  const orden = await dropi.crearOrden(input);
+  const guia = orden?.sticker;
+
+  if (orden?._guideError) {
+    // Guardar el order ID en Sheets aunque la guía haya fallado — permite reintentar después
+    if (input.telefono && orden._orderId) {
+      try {
+        await sheets.actualizarGuia(input.telefono, null, null, orden._orderId);
+        console.log(`crear_guia_dropi: DROPI order ID ${orden._orderId} guardado en Sheets para reintento`);
+      } catch (e) {
+        console.error('Error guardando DROPI ID en Sheets:', e.message);
+      }
+    }
+    return { ok: false, mensaje: `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero DROPI no generó la guía: ${orden._guideError}\n\nEl ID de la orden quedó guardado en Sheets. Cuando DROPI esté disponible, di *"ponle la guía a ${input.nombre}"* para reintentarlo.` };
+  }
+  if (!guia) {
+    if (input.telefono && orden?._orderId) {
+      try { await sheets.actualizarGuia(input.telefono, null, null, orden._orderId); } catch (_) {}
+    }
+    return { ok: false, mensaje: `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Di *"ponle la guía a ${input.nombre}"* para reintentarlo.` };
+  }
+
+  console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
+
+  // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO + DROPI order ID
+  if (input.telefono) {
+    const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping, orden._orderId);
+    console.log('actualizarGuia result:', JSON.stringify(updResult));
+  } else {
+    console.log('ADVERTENCIA: crear_guia_dropi sin telefono — no se puede actualizar Sheets');
+  }
+
+  const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
+  const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
+
+  return { ok: true, guia, orden, mensaje: `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}` };
+}
+
 async function executeTool(toolName, input) {
   switch (toolName) {
     case 'registrar_pedido': {
       // Combo Parejas: Torre Parejas + Dados + Emparejados juntos → marcar en NOTAS
       // aunque en Sheets cada columna (PAR/DADOS/EMPA) se siga llenando por separado.
+      // Si el modelo ya venía escribiendo "COMBO PAREJAS" en notas por su cuenta,
+      // no lo duplica (se vio "COMBO PAREJAS — COMBO PAREJAS" en pedidos reales).
       const esComboParejas = (parseInt(input.parejas) || 0) > 0
         && (parseInt(input.dados) || 0) > 0
         && (parseInt(input.emparejados) || 0) > 0;
-      const inputConNotas = esComboParejas
+      const yaMarcado = (input.notas || '').toUpperCase().includes('COMBO PAREJAS');
+      const inputConNotas = esComboParejas && !yaMarcado
         ? { ...input, notas: ['COMBO PAREJAS', input.notas].filter(Boolean).join(' — ') }
         : input;
-      const result = await sheets.appendPedido(inputConNotas);
-      return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.`;
+      await sheets.appendPedido(inputConNotas);
+
+      // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
+      // SEGUNDA llamada a crear_guia_dropi reextrayendo los mismos datos del
+      // mensaje — cuando se le olvidaba, el pedido quedaba registrado en Sheets
+      // sin guía ni orden en DROPI (bug reportado 2026-08-21: "no me genera la
+      // guía, solo me registra el pedido"). Ahora, si es SERVIENTREGA y trae
+      // producto físico, la guía se crea automáticamente acá mismo con los
+      // datos que ya se usaron para registrar — un solo lugar, un solo extract.
+      const transportadora = (input.transportadora || 'SERVIENTREGA').toUpperCase();
+      const CAMPOS_FISICOS = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
+      const tieneFisico = CAMPOS_FISICOS.some((c) => (parseInt(input[c]) || 0) > 0);
+
+      if (transportadora !== 'SERVIENTREGA' || !tieneFisico) {
+        return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.`;
+      }
+      if (!input.direccion) {
+        return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.`;
+      }
+
+      const saldoNum = parseFloat(String(inputConNotas.saldo || '0').replace(',', '.')) || 0;
+      const guiaInput = {
+        nombre: inputConNotas.nombre,
+        telefono: inputConNotas.telefono,
+        ciudad: inputConNotas.ciudad,
+        direccion: inputConNotas.direccion,
+        normal: inputConNotas.normal,
+        picante: inputConNotas.picante,
+        parejas: inputConNotas.parejas,
+        enganchados: inputConNotas.enganchados,
+        dados: inputConNotas.dados,
+        saldo: inputConNotas.saldo,
+        // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
+        pvp_total: saldoNum > 0 ? undefined : inputConNotas.anticipo,
+        notas: inputConNotas.notas
+      };
+      const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
+      return `✅ Pedido registrado.\n${guiaResult.mensaje}`;
     }
 
     case 'buscar_pedido':
@@ -273,43 +346,8 @@ async function executeTool(toolName, input) {
       return `No encontré pedido con teléfono ${input.telefono}.`;
 
     case 'crear_guia_dropi': {
-      console.log('crear_guia_dropi input:', JSON.stringify(input));
-      const orden = await dropi.crearOrden(input);
-      const guia = orden?.sticker;
-
-      if (orden?._guideError) {
-        // Guardar el order ID en Sheets aunque la guía haya fallado — permite reintentar después
-        if (input.telefono && orden._orderId) {
-          try {
-            await sheets.actualizarGuia(input.telefono, null, null, orden._orderId);
-            console.log(`crear_guia_dropi: DROPI order ID ${orden._orderId} guardado en Sheets para reintento`);
-          } catch (e) {
-            console.error('Error guardando DROPI ID en Sheets:', e.message);
-          }
-        }
-        return `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero DROPI no generó la guía: ${orden._guideError}\n\nEl ID de la orden quedó guardado en Sheets. Cuando DROPI esté disponible, di *"ponle la guía a ${input.nombre}"* para reintentarlo.`;
-      }
-      if (!guia) {
-        if (input.telefono && orden?._orderId) {
-          try { await sheets.actualizarGuia(input.telefono, null, null, orden._orderId); } catch (_) {}
-        }
-        return `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Di *"ponle la guía a ${input.nombre}"* para reintentarlo.`;
-      }
-
-      console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
-
-      // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO + DROPI order ID
-      if (input.telefono) {
-        const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping, orden._orderId);
-        console.log('actualizarGuia result:', JSON.stringify(updResult));
-      } else {
-        console.log('ADVERTENCIA: crear_guia_dropi sin telefono — no se puede actualizar Sheets');
-      }
-
-      const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
-      const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
-
-      return `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}`;
+      const r = await crearGuiaDropiYActualizar(input);
+      return r.mensaje;
     }
 
     case 'sincronizar_guia_dropi': {
