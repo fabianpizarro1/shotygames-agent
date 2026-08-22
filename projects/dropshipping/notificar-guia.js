@@ -1,11 +1,14 @@
 /**
- * Notificación automática al cliente cuando DROPI genera la guía de envío.
+ * Notificaciones automáticas al cliente de dropshipping por WhatsApp.
  *
- * Se dispara desde sincronizar_guias (claude-dropshipping.js) la primera vez
- * que un pedido pasa a GUIA_GENERADA — manda el mensaje con transportadora,
- * guía, link de rastreo y valor a pagar, más el PDF de la guía.
+ * - notificarPedidoConfirmado: se dispara desde confirmar_pedido
+ *   (claude-dropshipping.js) apenas el pedido se crea en DROPI (pasa a
+ *   EN_DROPI) — avisa que el pedido quedó confirmado y se va a despachar.
+ * - notificarGuiaLista: se dispara desde sincronizar_guias la primera vez
+ *   que un pedido pasa a GUIA_GENERADA — manda transportadora, guía, link
+ *   de rastreo y valor a pagar, más el PDF de la guía.
  *
- * Va por la instancia de WhatsApp "personal" (EVOLUTION_INSTANCE_PERSONAL),
+ * Ambas van por la instancia de WhatsApp "personal" (EVOLUTION_INSTANCE_PERSONAL),
  * separada de la operativa y de ventas.
  */
 
@@ -83,4 +86,23 @@ async function notificarGuiaLista({ nombre, telefono, transportadora, guia, valo
   }
 }
 
-module.exports = { notificarGuiaLista, mensajeGuiaLista, telefonoWA };
+function mensajePedidoConfirmado({ nombre }) {
+  return `¡Perfecto ${primerNombre(nombre)}! 😊 Muchas gracias por confirmar tu pedido ✅
+
+Ya vamos a preparar todo para *despacharlo lo antes posible* 📦🚛
+
+Apenas sea enviado, te enviaremos por aquí tu *número de guía* para que puedas rastrear el paquete.
+
+¡Gracias por tu compra! 🙌`;
+}
+
+/** Manda el mensaje de "pedido confirmado" apenas se crea la orden en DROPI. */
+async function notificarPedidoConfirmado({ nombre, telefono }) {
+  if (!INSTANCE) throw new Error('EVOLUTION_INSTANCE_PERSONAL no configurado en .env');
+  if (!telefono) throw new Error('pedido sin teléfono');
+
+  const to = telefonoWA(telefono);
+  await sendText(to, mensajePedidoConfirmado({ nombre }), INSTANCE);
+}
+
+module.exports = { notificarGuiaLista, mensajeGuiaLista, notificarPedidoConfirmado, mensajePedidoConfirmado, telefonoWA };

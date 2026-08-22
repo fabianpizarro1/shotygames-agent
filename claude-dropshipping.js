@@ -17,7 +17,7 @@ const pedidosDropi = require('./projects/dropshipping/pedidos');
 const hoja = require('./projects/dropshipping/sheets-pedidos');
 const { buscar } = require('./projects/dropshipping/catalogo');
 const { evaluar, precioParaMargen } = require('./projects/dropshipping/calculadora');
-const { notificarGuiaLista } = require('./projects/dropshipping/notificar-guia');
+const { notificarGuiaLista, notificarPedidoConfirmado } = require('./projects/dropshipping/notificar-guia');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -176,6 +176,16 @@ async function executeTool(name, input) {
 
       await hoja.actualizarFila(d.fila, campos);
 
+      // Avisarle al cliente que el pedido quedó confirmado — no bloquea el
+      // resto si WhatsApp falla, mismo criterio que la notificación de guía.
+      let notificado = null;
+      try {
+        await notificarPedidoConfirmado({ nombre: d.nombre, telefono: d.telefono });
+        notificado = '📲 cliente notificado por WhatsApp';
+      } catch (e) {
+        notificado = `⚠️ no se pudo notificar al cliente (${e.message})`;
+      }
+
       return `Pedido ${d.idPedido} creado en DROPI.
 Orden: ${r.orderId}
 Producto: ${r.producto} x${d.cantidad}${r.regalo ? `\nRegalo: ${r.regalo} x${d.cantidad2} (gratis, misma caja)` : ''}
@@ -185,7 +195,8 @@ Flete: ${usd(r.flete)}
 Ganas al entregarse: ${usd(r.gananciaEsperada)}
 Bodega: ${r.bodega.nombre || r.bodega.id}
 Transportadora: ${r.transportadora}
-Estado: EN_DROPI — esperando que el proveedor genere la guía.`;
+Estado: EN_DROPI — esperando que el proveedor genere la guía.
+${notificado}`;
     }
 
     case 'cancelar_pedido': {
