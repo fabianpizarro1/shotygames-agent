@@ -567,6 +567,53 @@ async function marcarNotificacionWA(nombre) {
   return { marcados: updates.length, nombres };
 }
 
+// Candidatos para mandar el mensaje de guía (notificar-guia-cliente.js).
+// Modo individual (nombre): fuzzy match, igual que marcarNotificacionWA.
+// Modo batch (sin nombre): todos los de HOY que ya tienen guía.
+// A diferencia de marcarNotificacionWA, esto NO escribe nada — solo junta
+// los datos (incluido LOG) para que quien llama decida enviar o no.
+async function getPedidosParaNotificarGuia(nombre) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+
+  const nombreIdx = headers.indexOf('NOMBRE');
+  const telIdx    = headers.indexOf('TELEFONO');
+  const guiaIdx    = headers.indexOf('GUIA');
+  const fechaIdx   = headers.indexOf('FECHA');
+  const transpIdx  = headers.indexOf('TRANSPORTADORA');
+  const logIdx     = headers.indexOf('LOG');
+  const dropiIdx   = 33; // columna AH, guardado como "DROPI:XXXXX"
+
+  const toCandidato = (i) => {
+    const dropiCell = String(rows[i][dropiIdx] || '');
+    return {
+      fila: i + 1,
+      nombre: rows[i][nombreIdx] || '',
+      telefono: rows[i][telIdx] || '',
+      guia: rows[i][guiaIdx] || '',
+      transportadora: rows[i][transpIdx] || 'SERVIENTREGA',
+      log: rows[i][logIdx] || '',
+      dropiId: dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null
+    };
+  };
+
+  if (nombre) {
+    const matches = buscarFilasPorNombre(rows, headers, nombre);
+    if (matches.length === 0) return { pedidos: [] };
+    if (matches.length > 1) return { candidatos: matches };
+    return { pedidos: [toCandidato(matches[0].idx)] };
+  }
+
+  const hoy = new Date().toLocaleDateString('es-EC', { day:'2-digit', month:'2-digit', year:'numeric', timeZone: 'America/Guayaquil' });
+  const pedidos = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][fechaIdx] === hoy && rows[i][guiaIdx]) pedidos.push(toCandidato(i));
+  }
+  return { pedidos };
+}
+
 // Devuelve número de guía + PDF link de un pedido buscando por nombre (fuzzy).
 async function obtenerGuiaPedido(nombre) {
   const sheetsApi = await getSheets();
@@ -1119,4 +1166,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, getPedidosParaNotificarGuia, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };

@@ -5,6 +5,7 @@ const dropi = require('./dropi');
 const { downloadPdf, merge4Up, generateThankyouCards, mergePdfs } = require('./pdf');
 const { sendDocument } = require('./evolution');
 const { uploadPdfReemplazando } = require('./drive');
+const { notificarGuia } = require('./notificar-guia-cliente');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -175,7 +176,7 @@ Cuando Fabián diga algo como "manda las guías a los clientes", "notifica a tod
 → USA INMEDIATAMENTE notificar_guia_clientes.
 → Con nombre específico: pasa el nombre. Sin nombre o "todos": no pases nombre (batch automático).
 → NUNCA pidas confirmación para esto — ejecuta directo.
-→ Sheets se encarga de enviar el WhatsApp automáticamente al marcar la casilla.
+→ El tool manda el WhatsApp (texto + PDF de la guía) directo, ya no depende de nada más.
 
 ## Imprimir guías de envío
 Cuando Fabián diga "imprime las guías", "mándame las guías", "necesito las guías para imprimir", "dame el PDF de las guías":
@@ -434,24 +435,43 @@ async function executeTool(toolName, input) {
     }
 
     case 'notificar_guia_clientes': {
-      const res = await sheets.marcarNotificacionWA(input.nombre || null);
-      // Múltiples coincidencias → preguntar cuál
+      // Manda el texto + PDF directo (ver notificar-guia-cliente.js) — antes
+      // esto solo marcaba una casilla que ya no tiene nada escuchándola
+      // (bug real, encontrado 2026-08-22). Usa la columna LOG para no
+      // duplicar contra el CRM aparte o el Apps Script del Sheet, que ya
+      // escriben ahí con el mismo formato "Guía enviada | ...".
+      const res = await sheets.getPedidosParaNotificarGuia(input.nombre || null);
+
       if (res.candidatos) {
         const lista = res.candidatos.map((c, i) =>
           `${i + 1}. ${c.nombre} — ${c.fecha}`
         ).join('\n');
         return `Encontré varios pedidos para "${input.nombre}":\n${lista}\n\n¿A cuál le mando la notificación? Dime el nombre completo.`;
       }
-      if (res.yaNotificado) {
-        return `El pedido de ${res.yaNotificado} ya fue notificado antes (casilla ya marcada).`;
-      }
-      if (res.marcados === 0) {
+      if (!res.pedidos.length) {
         return input.nombre
           ? `No encontré pedido para "${input.nombre}".`
-          : `No hay pedidos de hoy con guía pendientes de notificar (todos ya están marcados o sin guía).`;
+          : `No hay pedidos de hoy con guía pendientes de notificar.`;
       }
-      const lista = res.nombres.join(', ');
-      return `✅ Notificación activada para ${res.marcados} pedido(s): ${lista}. Sheets enviará el mensaje automáticamente.`;
+
+      const enviados = [];
+      const omitidos = [];
+      const errores = [];
+      for (const p of res.pedidos) {
+        try {
+          const r = await notificarGuia(p);
+          if (r.enviado) enviados.push(p.nombre);
+          else omitidos.push(`${p.nombre} (${r.motivo})`);
+        } catch (e) {
+          errores.push(`${p.nombre}: ${e.message}`);
+        }
+      }
+
+      let out = '';
+      if (enviados.length) out += `✅ Guía enviada a ${enviados.length}: ${enviados.join(', ')}\n`;
+      if (omitidos.length) out += `⏭️ Omitidos: ${omitidos.join(', ')}\n`;
+      if (errores.length) out += `⚠️ Con error: ${errores.join(', ')}`;
+      return out.trim() || 'Nada para notificar.';
     }
 
     case 'imprimir_guias': {
