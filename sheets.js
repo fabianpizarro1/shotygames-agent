@@ -999,13 +999,17 @@ async function getOrdenesConDropi() {
   const idxGuia   = headers.indexOf('GUIA');
   const idxDropiId = 33; // columna AH, guardado como "DROPI:XXXXX"
 
+  // El Sheet tiene ESTADO cargado con formatos mixtos de distintas épocas
+  // ("PAGADO", "Pagado", etc.) — comparar sin normalizar dejó pasar filas ya
+  // pagadas y el sync las reprocesó (bug real, 2026-08-22). Comparación
+  // insensible a mayúsculas para no repetirlo.
   const EXCLUIR = ['PAGADO', 'CANCELADO'];
   const resultado = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     if (!row || !row[idxNombre]) continue;
     const estado = row[idxEstado] || '';
-    if (EXCLUIR.includes(estado)) continue;
+    if (EXCLUIR.includes(estado.toUpperCase().trim())) continue;
     const dropiCell = row[idxDropiId] || '';
     const dropiId = dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null;
     if (!dropiId) continue;

@@ -48,14 +48,10 @@ const TOOLS = [
   },
   {
     name: 'sincronizar_pagos_dropi',
-    description: 'Revisa todos los pedidos con orden en DROPI que no están PAGADO ni CANCELADO. Primero chequea la wallet: si DROPI ya acreditó la ganancia de ese pedido, lo marca PAGADO en Sheets (esto es lo que realmente significa "me pagaron"). Si todavía no hay pago pero el estado en DROPI ya es entregado, lo marca ENTREGADO. Úsalo cuando Fabián pregunte "qué me pagaron hoy", "cuáles se entregaron", "sincroniza los pagos de DROPI". Es lo que corre el cron.',
+    description: 'Revisa todos los pedidos con orden en DROPI que no están PAGADO ni CANCELADO, y chequea la wallet real de DROPI: si ya se acreditó la ganancia de un pedido, lo marca PAGADO en Sheets. No toca ningún otro estado. Úsalo cuando Fabián pregunte "qué me pagaron hoy", "sincroniza los pagos de DROPI". Es lo que corre el cron.',
     input_schema: { type: 'object', properties: {} }
   }
 ];
-
-// Estados de DROPI que indican entrega (no necesariamente pago — la plata se
-// acredita después, ver pagoDeOrden contra la wallet más abajo)
-const ESTADOS_ENTREGADO = ['ENTREGADO', 'DELIVERED', 'PAGADO', 'PAGADO_PROVEEDOR', 'LIQUIDADO', 'COMPLETADO'];
 
 async function executeTool(name, input) {
   switch (name) {
@@ -83,63 +79,38 @@ async function executeTool(name, input) {
     }
 
     case 'sincronizar_pagos_dropi': {
+      // SOLO marca PAGADO cuando la wallet de DROPI confirma que se acreditó
+      // la plata. No toca ENTREGADO ni ningún otro estado — eso lo maneja
+      // Fabián por su cuenta. (2026-08-22: una versión anterior de esto
+      // también marcaba ENTREGADO por estado de la orden y pisó 61 pedidos
+      // que ya tenían ESTADO cargado a mano con otro formato — no se repite.)
       const ordenes = await sheets.getOrdenesConDropi();
       if (ordenes.length === 0) return `No hay pedidos con orden DROPI pendientes de pago para sincronizar.`;
 
-      // Una sola llamada a la wallet para todos los pedidos: dice cuándo la
-      // plata entró de verdad, no cuándo DROPI marcó la entrega.
+      // Una sola llamada a la wallet para todos los pedidos.
       let movimientos = [];
       try {
         movimientos = await dropi.getMovimientosWallet();
       } catch (e) {
-        console.error('sincronizar_pagos: error leyendo wallet:', e.message);
+        return `No se pudo leer la wallet de DROPI: ${e.message}`;
       }
 
       const pagados = [];
-      const entregados = [];
-      const pendientes = [];
-
       for (const orden of ordenes) {
+        const pago = dropi.pagoDeOrden(movimientos, orden.dropiId);
+        if (!pago) continue;
         try {
-          const pago = dropi.pagoDeOrden(movimientos, orden.dropiId);
-          if (pago) {
-            await sheets.marcarPagado(orden.fila);
-            pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total });
-            continue;
-          }
-
-          const dropiData = await dropi.getOrdenPorId(orden.dropiId);
-          const statusDropi = (dropiData.status || '').toUpperCase();
-          const esEntregado = ESTADOS_ENTREGADO.some(e => statusDropi.includes(e));
-          if (esEntregado && orden.estado !== 'ENTREGADO') {
-            await sheets.marcarEntregado(orden.fila);
-            entregados.push({ nombre: orden.nombre, guia: orden.guia, status: dropiData.status });
-          } else {
-            pendientes.push({ nombre: orden.nombre, guia: orden.guia, status: dropiData.status || orden.estado });
-          }
+          await sheets.marcarPagado(orden.fila);
+          pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total });
         } catch (e) {
-          console.error(`sincronizar_pagos: error en orden ${orden.dropiId}:`, e.message);
-          pendientes.push({ nombre: orden.nombre, guia: orden.guia, status: 'error consultando' });
+          console.error(`sincronizar_pagos: error marcando fila ${orden.fila}:`, e.message);
         }
       }
 
-      let respuesta = `📦 Revisados ${ordenes.length} pedidos:\n\n`;
-      if (pagados.length > 0) {
-        respuesta += `💰 *Marcados como PAGADO (${pagados.length}):*\n`;
-        respuesta += pagados.map(o => `• ${o.nombre} — Guía ${o.guia} — $${o.monto.toFixed(2)}`).join('\n');
-        respuesta += '\n\n';
-      }
-      if (entregados.length > 0) {
-        respuesta += `✅ *Marcados como ENTREGADO, aún sin acreditar (${entregados.length}):*\n`;
-        respuesta += entregados.map(o => `• ${o.nombre} — Guía ${o.guia}`).join('\n');
-        respuesta += '\n\n';
-      }
-      if (pendientes.length > 0) {
-        respuesta += `⏳ *Aún en tránsito (${pendientes.length}):*\n`;
-        respuesta += pendientes.map(o => `• ${o.nombre} — ${o.status}`).join('\n');
-      }
-      if (pagados.length === 0 && entregados.length === 0) respuesta += `Nada nuevo — ninguno se entregó ni se acreditó todavía.`;
-      return respuesta;
+      if (!pagados.length) return `Revisados ${ordenes.length} pedidos — ninguno nuevo acreditado en la wallet todavía.`;
+
+      return `💰 *Marcados como PAGADO (${pagados.length}):*\n` +
+        pagados.map(o => `• ${o.nombre} — Guía ${o.guia} — $${o.monto.toFixed(2)}`).join('\n');
     }
 
     default:
