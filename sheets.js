@@ -71,8 +71,10 @@ function coincideNombre(query, target) {
   const q = normalizar(query);
   const t = normalizar(target);
   if (!q || !t) return false;
-  // 1. Substring exacto (ya normalizado)
-  if (t.includes(q) || q.includes(t)) return true;
+  // 1. Substring exacto (ya normalizado). Mínimo 3 caracteres — con nombres
+  // de 1-2 letras (ej. fila real con NOMBRE="S") cualquier búsqueda larga
+  // "contiene" esa letra en algún lado y matcheaba siempre.
+  if (t.length >= 3 && q.length >= 3 && (t.includes(q) || q.includes(t))) return true;
   // 2. Todas las palabras del query aparecen (aprox) en el target
   const qWords = q.split(/\s+/).filter(w => w.length > 1);
   const tWords = t.split(/\s+/).filter(w => w.length > 1);
@@ -83,7 +85,12 @@ function coincideNombre(query, target) {
     )
   );
   if (todasPresentes) return true;
-  // 3. Typos mayores: al menos una palabra con distancia ≤ 2 (ej: "FABIANO" → "FABIAN")
+  // 3. Typos mayores en búsquedas de UNA sola palabra (ej: "FABIANO" → "FABIAN").
+  // Solo tiene sentido acá — con nombre completo, exigir que UNA palabra
+  // matchee (ej: "LUIS") hacía que cualquier "LUIS algo" calificara, sin
+  // importar que el resto del nombre no tuviera nada que ver (bug real,
+  // encontrado 2026-08-22: "LUIS MARIO CHANCAY PARRALES" traía 60+ candidatos).
+  if (qWords.length !== 1) return false;
   return qWords.some(qw =>
     tWords.some(tw => qw.length > 3 && tw.length > 3 && distanciaEdicion(qw, tw) <= 2)
   );
