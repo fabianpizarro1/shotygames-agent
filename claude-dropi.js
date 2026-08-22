@@ -1,6 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const dropi = require('./dropi');
 const sheets = require('./sheets');
+const { notificarGracias } = require('./notificar-gracias');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -95,13 +96,29 @@ async function executeTool(name, input) {
         return `No se pudo leer la wallet de DROPI: ${e.message}`;
       }
 
+      // Igual que el CRM aparte (PROYECTO SHEETS CLAUDE): apenas se marca
+      // PAGADO, se dispara el WhatsApp de gracias. Ese CRM solo lo hace
+      // cuando el cambio de estado sale de SU propia UI — un cambio hecho
+      // acá nunca pasaba por ahí. Mismo texto, mismo control de duplicados
+      // por LOG (ver notificar-gracias.js), para no depender de esa UI.
+      async function marcarPagadoYAgradecer(orden) {
+        await sheets.marcarPagado(orden.fila);
+        try {
+          const r = await notificarGracias({ fila: orden.fila, nombre: orden.nombre, telefono: orden.telefono, log: orden.log });
+          return r.enviado ? '📲 gracias enviado' : null;
+        } catch (e) {
+          console.error(`sincronizar_pagos: error mandando gracias fila ${orden.fila}:`, e.message);
+          return `⚠️ gracias no enviado (${e.message})`;
+        }
+      }
+
       const pagados = [];
       for (const orden of ordenes) {
         const pago = dropi.pagoDeOrden(movimientos, orden.dropiId);
         if (pago) {
           try {
-            await sheets.marcarPagado(orden.fila);
-            pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total });
+            const notif = await marcarPagadoYAgradecer(orden);
+            pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total, notif });
           } catch (e) {
             console.error(`sincronizar_pagos: error marcando fila ${orden.fila}:`, e.message);
           }
@@ -117,8 +134,8 @@ async function executeTool(name, input) {
             const dropiData = await dropi.getOrdenPorId(orden.dropiId);
             const statusDropi = (dropiData.status || '').toUpperCase();
             if (statusDropi.includes('ENTREGADO') || statusDropi.includes('DELIVERED')) {
-              await sheets.marcarPagado(orden.fila);
-              pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: 0, sinRecaudo: true });
+              const notif = await marcarPagadoYAgradecer(orden);
+              pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: 0, sinRecaudo: true, notif });
             }
           } catch (e) {
             console.error(`sincronizar_pagos: error revisando SIN RECAUDO fila ${orden.fila}:`, e.message);
@@ -129,7 +146,11 @@ async function executeTool(name, input) {
       if (!pagados.length) return `Revisados ${ordenes.length} pedidos — ninguno nuevo acreditado en la wallet todavía.`;
 
       return `💰 *Marcados como PAGADO (${pagados.length}):*\n` +
-        pagados.map(o => `• ${o.nombre} — Guía ${o.guia}` + (o.sinRecaudo ? ` — SIN RECAUDO (ya cobrado)` : ` — $${o.monto.toFixed(2)}`)).join('\n');
+        pagados.map(o =>
+          `• ${o.nombre} — Guía ${o.guia}` +
+          (o.sinRecaudo ? ` — SIN RECAUDO (ya cobrado)` : ` — $${o.monto.toFixed(2)}`) +
+          (o.notif ? ` ${o.notif}` : '')
+        ).join('\n');
     }
 
     default:

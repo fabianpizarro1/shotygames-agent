@@ -24,13 +24,25 @@ const clientPersonal = axios.create({
   }
 });
 
+// Instancia que usa el CRM aparte (PROYECTO SHEETS CLAUDE / finanzas-app) para
+// el mensaje de "gracias" cuando un pedido pasa a Pagado/Entregado.
+const clientGracias = axios.create({
+  baseURL: process.env.EVOLUTION_API_URL,
+  headers: {
+    'apikey': process.env.EVOLUTION_API_KEY_GRACIAS || process.env.EVOLUTION_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+
 const INSTANCE = process.env.EVOLUTION_INSTANCE;
 const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
 const INSTANCE_PERSONAL = process.env.EVOLUTION_INSTANCE_PERSONAL;
+const INSTANCE_GRACIAS = process.env.EVOLUTION_INSTANCE_GRACIAS;
 
 function getClient(instance) {
   if (instance === INSTANCE_VENTAS) return clientVentas;
   if (instance === INSTANCE_PERSONAL) return clientPersonal;
+  if (instance === INSTANCE_GRACIAS) return clientGracias;
   return client;
 }
 

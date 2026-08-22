@@ -982,6 +982,23 @@ async function marcarPagado(fila) {
   });
 }
 
+// Escribe en la columna LOG — mismo formato que usa el CRM aparte (PROYECTO
+// SHEETS CLAUDE) para registrar "Agradecimiento enviado | fecha" y evitar
+// duplicar el WhatsApp de gracias. Ver notificar-gracias.js.
+async function escribirLog(fila, texto) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A1:AJ1' });
+  const headers = res.data.values?.[0] || [];
+  const idxLog = headers.indexOf('LOG');
+  if (idxLog === -1) throw new Error('Columna LOG no encontrada');
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID,
+    range: `PEDIDOS!${idxToCol(idxLog)}${fila}`,
+    valueInputOption: 'RAW',
+    resource: { values: [[texto]] }
+  });
+}
+
 // Pedidos con orden en DROPI que todavía no están PAGADO ni CANCELADO —
 // el universo a revisar contra la wallet en cada corrida del cron.
 // A diferencia de getOrdenesEnviadas (solo ENVIADO/PENDIENTE, para el chequeo
@@ -998,6 +1015,7 @@ async function getOrdenesConDropi() {
   const idxEstado = headers.indexOf('ESTADO');
   const idxGuia   = headers.indexOf('GUIA');
   const idxSaldo  = headers.indexOf('SALDO');
+  const idxLog    = headers.indexOf('LOG');
   const idxDropiId = 33; // columna AH, guardado como "DROPI:XXXXX"
 
   // El Sheet tiene ESTADO cargado con formatos mixtos de distintas épocas
@@ -1023,6 +1041,7 @@ async function getOrdenesConDropi() {
       // SIN RECAUDO = SALDO vacío/0 — el pedido ya se cobró de otra forma
       // (transferencia, Payphone) antes de despachar, no contra entrega.
       saldo: parseMonto(row[idxSaldo]),
+      log: row[idxLog] || '',
       dropiId
     });
   }
@@ -1100,4 +1119,4 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
