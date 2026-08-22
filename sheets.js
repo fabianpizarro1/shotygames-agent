@@ -997,6 +997,7 @@ async function getOrdenesConDropi() {
   const idxTel    = headers.indexOf('TELEFONO');
   const idxEstado = headers.indexOf('ESTADO');
   const idxGuia   = headers.indexOf('GUIA');
+  const idxSaldo  = headers.indexOf('SALDO');
   const idxDropiId = 33; // columna AH, guardado como "DROPI:XXXXX"
 
   // El Sheet tiene ESTADO cargado con formatos mixtos de distintas épocas
@@ -1019,6 +1020,9 @@ async function getOrdenesConDropi() {
       telefono: row[idxTel] || '',
       estado,
       guia: row[idxGuia] || '',
+      // SIN RECAUDO = SALDO vacío/0 — el pedido ya se cobró de otra forma
+      // (transferencia, Payphone) antes de despachar, no contra entrega.
+      saldo: parseMonto(row[idxSaldo]),
       dropiId
     });
   }

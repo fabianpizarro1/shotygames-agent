@@ -48,7 +48,7 @@ const TOOLS = [
   },
   {
     name: 'sincronizar_pagos_dropi',
-    description: 'Revisa todos los pedidos con orden en DROPI que no están PAGADO ni CANCELADO, y chequea la wallet real de DROPI: si ya se acreditó la ganancia de un pedido, lo marca PAGADO en Sheets. No toca ningún otro estado. Úsalo cuando Fabián pregunte "qué me pagaron hoy", "sincroniza los pagos de DROPI". Es lo que corre el cron.',
+    description: 'Revisa todos los pedidos con orden en DROPI que no están PAGADO ni CANCELADO. CON RECAUDO: chequea la wallet real de DROPI y marca PAGADO si ya se acreditó la ganancia. SIN RECAUDO (ya cobrado antes de despachar, sin cobro contra entrega): marca PAGADO en cuanto DROPI dice que se entregó, porque esos pedidos nunca generan una entrada de wallet. No toca ningún otro estado ni pedido ya marcado PAGADO. Úsalo cuando Fabián pregunte "qué me pagaron hoy", "sincroniza los pagos de DROPI". Es lo que corre el cron.',
     input_schema: { type: 'object', properties: {} }
   }
 ];
@@ -98,19 +98,38 @@ async function executeTool(name, input) {
       const pagados = [];
       for (const orden of ordenes) {
         const pago = dropi.pagoDeOrden(movimientos, orden.dropiId);
-        if (!pago) continue;
-        try {
-          await sheets.marcarPagado(orden.fila);
-          pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total });
-        } catch (e) {
-          console.error(`sincronizar_pagos: error marcando fila ${orden.fila}:`, e.message);
+        if (pago) {
+          try {
+            await sheets.marcarPagado(orden.fila);
+            pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: pago.total });
+          } catch (e) {
+            console.error(`sincronizar_pagos: error marcando fila ${orden.fila}:`, e.message);
+          }
+          continue;
+        }
+
+        // SIN RECAUDO (SALDO 0/vacío) nunca genera una ENTRADA por GANANCIA en
+        // la wallet — ya se cobró antes de despachar (transferencia, Payphone),
+        // DROPI no cobra nada contra entrega. Para estos, "entregado" YA
+        // significa "pagado" — no hay wallet que confirme algo más.
+        if (orden.saldo <= 0) {
+          try {
+            const dropiData = await dropi.getOrdenPorId(orden.dropiId);
+            const statusDropi = (dropiData.status || '').toUpperCase();
+            if (statusDropi.includes('ENTREGADO') || statusDropi.includes('DELIVERED')) {
+              await sheets.marcarPagado(orden.fila);
+              pagados.push({ nombre: orden.nombre, guia: orden.guia, monto: 0, sinRecaudo: true });
+            }
+          } catch (e) {
+            console.error(`sincronizar_pagos: error revisando SIN RECAUDO fila ${orden.fila}:`, e.message);
+          }
         }
       }
 
       if (!pagados.length) return `Revisados ${ordenes.length} pedidos — ninguno nuevo acreditado en la wallet todavía.`;
 
       return `💰 *Marcados como PAGADO (${pagados.length}):*\n` +
-        pagados.map(o => `• ${o.nombre} — Guía ${o.guia} — $${o.monto.toFixed(2)}`).join('\n');
+        pagados.map(o => `• ${o.nombre} — Guía ${o.guia}` + (o.sinRecaudo ? ` — SIN RECAUDO (ya cobrado)` : ` — $${o.monto.toFixed(2)}`)).join('\n');
     }
 
     default:
