@@ -183,7 +183,9 @@ async function executeTool(name, input) {
         await notificarPedidoConfirmado({ nombre: d.nombre, telefono: d.telefono });
         notificado = '📲 cliente notificado por WhatsApp';
       } catch (e) {
-        notificado = `⚠️ no se pudo notificar al cliente (${e.message})`;
+        const detalle = e.response?.data?.message || e.response?.data || e.message;
+        console.error(`notificarPedidoConfirmado falló para ${d.idPedido}:`, e.response?.data || e);
+        notificado = `⚠️ no se pudo notificar al cliente (${detalle})`;
       }
 
       return `Pedido ${d.idPedido} creado en DROPI.
@@ -325,7 +327,9 @@ ${notificado}`;
               });
               notificado = '📲 cliente notificado por WhatsApp';
             } catch (e) {
-              errores.push(`${d.idPedido}: guía generada pero no se pudo notificar al cliente (${e.message})`);
+              const detalle = e.response?.data?.message || e.response?.data || e.message;
+              console.error(`notificarGuiaLista falló para ${d.idPedido}:`, e.response?.data || e);
+              errores.push(`${d.idPedido}: guía generada pero no se pudo notificar al cliente (${detalle})`);
             }
           }
 

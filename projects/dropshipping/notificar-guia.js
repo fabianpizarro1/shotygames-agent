@@ -43,8 +43,15 @@ function primerNombre(nombreCompleto) {
 }
 
 // Mismo criterio que pedidos.js al armar la orden: 0991234567 → 593991234567.
+// Limpia primero cualquier separador (guiones, espacios) que traiga el Sheet,
+// igual que toE164Ec en notificar-guia-cliente.js — si no, un teléfono como
+// "099-123-4567" queda mal formado y WhatsApp lo rechaza.
 function telefonoWA(telefono) {
-  return String(telefono || '').trim().replace(/^0/, '593').replace(/^\+/, '');
+  const n = String(telefono || '').replace(/\D/g, '');
+  if (/^593\d{9}$/.test(n)) return n;
+  if (/^9\d{8}$/.test(n)) return '593' + n;
+  if (/^09\d{8}$/.test(n)) return '593' + n.slice(1);
+  return n;
 }
 
 function mensajeGuiaLista({ nombre, transportadora, guia, valor }) {
