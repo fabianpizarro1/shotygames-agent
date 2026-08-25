@@ -34,24 +34,15 @@ function toE164Ec(raw) {
   return '';
 }
 
+// linkRastreo se recibe por compatibilidad de firma pero ya no se usa en el
+// texto — Fabián pidió sacar el link de rastreo del mensaje (2026-08-22).
 function buildGuiaMessage(nombre, transportadora, guia, linkRastreo) {
   const cliente = firstName(nombre);
   const transp = String(transportadora || 'SERVIENTREGA').toUpperCase().trim();
-  let urlRastreo = (linkRastreo || '').trim();
-
-  if (!urlRastreo) {
-    if (transp.includes('URBANO')) {
-      urlRastreo = `https://app.urbano.com.ec/plugin/etracking/etracking/?guia=${encodeURIComponent(guia)}`;
-    } else if (transp.includes('SERVIENTREGA')) {
-      urlRastreo = `https://www.servientrega.com.ec/Tracking/?guia=${encodeURIComponent(guia)}&tipo=GUIA`;
-    }
-  }
 
   return `*${cliente}* 👋 para informarte que tu pedido ya fue enviado a través de *${transp}*. Te adjunto el número de guía:
 
 🚛 Número de guía: *${guia}*
-
-🔎 *Rastrear paquete:* ${urlRastreo || 'No disponible'}
 
 Los repartidores se comunicarán contigo al momento de la entrega para que por favor estés pendiente 🙏
 
