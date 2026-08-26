@@ -25,7 +25,7 @@ const TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        telefono: { type: 'string', description: 'Número de teléfono del cliente (9 dígitos o con código de país)' }
+        telefono: { type: 'string', description: 'Teléfono del cliente TAL CUAL lo escribió Fabián — no lo reformatees ni le quites espacios, el código lo normaliza. Acepta cualquier formato: 0993154462, +593 99 315 4462, 593993154462.' }
       },
       required: ['telefono']
     }
@@ -37,7 +37,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         nombre: { type: 'string' },
-        telefono: { type: 'string' }
+        telefono: { type: 'string', description: 'Teléfono tal cual lo escribió Fabián, en cualquier formato — el código lo normaliza.' }
       },
       required: ['nombre', 'telefono']
     }

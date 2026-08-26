@@ -18,6 +18,32 @@ const PRODUCTS = {
   comboParejas: { id: 175606, name: 'Combo Parejas',          weight: '1.10' }
 };
 
+// ─── Normalización de teléfonos ecuatorianos ─────────────────────────────────
+// Fabián pega números desde WhatsApp, que vienen con espacios, guiones, "+" y
+// caracteres invisibles de dirección de texto (U+202A…U+202E, U+200E/F, NBSP).
+// Todo eso hacía que DROPI no encontrara al cliente. Se limpia a dígitos puros.
+
+// "‪+593 98 077 3933‬" | "0993154462" | "593993154462" → "993154462"
+function telNacional(tel) {
+  let s = String(tel || '').replace(/\D/g, '');
+  if (s.startsWith('00')) s = s.slice(2);
+  // Solo quitar el código de país si al hacerlo queda un número usable (9 dígitos)
+  if (s.startsWith('593') && s.length >= 12) s = s.slice(3);
+  return s.replace(/^0+/, '');
+}
+
+// → "593993154462" (formato que usa DROPI para crear órdenes)
+function telConPais(tel) {
+  const n = telNacional(tel);
+  return n ? '593' + n : '';
+}
+
+// → "0993154462" (formato local, el que muestra DROPI en algunos listados)
+function telLocal(tel) {
+  const n = telNacional(tel);
+  return n ? '0' + n : '';
+}
+
 const PROVINCIAS = {
   'GUAYAQUIL': 'Guayas', 'DURAN': 'Guayas', 'MILAGRO': 'Guayas', 'SAMBORONDON': 'Guayas', 'DAULE': 'Guayas',
   'CUENCA': 'Azuay', 'GUALACEO': 'Azuay', 'SIGSIG': 'Azuay',
@@ -257,7 +283,7 @@ async function crearOrden(pedido) {
   }));
 
   // Teléfono con prefijo 593
-  const phone = (pedido.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
+  const phone = telConPais(pedido.telefono);
 
   const body = {
     total_order: Math.round(saldo),   // entero requerido por la API
@@ -444,8 +470,8 @@ async function buscarOrden(query, telefono) {
 
   // Por teléfono (más confiable) — probar con y sin prefijo 593
   if (telefono) {
-    const tel = String(telefono).replace(/^0/, '593').replace(/^\+/, '');
-    const tel2 = String(telefono).replace(/^593/, '0');
+    const tel = telConPais(telefono);
+    const tel2 = telLocal(telefono);
     strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
     strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel2)}&user_id=${USER_ID}`);
     strategies.push(`/orders/myorders?page=1&perPage=10&q=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
@@ -483,9 +509,9 @@ async function buscarOrden(query, telefono) {
   // Filtrar por teléfono si tenemos uno
   let ordenFinal = null;
   if (telefono) {
-    const telNorm = String(telefono).replace(/^0/, '').replace(/^593/, '');
+    const telNorm = telNacional(telefono);
     const match = orders.find(o => {
-      const oTel = String(o.phone || '').replace(/^0/, '').replace(/^593/, '').replace(/^\+593/, '');
+      const oTel = telNacional(o.phone);
       return oTel.endsWith(telNorm) || telNorm.endsWith(oTel);
     });
     if (match) ordenFinal = match;
@@ -573,10 +599,7 @@ async function verificarCliente(telefono) {
 
   // Normalizar teléfono al formato que usa DROPI internamente: 993154462 (sin 0, sin 593, sin +)
   // Acepta: 0993154462 | 993154462 | 593993154462 | +593993154462
-  const tel = String(telefono).trim()
-    .replace(/^\+/, '')   // quitar +
-    .replace(/^593/, '')  // quitar código de país 593
-    .replace(/^0/, '');   // quitar 0 inicial
+  const tel = telNacional(telefono);
   console.log(`verificarCliente: tel normalizado = ${tel} (original: ${telefono})`);
 
   async function doPost(c) {
@@ -742,4 +765,4 @@ function pagoDeOrden(movimientos, orderId) {
   };
 }
 
-module.exports = { crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
+module.exports = { telNacional, telConPais, telLocal, crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };

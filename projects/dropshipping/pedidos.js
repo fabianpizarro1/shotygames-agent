@@ -22,7 +22,7 @@
  */
 
 require('dotenv').config();
-const { _makeClient: makeClient, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI } = require('../../dropi');
+const { _makeClient: makeClient, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI, telConPais } = require('../../dropi');
 const { buscar, pagina, conToken } = require('./catalogo');
 const { resolverCiudad } = require('./ciudades');
 
@@ -147,7 +147,7 @@ function armarBody({ producto, cantidad, precioVenta, cliente, notas, contraEntr
   const costoRegaloEnLinea = regalo ? (parseFloat(regalo.sale_price) || 0) * cantidadRegalo : 0;
   const precioUnitario = parseFloat(((Number(precioVenta) - costoRegaloEnLinea) / cantidad).toFixed(2));
 
-  const phone = (cliente.telefono || '').replace(/^0/, '593').replace(/^\+/, '');
+  const phone = telConPais(cliente.telefono);
 
   return {
     total_order: Math.round(total),
