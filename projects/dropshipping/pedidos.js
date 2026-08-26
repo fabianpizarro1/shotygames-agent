@@ -29,16 +29,18 @@ const { resolverCiudad } = require('./ciudades');
 const USER_ID = 12054;   // cuenta dropshipper de Fabián
 
 /**
- * Transportadoras de DROPI Ecuador, en el orden que el proveedor recomienda
- * (verificado contra GET /distribution_companies el 2026-08-18 — no hay
- * endpoint de cotización previa, DROPI solo calcula el flete real al crear
- * la orden). Por eso no se puede comparar el costo de las 3 antes de crear
- * nada: se intenta en este orden y se usa la primera que DROPI acepte.
+ * Transportadoras de DROPI Ecuador, en el orden que pidió Fabián el 2026-08-25
+ * (antes iba GINTRACOM primero, que era la recomendación del proveedor).
+ *
+ * IDs verificados contra GET /distribution_companies el 2026-08-18. No hay
+ * endpoint de cotización previa: DROPI solo calcula el flete real al crear la
+ * orden, así que no se puede comparar el costo de las 3 antes de crear nada.
+ * Se intenta en este orden y se usa la primera que DROPI acepte.
  */
 const TRANSPORTADORAS = [
+  { id: 2, name: 'SERVIENTREGA' },
   { id: 4, name: 'GINTRACOM' },
-  { id: 1, name: 'LAARCOURIER' },
-  { id: 2, name: 'SERVIENTREGA' }
+  { id: 1, name: 'LAARCOURIER' }
 ];
 
 // El token se maneja con `conToken` de catalogo.js: hace login solo con las
@@ -249,8 +251,8 @@ async function crearPedido({ productoId, nombreProducto, cantidad = 1, precioVen
 
   // No hay endpoint de DROPI para cotizar flete antes de crear la orden (se
   // buscó — ver TRANSPORTADORAS arriba), así que no se puede elegir "la más
-  // barata" comparando números. Por default se intenta en el orden que
-  // recomienda el proveedor y se usa la primera que DROPI acepte; si Fabián
+  // barata" comparando números. Por default se intenta en el orden definido
+  // arriba y se usa la primera que DROPI acepte; si Fabián
   // pide una transportadora puntual, se usa esa sola — sin probar las otras,
   // porque ahí la decisión ya no es "la más barata", es la que él eligió.
   const nombreForzado = transportadora ? String(transportadora).toUpperCase() : null;

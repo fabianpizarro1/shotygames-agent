@@ -53,7 +53,7 @@ const TOOLS = [
         transportadora: {
           type: 'string',
           enum: ['GINTRACOM', 'LAARCOURIER', 'SERVIENTREGA', 'VELOCES', 'URBANO', 'ROCKET'],
-          description: 'Opcional. Si Fabián pide una transportadora específica ("mándalo por Servientrega", "usa Laar"), pasarla acá. Si no se especifica, se prueba GINTRACOM → LAARCOURIER → SERVIENTREGA en ese orden y se usa la primera que DROPI acepte.'
+          description: 'Opcional. Si Fabián pide una transportadora específica ("mándalo por Servientrega", "usa Laar"), pasarla acá. Si no se especifica, se prueba SERVIENTREGA → GINTRACOM → LAARCOURIER en ese orden y se usa la primera que DROPI acepte.'
         }
       },
       required: ['idPedido']
