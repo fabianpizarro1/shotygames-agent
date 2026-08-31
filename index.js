@@ -23,64 +23,45 @@ const dropi = require('./dropi');
 // ── BOTS DE TELEGRAM ──────────────────────────────────────
 const BASE_URL = process.env.TELEGRAM_WEBHOOK_URL || '';
 
+// Cada bot se arranca en su propio try/catch. Antes estaban los 4 en un solo
+// bloque: si a UNO se le rompía el require (pasó el 2026-08-31 — a
+// claude-dropshipping.js le faltaba fechas.js en el repo), la excepción
+// cortaba en seco a todos los que venían después en el código — ese día
+// también se quedó mudo el bot PERSONAL sin que nada lo señalara, solo
+// porque estaba definido después del que reventó. Aislado así, un bot roto
+// no le saca los demás.
+const { setupTelegramBot } = require('./telegram-bot');
+
+// Bot operacional (pedidos, guías DROPI, impresión)
 try {
-  const { setupBot, setupTelegramBot } = require('./telegram-bot');
-
-  // Bot operacional (pedidos, guías DROPI, impresión)
   setupTelegramBot(app, getHistory, saveHistory);
-
-  // Bot contabilidad
-  if (process.env.TELEGRAM_CONTA_TOKEN) {
-    const { chatConta } = require('./claude-conta');
-    setupBot(app, {
-      token: process.env.TELEGRAM_CONTA_TOKEN,
-      path: '/telegram-conta',
-      name: 'CONTA',
-      chatFn: (history, msg) => chatConta(history, msg),
-      webhookUrl: BASE_URL
-    }, getHistory, saveHistory);
-  }
-
-  // Bot DROPI
-  if (process.env.TELEGRAM_DROPI_TOKEN) {
-    const { chatDropi } = require('./claude-dropi');
-    setupBot(app, {
-      token: process.env.TELEGRAM_DROPI_TOKEN,
-      path: '/telegram-dropi',
-      name: 'DROPI',
-      chatFn: (history, msg) => chatDropi(history, msg),
-      webhookUrl: BASE_URL
-    }, getHistory, saveHistory);
-  }
-
-  // Bot DROPSHIPPING (Truquito + Avanora) — cuenta DROPI y Sheet distintos a los
-  // de Shotygames, por eso es un bot aparte y no una skill del de arriba.
-  if (process.env.TELEGRAM_DROPI2_TOKEN) {
-    const { chatDropshipping } = require('./claude-dropshipping');
-    setupBot(app, {
-      token: process.env.TELEGRAM_DROPI2_TOKEN,
-      path: '/telegram-dropshipping',
-      name: 'DROPSHIPPING',
-      chatFn: (history, msg) => chatDropshipping(history, msg),
-      webhookUrl: BASE_URL
-    }, getHistory, saveHistory);
-  }
-
-  // Bot asistente personal
-  if (process.env.TELEGRAM_PERSONAL_TOKEN) {
-    const { chatPersonal } = require('./claude-personal');
-    setupBot(app, {
-      token: process.env.TELEGRAM_PERSONAL_TOKEN,
-      path: '/telegram-personal',
-      name: 'PERSONAL',
-      chatFn: (history, msg) => chatPersonal(history, msg),
-      webhookUrl: BASE_URL
-    }, getHistory, saveHistory);
-  }
-
 } catch (e) {
-  console.error('[TELEGRAM] Error al cargar bots:', e.message);
+  console.error('[TELEGRAM] Bot operacional no cargó:', e.message);
 }
+
+function arrancarBot({ tokenVar, path, name, modulo, fn }) {
+  if (!process.env[tokenVar]) return;
+  try {
+    const { setupBot } = require('./telegram-bot');
+    const chatFn = require(modulo)[fn];
+    setupBot(app, {
+      token: process.env[tokenVar],
+      path,
+      name,
+      chatFn: (history, msg) => chatFn(history, msg),
+      webhookUrl: BASE_URL
+    }, getHistory, saveHistory);
+  } catch (e) {
+    console.error(`[TELEGRAM] Bot ${name} no cargó:`, e.message);
+  }
+}
+
+arrancarBot({ tokenVar: 'TELEGRAM_CONTA_TOKEN', path: '/telegram-conta', name: 'CONTA', modulo: './claude-conta', fn: 'chatConta' });
+arrancarBot({ tokenVar: 'TELEGRAM_DROPI_TOKEN', path: '/telegram-dropi', name: 'DROPI', modulo: './claude-dropi', fn: 'chatDropi' });
+// DROPSHIPPING (Truquito + Avanora) — cuenta DROPI y Sheet distintos a los de
+// Shotygames, por eso es un bot aparte y no una skill del de arriba.
+arrancarBot({ tokenVar: 'TELEGRAM_DROPI2_TOKEN', path: '/telegram-dropshipping', name: 'DROPSHIPPING', modulo: './claude-dropshipping', fn: 'chatDropshipping' });
+arrancarBot({ tokenVar: 'TELEGRAM_PERSONAL_TOKEN', path: '/telegram-personal', name: 'PERSONAL', modulo: './claude-personal', fn: 'chatPersonal' });
 
 app.post('/webhook', async (req, res) => {
   res.sendStatus(200);
@@ -618,6 +599,7 @@ try {
 // nuevos que todavía no las tienen (idempotente — no vuelve a tocar lo ya
 // lleno). Mismo horario que la sincronización de pagos, no hace falta más.
 try {
+  const cron = require('node-cron');
   async function enriquecerDropiLovable() {
     try {
       const sheets = require('./sheets');
