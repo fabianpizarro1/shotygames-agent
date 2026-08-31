@@ -229,18 +229,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     return total;
   };
 
-  // El total ya no cambia según método de pago (se quitó el descuento por
-  // transferencia). getFinalTotal se mantiene como función porque el resto
-  // del componente ya la usa en varios puntos, pero ahora es un passthrough.
-  const getFinalTotal = (_metodo?: string) => calculateTotal();
-
-  // "Pago mixto" (antes "contraentrega" a secas): historial real de 2025
-  // mostró 22.4% de fallo en contraentrega 100% libre vs 2.9% en pagos
-  // anticipados (ver decisions/log.md). La reserva filtra a quien pide sin
-  // intención real, sin ser una barrera grande para el que sí quiere comprar.
-  // Solo aplica a productos físicos — los digitales no tienen contraentrega.
-  const RESERVA_MIXTO = 5;
-  const getSaldoMixto = () => +(calculateTotal() - RESERVA_MIXTO).toFixed(2);
+  // Reactivado 2026-08-26: se había quitado el descuento por transferencia,
+  // ahora vuelve como parte del nuevo modelo (contraentrega / anticipado /
+  // tarjeta). Solo aplica a "transferencia" — tarjeta y contraentrega pagan
+  // el precio completo. Solo para productos físicos.
+  const DESCUENTO_ANTICIPADO = 0.05;
+  const getMontoDescuento = () => +(calculateTotal() * DESCUENTO_ANTICIPADO).toFixed(2);
+  const getFinalTotal = (metodo?: string) =>
+    metodo === "transferencia" ? +(calculateTotal() - getMontoDescuento()).toFixed(2) : calculateTotal();
 
   const handleTorreSelection = (torreId: string) => {
     if (!torreSelection) return;
@@ -354,13 +350,19 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         upsellEmparejadosPrice: upsellEmparejados?.price || 0,
         upsellDadosPlacerSelected: selectedUpsells['dadosPlacer'] || false,
         upsellDadosPlacerPrice: upsellDadosPlacer?.price || 0,
-        total: calculateTotal(),
-        // Pago mixto: se reserva un monto fijo (coordinado por WhatsApp) y el
-        // resto se cobra en efectivo al recibir. Solo aplica a contraentrega.
-        // Mismos nombres de campo que usa el Sheet (ANTICIPO/SALDO) para que
-        // n8n los pueda mapear directo sin renombrar nada.
-        anticipo: metodoPagoFinal === 'contraentrega' ? RESERVA_MIXTO : 0,
-        saldo: metodoPagoFinal === 'contraentrega' ? getSaldoMixto() : 0,
+        total: getFinalTotal(metodoPagoFinal),
+        // Ya no hay reserva parcial (se quitó el "pago mixto"): ahora es
+        // simplemente el monto real a cobrar en cada método. Contraentrega
+        // cobra todo el repartidor (va en SALDO); transferencia/tarjeta se
+        // cobran antes del envío (van en ANTICIPO, ya con el 5% aplicado si
+        // corresponde). Mismos nombres de columna que ya usa el Sheet.
+        anticipo: metodoPagoFinal === 'contraentrega' ? 0 : getFinalTotal(metodoPagoFinal),
+        saldo: metodoPagoFinal === 'contraentrega' ? getFinalTotal(metodoPagoFinal) : 0,
+        // Para mostrar el desglose del descuento en la página de confirmación
+        // (no son columnas nuevas obligatorias para n8n, solo viajan con el
+        // pedido para la UI).
+        descuentoAnticipado: metodoPagoFinal === 'transferencia',
+        montoDescuento: metodoPagoFinal === 'transferencia' ? getMontoDescuento() : 0,
         nombre: data.nombre,
         telefono: data.telefono,
         provincia: data.provincia,
@@ -1213,19 +1215,25 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   <span className="text-muted-foreground">Envío</span>
                   <span className="font-semibold text-primary">INCLUIDO</span>
                 </div>
+                {metodoPago === 'transferencia' && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">Descuento 5% por pago anticipado</span>
+                    <span className="font-semibold text-green-600">-${getMontoDescuento().toFixed(2)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">Total a pagar:</span>
                   <span className="text-2xl font-bold text-primary">
-                    ${calculateTotal().toFixed(2)}
+                    ${getFinalTotal(metodoPago).toFixed(2)}
                   </span>
                 </div>
                 {metodoPago === 'contraentrega' && (
                   <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-dashed">
                     <span className="text-muted-foreground">
-                      Reserva ahora ${RESERVA_MIXTO.toFixed(2)} + ${getSaldoMixto().toFixed(2)} en efectivo al recibir
+                      Pagas ${getFinalTotal(metodoPago).toFixed(2)} en efectivo al recibir
                     </span>
                   </div>
                 )}
@@ -1246,17 +1254,11 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
                       <Banknote className="w-4 h-4" />
-                      Pago mixto
-                      <Badge variant="secondary" className="text-[10px] px-2 py-0">RESERVA ${RESERVA_MIXTO}</Badge>
+                      Pago contra entrega
                     </span>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Reservas tu pedido con ${RESERVA_MIXTO} y pagas el resto en efectivo cuando lo recibes.
-                      Te coordinamos la reserva por WhatsApp.
+                      Pagas en efectivo cuando recibes tu pedido. Para confirmarlo te llevamos a WhatsApp con tu pedido ya escrito, solo lo envías.
                     </p>
-                    {/* Solo Combo Parejas: acá lo digital NO se manda por
-                        WhatsApp, viaja dentro del paquete en tarjetas QR —
-                        hay que dejarlo claro en el momento en que se elige el
-                        método de pago, no solo en la landing. */}
                     {productId === 'comboParejas' && (
                       <p className="text-xs text-muted-foreground/80 mt-2 flex items-start gap-1.5">
                         <span aria-hidden>📦</span>
@@ -1269,13 +1271,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="transferencia" className="flex items-start space-x-3 border-2 border-green-500/40 bg-green-500/5 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia" className="mt-1" />
                   <div className="flex-1">
-                    <span className="font-semibold flex items-center gap-2">
+                    <span className="font-semibold flex items-center gap-2 flex-wrap">
                       <Truck className="w-4 h-4 text-green-600" />
                       Pago anticipado por transferencia/depósito
+                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">5% OFF</Badge>
                       <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
                     </span>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Pagas antes del envío y tu pedido sale primero: te llega en 24-48 horas laborables.
+                      Pagas antes del envío con 5% de descuento y tu pedido sale primero: te llega en 24-48 horas laborables.
                     </p>
                     {productId === 'comboParejas' && (
                       <p className="text-xs font-semibold text-green-700 mt-2 flex items-start gap-1.5">
@@ -1292,9 +1295,10 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     <span className="font-semibold flex items-center gap-2">
                       <CreditCard className="w-4 h-4" />
                       Pagar con tarjeta
+                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
                     </span>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Pago seguro con tarjeta de crédito o débito a través de PayPhone
+                      Pago seguro con tarjeta de crédito o débito a través de PayPhone. Tu pedido sale primero: te llega en 24-48 horas laborables.
                     </p>
                     {productId === 'comboParejas' && (
                       <p className="text-xs font-semibold text-primary mt-2 flex items-start gap-1.5">

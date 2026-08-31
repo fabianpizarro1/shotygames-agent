@@ -886,10 +886,10 @@ const TresTorresLanding = () => {
             <div className="grid md:grid-cols-2 gap-6">
               <Card className="p-6 md:p-8 border-2 border-green-500/30 bg-green-500/5">
                 <Banknote className="w-10 h-10 text-green-600 mb-4" />
-                <h3 className="text-xl md:text-2xl font-bold mb-2">Pago mixto</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-2">Paga al recibir</h3>
                 <p className="text-sm md:text-base text-muted-foreground mb-4">
-                  Reservas tu pedido con $5 y pagas el resto en efectivo cuando el paquete llega
-                  a tu casa. No necesitas tarjeta. Reserva confirmada por WhatsApp.
+                  Pagas en efectivo cuando el paquete llega a tu casa. No necesitas tarjeta.
+                  Confirmas tu pedido por WhatsApp. Y si pagas anticipado, te llevas 5% de descuento.
                 </p>
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-500">
                   <CheckCircle2 className="w-4 h-4" />

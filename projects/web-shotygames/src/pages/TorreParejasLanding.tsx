@@ -105,7 +105,7 @@ const TorreParejasLanding = () => {
     },
     {
       q: "¿Tengo que pagar por adelantado?",
-      a: "No necesitas tarjeta. Puedes reservar tu pedido con $5 y pagar el resto en efectivo cuando el paquete llegue a tu puerta. También aceptamos transferencia y tarjeta si prefieres.",
+      a: "No. Tienes pago contraentrega: pagas todo en efectivo cuando el paquete llega a tu puerta, y para confirmarlo solo te llevamos a WhatsApp con el pedido ya escrito. Y si prefieres pagar por adelantado con transferencia, te damos 5% de descuento y tu pedido sale con envío prioritario. También puedes pagar con tarjeta.",
     },
     {
       q: "¿Los retos son muy fuertes?",
@@ -121,7 +121,7 @@ const TorreParejasLanding = () => {
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Seo
         title="Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador"
-        description="51 retos para dos que convierten una noche cualquiera en uno que van a recordar. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador."
+        description="51 retos para dos que convierten una noche cualquiera en uno que van a recordar. Madera de pino premium. Paga al recibir o anticipado con 5% de descuento. Envío gratis a todo Ecuador."
         canonical="https://www.shotygames.com/landing/torre-parejas"
         image={`https://www.shotygames.com${torreParejas1}`}
         type="product"
@@ -130,7 +130,7 @@ const TorreParejasLanding = () => {
       {/* Barra fija: mata las 2 objeciones mas grandes en el primer segundo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#e91e63] to-[#f50057] text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-[11px] md:text-base leading-tight">
-          💵 Reserva con $5, resto al recibir · 🚚 Envío gratis a todo Ecuador
+          💵 Contraentrega · 5% OFF si pagas anticipado · 🚚 Envío gratis
         </p>
       </div>
       <div className="h-10 md:h-14"></div>
@@ -217,7 +217,7 @@ const TorreParejasLanding = () => {
               <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground pt-1">
                 <div className="flex items-center gap-1.5">
                   <Banknote className="w-4 h-4 text-green-600" />
-                  <span className="font-semibold text-foreground">Pago mixto</span>
+                  <span className="font-semibold text-foreground">Contraentrega</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Truck className="w-4 h-4 text-[#e91e63]" />
@@ -486,7 +486,7 @@ const TorreParejasLanding = () => {
               </div>
 
               <p className="text-lg md:text-2xl font-bold">
-                Reservas con $5 y pagas el resto cuando la tengas en la mano 💵
+                Pagas cuando la tengas en la mano 💵 (o anticipado con 5% de descuento)
               </p>
 
               <Button
@@ -535,9 +535,9 @@ const TorreParejasLanding = () => {
             <div className="grid md:grid-cols-3 gap-4 md:gap-6">
               <Card className="p-6 text-center border-2 border-green-500/30 bg-green-500/5">
                 <Banknote className="w-10 h-10 text-green-600 mx-auto mb-3" />
-                <p className="font-bold text-base md:text-lg mb-1">Pago mixto</p>
+                <p className="font-bold text-base md:text-lg mb-1">Pago contraentrega</p>
                 <p className="text-sm text-muted-foreground">
-                  Reservas con $5 y pagas el resto en efectivo cuando el paquete llega a tu puerta.
+                  Pagas en efectivo cuando el paquete llega a tu puerta. Confirmas por WhatsApp con un mensaje ya escrito. O pagas anticipado y te ahorras el 5%.
                 </p>
               </Card>
               <Card className="p-6 text-center border-2 border-[#e91e63]/20">
@@ -569,7 +569,7 @@ const TorreParejasLanding = () => {
             </h2>
             <p className="text-base md:text-xl text-white/90">
               O puede ser la que se acuerden dentro de un año.
-              La torre llega en 2-4 días hábiles: reservas con $5 y pagas el resto cuando la tengas en la mano.
+              La torre llega en 2-4 días hábiles: pagas cuando la tengas en la mano, o anticipado con 5% de descuento.
             </p>
             <p className="text-base md:text-lg font-semibold text-yellow-300">
               🎁 Y si pides hoy, la Guía de 30 Posiciones va incluida
@@ -585,7 +585,7 @@ const TorreParejasLanding = () => {
             </Button>
 
             <p className="text-xs md:text-sm text-white/80">
-              💵 Reserva $5, resto al recibir · 🚚 Envío gratis · 🎁 Guía de 30 posiciones incluida
+              💵 Contraentrega · 5% OFF anticipado · 🚚 Envío gratis · 🎁 Guía de 30 posiciones
             </p>
           </div>
         </div>

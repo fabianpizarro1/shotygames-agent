@@ -85,6 +85,9 @@ export const ConfirmacionTransferencia = () => {
               ) : (
                 <>
                   <li>🚀 Envío <strong>PRIORITARIO</strong> en 24 a 48 horas laborables</li>
+                  {pedido.descuentoAnticipado && (
+                    <li>💰 <strong>5% de descuento</strong> por pagar anticipado — ya aplicado</li>
+                  )}
                   {pedido.productoPrincipal === "Combo Parejas" && (
                     <>
                       <li>⚡ Emparejados y las <strong>2 guías digitales</strong> por WhatsApp <strong>de inmediato</strong>, sin esperar el paquete</li>
@@ -179,11 +182,18 @@ export const ConfirmacionTransferencia = () => {
                 )}
               </div>
               
+              {!isDigitalProduct && pedido.descuentoAnticipado && (
+                <div className="flex justify-between items-start gap-2 text-sm text-green-600">
+                  <span className="flex-1">Descuento 5% por pago anticipado</span>
+                  <span className="whitespace-nowrap">-${Number(pedido.montoDescuento).toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center pt-2">
                 <span className="font-bold text-base">Total a pagar:</span>
                 <span className="font-bold text-primary text-xl">${pedido.total.toFixed(2)}</span>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row sm:justify-between gap-1 pt-2 border-t text-xs">
                 <span className="text-muted-foreground">Método de pago:</span>
                 <span className="font-medium">Transferencia bancaria</span>

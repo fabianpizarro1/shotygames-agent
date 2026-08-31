@@ -1,18 +1,22 @@
 ---
 name: investigacion-producto
-description: Método completo para lanzar un producto de dropshipping — barrido total de la biblioteca de anuncios, extracción de todo el material de las landings de la competencia (creativos, fotos, testimonios, ofertas) y armado de 3 landings completamente distintas. Usar SIEMPRE que toque investigar o lanzar un producto, aunque Fabián no lo pida.
+description: Método completo para investigar un producto de dropshipping antes de lanzarlo — barrido total de la biblioteca de anuncios, extracción de todo el material de las landings de la competencia (creativos, fotos, testimonios, ofertas) y armado de un informe en PDF con todo lo encontrado. Usar SIEMPRE que toque investigar un producto, aunque Fabián no lo pida. El resultado (el PDF) es el insumo para diseñar la landing — ver la skill `armar-landing` para el paso siguiente.
 ---
 
-# Método de lanzamiento de producto
+# Método de investigación de producto
 
 Este es EL método. No se improvisa ni se recorta: cada paso existe porque saltárselo
 ya costó tiempo una vez.
 
+**Dónde termina esta skill:** en el informe PDF. Diseñar y construir la landing es otro
+paso, con otro proceso — ver [`armar-landing`](../armar-landing/SKILL.md). El flujo completo
+de Fabián es: dashboard (`dropi-dashboard`) → Fabián elige un producto → esta skill produce
+el informe → Fabián se lo manda a una IA externa que diseña la landing → esa IA le devuelve
+texto e imágenes → Fabián me los pasa → `armar-landing` construye.
+
 > **Los comandos, los IDs y las trampas concretas están en [`EJECUCION.md`](EJECUCION.md)**,
-> en esta misma carpeta. Ese archivo es el manual operativo: cómo sacar la ficha de DROPI, cómo
-> generar creativos con Higgsfield sin que se coma las tildes, qué campos lleva un producto en
-> `productos.ts`, la secuencia exacta para armar una campaña en Meta y qué herramientas NO están
-> habilitadas en la cuenta. Léelo antes de ejecutar.
+> en esta misma carpeta. Ese archivo es el manual operativo: cómo sacar la ficha de DROPI y
+> cómo armar el informe en PDF paso a paso. Léelo antes de ejecutar.
 
 ## Las dos reglas que mandan sobre todo lo demás
 
@@ -36,20 +40,20 @@ otro lado. Solo después de agotarlas se informa el límite, y con el detalle de
 
 ### 2. No se avisa hasta que esté terminado
 
-No se entrega una landing "para que la revise y diga qué falta". Se entrega cuando está
-**perfecta, clara, vendedora y rápida** — cuando no queda nada que Fabián pueda pedir que yo
-hubiera podido hacer solo.
+No se entrega un informe "para que la revise y diga qué falta". Se entrega cuando está
+**completo** — cuando no queda nada que Fabián pueda pedir que yo hubiera podido hacer solo.
 
-Antes de avisar, la landing tiene que estar:
+Antes de avisar, el informe tiene que tener:
 
-- **Completa** — todo el material extraído ya incorporado, no la mitad
-- **Vendedora** — mecanismo, casos con foto, reseñas, garantía, oferta clara
-- **Clara** — se entiende sin leer dos veces; nada repetido en dos secciones
-- **Rápida** — imágenes comprimidas, `loading="lazy"` salvo la primera, `fetchPriority` en el hero
-- **Verificada** — fase 4 completa, en producción, con los links probados
+- **Los tres países barridos** (Ecuador, Colombia, México), no solo el que resultó más fácil
+- **Cada anunciante activo real**, no solo los primeros que aparecieron (ver Fase 1: la
+  búsqueda simple da lo más nuevo, que es lo contrario de lo que sirve)
+- **Todas las landings de la lista, destripadas** — no una lista de URLs sin abrir
+- **Las secciones que pide la Fase 3, completas** — si falta un dato real, se dice así, no se
+  deja vacío sin explicación ni se inventa
 
-Si algo quedó afuera a propósito, se dice en la misma entrega y con el motivo — no se espera a
-que lo note él.
+Si algo quedó afuera a propósito (un país sin anunciantes con landing propia, por ejemplo), se
+dice en la misma entrega y con el motivo — no se espera a que lo note él.
 
 ---
 
@@ -169,95 +173,46 @@ INFLAMACIÓN Y EDEMAS" en el tercio inferior y hubo que recortarlas.
 
 ---
 
-## FASE 3 — Tres landings COMPLETAMENTE distintas
+## FASE 3 — El informe (PDF)
 
-No es la misma página con otro titular. Son tres formatos:
+Esto es lo que reemplaza al diseño propio de landings (así se hacía antes — ver
+`armar-landing` para cómo se arma la landing ahora). El informe es el único entregable de
+esta skill: se lo manda Fabián a una IA externa, que diseña la landing a partir de él.
 
-| Variante | URL | Qué es |
-|---|---|---|
-| **A — visual** | `/p/slug` | Casi puras imágenes apiladas a ancho completo, CTA cada dos bloques. Es lo que están usando los que venden hoy en Ecuador. Si hay que elegir una, es esta |
-| **B — clásica** | `?v=b` | Secciones de texto, cada una entra por una imagen |
-| **C — advertorial** | `?v=c` | Nota larga: autoridad → confesión → el sistema te falló → mecanismo → producto → garantía. Para tráfico frío |
+**Un solo PDF por producto**, con los tres países (Ecuador, Colombia, México) adentro,
+organizado por sección — no un PDF por país. Estructura fija:
 
-Cada una puede tener su propio diseño, banner, estructura y ganchos. Si un producto necesita
-una sección que la plantilla no tiene, **se agrega**.
+1. **Portada** — producto, fecha del barrido, resumen de una línea (cuántos anunciantes
+   activos en total, el más agresivo, la oferta más común).
+2. **Anunciantes activos, por país.** Tabla EC / CO / MX, cada fila:
+   - Nombre y `page_id`
+   - Cantidad de anuncios activos (cuánto invierte de verdad)
+   - Anuncio más antiguo + hace cuántos días está activo (**ese es el que le da plata** — ver
+     Fase 1, "la vía que funciona: por anunciante")
+   - Oferta exacta: precio 1 unidad / 2 unidades / 3 unidades, tal como la muestra el anuncio
+   - Tipo de CTA (WhatsApp vs landing web)
+   - URL de la landing, si tiene
+3. **Copys que están funcionando.** Los copys completos de los anuncios más viejos de cada
+   país (son los validados — Fase 1 ya explica por qué). Agrupados por ángulo/gancho, no por
+   anunciante — así se ve qué ángulos se repiten entre varios competidores.
+4. **Ofertas del mercado.** Tabla comparativa de precios: 1/2/3 unidades, cada anunciante que
+   los muestra, por país. Es el dato que dice a cuánto se vende de verdad (Fase 3 vieja lo
+   decía así: "el precio sale del mercado, no de la calculadora" — sigue siendo cierto).
+5. **Lista completa de landings extraídas**, agrupada por país (EC / CO / MX), con la URL de
+   cada una. Es el índice de todo lo que se destripó en la Fase 2 — la IA externa y quien
+   revise el informe tienen que poder ir a cada una.
+6. **Material de las landings** (resumen de Fase 2 por cada landing de la lista): mecanismo,
+   dolores con las palabras del cliente, garantía, FAQ, prueba social, timeline — lo que se
+   extrajo, no copiado literal si es muy largo, con referencia a de qué landing salió.
 
-El pixel manda el slug con la variante pegada (`producto|b`) — sin eso las tres se ven iguales
-en Meta y el test no sirve.
-
-Lo que **no** cambia entre variantes: la oferta, las reseñas y el FAQ. Se testea el camino
-hasta la oferta, no el cierre.
-
-### Reglas de la landing, ya aprendidas
-
-- **Precio de mercado**, no el de la calculadora. La calculadora dice si puede ser rentable; el
-  mercado dice a cuánto se vende. El primer test mide el CPA real, no busca ganar plata.
-- **El CPA de equilibrio se divide por 1.2.** El gasto en Meta lleva ~20% de comisión bancaria,
-  así que el número que muestra el administrador tiene que ser un 20% menor que el que sale de
-  la calculadora. Se olvidó una vez y lo cazó una revisión externa. Para ganar plata, apuntar a
-  la MITAD del CPA de equilibrio.
-- **Los botones muestran el precio de UNA unidad**, y el checkout abre en la opción más barata.
-  Pedir la decisión más cara antes de que el cliente confíe es lo que lo espanta. El upsell va
-  adentro del checkout, con el ahorro a la vista.
-- **Checkout tipo "Selecciona tu oferta"**: tarjetas con foto, precio por unidad, precio de
-  lista tachado y el % de descuento. Abajo el desglose y el botón *"Confirmar pedido para pagar
-  al recibir — $X"*.
-- **Reseñas con foto primero**, y ciudades reales repartidas (Quito, Guayaquil, Cuenca,
-  Machala, Ambato, Manta…). Nunca "Ecuador" a secas ni todas de la misma ciudad.
-- **Una reseña de 4 estrellas con un pero.** Un muro de 5 perfectas se lee como inventado.
-- **Timeline de resultados** para bajar expectativas. En contra entrega el cliente ya pagó
-  cuando se decepciona, y una devolución se come el margen de tres ventas buenas.
-- **Garantía visible.** Toda la competencia da una.
-- **Tabla comparativa con una fila donde gana la alternativa.** Todos los ✓ de un lado no lo
-  cree nadie.
+No hace falta pedir permiso para armar el PDF — se genera con la skill `pdf` (ya disponible)
+en cuanto termina la Fase 2. Entregarlo con `SendUserFile`, no solo describirlo en el chat.
 
 ---
 
-## FASE 4 — Verificar antes de entregar
-
-### Técnico
-
-- `npx tsc --noEmit` y `npx vite build`
-- Las tres variantes cargan y son distintas; una `?v=` desconocida cae en la A
-- Todas las imágenes responden 200
-- Sin scroll horizontal en móvil (375px)
-- El checkout abre en la opción más barata y el total se actualiza al cambiarla
-- Después de desplegar: `curl` a las 3 URLs y a los assets nuevos
-
-### Concordancia entre elementos
-
-Esto es lo que más veces hubo que corregir, y siempre lo cazó Fabián, no yo. **Recorrer la
-página entera de arriba abajo antes de entregarla**, no revisar sección por sección aislada.
-
-**Nada repetido en dos lugares.**
-- La misma foto no puede estar en dos secciones. Pasó: el antes/después de Carmen estaba en
-  los casos Y como foto de su reseña.
-- La misma sección no puede existir dos veces con contenido distinto. Pasó: un bloque de
-  imagen con tres testimonios inventados arriba, y la sección de reseñas reales abajo. El
-  lector ve lo mismo dos veces y la segunda le quita credibilidad a la primera.
-
-**Leer el texto DENTRO de cada imagen, no solo mirarla.** Las piezas heredadas de la
-competencia traen cosas que no se ven de reojo:
-- La marca mal escrita — decía "Aurelis" en vez de "Aurelys" al pie de un bloque.
-- Palabras sin sentido — un ícono decía "Support Euthyroy".
-- Prueba social de OTRA tienda — "MÁS DE 10.000 CLIENTES SATISFECHOS" en una marca que abre
-  hoy. Eso es mentir sobre el propio negocio, y se recorta.
-- El precio de otra tienda ($27.99, $25) contradiciendo el nuestro.
-- Claims médicos incrustados que el copy evita con cuidado ("REDUCE LA INFLAMACIÓN Y EDEMAS").
-
-**Coherencia de datos en toda la página.**
-- El precio de la landing, del checkout y del anuncio dicen lo mismo.
-- Ninguna reseña repite nombre. Ninguna ciudad se repite de más. No todas son 5 estrellas.
-- El ml del producto es el mismo en las fotos, el copy y la ficha.
-- Lo que promete el creativo del anuncio existe en la landing a la que lleva.
-
-**Que cada anuncio apunte a la landing correcta.** Si un anuncio va a `?v=b` y los otros a la
-A, el test mezcla creativo con landing y el resultado no dice cuál movió la aguja. Pasó al
-armar la campaña.
-
 ## Dónde queda todo
 
-Google Sheet del producto, una pestaña por producto: mapa de anunciantes → landings → precios →
-ángulos usados → material extraído.
+Además del PDF entregado, el material crudo (capturas, URLs, copys) queda en el Google Sheet
+del producto, una pestaña por producto — igual que antes.
 
 Ver [[project_dropshipping]] y [[project_avanora_productos]].
