@@ -15,6 +15,7 @@ projects/avanora/
 # Proyectos con su propio repo (se despliegan aparte)
 projects/emparejados/
 projects/entredados/
+projects/dropi-dashboard/
 
 # Caché de pnpm — no va al repo
 .pnpm-store/

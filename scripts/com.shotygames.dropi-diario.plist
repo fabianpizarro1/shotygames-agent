@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.shotygames.dropi-diario</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/user/Projects/KEPLER/scripts/dropi-diario.sh</string>
+    </array>
+
+    <!-- Todos los días a las 5:00 AM — la API de DROPI está vacía a esa hora
+         y el catálogo completo (~34.000 productos) baja mucho más rápido. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>5</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/user/dropi-diario.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/user/dropi-diario.log</string>
+</dict>
+</plist>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.shotygames.publicidad-live</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/user/Projects/KEPLER/scripts/publicidad-live.sh</string>
+    </array>
+
+    <!-- Cada 15 minutos, todo el día. No cargar este agente hasta tener
+         META_ADS_TOKEN en .env — sin eso el script falla en cada corrida. -->
+    <key>StartInterval</key>
+    <integer>900</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/user/publicidad-live.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/user/publicidad-live.log</string>
+</dict>
+</plist>

@@ -19,6 +19,12 @@
       "runtimeArgs": ["run", "dev", "--prefix", "projects/web-shotygames"],
       "port": 5175,
       "autoPort": true
+    },
+    {
+      "name": "dropi-dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "projects/dropi-dashboard"],
+      "port": 3000
     }
   ]
 }

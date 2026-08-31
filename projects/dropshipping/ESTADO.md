@@ -217,6 +217,13 @@ comparativa con una fila donde gana la alternativa.
 
 ## Flujo de un pedido
 
+**Actualizado 2026-08-25:** la página `/gracias` ahora hace lo mismo que Truquito — arma un mensaje
+con el pedido completo y manda al cliente a WhatsApp (`593985366649`, el mismo número de Truquito)
+para que **él** confirme. Antes decía "te escribimos nosotros". El pedido se distingue por su
+prefijo: `AVN-` es Avanora, `TRQ-` es Truquito. El redirect es automático a los 1.4 s y además
+queda el botón visible. `CheckoutModal.tsx` manda a `/gracias` el pedido entero (producto,
+cantidad, total, provincia y ciudad con etiqueta legible, dirección, referencias, idPedido).
+
 ```
 landing → /api/pedido → n8n → Google Sheet (estado PENDIENTE_CONFIRMACION)
        → Fabián confirma (bot de Telegram) → DROPI crea la orden (estado EN_DROPI)
@@ -234,8 +241,109 @@ Scripts relevantes:
 | `ranking.js` | Cruza velocidad de venta, rentabilidad y riesgo en Meta |
 | `pedidos.js` | Crea órdenes en DROPI. `crearPedido`, `getOrden`, `getMovimientosWallet` |
 | `sheets-pedidos.js` | Lee y escribe el Sheet de pedidos **por título de columna**, no por índice |
-| `diario.js` | Rutina de las 5 AM: snapshot + ranking + aviso por Telegram |
+| `diario.js` | Rutina de las 5 AM: snapshot + ranking + aviso por Telegram + publica el dashboard |
 | `crear-sheet-productos.js` | Arma el Sheet de investigación, una hoja por producto |
+| `consistencia.js` | Velocidad de venta sostenida (no un solo salto de stock) |
+| `candidatos-tienda.js` | Separa candidatos por tienda: Avanora (salud) vs Truquito (Meta-safe) |
+| `tendencias.js` | Nuevos ganadores y producto del mes, sobre `consistencia.js` |
+| `publicar.js` | Sube todo a Supabase para el dashboard web (`dropi_dashboard`, `dropi_historial`) |
+| `campanas.js` | Mapeo ID DROPI → campaña(s) de Meta, a mano. Lo usa `publicidad-live.js` |
+| `publicidad-sheet.js` | Arma el layout de la hoja PUBLICIDAD: dropdown de producto y tabla filtrada por fórmula. Re-correrlo es seguro |
+| `publicidad-live.js` | Llena `PUBLICIDAD_DATOS` cada 15 min: una fila por **día × producto** (campañas del mismo producto **sumadas**), últimos 30 días. Requiere `META_ADS_TOKEN` en `.env` (pendiente, ver Pendientes) |
+
+**Cómo está armada la hoja PUBLICIDAD** (rediseñada 2026-08-31 a pedido de Fabián: la primera
+versión, por campaña y con 16 columnas, era confusa):
+
+- **9 columnas:** FECHA · GASTO · GASTO REAL (+20%) · VENTAS REALES · ENTREGADOS · DEVUELTOS ·
+  % DEVOLUCIONES · CPA REAL · ROAS REAL.
+- **Qué cuenta como DEVUELTO** (definido el 2026-08-31 mirando los datos, no suponiendo): un
+  `CANCELADO` **que ya tenía guía**. Ni el Sheet ni DROPI tienen estado `DEVUELTO` — verificado
+  contra las 91 órdenes reales de la cuenta 12054 (los estados que existen son ENTREGADO,
+  PENDIENTE, CANCELADO, NOVEDAD, GUIA_GENERADA y variantes de tránsito). La guía es lo único que
+  separa "se cayó antes de despachar" de "salió y volvió". Al 2026-08-31: **0 devoluciones sobre
+  18 cancelados** — los 18 se cayeron antes de que el paquete existiera. Si DROPI algún día expone
+  un estado propio de devolución, se cambia en `pedidosDiarios()` y nada más.
+- **ENTREGADOS = `ENTREGADO` + `PAGADO`**, y **% DEVOLUCIONES = devueltos / (entregados + devueltos)**
+  — sobre lo ya resuelto, no sobre el total: los pedidos en tránsito todavía no votaron. Por eso
+  en los días recientes ENTREGADOS sale 0 y el % sale vacío: la entrega tarda días. **Esa columna
+  solo dice algo en las filas viejas.**
+- **Orden ASCENDENTE**: el día más nuevo se agrega abajo. Arriba queda fija la fila TOTAL PERÍODO.
+- **Dos filtros, los dos por fórmula** (`QUERY` sobre la hoja oculta) — **responden al instante**,
+  no hay que esperar al cron:
+  - **B2 — Producto:** `TODOS` + cada producto.
+  - **D2 — Ver por:** `DÍA` / `SEMANA` / `MES`. La semana es **lunes-domingo** (misma regla que
+    `analisis-ventas.js`, ver `feedback_metricas_reales_ads` en memoria). Las columnas de
+    agrupación (`SEMANA`, `MES`) las precalcula `publicidad-live.js` en `PUBLICIDAD_DATOS`;
+    la celda oculta `H2` traduce el dropdown a la letra de columna que usa el `QUERY`.
+  - Ojo: CPA y ROAS se **recalculan** sobre el total agrupado, nunca se promedian los diarios.
+- **Campañas unificadas por producto.** No hay fila por campaña: si un producto tiene 2 campañas
+  activas se suma el gasto. Además de ser lo pedido, es lo único honesto — el Sheet de pedidos no
+  guarda de qué campaña vino cada pedido, así que repartir el CPA entre campañas sería inventado.
+- `PUBLICIDAD_DATOS` es una hoja **oculta** con los datos crudos; no se mira ni se edita a mano.
+
+---
+
+## Dashboard web — "DROPI Winners" (2026-08-29)
+
+Clon liviano de DropKiller/DropData sobre datos reales de DROPI EC. Repo aparte
+`projects/dropi-dashboard/` (Next.js, gitignorado en KEPLER, mismo criterio que
+`avanora`/`truquito`). Lee de solo lectura lo que `publicar.js` sube a Supabase — toda la
+lógica de negocio se queda en JS corriendo en la Mac, el dashboard no recalcula nada.
+
+- Tablas Avanora / Truquito / Nuevos ganadores / Producto del mes / Consistencia completa.
+- Click en un producto abre el gráfico de stock en el tiempo (Recharts, datos reales).
+- Login simple por password (`APP_PASSWORD`) — expone costo y stock del proveedor.
+- Fuera de esta fase, documentado en el plan: cruce con Meta Ads Library (fase 2),
+  multi-país (bloqueado por credenciales — `catalogo.js` solo tiene login de DROPI EC),
+  y automatizar el lanzamiento completo (landing + campaña) con un botón (fase 3, a
+  futuro — requiere primero convertir la skill `investigacion-producto` en pasos
+  invocables por código, no solo instrucciones para que un agente las siga).
+
+**Deployado 2026-08-29:** https://dropi-dashboard-sepia.vercel.app (Vercel, cuenta
+`contacto-5987`, proyecto `fabian-pizarro-s-projects/dropi-dashboard`). Password en el
+gestor de Fabián / env vars de Vercel, no acá.
+
+**Disparador diario armado:** `scripts/dropi-diario.sh` + `~/Library/LaunchAgents/com.shotygames.dropi-diario.plist`,
+mismo patrón que `dropi-refresh.sh`. Corre `diario.js` todos los días a las 5 AM — snapshot,
+ranking, Telegram y publicación del dashboard, todo en un solo paso.
+
+**2026-08-29 (tarde) — decisión de Fabián:** Truquito deja de ocultar productos con riesgo
+Meta (antes era un filtro duro, ver `candidatos-tienda.js`). Se siguen mostrando con la
+etiqueta ⚠ — la decisión de testear ahí es suya, informada. Se agregó también: imagen real
+del producto (`catalogo.js` → `resumir()` + `publicar.js` enriquece los ids viejos que no la
+tenían buscando por id como texto, porque `GET /products/{id}` está bloqueado para la cuenta
+dropshipper), proveedor visible en la tabla, y un modal por producto con selector de período
+(7/14/30/60/90 días), total/promedio/máximo/días activos, gráfico ventas-o-stock, y detalle
+diario — todo calculado en vivo desde `dropi_historial` en Supabase (`/api/producto/[id]`).
+
+**2026-08-30 — bug real encontrado y arreglado:** el cliente de DROPI (`dropi.js` →
+`makeClient`) no tenía `timeout`. Una conexión colgada (sin error, sin respuesta) hacía que
+el proceso esperara para siempre — la corrida de las 5 AM del 30-ago quedó viva **6+ horas**
+sin terminar. Se agregó `timeout: 30000` al cliente axios (afecta a todo lo que lo usa, no
+solo el dashboard) y a los dos `axios.post` sueltos del login en `catalogo.js`. Se corrigió
+además que `diario.js` re-subía el backfill COMPLETO de historial todos los días en vez de
+solo el snapshot del día — trabajo redundante que además abría más superficie de fallo. Y se
+le agregó reintento con espera creciente a `subirLote()` en `publicar.js` para que un `fetch
+failed` transitorio de red no corte la subida a mitad de camino.
+
+**2026-08-30 (tarde) — análisis de ads por producto: intentado y revertido.** Se armó una
+sección en el modal (término de búsqueda editable, resultados EC/CO/MX, anunciantes únicos,
+días activo, link al anuncio) que llamaba a la Ad Library de Meta vía Graph API con un token
+de usuario. **No funciona:** Meta exige verificación de identidad (subir cédula/pasaporte,
+vinculada a un Business Portfolio) para que cualquier app pueda consultar la Ad Library API,
+sin importar el tipo de anuncio — confirmado con un token real, error
+`OAuthException subcode 2332002`. No es un permiso que se activa solo.
+
+**Decisión de Fabián:** no hacer el trámite de verificación. La sección se sacó del dashboard
+(código revertido, no queda a medias mostrando un error permanente). **El análisis de ads se
+pide por chat** — Claude ya tiene acceso a la Ad Library a través de la herramienta de Meta
+Ads conectada (probado con "Drenaje Linfático" en Ecuador: 1.378 anuncios activos, anunciante,
+texto del anuncio, tiempo activo, link al anuncio). Pedir "analizame los ads de X producto"
+en la conversación en vez de esperarlo en la web.
+
+**No expone sitio web / landing page del anunciante** — la Ad Library no da ese dato para
+anuncios comerciales normales (solo para político/de interés público), ni por chat ni por
+API. No inventar esa columna si se pide "toda la info" — no está disponible, punto.
 
 ---
 
@@ -279,10 +387,18 @@ Las dos reglas que mandan sobre todo lo demás:
 
 **Bloqueantes de verdad**
 
-- [ ] **Nadie ha activado ninguna campaña todavía.** Las dos están en pausa esperando a Fabián
-- [ ] La **tasa de entrega del 70%** sigue siendo un supuesto. Es la variable que puede tumbar
-      toda la matemática
+- [ ] **Generar `META_ADS_TOKEN`** (Business Settings > System Users, `ads_read` en las 2 cuentas)
+      para que `publicidad-live.js` corra sola cada 15 min. Sin esto la hoja PUBLICIDAD no se
+      actualiza — el 2026-08-30 se llenó a mano una sola vez para verificar el formato
 - [ ] Eliminar a mano el anuncio rechazado `120251998682700787`
+
+**Corregido 2026-08-30:** esta sección decía "nadie ha activado ninguna campaña todavía" y que la
+tasa de entrega del 70% seguía siendo un supuesto. **Ya no es cierto** — verificado en vivo contra
+Meta: la campaña del Drenaje (`120251984830830787`) está **ACTIVE** y gastando ($24.11 el
+2026-08-30, CPA real $14.47 — casi el doble del CPA máximo $7.59 de la tabla de arriba, con
+muestra chica de 2 pedidos). Confirmar con Fabián si la activó a propósito sabiendo que el
+producto 168103 estaba en stock 0 al 27-ago, y si la tasa de entrega real ya se puede medir con
+pedidos propios en vez del supuesto.
 
 **Importantes**
 
