@@ -535,12 +535,23 @@ try {
   // Rutina diaria: snapshot del catálogo + ranking de candidatos.
   // 5 AM Ecuador = 10:00 UTC. A esa hora la API de DROPI está vacía y el
   // catálogo baja en ~9 min; a media tarde la misma descarga tarda 25-30.
-  if (process.env.DROPI2_EMAIL) {
+  // Apagado por defecto: este mismo trabajo lo corre el launchd de la Mac
+  // (com.shotygames.dropi-diario). Tenerlo en los dos lados bajaba el catálogo
+  // entero dos veces y mandaba el Telegram duplicado.
+  //
+  // Gana la Mac y no el servidor porque el snapshot es un JSON de ~18 MB que
+  // queda en projects/dropshipping/data/, y de ahí leen ranking, consistencia y
+  // tendencias. En el contenedor ese archivo se pierde en cada redeploy y el
+  // análisis local se quedaría sin historial. Para invertirlo: DIARIO_EN_SERVIDOR=1
+  // y descargar el launchd.
+  if (process.env.DROPI2_EMAIL && process.env.DIARIO_EN_SERVIDOR === '1') {
     const { correr: correrDiario } = require('./projects/dropshipping/diario');
     cron.schedule('0 10 * * *', () => {
       correrDiario().catch(e => console.error('[DIARIO] Falló:', e.message));
     });
     console.log('[CRON] Dropshipping: catálogo + ranking 5am Ecuador');
+  } else if (process.env.DROPI2_EMAIL) {
+    console.log('[CRON] Catálogo diario: lo corre la Mac (launchd). DIARIO_EN_SERVIDOR=1 para moverlo acá.');
   } else {
     console.log('[CRON] Catálogo diario: desactivado (falta DROPI2_EMAIL)');
   }
