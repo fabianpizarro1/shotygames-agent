@@ -254,7 +254,13 @@ function aObjeto(p) {
     cpa: num(val('CPA')),
     utilidad: num(val('UTILIDAD')),
     ordenDropi: val('ORDEN_DROPI') || null,
-    guia: val('GUIA') || null
+    guia: val('GUIA') || null,
+    // Fechas del ciclo. Se leen para poder completar las que falten sin pisar
+    // las que ya están (un pedido corregido a mano suele tener el ESTADO puesto
+    // pero las fechas vacías).
+    fGuia: val('F_GUIA') || null,
+    fEntrega: val('F_ENTREGA') || null,
+    fPago: val('F_PAGO') || null
   };
 }
 

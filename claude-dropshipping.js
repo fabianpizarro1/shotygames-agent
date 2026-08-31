@@ -242,14 +242,21 @@ ${notificado}`;
       // Revisa todo lo que está en vuelo y lo hace avanzar de estado según lo
       // que diga DROPI. Un pedido puede saltar dos estados de una si estuvo
       // horas sin revisar (ej. EN_DROPI → ENTREGADO).
-      const enVuelo = [];
-      for (const e of ['EN_DROPI', 'GUIA_GENERADA', 'ENTREGADO']) {
-        enVuelo.push(...(await hoja.pedidosPorEstado(e)));
-      }
+      // Una sola lectura del Sheet en vez de una por estado. Entran los pedidos
+      // que todavía pueden moverse, más los PAGADO a los que les falte alguna
+      // fecha: un pedido corregido a mano queda con el estado bien pero sin
+      // F_ENTREGA ni F_PAGO, y si no se miran acá nadie las completa nunca.
+      const EN_CURSO = ['EN_DROPI', 'GUIA_GENERADA', 'ENTREGADO'];
+      const enVuelo = (await hoja.leerPedidos()).filter((p) => {
+        const d = hoja.aObjeto(p);
+        if (EN_CURSO.includes(d.estado)) return true;
+        return d.estado === 'PAGADO' && (!d.fPago || !d.fEntrega);
+      });
       if (!enVuelo.length) return 'No hay pedidos en curso para revisar.';
 
       const cambios = [];
       const sinNovedad = [];
+      const aRevisar = [];
       const errores = [];
 
       // Una sola llamada a la wallet para todos los pedidos: es la fuente que
@@ -266,33 +273,58 @@ ${notificado}`;
         if (!d.ordenDropi) { errores.push(`${d.idPedido}: sin ORDEN DROPI en el Sheet`); continue; }
 
         try {
-          const o = await pedidosDropi.getOrden(d.ordenDropi);
-          const estadoDropi = String(o.estadoDropi || '').toUpperCase();
+          // DROPI bloquea la consulta de ciertas órdenes reales (ver getOrden).
+          // Cuando pasa no se corta el pedido: la wallet es una fuente
+          // independiente y puede confirmar el pago aunque la orden no se lea.
+          let o = null;
+          let noConsultable = null;
+          let idCorregido = null;
+          try {
+            o = await pedidosDropi.getOrden(d.ordenDropi);
+          } catch (e) {
+            if (!e.dropiNoConsultable) throw e;
+            // DROPI le cambia el id a la orden después de crearla, así que el
+            // que guardamos deja de existir. Se reencuentra por guía o nombre y
+            // se corrige en el Sheet, si no el pedido queda ciego para siempre.
+            o = await pedidosDropi.buscarOrdenPorPedido({
+              guia: d.guia, nombre: d.nombre, telefono: d.telefono
+            });
+            if (o) idCorregido = o.orderId;
+            else noConsultable = e.message;
+          }
+
+          const estadoDropi = String(o?.estadoDropi || '').toUpperCase();
           const ahora = new Date().toISOString();
           const campos = {};
           let nuevo = d.estado;
 
           // La wallet manda sobre el estado de la orden: solo cuenta como
-          // PAGADO si hay una ENTRADA por ganancia ligada a esta orden.
-          const pago = pedidosDropi.pagoDeOrden(movimientos, d.ordenDropi);
+          // PAGADO si hay una ENTRADA por ganancia ligada a esta orden. Se busca
+          // por el id vigente: con el viejo no aparecía el pago y el pedido se
+          // quedaba clavado aunque la plata ya estuviera acreditada.
+          const idVigente = o?.orderId || d.ordenDropi;
+          const pago = pedidosDropi.pagoDeOrden(movimientos, idVigente);
 
           if (pago) {
             nuevo = 'PAGADO';
-            if (d.estado !== 'PAGADO') {
-              campos.F_PAGO = pago.fecha || ahora;
+            // Las fechas se completan por separado del estado: un pedido pasado
+            // a PAGADO a mano tiene el estado bien pero las fechas vacías, y sin
+            // esto nunca se llenarían (el estado ya coincide, no hay "cambio").
+            if (!d.fPago) campos.F_PAGO = pago.fecha || ahora;
+            const fEnt = pedidosDropi.fechaDeEstado(o?.historial, 'ENTREGADO');
+            if (!d.fEntrega && fEnt) campos.F_ENTREGA = fEnt;
 
-              // Lo prometido contra lo acreditado. Si no cuadran, queda escrito
-              // en el Sheet: son centavos que de otro modo nadie notaría.
-              const esperado = o.gananciaEsperada;
-              if (esperado && Math.abs(esperado - pago.total) > 0.05) {
-                campos.NOTAS = `DROPI prometía ${usd(esperado)} y acreditó ${usd(pago.total)} ` +
-                               `(diferencia ${usd(pago.total - esperado)})`;
-              }
+            // Lo prometido contra lo acreditado. Si no cuadran, queda escrito
+            // en el Sheet: son centavos que de otro modo nadie notaría.
+            const esperado = o?.gananciaEsperada;
+            if (esperado && Math.abs(esperado - pago.total) > 0.05) {
+              campos.NOTAS = `DROPI prometía ${usd(esperado)} y acreditó ${usd(pago.total)} ` +
+                             `(diferencia ${usd(pago.total - esperado)})`;
             }
           } else if (ESTADOS_PAGADO.some((e) => estadoDropi.includes(e))) {
             // Respaldo: DROPI dice liquidado pero el movimiento aún no aparece
             nuevo = 'PAGADO';
-            if (d.estado !== 'PAGADO') campos.F_PAGO = ahora;
+            if (!d.fPago) campos.F_PAGO = ahora;
           } else if (ESTADOS_CANCELADO.some((e) => estadoDropi.includes(e))) {
             nuevo = 'CANCELADO';
             if (d.estado !== 'CANCELADO') {
@@ -300,14 +332,19 @@ ${notificado}`;
             }
           } else if (ESTADOS_ENTREGADO.some((e) => estadoDropi.includes(e))) {
             nuevo = 'ENTREGADO';
-            if (d.estado !== 'ENTREGADO') campos.F_ENTREGA = ahora;
-          } else if (o.guia) {
+            // La fecha real de entrega sale de la bitácora de DROPI; `ahora`
+            // solo es el momento en que el cron se enteró, que puede ser días
+            // después y desvirtúa cualquier medición de tiempos de entrega.
+            if (d.estado !== 'ENTREGADO') {
+              campos.F_ENTREGA = pedidosDropi.fechaDeEstado(o?.historial, 'ENTREGADO') || ahora;
+            }
+          } else if (o?.guia) {
             nuevo = 'GUIA_GENERADA';
           }
 
           // La guía y el flete se escriben apenas aparecen, en cualquier estado
           let notificado = null;
-          if (o.guia && !d.guia) {
+          if (o?.guia && !d.guia) {
             campos.GUIA = o.guia;
             campos.FLETE = o.costoEnvio;
             campos.F_GUIA = ahora;
@@ -316,7 +353,16 @@ ${notificado}`;
             // transportadora, número, link de rastreo, PDF y valor a pagar.
             // Un fallo acá no debe tumbar el resto del sync: se reporta como
             // error y el pedido queda con la guía igual escrita en el Sheet.
-            try {
+            //
+            // Solo si el pedido sigue EN CAMINO. "Guía nueva" acá significa
+            // "nueva en el Sheet", no "recién generada en DROPI": un pedido ya
+            // entregado al que se le completa la guía retroactivamente haría
+            // salir un "ten listos $X en efectivo" a alguien que ya pagó y
+            // recibió. Pasó de verdad el 2026-08-31 con 2 clientes.
+            const enCamino = !['ENTREGADO', 'PAGADO', 'CANCELADO'].includes(nuevo);
+            if (!enCamino) {
+              notificado = '🔕 sin aviso al cliente: el pedido ya está ' + nuevo;
+            } else try {
               await notificarGuiaLista({
                 nombre: d.nombre,
                 telefono: d.telefono,
@@ -334,6 +380,7 @@ ${notificado}`;
           }
 
           if (nuevo !== d.estado) campos.ESTADO = nuevo;
+          if (idCorregido) campos.ORDEN_DROPI = idCorregido;
 
           if (Object.keys(campos).length) {
             await hoja.actualizarFila(d.fila, campos);
@@ -343,6 +390,11 @@ ${notificado}`;
               (pago ? ` · acreditado ${usd(pago.total)}` : '') +
               (notificado ? ` · ${notificado}` : '')
             );
+          } else if (noConsultable) {
+            // Ni la orden ni la wallet dijeron nada: no hay forma automática de
+            // saber cómo va. Se separa de "sin cambios" porque acá sí hay algo
+            // que hacer a mano, y de "con problema" porque no es un fallo nuestro.
+            aRevisar.push(`${d.idPedido} (orden ${d.ordenDropi}, guía ${d.guia || 'sin guía en el Sheet'})`);
           } else {
             sinNovedad.push(`${d.idPedido} (${estadoDropi || 'sin estado en DROPI'})`);
           }
@@ -354,6 +406,10 @@ ${notificado}`;
       let out = '';
       if (cambios.length) out += `✅ ${cambios.length} con novedad:\n${cambios.join('\n')}\n\n`;
       if (sinNovedad.length) out += `⏳ ${sinNovedad.length} sin cambios:\n${sinNovedad.join('\n')}\n\n`;
+      if (aRevisar.length) {
+        out += `🔍 ${aRevisar.length} que DROPI no deja consultar por API — revisar a mano en el panel ` +
+               `y actualizar el estado en el Sheet:\n${aRevisar.join('\n')}\n\n`;
+      }
       if (errores.length) out += `⚠️ ${errores.length} con problema:\n${errores.join('\n')}`;
       return out.trim() || 'Nada que actualizar.';
     }

@@ -401,11 +401,8 @@ function pagoDeOrden(movimientos, orderId) {
   };
 }
 
-/** Consulta una orden en DROPI. Devuelve estado, guía y costo de envío si ya existen. */
-async function getOrden(orderId) {
-  const r = await conToken(async (c) => c.get(`/orders/myorders/${orderId}`));
-  const o = r.data?.objects || r.data?.order || r.data || {};
-
+/** Deja una orden cruda de DROPI en la forma que usa el resto del código. */
+function normalizarOrden(o, orderId) {
   const guia = o.shipping_guide || o.guide_number || o.tracking_number || null;
   const envio = parseFloat(o.shipping_amount || o.discounted_amount || 0) || 0;
 
@@ -423,6 +420,10 @@ async function getOrden(orderId) {
     // lo prometido y lo cobrado, sin tener que estimar nada.
     gananciaEsperada: parseFloat(o.dropshipper_amount_to_win || 0) || 0,
     gananciaAcreditada: parseFloat(o.amount_earned_dropshipper || 0) || 0,
+    // Bitácora de estados con su fecha. Solo viene en el listado, no en la
+    // consulta por id — es la única fuente de la fecha REAL de entrega
+    // (antes se escribía la del momento en que el cron se enteraba).
+    historial: Array.isArray(o.history) ? o.history : [],
     // guia_urls3 es la ruta real del PDF que da DROPI — varía según la
     // transportadora (antes esto asumía siempre "servientrega" y el link
     // salía roto para pedidos despachados por GINTRACOM o LAARCOURIER).
@@ -430,6 +431,86 @@ async function getOrden(orderId) {
       ? `https://d39ru7awumhhs2.cloudfront.net/${o.guia_urls3}`
       : (guia ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf` : null)
   };
+}
+
+/** Fecha en que la orden entró a un estado, según su bitácora. La última, si se repite. */
+function fechaDeEstado(historial, estado) {
+  const hits = (historial || []).filter((h) => String(h.status || '').toUpperCase() === estado);
+  return hits.length ? hits[hits.length - 1].created_at : null;
+}
+
+/** Consulta una orden en DROPI. Devuelve estado, guía y costo de envío si ya existen. */
+async function getOrden(orderId) {
+  const r = await conToken(async (c) => c.get(`/orders/myorders/${orderId}`));
+
+  // DROPI responde 200 con un cuerpo de error (isSuccess:false, status:400,
+  // "Esta guia no existe en nuestro sistema"). Sin este chequeo, ese `status: 400`
+  // se leía como si fuera el estado de envío y el bot mostraba "estado 400".
+  //
+  // El motivo real: **DROPI le cambia el id a la orden** en algún momento
+  // después de crearla (verificado el 2026-08-31 en 10 órdenes: el id guardado
+  // al crear ya no existe y el bueno es otro, con el mismo cliente, la misma
+  // guía y el mismo created_at). O sea que el mensaje de DROPI es correcto: esa
+  // orden no existe. Quien llama debe reencontrarla con `buscarOrdenPorPedido`.
+  if (r.data?.isSuccess === false) {
+    const err = new Error(`DROPI no permite consultar la orden ${orderId}: ${r.data.message || 'sin detalle'}`);
+    err.dropiNoConsultable = true;
+    throw err;
+  }
+
+  return normalizarOrden(r.data?.objects || r.data?.order || r.data || {}, orderId);
+}
+
+/** ¿Es el mismo número? DROPI guarda 9 dígitos (986041069), el Sheet 0986041069. */
+function mismoTelefono(a, b) {
+  const normalizar = (t) => String(t || '').replace(/\D/g, '').replace(/^593/, '').replace(/^0/, '');
+  const x = normalizar(a);
+  const y = normalizar(b);
+  return x.length >= 9 && y.length >= 9 && x.slice(-9) === y.slice(-9);
+}
+
+/**
+ * Reencuentra una orden cuando su id dejó de servir.
+ *
+ * Por qué se pierde el id: cuando Fabián entra al panel de DROPI a corregirle
+ * un dato a una orden (dirección, teléfono), DROPI **no la edita — la vuelve a
+ * crear con id nuevo** y descarta la vieja, conservando el `created_at`.
+ * Verificado el 2026-08-31: las órdenes con id cambiado tienen un hueco de
+ * 42s a 95min entre `created_at` y su primer estado (el rato que llevó la
+ * edición), mientras que las intactas arrancan en 0s.
+ *
+ * El buscador de DROPI (`textToSearch` en el listado) matchea por número de
+ * guía y por nombre del cliente, pero NO por id de orden, ni por teléfono, ni
+ * por las notas — probado uno por uno.
+ *
+ *   - Por guía alcanza: es única.
+ *   - Por nombre NO alcanza. Dos clientes pueden llamarse igual, y aceptar el
+ *     match equivocado significa escribirle a alguien la guía de otro. Por eso
+ *     se exige además que coincida el teléfono. Este es el camino que se usa
+ *     cuando se editó la orden ANTES de que existiera la guía.
+ *
+ * Si nada da un único match seguro devuelve null, y el pedido queda marcado
+ * para revisar a mano. Preferible a adivinar.
+ */
+async function buscarOrdenPorPedido({ guia, nombre, telefono }) {
+  const intentar = async (q) => {
+    const r = await conToken(async (c) => c.get(
+      `/orders/myorders?result_number=20&start=0&orderBy=id&orderDirection=desc` +
+      `&user_id=${USER_ID}&textToSearch=${encodeURIComponent(q)}`));
+    return r.data?.objects || [];
+  };
+
+  if (guia) {
+    const porGuia = await intentar(guia);
+    if (porGuia.length === 1) return normalizarOrden(porGuia[0], porGuia[0].id);
+  }
+
+  if (nombre && telefono) {
+    const porNombre = (await intentar(nombre)).filter((o) => mismoTelefono(o.phone, telefono));
+    if (porNombre.length === 1) return normalizarOrden(porNombre[0], porNombre[0].id);
+  }
+
+  return null;
 }
 
 // ─── Prueba en seco ──────────────────────────────────────────────────────────
@@ -481,4 +562,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { crearPedido, getOrden, getMovimientosWallet, pagoDeOrden, armarBody, getProductoPorNombre, bodegaDe };
+module.exports = { crearPedido, getOrden, buscarOrdenPorPedido, fechaDeEstado, getMovimientosWallet, pagoDeOrden, armarBody, getProductoPorNombre, bodegaDe };
