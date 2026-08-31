@@ -303,6 +303,15 @@ async function procesarBatchVentas(from, items, firstMessageId) {
     if (ADMIN_PHONES.length) {
       await sendText(ADMIN_PHONES[0], `⚠️ Error bot ventas: ${error.message}`, INSTANCE_VENTAS).catch(() => {});
     }
+    // Antes esto dejaba al cliente sin ninguna respuesta y sin ningún indicio
+    // de que algo falló — pasó de verdad el 2026-08-31 (ANTHROPIC_API_KEY sin
+    // crédito). Un cliente real esperando una respuesta de venta es peor que
+    // un mensaje genérico. Sin jerga técnica: no es su problema.
+    await sendText(
+      from,
+      'Estamos teniendo un problema técnico en este momento. Ya lo estamos revisando — te contactamos apenas se resuelva 🙏',
+      INSTANCE_VENTAS
+    ).catch(() => {});
   }
 }
 

@@ -89,6 +89,19 @@ function setupBot(app, { token, path, name, chatFn, webhookUrl }, getHistory, sa
 
     } catch (err) {
       console.error(`[${name}] error:`, err.message);
+      // Antes esto moría en silencio: el usuario escribía y nunca recibía
+      // nada, sin ningún indicio de que algo falló (pasó de verdad el
+      // 2026-08-31 — el ANTHROPIC_API_KEY se quedó sin crédito y los 5 bots
+      // de Telegram, más el de WhatsApp, dejaron de contestar sin avisar).
+      // Un chatId puede no existir todavía si el error ocurrió antes de leerlo.
+      const chatIdDeMensaje = req.body?.message?.chat?.id;
+      if (chatIdDeMensaje) {
+        const esCredito = /credit balance/i.test(err.message);
+        const texto = esCredito
+          ? '⚠️ Sin crédito en la cuenta de Anthropic — hay que recargar en console.anthropic.com/settings/billing'
+          : `⚠️ Error procesando tu mensaje: ${err.message}`;
+        await sendMessage(token, chatIdDeMensaje, texto).catch(() => {});
+      }
     }
   });
 
