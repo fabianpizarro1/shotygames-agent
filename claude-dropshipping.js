@@ -18,6 +18,7 @@ const hoja = require('./projects/dropshipping/sheets-pedidos');
 const { buscar } = require('./projects/dropshipping/catalogo');
 const { evaluar, precioParaMargen } = require('./projects/dropshipping/calculadora');
 const { notificarGuiaLista, notificarPedidoConfirmado } = require('./projects/dropshipping/notificar-guia');
+const { ahoraEC } = require('./fechas.js');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -30,9 +31,11 @@ Gestionar los pedidos que llegan de las landings: crearlos en DROPI cuando el cl
 1. PENDIENTE_CONFIRMACION — llegó de la web, se le escribió por WhatsApp
 2. EN_DROPI — el cliente confirmó, tú creaste el pedido en DROPI, falta que el proveedor genere la guía
 3. GUIA_GENERADA — el proveedor generó la guía (hay número y flete)
-4. ENTREGADO — se entregó
-5. PAGADO — DROPI acreditó la plata
-6. CANCELADO — no confirmó o se cayó
+4. NOVEDAD — la entrega tuvo un problema (dirección mala, nadie en casa, no contesta). El paquete SIGUE VIVO: se puede resolver y entregar, o terminar en devolución. Es lo más urgente de atender: una novedad desatendida termina en devolución
+5. ENTREGADO — se entregó
+6. PAGADO — DROPI acreditó la plata
+7. CANCELADO — se cayó ANTES de despacharse (nunca salió el paquete)
+8. DEVUELTO — salió y volvió al remitente. Se pierde el CPA y el flete de ida
 
 ## Reglas
 - Cuando Fabián diga que un pedido se confirmó, usa confirmar_pedido con el ID (ej. TRQ-12345).
@@ -77,7 +80,7 @@ const TOOLS = [
     input_schema: {
       type: 'object',
       properties: {
-        estado: { type: 'string', description: 'Opcional: PENDIENTE_CONFIRMACION, EN_DROPI, GUIA_GENERADA, ENTREGADO, PAGADO, CANCELADO' }
+        estado: { type: 'string', description: 'Opcional: PENDIENTE_CONFIRMACION, EN_DROPI, GUIA_GENERADA, NOVEDAD, ENTREGADO, PAGADO, CANCELADO, DEVUELTO' }
       }
     }
   },
@@ -126,6 +129,64 @@ const ESTADOS_PAGADO = ['PAGADO', 'PAGADO_PROVEEDOR', 'LIQUIDADO', 'COMPLETADO']
 // que un pedido cancelado en DROPI se quedaba EN_DROPI en el Sheet para
 // siempre — nada lo hacía avanzar ni retroceder.
 const ESTADOS_CANCELADO = ['CANCELADO', 'CANCELLED', 'CANCELED', 'ANULADO'];
+/**
+ * ── Devoluciones ──────────────────────────────────────────────────────────
+ * Cada transportadora las escribe distinto, y hay dos cosas MUY distintas que
+ * usan las mismas palabras (lo advirtió Fabián el 2026-08-31):
+ *
+ *   "DEVOLUCION DE DISTRIBUCION"  → falló un intento de entrega y el paquete
+ *                                   vuelve al centro de distribución. SIGUE VIVO,
+ *                                   se puede reintentar. NO es una devolución.
+ *   "DEVUELTO AL REMITENTE"       → el paquete volvió al vendedor. Orden muerta.
+ *
+ * Un match por raíz ("DEVOLUC") confunde las dos y mata pedidos que todavía se
+ * pueden entregar. Por eso hay tres niveles y, ante la duda, NO se decide:
+ * el pedido se deja como está y se reporta para que Fabián lo clasifique.
+ */
+const RAICES_DEVOLUCION = ['DEVUEL', 'DEVOLUC', 'RETORN', 'RECHAZ'];
+
+/** Suenan a devolución pero el paquete sigue en juego. Se tratan como tránsito. */
+const DEVOLUCION_TRANSITORIA = ['DEVOLUCION DE DISTRIBUCION', 'DEVOLUCION DE REPARTO', 'REPROGRAMAD'];
+
+/** El paquete volvió al remitente: definitivo. Se exige que lo diga explícito. */
+const DEVOLUCION_A_ORIGEN = ['AL REMITENTE', 'A REMITENTE', 'AL ORIGEN', 'A ORIGEN'];
+
+/**
+ * Estados que por sí solos ya significan devolución consumada. Se comparan por
+ * IGUALDAD, no por substring: así "DEVOLUCION DE DISTRIBUCION" no matchea con
+ * "DEVOLUCION" — que es exactamente la confusión que hay que evitar.
+ */
+const DEVOLUCION_EXACTA = ['DEVUELTO', 'DEVOLUCION', 'RETORNADO', 'DEVOLUCION TOTAL'];
+
+/**
+ * ── Novedades ─────────────────────────────────────────────────────────────
+ * NOVEDAD = la entrega tuvo un problema (dirección mala, nadie en casa, el
+ * cliente no contesta). El paquete SIGUE VIVO: puede resolverse y entregarse,
+ * o terminar en devolución. Es un estado de alerta, no un final.
+ *
+ * ⚠️ "NOVEDAD SOLUCIONADA" contiene "NOVEDAD" — misma trampa que
+ * "DEVOLUCION DE DISTRIBUCION" con "DEVOLUCION". Se chequea PRIMERO lo
+ * resuelto, si no un pedido ya destrabado se quedaría marcado con problema.
+ */
+const NOVEDAD_RESUELTA = ['SOLUCIONADA', 'RESUELTA', 'SUPERADA'];
+
+function esNovedadAbierta(estadoDropi) {
+  const e = String(estadoDropi || '').toUpperCase().trim();
+  if (!e.includes('NOVEDAD')) return false;
+  return !NOVEDAD_RESUELTA.some((r) => e.includes(r));
+}
+
+/** 'DEFINITIVA' | 'TRANSITORIA' | 'AMBIGUA' | null (no habla de devoluciones). */
+function clasificarDevolucion(estadoDropi) {
+  const e = String(estadoDropi || '').toUpperCase().trim();
+  if (!RAICES_DEVOLUCION.some((r) => e.includes(r))) return null;
+  if (DEVOLUCION_TRANSITORIA.some((t) => e.includes(t))) return 'TRANSITORIA';
+  if (DEVOLUCION_EXACTA.includes(e)) return 'DEFINITIVA';
+  if (DEVOLUCION_A_ORIGEN.some((d) => e.includes(d))) return 'DEFINITIVA';
+  // Habla de devolución pero no sabemos si el paquete volvió o sigue en ruta.
+  // Adivinar acá cuesta plata en cualquiera de las dos direcciones.
+  return 'AMBIGUA';
+}
 
 async function executeTool(name, input) {
   switch (name) {
@@ -168,7 +229,7 @@ async function executeTool(name, input) {
         ESTADO: 'EN_DROPI',
         ORDEN_DROPI: r.orderId,
         COSTO: r.costoProveedor,
-        F_CONFIRM: new Date().toISOString()
+        F_CONFIRM: ahoraEC()
       };
       // El flete exacto de ESTE envío (depende de ciudad y peso). Con él, la
       // fórmula de utilidad del Sheet deja de ser estimada y da el número real.
@@ -246,7 +307,10 @@ ${notificado}`;
       // que todavía pueden moverse, más los PAGADO a los que les falte alguna
       // fecha: un pedido corregido a mano queda con el estado bien pero sin
       // F_ENTREGA ni F_PAGO, y si no se miran acá nadie las completa nunca.
-      const EN_CURSO = ['EN_DROPI', 'GUIA_GENERADA', 'ENTREGADO'];
+      // NOVEDAD tiene que seguir revisándose: el paquete está vivo y puede
+      // resolverse (→ entregado) o caerse (→ devuelto). Si no estuviera acá,
+      // un pedido con novedad quedaría congelado para siempre.
+      const EN_CURSO = ['EN_DROPI', 'GUIA_GENERADA', 'NOVEDAD', 'ENTREGADO'];
       const enVuelo = (await hoja.leerPedidos()).filter((p) => {
         const d = hoja.aObjeto(p);
         if (EN_CURSO.includes(d.estado)) return true;
@@ -257,6 +321,7 @@ ${notificado}`;
       const cambios = [];
       const sinNovedad = [];
       const aRevisar = [];
+      const dudosos = [];   // estados de devolución que no se pueden clasificar solos
       const errores = [];
 
       // Una sola llamada a la wallet para todos los pedidos: es la fuente que
@@ -294,7 +359,8 @@ ${notificado}`;
           }
 
           const estadoDropi = String(o?.estadoDropi || '').toUpperCase();
-          const ahora = new Date().toISOString();
+          const devolucion = clasificarDevolucion(estadoDropi);
+          const ahora = ahoraEC();
           const campos = {};
           let nuevo = d.estado;
 
@@ -325,6 +391,19 @@ ${notificado}`;
             // Respaldo: DROPI dice liquidado pero el movimiento aún no aparece
             nuevo = 'PAGADO';
             if (!d.fPago) campos.F_PAGO = ahora;
+          } else if (devolucion === 'DEFINITIVA') {
+            // El paquete salió y volvió. Se pierde el CPA y el flete de ida
+            // (DROPI no cobra el de retorno en órdenes con recaudo, pero la
+            // salida del envío sí queda marcada en la wallet).
+            nuevo = 'DEVUELTO';
+            if (d.estado !== 'DEVUELTO') {
+              campos.NOTAS = `Devuelto en DROPI (orden ${d.ordenDropi}) — estado: ${estadoDropi}`;
+            }
+          } else if (devolucion === 'AMBIGUA') {
+            // Habla de devolución pero no dice si el paquete volvió o sigue en
+            // ruta. No se toca el estado: se reporta con el texto exacto para
+            // que Fabián decida y, si aparece seguido, se agregue a las listas.
+            dudosos.push(`${d.idPedido} (orden ${d.ordenDropi}) → DROPI dice: "${estadoDropi}"`);
           } else if (ESTADOS_CANCELADO.some((e) => estadoDropi.includes(e))) {
             nuevo = 'CANCELADO';
             if (d.estado !== 'CANCELADO') {
@@ -338,7 +417,16 @@ ${notificado}`;
             if (d.estado !== 'ENTREGADO') {
               campos.F_ENTREGA = pedidosDropi.fechaDeEstado(o?.historial, 'ENTREGADO') || ahora;
             }
+          } else if (esNovedadAbierta(estadoDropi)) {
+            // Problema en la entrega, pero el paquete sigue vivo. Se marca para
+            // que Fabián pueda actuar (llamar al cliente, corregir dirección):
+            // una novedad sin atender termina en devolución.
+            nuevo = 'NOVEDAD';
+            if (d.estado !== 'NOVEDAD') {
+              campos.NOTAS = `Novedad en DROPI (orden ${d.ordenDropi}) — estado: ${estadoDropi}`;
+            }
           } else if (o?.guia) {
+            // Incluye la novedad ya solucionada: vuelve a ser un envío normal.
             nuevo = 'GUIA_GENERADA';
           }
 
@@ -347,35 +435,45 @@ ${notificado}`;
           if (o?.guia && !d.guia) {
             campos.GUIA = o.guia;
             campos.FLETE = o.costoEnvio;
-            campos.F_GUIA = ahora;
+          }
 
-            // Guía recién generada → avisarle al cliente por WhatsApp con
-            // transportadora, número, link de rastreo, PDF y valor a pagar.
-            // Un fallo acá no debe tumbar el resto del sync: se reporta como
-            // error y el pedido queda con la guía igual escrita en el Sheet.
-            //
-            // Solo si el pedido sigue EN CAMINO. "Guía nueva" acá significa
-            // "nueva en el Sheet", no "recién generada en DROPI": un pedido ya
-            // entregado al que se le completa la guía retroactivamente haría
-            // salir un "ten listos $X en efectivo" a alguien que ya pagó y
-            // recibió. Pasó de verdad el 2026-08-31 con 2 clientes.
-            const enCamino = !['ENTREGADO', 'PAGADO', 'CANCELADO'].includes(nuevo);
+          // El aviso se decide por F_GUIA, NO por GUIA. F_GUIA es la marca de
+          // "ya se le avisó"; GUIA es solo el número. Mientras el bot estuvo
+          // ciego, Fabián pegó las guías a mano en el Sheet: `!d.guia` daba
+          // false y esos clientes no recibieron el aviso NUNCA (5 casos el
+          // 2026-08-31). Avisar no es opcional — el cliente necesita el número
+          // para rastrear y saber cuánto tener listo.
+          if (o?.guia && !d.fGuia) {
+            // La fecha real en que se generó la guía, no la de esta corrida.
+            const fGuiaReal = pedidosDropi.fechaDeEstado(o.historial, 'GUIA_GENERADA');
+
+            // No se avisa si el pedido ya llegó: un "ten listos $X en efectivo"
+            // a alguien que ya pagó y recibió confunde. Igual se sella F_GUIA
+            // para no volver a evaluarlo en cada pasada.
+            const enCamino = !['ENTREGADO', 'PAGADO', 'CANCELADO', 'DEVUELTO'].includes(nuevo);
+
             if (!enCamino) {
-              notificado = '🔕 sin aviso al cliente: el pedido ya está ' + nuevo;
-            } else try {
-              await notificarGuiaLista({
-                nombre: d.nombre,
-                telefono: d.telefono,
-                transportadora: o.transportadora,
-                guia: o.guia,
-                valor: d.total,
-                pdfUrl: o.pdf
-              });
-              notificado = '📲 cliente notificado por WhatsApp';
-            } catch (e) {
-              const detalle = e.response?.data?.message || e.response?.data || e.message;
-              console.error(`notificarGuiaLista falló para ${d.idPedido}:`, e.response?.data || e);
-              errores.push(`${d.idPedido}: guía generada pero no se pudo notificar al cliente (${detalle})`);
+              campos.F_GUIA = fGuiaReal || ahora;
+              notificado = '\u{1F515} sin aviso al cliente: el pedido ya está ' + nuevo;
+            } else {
+              try {
+                await notificarGuiaLista({
+                  nombre: d.nombre,
+                  telefono: d.telefono,
+                  transportadora: o.transportadora,
+                  guia: o.guia,
+                  valor: d.total,
+                  pdfUrl: o.pdf
+                });
+                campos.F_GUIA = fGuiaReal || ahora;
+                notificado = '\u{1F4F2} cliente notificado por WhatsApp';
+              } catch (e) {
+                // F_GUIA queda VACÍA a propósito: así la próxima pasada lo
+                // reintenta en vez de dar por avisado a quien nunca lo fue.
+                const detalle = e.response?.data?.message || e.response?.data || e.message;
+                console.error(`notificarGuiaLista falló para ${d.idPedido}:`, e.response?.data || e);
+                errores.push(`${d.idPedido}: guía generada pero no se pudo notificar al cliente (${detalle})`);
+              }
             }
           }
 
@@ -409,6 +507,11 @@ ${notificado}`;
       if (aRevisar.length) {
         out += `🔍 ${aRevisar.length} que DROPI no deja consultar por API — revisar a mano en el panel ` +
                `y actualizar el estado en el Sheet:\n${aRevisar.join('\n')}\n\n`;
+      }
+      if (dudosos.length) {
+        out += `↩️ ${dudosos.length} con estado de DEVOLUCIÓN que no supe clasificar. No les toqué el ` +
+               `estado. Decime si el paquete ya volvió (→ DEVUELTO) o sigue en ruta, y agrego ese ` +
+               `texto a las listas para que la próxima salga solo:\n${dudosos.join('\n')}\n\n`;
       }
       if (errores.length) out += `⚠️ ${errores.length} con problema:\n${errores.join('\n')}`;
       return out.trim() || 'Nada que actualizar.';
