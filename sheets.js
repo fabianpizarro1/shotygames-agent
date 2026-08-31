@@ -1173,4 +1173,109 @@ async function actualizarEstadoMasivo(nuevoEstado, excluirNombres = [], estadoAc
   return { updated: candidatos.length, nombres: candidatos.map(c => c.nombre) };
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, getPedidosParaNotificarGuia, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, parseMonto, idxToCol };
+// Enriquece "PEDIDOS LOVABLE" con la reputación del cliente en TODA la
+// plataforma DROPI (no solo Shotygames) — mismo endpoint que usa el bot DROPI
+// cuando se le manda un número a mano (`verificarCliente` en dropi.js).
+// Agrega 3 columnas al final: DROPI PEDIDOS / DROPI ENTREGADOS / DROPI
+// DEVUELTOS, para decidir si vale la pena mandar un contraentrega a ese
+// teléfono o no, sin tener que consultarlo pedido por pedido.
+// Idempotente: una fila que ya tiene las 3 columnas llenas no se vuelve a
+// consultar — correr de nuevo solo rellena lo que falta (pedidos nuevos).
+async function enriquecerReputacionDropi({ dryRun = false } = {}) {
+  if (!SHEETS_ID_PEDIDOS_WEB) throw new Error('Falta SHEETS_ID_PEDIDOS_WEB');
+  const dropi = require('./dropi');
+  const sheets = await getSheets();
+
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEETS_ID_PEDIDOS_WEB });
+  const tab = meta.data.sheets[0].properties;
+  const sheetId = tab.sheetId;
+  const tituloTab = tab.title;
+  let columnCount = tab.gridProperties.columnCount;
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+    range: `${tituloTab}!A1:${idxToCol(columnCount - 1)}`
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const idxTel = headers.indexOf('TELEFONO');
+  if (idxTel === -1) throw new Error('No se encontró columna TELEFONO en PEDIDOS LOVABLE');
+
+  const NUEVAS = ['DROPI PEDIDOS', 'DROPI ENTREGADOS', 'DROPI DEVUELTOS'];
+  let idxNuevas = NUEVAS.map(h => headers.indexOf(h));
+
+  // Si alguna columna no existe todavía, se agrega al final — expandiendo el
+  // grid primero si hace falta (si no, Sheets tira "Range exceeds grid limits").
+  if (idxNuevas.some(i => i === -1)) {
+    const startCol = headers.length;
+    const faltantes = NUEVAS.filter((_, i) => idxNuevas[i] === -1);
+    const necesarias = startCol + faltantes.length;
+    if (necesarias > columnCount) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+        resource: { requests: [{ appendDimension: { sheetId, dimension: 'COLUMNS', length: necesarias - columnCount } }] }
+      });
+      columnCount = necesarias;
+    }
+    if (!dryRun) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+        range: `${tituloTab}!${idxToCol(startCol)}1`,
+        valueInputOption: 'RAW',
+        resource: { values: [faltantes] }
+      });
+    }
+    let cursor = startCol;
+    idxNuevas = NUEVAS.map((h, i) => (idxNuevas[i] !== -1 ? idxNuevas[i] : cursor++));
+  }
+
+  const [idxPedidos, idxEntregados, idxDevueltos] = idxNuevas;
+  const resultado = { revisados: 0, actualizados: 0, sinTelefono: 0, yaTenian: 0, errores: [] };
+
+  // Junta todas las escrituras y las manda en tandas por batchUpdate — una
+  // escritura por fila (145+) pega contra la cuota de "Write requests per
+  // minute" de Sheets API mucho antes que la de DROPI.
+  const pendientes = [];
+  const FLUSH_CADA = 20;
+
+  async function flush() {
+    if (!pendientes.length || dryRun) { pendientes.length = 0; return; }
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+      resource: {
+        valueInputOption: 'RAW',
+        data: pendientes.map(p => ({
+          range: `${tituloTab}!${idxToCol(idxPedidos)}${p.rowNum}:${idxToCol(idxDevueltos)}${p.rowNum}`,
+          values: [[p.total, p.entregados, p.devueltos]]
+        }))
+      }
+    });
+    pendientes.length = 0;
+  }
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[idxTel]) { resultado.sinTelefono++; continue; }
+
+    const yaTiene = row[idxPedidos] !== undefined && row[idxPedidos] !== '';
+    if (yaTiene) { resultado.yaTenian++; continue; }
+
+    resultado.revisados++;
+    const rowNum = i + 1;
+    try {
+      const info = await dropi.verificarCliente(row[idxTel]);
+      pendientes.push({ rowNum, total: info.total ?? '', entregados: info.entregados ?? '', devueltos: info.devueltos ?? '' });
+      resultado.actualizados++;
+      if (pendientes.length >= FLUSH_CADA) await flush();
+    } catch (e) {
+      resultado.errores.push({ fila: rowNum, telefono: row[idxTel], error: e.message });
+    }
+    // Pausa breve para no saturar la API de DROPI (cientos de filas posibles).
+    await new Promise(r => setTimeout(r, 350));
+  }
+  await flush();
+
+  return resultado;
+}
+
+module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, getPedidosParaNotificarGuia, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, enriquecerReputacionDropi, parseMonto, idxToCol };

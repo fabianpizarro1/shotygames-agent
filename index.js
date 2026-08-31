@@ -341,6 +341,21 @@ app.get('/admin/backfill-atribucion', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Enriquece PEDIDOS LOVABLE con reputación DROPI (pedidos/entregados/devueltos
+// por teléfono en toda la plataforma) — para decidir si mandar contraentrega.
+// Idempotente: solo llena filas que aún no tienen las 3 columnas. ?dryRun=1
+// para ver el conteo sin escribir nada ni consultar DROPI de verdad.
+app.get('/admin/enriquecer-dropi', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  if (adminKey && req.headers['x-admin-key'] !== adminKey) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const sheets = require('./sheets');
+    const dryRun = req.query.dryRun === '1';
+    const resultado = await sheets.enriquecerReputacionDropi({ dryRun });
+    res.json({ dryRun, ...resultado });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Diagnóstico: probar marcar orden DROPI como impresa
 app.get('/admin/dropi-print-test/:dropiId', async (req, res) => {
   const adminKey = process.env.ADMIN_KEY || '';
@@ -571,6 +586,28 @@ try {
   console.log('[CRON] Shotygames: sincronizar pagos DROPI cada 2h (8am-8pm Ecuador)');
 } catch (e) {
   console.error('[CRON] Error al iniciar sincronización de pagos Shotygames:', e.message);
+}
+
+// ── REPUTACIÓN DROPI en PEDIDOS LOVABLE ───────────────────────
+// Rellena las columnas DROPI PEDIDOS/ENTREGADOS/DEVUELTOS de los pedidos web
+// nuevos que todavía no las tienen (idempotente — no vuelve a tocar lo ya
+// lleno). Mismo horario que la sincronización de pagos, no hace falta más.
+try {
+  async function enriquecerDropiLovable() {
+    try {
+      const sheets = require('./sheets');
+      const resultado = await sheets.enriquecerReputacionDropi({ dryRun: false });
+      if (resultado.actualizados > 0) {
+        console.log('[ENRIQUECER DROPI]', JSON.stringify(resultado));
+      }
+    } catch (e) {
+      console.error('[ENRIQUECER DROPI] Error:', e.message);
+    }
+  }
+  cron.schedule('0 13,15,17,19,21,23,1 * * *', enriquecerDropiLovable);
+  console.log('[CRON] Reputación DROPI en PEDIDOS LOVABLE cada 2h (8am-8pm Ecuador)');
+} catch (e) {
+  console.error('[CRON] Error al iniciar enriquecimiento DROPI:', e.message);
 }
 
 // ── META CAPI: Purchase real desde PEDIDOS ────────────────────
