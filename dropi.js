@@ -139,6 +139,12 @@ function setToken(token) {
 function makeClient(token) {
   return axios.create({
     baseURL: BASE,
+    // Sin esto, una conexión que se queda colgada (sin error, sin respuesta)
+    // hace que el proceso espere para siempre — el reintento de
+    // `paginaConReintento` en catalogo.js nunca se dispara porque nunca llega
+    // un error que atrapar. Pasó de verdad el 2026-08-30: la corrida de las
+    // 5 AM quedó viva 6+ horas colgada en el producto 1500 de ~34.500.
+    timeout: 30000,
     headers: {
       'accept': 'application/json, text/plain, */*',
       'accept-language': 'es-EC,es;q=0.9,en;q=0.8',

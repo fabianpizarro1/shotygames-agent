@@ -64,13 +64,13 @@ async function login() {
     throw new Error('Faltan DROPI2_EMAIL / DROPI2_PASSWORD en .env (cuenta de dropshipper)');
   }
 
-  // Esta cuenta no tiene 2FA activo, así que el OTP es opcional. Si algún día se
-  // activa, basta con poner DROPI2_TOTP_SECRET en .env y esto lo maneja solo.
+  // 2FA activo desde el 2026-08-30. El OTP sigue siendo opcional en el código
+  // por si alguna vez se desactiva, pero hoy sin DROPI2_TOTP_SECRET no entra.
   const otp = totpSecret ? generateTotp(totpSecret) : undefined;
   const body = { email, password, white_brand_id: 1, brand: '', with_cdc: false };
   if (otp) body.otp = otp;
 
-  const res = await axios.post(`${BASE}/login`, body, { headers: HEADERS });
+  const res = await axios.post(`${BASE}/login`, body, { headers: HEADERS, timeout: 30000 });
 
   let token = res.data?.token;
   if (!token) throw new Error('Login falló: sin token en la respuesta');
@@ -78,9 +78,13 @@ async function login() {
   // El token de /login puede ser uno temporal de solo-2FA. Se detecta por su payload.
   if (decodeJwtPayload(token)?.token_type === '2FA') {
     if (!otp) {
-      throw new Error('La cuenta pide 2FA pero no hay DROPI2_TOTP_SECRET en .env — activá el secreto o desactivá 2FA en DROPI');
+      throw new Error(
+        'La cuenta pide 2FA pero no hay DROPI2_TOTP_SECRET en .env. ' +
+        'Si el 2FA ya está escaneado en Google Authenticator, la clave se recupera sin tocar DROPI: ' +
+        'exportá la cuenta desde Authenticator y decodificá el QR con scripts/decodificar-qr-2fa.py'
+      );
     }
-    const verify = await axios.post(`${BASE}/auth/2fa/verify`, { token, code: otp }, { headers: HEADERS });
+    const verify = await axios.post(`${BASE}/auth/2fa/verify`, { token, code: otp }, { headers: HEADERS, timeout: 30000 });
     token = verify.data?.token;
   }
   if (!token) throw new Error('Login falló: sin token tras la verificación 2FA');
@@ -142,6 +146,19 @@ async function verProducto(id) {
   return conToken(async c => (await c.get(`/products/${id}`)).data?.objects);
 }
 
+// Mismo CDN que ya usan las guías de envío (ver pedidos.js) — `gallery[].url`
+// casi siempre viene null, la ruta real está en `urlS3` y hay que armarla a mano.
+const CDN = 'https://d39ru7awumhhs2.cloudfront.net/';
+
+function urlImagen(gallery) {
+  for (const g of gallery || []) {
+    if (typeof g === 'string') return g;
+    if (typeof g?.url === 'string') return g.url;
+    if (typeof g?.urlS3 === 'string') return CDN + g.urlS3;
+  }
+  return null;
+}
+
 /** Se queda solo con lo que sirve para decidir — un snapshot completo pesa de más. */
 function resumir(p) {
   return {
@@ -156,9 +173,32 @@ function resumir(p) {
     user_id: p.user_id,                                  // proveedor dueño del producto
     proveedor: p.user?.store_name || p.user?.name || null,
     categorias: (p.categories || []).map(c => c.name || c.category?.name).filter(Boolean),
-    imagenes: (p.gallery || []).map(g => g.url || g.urlS3 || g).filter(v => typeof v === 'string').length,
+    imagenes: (p.gallery || []).length,
+    imagen: urlImagen(p.gallery),
     variaciones: (p.variations || []).length
   };
+}
+
+/**
+ * Pide una página reintentando los errores pasajeros del servidor.
+ *
+ * Sin esto, un 502 suelto tira abajo la descarga entera: pasó el 2026-08-25 en
+ * la página 26 de ~340 y se perdieron cinco minutos de bajada. La API de DROPI
+ * devuelve 502 esporádicos que se resuelven solos al segundo intento.
+ */
+async function paginaConReintento(opts, intentos = 4) {
+  for (let n = 1; ; n++) {
+    try {
+      return await pagina(opts);
+    } catch (e) {
+      const status = e.response?.status;
+      const pasajero = !status || status >= 500 || status === 429;
+      if (!pasajero || n >= intentos) throw e;
+      const espera = 2000 * n;
+      process.stdout.write(`\n  ⚠ ${status || e.code} en startData ${opts.startData} — reintento ${n}/${intentos - 1} en ${espera / 1000}s\n`);
+      await new Promise(r => setTimeout(r, espera));
+    }
+  }
 }
 
 async function descargarCatalogo() {
@@ -166,7 +206,7 @@ async function descargarCatalogo() {
   const vistos = new Set();
 
   for (let i = 0; i < MAX_PAGINAS; i++) {
-    const lote = await pagina({ startData: i * PAGE_SIZE });
+    const lote = await paginaConReintento({ startData: i * PAGE_SIZE });
     if (!lote.length) break;
 
     let nuevos = 0;
@@ -348,4 +388,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { login, buscar, verProducto, pagina, descargarCatalogo, guardarSnapshot, delta, conToken };
+module.exports = { login, buscar, verProducto, pagina, descargarCatalogo, guardarSnapshot, delta, conToken, urlImagen };

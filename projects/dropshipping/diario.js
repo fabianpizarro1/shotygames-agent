@@ -9,6 +9,7 @@
  *   2. Borra snapshots viejos — cada uno pesa 13 MB
  *   3. Compara contra el día anterior y arma el ranking
  *   4. Manda los candidatos por Telegram
+ *   5. Publica el dashboard web (publicar.js) — no tira abajo lo anterior si falla
  *
  * El delta de stock entre dos snapshots es la única señal honesta de que un
  * producto se vende: no es opinión de nadie ni una tendencia de TikTok, es
@@ -106,6 +107,21 @@ async function correr({ avisarPorTelegram = true } = {}) {
   }
 
   if (avisarPorTelegram) await avisar(mensaje);
+
+  // El dashboard web es un visor sobre esto — si falla la publicación no debe
+  // tirar abajo el snapshot ni el aviso de Telegram, que ya corrieron bien.
+  // `backfill: false` es clave acá: el backfill completo (7+ días viejos, ya
+  // subidos) es un trabajo de una sola vez — repetirlo todos los días no suma
+  // nada y solo agrega superficie de fallo (se cortó por un fetch failed
+  // transitorio el 2026-08-30 antes de llegar siquiera al snapshot del día).
+  try {
+    const { publicar } = require('./publicar');
+    await publicar({ backfill: false });
+    console.log('[DIARIO] Dashboard actualizado en Supabase');
+  } catch (e) {
+    console.error('[DIARIO] No se pudo actualizar el dashboard:', e.message);
+  }
+
   return { snapshot: snap, mensaje };
 }
 
