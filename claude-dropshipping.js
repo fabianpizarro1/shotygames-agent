@@ -115,6 +115,22 @@ const TOOLS = [
 const usd = (n) => '$' + (Number(n) || 0).toFixed(2);
 
 /**
+ * Pausa entre cada aviso de WhatsApp de un lote (2.5-5s al azar).
+ *
+ * WhatsApp restringió el número "personal" el 2026-08-31 ("cuenta restringida
+ * 24h por posible spam/mensajeria masiva") justo despues de que este loop
+ * mandara 26 avisos de guia seguidos, sin ninguna pausa entre uno y otro —
+ * exactamente el patron que detecta como automatizacion. No es opcional:
+ * arrancar en chats nuevos (no responder uno que el cliente inicio) es lo que
+ * mas vigila. El numero al azar evita que el propio delay sea, a su vez, un
+ * patron perfectamente regular y detectable.
+ */
+function esperarEntreEnvios() {
+  const ms = 2500 + Math.random() * 2500;
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
  * Estados de DROPI, en dos grupos. Copiados de claude-dropi.js, donde ya están
  * probados contra pedidos reales de Shotygames.
  *
@@ -467,6 +483,7 @@ ${notificado}`;
                 });
                 campos.F_GUIA = fGuiaReal || ahora;
                 notificado = '\u{1F4F2} cliente notificado por WhatsApp';
+                await esperarEntreEnvios();
               } catch (e) {
                 // F_GUIA queda VACÍA a propósito: así la próxima pasada lo
                 // reintenta en vez de dar por avisado a quien nunca lo fue.
