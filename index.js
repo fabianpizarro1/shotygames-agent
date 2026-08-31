@@ -464,8 +464,22 @@ app.get('/reset/:phone', async (req, res) => {
   res.json({ ok: true, phone, cleared: keysDeleted });
 });
 
+// `commit` y `arranque` existen para poder verificar DESDE AFUERA que un deploy
+// realmente entró. EasyPanel sigue sirviendo el contenedor viejo mientras
+// compila, así que un /health en 200 no prueba nada: el 2026-08-31 no hubo forma
+// de confirmar si el fix desplegado estaba vivo o seguía corriendo el anterior.
+// SOURCE_COMMIT lo inyecta EasyPanel/nixpacks; si no está, queda 'desconocido'.
+const COMMIT = process.env.SOURCE_COMMIT || process.env.RAILWAY_GIT_COMMIT_SHA || 'desconocido';
+const ARRANQUE = new Date().toISOString();
+
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    commit: COMMIT,
+    arranque: ARRANQUE,
+    uptimeSegundos: Math.round(process.uptime())
+  });
 });
 
 // ── NOTIFICACIONES AUTOMÁTICAS ───────────────────────────────
