@@ -90,10 +90,19 @@ function etiquetaSemana(iso) {
   return `${lunes} → ${diasAtras(lunes, -6).slice(5)}`;
 }
 
-/** Gasto por día de una campaña. Devuelve { 'YYYY-MM-DD': gasto }. */
-async function insightsDiarios(campaignId, token) {
+/**
+ * Gasto por día de una campaña. Devuelve { 'YYYY-MM-DD': gasto }.
+ *
+ * ⚠️ Se usa `time_range` explícito y NO `date_preset=last_30d`: ese preset
+ * **excluye el día de hoy** (verificado el 2026-09-01 — devolvía hasta el 31-ago
+ * cuando hoy era el 1-sep y ya había $23.27 gastados). El resultado era que la
+ * fila del día en curso salía siempre con gasto $0, y por lo tanto CPA $0 y
+ * utilidad inflada: justo el día que más se mira. Lo cazó Fabián mirando la hoja.
+ */
+async function insightsDiarios(campaignId, token, { desde, hasta }) {
+  const rango = encodeURIComponent(JSON.stringify({ since: desde, until: hasta }));
   const url = `https://graph.facebook.com/${GRAPH_VERSION}/${campaignId}/insights` +
-    `?fields=spend&time_increment=1&date_preset=last_30d&limit=100&access_token=${token}`;
+    `?fields=spend&time_increment=1&time_range=${rango}&limit=100&access_token=${token}`;
   const res = await fetch(url);
   const json = await res.json();
   if (!res.ok) throw new Error(`Meta insights ${campaignId}: ${JSON.stringify(json)}`);
@@ -253,11 +262,12 @@ async function correr() {
   const token = process.env.META_ADS_TOKEN;
   if (!token) throw new Error('Falta META_ADS_TOKEN en .env (permiso ads_read en las 2 cuentas)');
 
-  const desde = diasAtras(hoyEC(), DIAS);
+  const hoy = hoyEC();
+  const desde = diasAtras(hoy, DIAS);
 
   const gastoPorCampaña = {};
   for (const p of campanas) {
-    for (const c of p.campañas) gastoPorCampaña[c.id] = await insightsDiarios(c.id, token);
+    for (const c of p.campañas) gastoPorCampaña[c.id] = await insightsDiarios(c.id, token, { desde, hasta: hoy });
   }
 
   const pedidosPorClave = await pedidosDiarios({ desde });
