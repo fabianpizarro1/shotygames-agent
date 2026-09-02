@@ -231,7 +231,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     if (productId === 'guia-placer' && selectedUpsells['emparejados-digital']) {
       total += 2.90;
     }
-    return total;
+    // Redondeo obligatorio: sumar flotantes da 29.99 + 10 + 5 =
+    // 44.989999999999995, y ese número entraba crudo al webhook y al Sheet,
+    // que con separador de miles en punto lo mostraba como 44.989.999.999.999.900
+    // y rompía los totales de ingresos. getFinalTotal solo redondeaba en la
+    // rama de transferencia, así que contraentrega y tarjeta pasaban sin tocar.
+    return +total.toFixed(2);
   };
 
   // Reactivado 2026-08-26: se había quitado el descuento por transferencia,
