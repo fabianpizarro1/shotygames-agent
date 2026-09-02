@@ -20,9 +20,18 @@ function construirMensaje(pedido: any): string {
   const provinciaCiudad = [pedido?.provincia, pedido?.ciudad].filter(Boolean).join(", ");
   const calleReferencia = [pedido?.direccion, pedido?.referencias].filter(Boolean).join(" — ");
 
+  // El detalle tiene que reflejar TODO lo que pidió: si eligió upsells y el
+  // mensaje solo nombra el producto principal, a ventas le llega un pedido que
+  // no coincide con lo que va a recibir.
+  const extras: { nombre: string; precio: number }[] = pedido?.extras || [];
+  const detalle = [
+    `• ${producto}${pedido?.precioPrincipal ? ` — $${Number(pedido.precioPrincipal).toFixed(2)}` : ""}`,
+    ...extras.map((e) => `• ${e.nombre} — $${Number(e.precio).toFixed(2)}`),
+  ].join("\n");
+
   const bloques = [
     `¡Hola! Soy *${nombre}*${pedido?.idPedido ? ` y quiero confirmar mi pedido *#${pedido.idPedido}*` : " y quiero confirmar mi pedido"}`,
-    `*${producto}*${total ? ` por *${total}*` : ""}`,
+    `${detalle}${total ? `\n\n*Total: ${total}*` : ""}`,
     ["Dirección de entrega:", provinciaCiudad, calleReferencia].filter(Boolean).join("\n"),
     "*Confirmo mi pedido y me comprometo a estar pendiente al celular hasta que llegue y recibirlo.*",
     "Muchas gracias",
@@ -72,7 +81,7 @@ export const ConfirmacionContraentrega = () => {
             </div>
 
             <p className="text-muted-foreground">
-              Te escribimos al número que dejaste con el resumen de tu pedido de <strong>{pedido.productoPrincipal}</strong> para que lo confirmes. Respondé ese mensaje y sale a despacho.
+              Te escribimos al número que dejaste con el resumen de tu pedido de <strong>{pedido.productoPrincipal}</strong> para que lo confirmes. Respóndelo y tu pedido sale a despacho.
             </p>
           </div>
 
@@ -166,7 +175,7 @@ export const ConfirmacionContraentrega = () => {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Importante: necesitamos tu confirmación por WhatsApp para despachar. Si no te llega nuestro mensaje en unos minutos, escribinos vos.
+            Importante: necesitamos tu confirmación por WhatsApp para despachar. Si no te llega nuestro mensaje en unos minutos, escríbenos tú.
           </p>
 
           <div className="pt-4 space-y-3">

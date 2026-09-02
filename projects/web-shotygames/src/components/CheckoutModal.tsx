@@ -330,6 +330,13 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         idPedido,
         productoPrincipal: productName,
         precioPrincipal: productPrice,
+        // Lista limpia de los upsells elegidos. Los flags `upsellXSelected` de
+        // más abajo siguen yendo para el webhook, pero son ilegibles: la página
+        // de confirmación arma con esto el detalle del pedido, que antes solo
+        // mostraba el producto principal y le llegaba incompleto a ventas.
+        extras: upsells
+          .filter((u) => selectedUpsells[u.id])
+          .map((u) => ({ nombre: u.name, precio: u.price })),
         // Torres seleccionadas del combo (si aplica)
         torresSeleccionadas: torreSelection?.required ? selectedTorres.join(', ') : '',
         // El Shot Bidu solo va con combos que lo prometen a proposito
