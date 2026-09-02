@@ -46,18 +46,10 @@ export const ConfirmacionContraentrega = () => {
     ? `https://wa.me/${WHATSAPP_VENTAS}?text=${encodeURIComponent(construirMensaje(pedido))}`
     : "";
 
-  // Redirección automática a WhatsApp con el mensaje ya escrito — mismo
-  // patrón que Truquito/Avanora. Navegación en la misma pestaña (no
-  // window.open): no la bloquea ningún bloqueador de pop-ups y en móvil abre
-  // la app de WhatsApp directo. Retraso corto para que el cliente alcance a
-  // leer qué está pasando antes de sacarlo de la pestaña.
-  useEffect(() => {
-    if (!pedido?.idPedido) return;
-    const t = setTimeout(() => {
-      window.location.href = linkConfirmar;
-    }, 1400);
-    return () => clearTimeout(t);
-  }, [pedido?.idPedido, linkConfirmar]);
+  // Sin redirección: 2026-09-02 se vuelve al flujo en el que ESCRIBIMOS
+  // NOSOTROS. El cliente termina acá y desde el CRM le llega el resumen del
+  // pedido pidiéndole que confirme. El botón de abajo queda por si prefiere
+  // adelantarse, pero ya no lo sacamos de la página automáticamente.
 
   if (!pedido) return null;
 
@@ -70,17 +62,17 @@ export const ConfirmacionContraentrega = () => {
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold">
-            ¡Ya casi! Falta confirmar 🙌
+            ¡Pedido recibido! 🙌
           </h1>
 
           <div className="bg-muted/50 rounded-lg p-6 space-y-3">
             <div className="flex items-center justify-center gap-2 text-primary">
               <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">Te llevamos a WhatsApp</span>
+              <span className="font-semibold">Te escribimos por WhatsApp</span>
             </div>
 
             <p className="text-muted-foreground">
-              Falta un último paso: confirmar tu pedido de <strong>{pedido.productoPrincipal}</strong> por WhatsApp para que salga a despacho. Te llevamos allá en un momento…
+              Te escribimos al número que dejaste con el resumen de tu pedido de <strong>{pedido.productoPrincipal}</strong> para que lo confirmes. Respondé ese mensaje y sale a despacho.
             </p>
           </div>
 
@@ -174,14 +166,14 @@ export const ConfirmacionContraentrega = () => {
           </div>
 
           <p className="text-sm text-muted-foreground">
-            Importante: si no confirmas por WhatsApp, no podemos despachar tu pedido.
+            Importante: necesitamos tu confirmación por WhatsApp para despachar. Si no te llega nuestro mensaje en unos minutos, escribinos vos.
           </p>
 
           <div className="pt-4 space-y-3">
             <Button asChild variant="whatsapp" size="lg" className="w-full h-auto whitespace-normal py-3.5 leading-snug text-center">
               <a href={linkConfirmar}>
                 <MessageCircle className="w-5 h-5 mr-2 shrink-0" />
-                Confirmar mi pedido por WhatsApp
+                Escribir por WhatsApp ahora
               </a>
             </Button>
             <Button onClick={() => navigate("/")} variant="outline" className="w-full">
