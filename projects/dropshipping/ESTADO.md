@@ -348,6 +348,34 @@ La hoja PUBLICIDAD **ya se actualiza sola cada 15 minutos**. LaunchAgent
 **El token:** system user **KEPLER**, app **DROPI WINNERS**, permiso `ads_read`, **no caduca**.
 Lee las 2 cuentas y las 5 campañas mapeadas.
 
+#### Corre en el SERVIDOR, no en la Mac (2026-09-01)
+
+El cron vive en el proceso de EasyPanel que ya ejecuta los otros 12 (`index.js`), **no** en un
+launchd local. Así se actualiza aunque la Mac esté apagada. Se puede mover porque
+`publicidad-live.js` **no escribe nada en disco** — lee Meta + Sheets y escribe en Sheets. Es la
+diferencia con `diario.js`, que sigue en la Mac a propósito (guarda un snapshot de ~18 MB que se
+perdería en cada redeploy).
+
+Verificado de punta a punta con el launchd de la Mac **descargado**: el servidor escribió solo en
+el tick de las 21:00. Apagable con `PUBLICIDAD_EN_SERVIDOR=0`.
+
+**`/health` ahora reporta el estado de cada cron** (`crons: { publicidad: { activo, motivo } }`).
+Nació de este mismo problema: sin logs de EasyPanel a mano, "código viejo" y "falta la env var" se
+ven idénticos desde afuera (no pasa nada). Ahora un `curl` los distingue.
+
+#### 🐛 `date_preset=last_30d` EXCLUYE el día de hoy
+
+**Lo cazó Fabián mirando la hoja**, no un test: el 1-sep marcaba $0 de gasto cuando Meta ya
+reportaba $43.04. Verificado contra la API — con hoy = 2026-09-01, `last_30d` devolvía hasta el
+**31-ago**.
+
+Las actualizaciones manuales nunca lo mostraron porque siempre se hacían **dos** llamadas
+(`last_30d` + `today`); el script automático solo hacía la primera. Consecuencia: la fila del día
+en curso salía con gasto $0 → **CPA $0 y utilidad inflada, justo el día que más se mira**.
+
+Arreglado usando `time_range={since,until}` explícito con `until = hoyEC()`. **Regla: para
+cualquier rango que tenga que incluir el día en curso, no usar `date_preset`.**
+
 #### ⚠️ Por qué costó tanto sacarlo — 3 capas distintas, no una
 
 Generar el token falló varias veces con *"No hay permisos disponibles"*. La causa real solo
