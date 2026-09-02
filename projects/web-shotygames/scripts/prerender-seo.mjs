@@ -64,7 +64,7 @@ const pages = [
     hero: "src/assets/torre-normal-brillo.webp",
     title: "Torre La Previa 🎉 - El Juego que Prende la Reunión | ShotyGames Ecuador",
     description:
-      "51 retos que convierten cualquier reunión en fiesta. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
+      "51 retos que convierten cualquier reunión en fiesta. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",
     image: resolveImage("src/assets/torre-normal-brillo.webp"),
     type: "product",
   },
@@ -74,7 +74,7 @@ const pages = [
     hero: "src/assets/torre-picante-1.webp",
     title: "Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador",
     description:
-      "51 retos atrevidos para grupos con confianza. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
+      "51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",
     image: resolveImage("src/assets/torre-picante-1.webp"),
     type: "product",
   },
@@ -84,7 +84,17 @@ const pages = [
     hero: "src/assets/torre-parejas-1.webp",
     title: "Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador",
     description:
-      "51 retos para dos que convierten una noche cualquiera en uno que van a recordar. Madera de pino premium. Reserva con $5 y paga el resto al recibir. Envío gratis a todo Ecuador.",
+      "51 retos para dos que convierten una noche cualquiera en uno que van a recordar. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",
+    image: resolveImage("src/assets/torre-parejas-1.webp"),
+    type: "product",
+  },
+  {
+    route: "/landing/torre-parejas-v2",
+    chunk: "src/pages/TorreParejasV2Landing.tsx",
+    hero: "src/assets/torre-parejas-1.webp",
+    title: "Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador",
+    description:
+      "51 retos para dos que convierten una noche cualquiera en una que van a recordar. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",
     image: resolveImage("src/assets/torre-parejas-1.webp"),
     type: "product",
   },
@@ -201,7 +211,7 @@ const pages = [
     hero: "src/assets/combo-parejas-pareja-hero.webp",
     title: "Combo Parejas 🔥 3 juegos + 2 guías por $35 | ShotyGames Ecuador",
     description:
-      "Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Reserva con $5 y paga el resto al recibir.",
+      "Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Pagas en efectivo al recibir.",
     image: resolveImage("src/assets/combo-parejas-pareja-hero.webp"),
     type: "product",
   },

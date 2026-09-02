@@ -13,6 +13,7 @@ const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
 const TorreNormalLanding = lazyWithRetry(() => import("./pages/TorreNormalLanding"));
 const TorrePicanteLanding = lazyWithRetry(() => import("./pages/TorrePicanteLanding"));
 const TorreParejasLanding = lazyWithRetry(() => import("./pages/TorreParejasLanding"));
+const TorreParejasV2Landing = lazyWithRetry(() => import("./pages/TorreParejasV2Landing"));
 const PartyshotsLanding = lazyWithRetry(() => import("./pages/PartyshotsLanding"));
 const EnganchadosLanding = lazyWithRetry(() => import("./pages/EnganchadosLanding"));
 const EmparejadosLanding = lazyWithRetry(() => import("./pages/EmparejadosLanding"));
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
         <Route path="/landing/torre-picante" element={<TorrePicanteLanding />} />
           <Route path="/landing/torre-parejas" element={<TorreParejasLanding />} />
+          <Route path="/landing/torre-parejas-v2" element={<TorreParejasV2Landing />} />
         <Route path="/landing/partyshots" element={<PartyshotsLanding />} />
         <Route path="/landing/enganchados" element={<EnganchadosLanding />} />
         <Route path="/landing/emparejados" element={<EmparejadosLanding />} />
