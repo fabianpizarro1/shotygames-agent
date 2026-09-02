@@ -15,7 +15,7 @@ const physicalProducts = [{
   id: "torre-normal",
   name: "Torre La Previa",
   description: "El clásico que prendió todas las fiestas. 51 bloques con retos, preguntas y penitencias en español.",
-  price: 28,
+  price: 29.99,
   image: torreNormal,
   badge: "MÁS VENDIDO",
   includes: [
@@ -29,7 +29,7 @@ const physicalProducts = [{
   id: "torre-picante",
   name: "Torre de Shots Picante",
   description: "La versión más atrevida con retos picantes y calientes 🔥",
-  price: 28,
+  price: 29.99,
   image: torrePicante,
   badge: "PICANTE 🌶️",
   includes: [
@@ -43,7 +43,7 @@ const physicalProducts = [{
   id: "torre-parejas",
   name: "Torre de Shots Parejas",
   description: "Diseñada para parejas que quieren salir de la rutina y encender la noche ❤️",
-  price: 28,
+  price: 29.99,
   image: torreParejas,
   badge: "PAREJAS ❤️",
   includes: [

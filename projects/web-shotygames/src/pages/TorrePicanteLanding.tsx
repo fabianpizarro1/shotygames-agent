@@ -35,7 +35,7 @@ import { useSlideActual } from "@/hooks/useSlideActual";
 
 const TorrePicanteLanding = () => {
   const productName = "Torre de Shots Picante";
-  const productPrice = 28.00;
+  const productPrice = 29.99;
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   // Para saber qué foto de la galería está a la vista y no bajar las otras 10.
   const [api, setApi] = useState<CarouselApi>();
@@ -100,7 +100,7 @@ const TorrePicanteLanding = () => {
     },
     {
       q: "¿Tengo que pagar por adelantado?",
-      a: "No. Tienes pago contraentrega: pagas todo en efectivo cuando el paquete llega a tu puerta, y para confirmarlo solo te llevamos a WhatsApp con el pedido ya escrito. Y si prefieres pagar por adelantado con transferencia, te damos 5% de descuento y tu pedido sale con envío prioritario. También puedes pagar con tarjeta.",
+      a: "No. Pagas todo en efectivo cuando el paquete llega a tu puerta. Para confirmar el pedido solo te llevamos a WhatsApp con el mensaje ya escrito: lo envías y listo, no adelantas nada.",
     },
     {
       q: "¿Qué tan fuertes son los retos?",
@@ -116,7 +116,7 @@ const TorrePicanteLanding = () => {
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Seo
         title="Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador"
-        description="51 retos atrevidos para grupos con confianza. Madera de pino premium. Paga al recibir o anticipado con 5% de descuento. Envío gratis a todo Ecuador."
+        description="51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador."
         canonical="https://www.shotygames.com/landing/torre-picante"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
@@ -125,7 +125,7 @@ const TorrePicanteLanding = () => {
       {/* Barra fija: mata las 2 objeciones mas grandes en el primer segundo */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-2 md:py-3 px-4 text-center font-semibold shadow-lg">
         <p className="text-[11px] md:text-base leading-tight">
-          💵 Contraentrega · 5% OFF si pagas anticipado · 🚚 Envío gratis
+          💵 Pagas al recibir · 🚚 Envío gratis a todo Ecuador
         </p>
       </div>
       <div className="h-10 md:h-14"></div>
@@ -349,7 +349,7 @@ const TorrePicanteLanding = () => {
                       <Badge className="ml-2 bg-[#ff3d00] text-white align-middle">DE REGALO</Badge>
                     </p>
                     <p className="text-sm md:text-base text-muted-foreground">
-                      Te llega al WhatsApp apenas confirmes el pedido, sin costo extra.
+                      Viene dentro de la caja, en una tarjeta con código QR. Sin costo extra.
                     </p>
                   </div>
                 </div>
@@ -419,7 +419,7 @@ const TorrePicanteLanding = () => {
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
                     Torre Picante + vaso tequilero
                   </span>
-                  <span className="font-semibold whitespace-nowrap">$28</span>
+                  <span className="font-semibold whitespace-nowrap">$29.99</span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 text-base md:text-lg">
@@ -445,18 +445,18 @@ const TorrePicanteLanding = () => {
 
               <div>
                 <p className="text-base md:text-lg text-white/80 mb-1">Hoy pagas</p>
-                <p className="text-5xl md:text-7xl font-bold">$28</p>
+                <p className="text-5xl md:text-7xl font-bold">$29.99</p>
               </div>
 
               <div className="bg-yellow-300/15 border border-yellow-300/40 rounded-xl p-3 md:p-4">
                 <p className="text-sm md:text-base text-yellow-100">
                   🎁 <strong className="text-yellow-300">La Guía de 20 Juegos va incluida en los pedidos de hoy.</strong>{" "}
-                  Te llega al WhatsApp apenas confirmas, aunque el paquete todavía esté en camino.
+                  Viene dentro de la caja, en una tarjeta con código QR para descargarla.
                 </p>
               </div>
 
               <p className="text-lg md:text-2xl font-bold">
-                Pagas cuando la tengas en la mano 💵 (o anticipado con 5% de descuento)
+                Pagas cuando la tengas en la mano 💵
               </p>
 
               <Button
@@ -507,7 +507,7 @@ const TorrePicanteLanding = () => {
                 <Banknote className="w-10 h-10 text-green-600 mx-auto mb-3" />
                 <p className="font-bold text-base md:text-lg mb-1">Pago contraentrega</p>
                 <p className="text-sm text-muted-foreground">
-                  Pagas en efectivo cuando el paquete llega a tu puerta. Confirmas por WhatsApp con un mensaje ya escrito. O pagas anticipado y te ahorras el 5%.
+                  Pagas en efectivo cuando el paquete llega a tu puerta. Confirmas por WhatsApp con un mensaje ya escrito.
                 </p>
               </Card>
               <Card className="p-6 text-center border-2 border-[#ff3d00]/20">
@@ -539,7 +539,7 @@ const TorrePicanteLanding = () => {
             </h2>
             <p className="text-base md:text-xl text-white/90">
               O puede ser la que todos recuerden. La torre llega en 2-4 días hábiles:
-              pagas cuando la tengas en la mano, o anticipado con 5% de descuento.
+              pagas cuando la tengas en la mano.
             </p>
             <p className="text-base md:text-lg font-semibold text-yellow-300">
               🎁 Y si pides hoy, la Guía de 20 Juegos va incluida
@@ -555,7 +555,7 @@ const TorrePicanteLanding = () => {
             </Button>
 
             <p className="text-xs md:text-sm text-white/80">
-              💵 Contraentrega · 5% OFF anticipado · 🚚 Envío gratis · 🎁 Guía de 20 juegos
+              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Guía de 20 juegos
             </p>
           </div>
         </div>

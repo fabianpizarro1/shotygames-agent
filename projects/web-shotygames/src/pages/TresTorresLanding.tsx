@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import {
   ShoppingCart, Star, Gift, Truck, Clock, Users, Heart, Zap,
-  CheckCircle2, MessageCircle, Package, Grid3x3, Lock, Banknote, CreditCard,
+  CheckCircle2, MessageCircle, Package, Grid3x3, Lock, Banknote,
 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNavigate } from "react-router-dom";
@@ -99,7 +99,7 @@ const PLANES: Plan[] = [
   {
     id: "una",
     nombre: "Una Torre",
-    precio: 28,
+    precio: 29.99,
     productId: "torreNormal",
     imagen: torreNormalImg,
     etiqueta: "OPCIÓN INDIVIDUAL",
@@ -116,8 +116,8 @@ const PLANES: Plan[] = [
     id: "dos",
     nombre: "Dos Torres",
     precio: 39,
-    precioAntes: 56,
-    ahorro: 17,
+    precioAntes: 59.98,
+    ahorro: 20.98,
     productId: "torres",
     imagen: torreNormalBrillo,
     destacado: true,
@@ -131,14 +131,14 @@ const PLANES: Plan[] = [
       "1 Shot Bidu de regalo",
     ],
     cta: "ELEGIR MIS 2 TORRES",
-    microcopy: "El más pedido. Ahorras $17 sobre el precio individual.",
+    microcopy: "El más pedido. Ahorras $20.98 sobre el precio individual.",
   },
   {
     id: "tres",
     nombre: "Las Tres Torres",
     precio: 49,
-    precioAntes: 84,
-    ahorro: 35,
+    precioAntes: 89.97,
+    ahorro: 40.97,
     productId: "chuchaqui",
     imagen: torreNormalBrillo,
     etiqueta: "PACK COMPLETO",
@@ -265,7 +265,7 @@ const FAQS = [
   },
   {
     q: "¿Cómo me llegan las guías digitales?",
-    a: "Por WhatsApp, apenas confirmamos tu pedido. No tienes que esperar a que llegue la caja para empezar a usarlas.",
+    a: "Dentro de la misma caja, en tarjetas con código QR. Escaneas y las descargas al toque, sin costo extra.",
   },
   {
     q: "¿Qué diferencia hay entre las tres torres?",
@@ -433,7 +433,7 @@ const TresTorresLanding = () => {
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Seo
-        title="Las 3 Torres de Shots | Desde $28 con Envío Gratis | ShotyGames Ecuador"
+        title="Las 3 Torres de Shots | Desde $29.99 con Envío Gratis | ShotyGames Ecuador"
         description="La Previa, Picante y Parejas. 51 retos en cada una. Llévate las 3 por $49 con envío gratis a todo Ecuador."
         canonical="https://www.shotygames.com/landing/3-torres"
         type="product"
@@ -518,7 +518,7 @@ const TresTorresLanding = () => {
 
               <div className="flex items-baseline justify-center gap-3 md:gap-4 pt-2">
                 <span className="text-lg md:text-xl text-muted-foreground">Desde</span>
-                <span className="text-4xl md:text-6xl font-bold text-[#ff3d00]">$28</span>
+                <span className="text-4xl md:text-6xl font-bold text-[#ff3d00]">$29.99</span>
                 <Badge className="bg-green-600 text-white text-sm md:text-base px-3 py-1">
                   Envío GRATIS
                 </Badge>
@@ -864,7 +864,7 @@ const TresTorresLanding = () => {
             </div>
 
             <p className="text-center text-sm md:text-base text-muted-foreground mt-6">
-              📲 Las guías digitales te llegan al WhatsApp apenas confirmamos el pedido. No esperas al paquete.
+              📦 Las guías digitales viajan dentro de la caja, en tarjetas con código QR. Escaneas y las descargas.
             </p>
           </div>
         </div>
@@ -876,37 +876,25 @@ const TresTorresLanding = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8 md:mb-12">
               <p className="text-xs md:text-sm font-bold tracking-[0.2em] text-[#ff3d00] uppercase mb-3">
-                Tú eliges
+                Sin riesgo
               </p>
               <h2 className="text-2xl md:text-5xl font-bold leading-tight">
-                Dos formas de pagar
+                Pagas cuando lo tengas en la mano
               </h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="max-w-2xl mx-auto">
               <Card className="p-6 md:p-8 border-2 border-green-500/30 bg-green-500/5">
                 <Banknote className="w-10 h-10 text-green-600 mb-4" />
                 <h3 className="text-xl md:text-2xl font-bold mb-2">Paga al recibir</h3>
                 <p className="text-sm md:text-base text-muted-foreground mb-4">
-                  Pagas en efectivo cuando el paquete llega a tu casa. No necesitas tarjeta.
-                  Confirmas tu pedido por WhatsApp. Y si pagas anticipado, te llevas 5% de descuento.
+                  Pagas en efectivo cuando el paquete llega a tu casa. No adelantas nada y no
+                  necesitas tarjeta: para confirmar el pedido solo te llevamos a WhatsApp con el
+                  mensaje ya escrito.
                 </p>
                 <div className="flex items-center gap-2 text-sm font-semibold text-green-700 dark:text-green-500">
                   <CheckCircle2 className="w-4 h-4" />
                   Entrega estimada: 48-72h laborables*
-                </div>
-              </Card>
-
-              <Card className="p-6 md:p-8 border-2 border-[#ff3d00]/30 bg-[#ff3d00]/5">
-                <CreditCard className="w-10 h-10 text-[#ff3d00] mb-4" />
-                <h3 className="text-xl md:text-2xl font-bold mb-2">Transferencia o tarjeta</h3>
-                <p className="text-sm md:text-base text-muted-foreground mb-4">
-                  Pagas al momento de hacer el pedido y tu envío sale con prioridad. Pago seguro
-                  con tarjeta a través de PayPhone.
-                </p>
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#ff3d00]">
-                  <Zap className="w-4 h-4" />
-                  Entrega estimada: 24-48h laborables*
                 </div>
               </Card>
             </div>

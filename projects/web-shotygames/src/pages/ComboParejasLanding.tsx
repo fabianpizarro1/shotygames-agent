@@ -157,7 +157,7 @@ const ComboParejasLanding = () => {
     },
     {
       q: "¿Cómo recibo los productos digitales?",
-      a: "Depende de cómo pagues. Si pagas anticipado por transferencia o tarjeta, te mandamos el acceso a Emparejados y las 2 guías por WhatsApp de inmediato, sin esperar a que llegue el paquete. Si pagas contra entrega, lo digital viaja dentro de la misma caja: unas tarjetas con código QR para descargar cada cosa.",
+      a: "Dentro de la misma caja, en tarjetas con código QR: una para Emparejados y una para cada guía. Escaneas, descargas y ya son tuyas para siempre.",
     },
     {
       q: "¿Tengo que instalar alguna aplicación para Emparejados?",
@@ -173,7 +173,7 @@ const ComboParejasLanding = () => {
     },
     {
       q: "¿Tengo que pagar algo por adelantado?",
-      a: "No. Tienes pago contraentrega: pagas los $35 completos en efectivo cuando el paquete llega a tu puerta, y para confirmarlo solo te llevamos a WhatsApp con el pedido ya escrito. Si prefieres pagar por adelantado con transferencia, te damos 5% de descuento y envío prioritario. También puedes pagar con tarjeta.",
+      a: "No. Pagas los $35 completos en efectivo cuando el paquete llega a tu puerta. Para confirmar el pedido solo te llevamos a WhatsApp con el mensaje ya escrito: lo envías y listo.",
     },
     {
       q: "¿Hasta cuándo recibo las dos guías gratis?",
@@ -234,7 +234,7 @@ const ComboParejasLanding = () => {
     >
       <Seo
         title="Combo Parejas 🔥 3 juegos + 2 guías por $35 | ShotyGames Ecuador"
-        description="Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Paga al recibir o anticipado con 5% de descuento."
+        description="Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Pagas en efectivo al recibir."
         canonical="https://www.shotygames.com/landing/combo-parejas"
         image={`https://www.shotygames.com${comboFlatlay}`}
         type="product"
@@ -376,7 +376,7 @@ const ComboParejasLanding = () => {
                   <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#ffb4cd" }}>
                     <Truck className="h-4 w-4" /> Envío incluido a todo Ecuador
                   </p>
-                  <p className="text-xs text-muted-foreground">Pago contraentrega, o anticipado con 5% OFF</p>
+                  <p className="text-xs text-muted-foreground">Pagas en efectivo al recibir</p>
                 </div>
 
                 {/* Prueba social temprana: gana confianza antes de pedir el
@@ -495,7 +495,7 @@ const ComboParejasLanding = () => {
       {/* Precios reales de cada producto por separado (confirmados por
           Fabián, no listados en ningún catálogo público porque Dados del
           Placer y Emparejados se venden sobre todo como upsell/combo):
-          Torre Parejas $28 (incluye el vaso), Dados del Placer $15,
+          Torre Parejas $29.99 (incluye el vaso), Dados del Placer $15,
           Emparejados $6.90. Las 2 guías quedaron fuera de catálogo — son
           bonus puro, por eso no se les pone precio acá. */}
       <section className="py-12 md:py-20">
@@ -513,7 +513,7 @@ const ComboParejasLanding = () => {
 
             <ul className="mt-6 space-y-2.5">
               {[
-                { t: "Torre Parejas", p: "$28" },
+                { t: "Torre Parejas", p: "$29.99" },
                 { t: "Dados del Placer", p: "$15" },
                 { t: "Emparejados", p: "$6.90" },
               ].map((item) => (
@@ -529,7 +529,7 @@ const ComboParejasLanding = () => {
             <div className="flex items-center justify-between">
               <span className="text-[15px] font-semibold md:text-lg">Total por separado</span>
               <span className="text-[15px] font-semibold line-through text-muted-foreground md:text-lg">
-                $49.90
+                $51.89
               </span>
             </div>
             <div className="mt-1 flex items-center justify-between">
@@ -543,7 +543,7 @@ const ComboParejasLanding = () => {
               className="mt-4 rounded-xl border px-4 py-2.5 text-center text-sm font-extrabold uppercase tracking-wide md:text-base"
               style={{ borderColor: `${ORO}59`, background: `${ORO}1a`, color: ORO }}
             >
-              Ahorras $14.90 🔥
+              Ahorras $16.89 🔥
             </div>
 
             <p className="mt-4 text-center text-[12px] text-muted-foreground md:text-sm">
@@ -868,25 +868,25 @@ const ComboParejasLanding = () => {
               Las 2 guías son <strong>GRATIS</strong> únicamente durante la promo de lanzamiento de esta semana.
             </p>
 
-            {/* Empuje a pago completo: no compite con el CTA de $5 (que es el
-                que más convierte, ver decisions/log.md) — es una nota aparte
-                para el que sí puede pagar todo de una y quiere lo digital ya. */}
+            {/* Cómo llega lo digital con contraentrega. El beneficio de pagar
+                por adelantado (5% OFF, envío prioritario y lo digital al toque
+                por WhatsApp) NO se menciona acá: vive solo en el checkout, para
+                que la landing tenga una sola promesa y no divida la decisión. */}
             <div
               className="mt-3 flex items-start gap-2.5 rounded-xl border p-3 text-left text-[12px] leading-snug md:text-sm"
               style={{ borderColor: `${ROSA}40`, background: `${ROSA}12`, color: "#ffc9dc" }}
             >
               <Zap className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ROSA }} />
               <span>
-                <strong className="text-foreground">¿Pagas completo?</strong> Te mandamos Emparejados y las 2
-                guías por WhatsApp al toque, sin esperar el paquete. Pagando contra entrega, lo digital te
-                llega dentro de la caja en tarjetas con código QR.
+                <strong className="text-foreground">Lo digital viene en la caja.</strong> Emparejados y las 2
+                guías llegan en tarjetas con código QR: escaneas, descargas y ya son tuyas para siempre.
               </span>
             </div>
 
             <div className="mt-5">
               <CtaButton className="text-base sm:text-xl">QUIERO MI COMBO POR $35 🔥</CtaButton>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground md:text-sm">
-                <Wallet className="h-4 w-4" /> Pago contraentrega, o anticipado con 5% de descuento
+                <Wallet className="h-4 w-4" /> Pagas en efectivo al recibir
               </p>
             </div>
           </div>
@@ -953,7 +953,7 @@ const ComboParejasLanding = () => {
 
             <div className="mx-auto mt-6 max-w-sm">
               <CtaButton>QUIERO MI COMBO PAREJAS</CtaButton>
-              <p className="mt-3 text-xs text-muted-foreground md:text-sm">Pago contraentrega o anticipado con 5% OFF.</p>
+              <p className="mt-3 text-xs text-muted-foreground md:text-sm">Pagas en efectivo al recibir.</p>
             </div>
           </div>
         </div>
