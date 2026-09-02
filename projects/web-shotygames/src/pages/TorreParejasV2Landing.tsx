@@ -155,6 +155,9 @@ const TorreParejasV2Landing = () => {
       width={PIEZAS[i].w}
       height={PIEZAS[i].h}
       loading={i === 0 ? "eager" : "lazy"}
+      // La primera pieza es el LCP: se le pide prioridad alta al navegador.
+      // En minúscula porque React 18 no reconoce `fetchPriority` en camelCase.
+      {...(i === 0 ? { fetchpriority: "high" } : {})}
       decoding={i === 0 ? "sync" : "async"}
       className="w-full h-auto"
     />
