@@ -462,13 +462,22 @@ app.get('/reset/:phone', async (req, res) => {
 const COMMIT = process.env.SOURCE_COMMIT || process.env.RAILWAY_GIT_COMMIT_SHA || 'desconocido';
 const ARRANQUE = new Date().toISOString();
 
+// Estado de los crons, para poder diagnosticar desde afuera sin leer los logs
+// de EasyPanel. Nació el 2026-09-01: el cron de publicidad no corría y no había
+// forma de saber si era código viejo o una env var faltante — las dos se ven
+// igual desde afuera (no pasa nada). Cada bloque de cron registra acá su estado.
+const CRONS = {};
+const registrarCron = (nombre, activo, motivo) => { CRONS[nombre] = { activo, motivo }; };
+global.registrarCron = registrarCron;
+
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     commit: COMMIT,
     arranque: ARRANQUE,
-    uptimeSegundos: Math.round(process.uptime())
+    uptimeSegundos: Math.round(process.uptime()),
+    crons: CRONS
   });
 });
 
@@ -669,10 +678,13 @@ try {
       correrPublicidad().catch(e => console.error('[PUBLICIDAD] Falló:', e.message));
     });
     console.log('[CRON] Publicidad: gasto Meta + ventas reales cada 15 min');
+    registrarCron('publicidad', true, 'cada 15 min');
   } else if (process.env.PUBLICIDAD_EN_SERVIDOR === '0') {
     console.log('[CRON] Publicidad: apagada a propósito (PUBLICIDAD_EN_SERVIDOR=0)');
+    registrarCron('publicidad', false, 'apagada a propósito (PUBLICIDAD_EN_SERVIDOR=0)');
   } else {
     console.log('[CRON] Publicidad: desactivada (falta META_ADS_TOKEN o SHEETS_ID_DROPSHIPPING)');
+    registrarCron('publicidad', false, 'falta META_ADS_TOKEN o SHEETS_ID_DROPSHIPPING en las env vars del servidor');
   }
 } catch (e) {
   console.error('[CRON] Error al iniciar publicidad:', e.message);
