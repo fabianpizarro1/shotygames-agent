@@ -583,7 +583,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
                     selectedTorres.includes(torre.id)
                       ? 'border-primary bg-primary/10 shadow-md'
-                      : 'border-border hover:border-primary/50'
+                      : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                   }`}
                 >
                   <div className="aspect-square rounded-md overflow-hidden mb-2">
@@ -813,7 +813,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="upsell-emparejados-digital" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['emparejados-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-emparejados-digital"
@@ -835,7 +835,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="upsell-guia-placer-dados" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['guia-placer-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-guia-placer-dados"
@@ -895,7 +895,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <Label htmlFor="transferencia-dados" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="transferencia-dados" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia-dados" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -908,7 +908,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   </div>
                 </Label>
                   
-                  <Label htmlFor="tarjeta-dados" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="tarjeta-dados" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="tarjeta" id="tarjeta-dados" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -934,7 +934,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="upsell-dados-digital" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['dados-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-dados-digital"
@@ -961,7 +961,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="upsell-guia-placer-emparejados" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['guia-placer-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-guia-placer-emparejados"
@@ -1035,7 +1035,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <Label htmlFor="transferencia-digital" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="transferencia-digital" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia-digital" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1048,7 +1048,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   </div>
                 </Label>
                   
-                  <Label htmlFor="tarjeta-digital" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="tarjeta-digital" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="tarjeta" id="tarjeta-digital" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1074,7 +1074,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <Label htmlFor="upsell-emparejados-guia" className={`flex items-center gap-3 border-2 rounded-lg p-4 transition-all cursor-pointer mb-0 ${
                   selectedUpsells['emparejados-digital']
                     ? 'border-primary bg-primary/10 shadow-md'
-                    : 'border-border hover:border-primary/50'
+                    : 'border-border [@media(hover:hover)]:hover:border-primary/50'
                 }`}>
                   <Checkbox
                     id="upsell-emparejados-guia"
@@ -1126,7 +1126,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <Label htmlFor="transferencia-guia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="transferencia-guia" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia-guia" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1139,7 +1139,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   </div>
                 </Label>
                   
-                  <Label htmlFor="tarjeta-guia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="tarjeta-guia" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="tarjeta" id="tarjeta-guia" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1184,7 +1184,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   defaultValue="transferencia"
                   className="space-y-3"
                 >
-                  <Label htmlFor="transferencia-ebook" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="transferencia-ebook" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia-ebook" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1197,7 +1197,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   </div>
                 </Label>
                   
-                  <Label htmlFor="tarjeta-ebook" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <Label htmlFor="tarjeta-ebook" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="tarjeta" id="tarjeta-ebook" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1224,7 +1224,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   key={upsell.id}
                   htmlFor={`upsell-${upsell.id}`}
                   className={`flex items-center gap-3 border rounded-lg p-4 transition-colors cursor-pointer mb-0 ${
-                    selectedUpsells[upsell.id] ? 'border-primary bg-primary/5' : 'hover:border-primary'
+                    selectedUpsells[upsell.id] ? 'border-primary bg-primary/5' : '[@media(hover:hover)]:hover:border-primary'
                   }`}
                 >
                   <Checkbox
@@ -1257,7 +1257,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 onValueChange={(value) => setValue("metodoPago", value as any, { shouldValidate: true })}
                 className="space-y-3"
               >
-                <Label htmlFor="contraentrega" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                <Label htmlFor="contraentrega" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="contraentrega" id="contraentrega" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2">
@@ -1267,7 +1267,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   </div>
                 </Label>
 
-                <Label htmlFor="transferencia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                <Label htmlFor="transferencia" className="flex items-start space-x-3 border rounded-lg p-4 [@media(hover:hover)]:hover:border-primary transition-colors cursor-pointer mb-0">
                   <RadioGroupItem value="transferencia" id="transferencia" className="mt-1" />
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2 flex-wrap">
