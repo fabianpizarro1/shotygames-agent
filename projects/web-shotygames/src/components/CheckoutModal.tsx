@@ -1272,7 +1272,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   <div className="flex-1">
                     <span className="font-semibold flex items-center gap-2 flex-wrap">
                       <Truck className="w-4 h-4" />
-                      Pago anticipado por transferencia/depósito
+                      Pago anticipado por transferencia
                       <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0">5% DE DESCUENTO</Badge>
                       <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
                     </span>
