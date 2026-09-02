@@ -18,6 +18,7 @@
 
 require('dotenv').config();
 const { google } = require('googleapis');
+const { ahoraEC } = require('../../fechas.js');
 
 const SHEET_ID = process.env.SHEETS_ID_DROPSHIPPING;
 const HOJA = 'PEDIDOS';
@@ -164,9 +165,14 @@ async function actualizarFila(fila, campos) {
     data.push({
       range: `${HOJA}!${letra(C.UTILIDAD)}${fila}`,
       values: [[
+        // CANCELADO = nunca salió: se pierde solo el CPA.
+        // DEVUELTO  = salió y volvió: se pierde el CPA **y el flete de ida**
+        //             (DROPI no cobra el retorno en órdenes con recaudo, pero
+        //             la salida del envío sí queda marcada en la wallet).
         `=IF($${es}${fila}="","",IF(OR($${es}${fila}="ENTREGADO",$${es}${fila}="PAGADO"),` +
         `${t}${fila}-${co}${fila}-${fl}${fila}-${cp}${fila},` +
-        `IF($${es}${fila}="CANCELADO",-${cp}${fila},"")))`
+        `IF($${es}${fila}="DEVUELTO",-${fl}${fila}-${cp}${fila},` +
+        `IF($${es}${fila}="CANCELADO",-${cp}${fila},""))))`
       ]]
     });
   }
@@ -188,7 +194,7 @@ async function agregarPedido(p) {
   const set = (clave, valor) => { if (C[clave] !== undefined) fila[C[clave]] = valor; };
 
   set('ID', p.idPedido);
-  set('FECHA', p.fechaHoraPedido || new Date().toISOString());
+  set('FECHA', p.fechaHoraPedido || ahoraEC());
   set('TIENDA', p.tienda || 'truquito');
   set('ESTADO', p.estado || 'PENDIENTE_CONFIRMACION');
   set('NOMBRE', p.nombre);

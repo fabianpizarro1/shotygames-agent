@@ -648,6 +648,36 @@ try {
   console.error('[CRON] Error al iniciar Meta CAPI:', e.message);
 }
 
+// ── PUBLICIDAD: gasto de Meta vs ventas reales en el Sheet ────
+// Corre 24/7 cada 15 min. A diferencia del catálogo diario, este job NO escribe
+// nada en disco (lee Meta + Sheets y escribe en Sheets), así que vive bien en el
+// contenedor: no pierde historial en cada redeploy.
+//
+// Sustituye al launchd de la Mac (com.shotygames.publicidad-live). Correrlo en
+// los dos lados no rompe datos —la hoja se reescribe entera cada vez— pero
+// duplica llamadas a la API de Meta al pedo. Si se reactiva el launchd, apagar
+// este con PUBLICIDAD_EN_SERVIDOR=0.
+try {
+  const cron = require('node-cron');
+  const { correr: correrPublicidad } = require('./projects/dropshipping/publicidad-live');
+
+  const activo = process.env.META_ADS_TOKEN && process.env.SHEETS_ID_DROPSHIPPING
+    && process.env.PUBLICIDAD_EN_SERVIDOR !== '0';
+
+  if (activo) {
+    cron.schedule('*/15 * * * *', () => {
+      correrPublicidad().catch(e => console.error('[PUBLICIDAD] Falló:', e.message));
+    });
+    console.log('[CRON] Publicidad: gasto Meta + ventas reales cada 15 min');
+  } else if (process.env.PUBLICIDAD_EN_SERVIDOR === '0') {
+    console.log('[CRON] Publicidad: apagada a propósito (PUBLICIDAD_EN_SERVIDOR=0)');
+  } else {
+    console.log('[CRON] Publicidad: desactivada (falta META_ADS_TOKEN o SHEETS_ID_DROPSHIPPING)');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar publicidad:', e.message);
+}
+
 // ── CONTENIDO DIARIO (Instagram, manual — bot solo genera y envía) ──
 try {
   const cron = require('node-cron');

@@ -25,12 +25,31 @@
  *   mismo id sale escrito distinto según cómo se registró el pedido
  *   ("Olla Freidora con Canasta" vs "Mini Olla Freidora con Canasta Acero
  *   Inoxidable", los dos son 133468).
+ *
+ * ── Las dos columnas de utilidad (agregadas 2026-08-31) ──
+ * Usan la MISMA fórmula que ya está validada en `calculadora.js` (margen si se
+ * entrega vs pérdida de flete si se devuelve), pero con costo/flete REALES de
+ * cada pedido en vez de los defaults genéricos, y separando lo que ya se sabe
+ * de lo que todavía no:
+ *
+ *   - Pedidos ENTREGADO/PAGADO → resultado conocido, cuenta su margen real.
+ *   - Pedidos DEVUELTO (o CANCELADO con guía) → resultado conocido, cuenta su
+ *     pérdida real (el flete de ida, ya gastado).
+ *   - Pedidos todavía en tránsito (EN_DROPI/GUIA_GENERADA/NOVEDAD) → resultado
+ *     DESCONOCIDO. Acá es donde entran las dos columnas:
+ *       UTILIDAD SI SE ENTREGA TODO   → asume que el 100% de lo pendiente entrega
+ *       UTILIDAD AJUSTADA (%DEV)      → aplica la tasa de devolución que Fabián
+ *                                        escriba en la celda F2, SOLO sobre lo
+ *                                        pendiente (lo ya resuelto no se toca:
+ *                                        no tiene sentido "ajustar" un hecho).
  */
 require('dotenv').config();
 const { google } = require('googleapis');
 const campanas = require('./campanas.js');
 const { leerPedidos } = require('./sheets-pedidos.js');
 const { parseMonto } = require('../../sheets.js');
+const { hoyEC, aFechaLocal } = require('../../fechas.js');
+const { DEFAULTS } = require('./calculadora.js');
 
 const SHEET_ID = process.env.SHEETS_ID_DROPSHIPPING;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
@@ -47,8 +66,6 @@ function getAuth() {
   auth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
   return auth;
 }
-
-const hoyEC = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
 
 function diasAtras(iso, n) {
   const d = new Date(iso + 'T12:00:00Z');
@@ -86,27 +103,29 @@ async function insightsDiarios(campaignId, token) {
   return porFecha;
 }
 
-function aISO(val) {
-  if (!val) return null;
-  const m = String(val).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? m[0] : null;
-}
+// El Sheet guarda instantes UTC ("...T01:42:50.764Z"). Cortar los primeros 10
+// caracteres daba el día UTC, no el de Ecuador: un pedido de las 20:42 del 30 se
+// contaba como del 31. aFechaLocal() convierte antes de quedarse con la fecha.
+
+const ESTADOS_PENDIENTES = ['EN_DROPI', 'GUIA_GENERADA', 'NOVEDAD'];
 
 /**
- * Ventas, ingreso, entregados y devueltos por día.
- * Devuelve { 'tienda|idDropi': { fecha: {ventas, ingreso, entregados, devueltos} } }.
+ * Ventas, ingreso, entregados, devueltos y las 4 piezas de utilidad por día.
+ * Devuelve { 'tienda|idDropi': { fecha: {...} } }.
  *
  * ── Qué es una DEVOLUCIÓN acá ──
- * Ni el Sheet ni DROPI tienen un estado `DEVUELTO` (verificado el 2026-08-31
- * contra las 91 órdenes reales de la cuenta 12054: los estados que existen son
- * ENTREGADO, PENDIENTE, CANCELADO, NOVEDAD, GUIA_GENERADA y variantes de
- * tránsito). Lo único que distingue "se cayó antes de despachar" de "salió y
- * volvió" es la GUÍA: si el pedido llegó a tener guía y terminó CANCELADO, el
- * paquete se movió y volvió. Sin guía, nunca salió y no es una devolución.
+ * DROPI **sí** marca devoluciones, con el texto que use cada transportadora
+ * ("DEVUELTO", "DEVOLUCION", "DEVUELTO AL REMITENTE", "RETORNADO"...).
+ * `sincronizar_guias` las traduce al estado `DEVUELTO` del Sheet
+ * (ver ESTADOS_DEVUELTO en claude-dropshipping.js). Esa es la fuente principal.
  *
- * Al 2026-08-31 esto da 0 devoluciones sobre 18 cancelados — los 18 se cayeron
- * antes de que el paquete existiera. Si algún día DROPI empieza a devolver un
- * estado propio de devolución, cambiar ACÁ y nada más.
+ * Como respaldo se cuenta también un `CANCELADO` que **ya tenía guía**: si el
+ * paquete llegó a despacharse y el pedido terminó cancelado, salió y volvió.
+ * Cubre las devoluciones anteriores a que existiera el estado `DEVUELTO`.
+ *
+ * Un `CANCELADO` **sin** guía nunca se despachó: no es venta ni devolución.
+ *
+ * Al 2026-08-31 esto da 0 devoluciones — todavía no se generó ninguna.
  */
 async function pedidosDiarios({ desde }) {
   const todos = await leerPedidos();
@@ -117,24 +136,47 @@ async function pedidosDiarios({ desde }) {
     if (estado === 'PENDIENTE_CONFIRMACION') continue;
 
     const tieneGuia = String(datos[C.GUIA] || '').trim() !== '';
-    const devuelto = estado === 'CANCELADO' && tieneGuia;
+    const devuelto = estado === 'DEVUELTO' || (estado === 'CANCELADO' && tieneGuia);
     // Cancelado sin guía = el paquete nunca salió. No es venta ni devolución.
     if (estado === 'CANCELADO' && !devuelto) continue;
 
-    const fecha = aISO(datos[C.FECHA]);
+    const fecha = aFechaLocal(datos[C.FECHA]);
     if (!fecha || fecha < desde) continue;
 
     const clave = `${String(datos[C.TIENDA] || '').toLowerCase().trim()}|${String(datos[C.ID_DROPI] || '').trim()}`;
     porClave[clave] ||= {};
-    const d = (porClave[clave][fecha] ||= { ventas: 0, ingreso: 0, entregados: 0, devueltos: 0 });
+    const d = (porClave[clave][fecha] ||= {
+      ventas: 0, ingreso: 0, entregados: 0, devueltos: 0,
+      margenEntregados: 0, perdidaDevueltos: 0, margenPendientes: 0, fletePendientes: 0,
+    });
+
+    // El flete real viene de la columna FLETE, que recién se llena cuando el
+    // proveedor genera la guía. Antes de eso se usa el default verificado de
+    // `calculadora.js` — es la mejor estimación disponible, no un invento.
+    const flete = parseMonto(datos[C.FLETE]) || DEFAULTS.flete;
 
     if (devuelto) {
       d.devueltos += 1;
-    } else {
-      d.ventas += 1;
-      d.ingreso += parseMonto(datos[C.TOTAL]) || 0;
-      if (estado === 'ENTREGADO' || estado === 'PAGADO') d.entregados += 1;
+      d.perdidaDevueltos += flete;
+      continue;
     }
+
+    d.ventas += 1;
+    const total = parseMonto(datos[C.TOTAL]) || 0;
+    d.ingreso += total;
+
+    const costo = parseMonto(datos[C.COSTO]) || 0;
+    const margen = total - costo - flete;
+
+    if (estado === 'ENTREGADO' || estado === 'PAGADO') {
+      d.entregados += 1;
+      d.margenEntregados += margen;
+    } else if (ESTADOS_PENDIENTES.includes(estado)) {
+      d.margenPendientes += margen;
+      d.fletePendientes += flete;
+    }
+    // Cualquier otro estado que aparezca no clasificado no suma a ninguna
+    // utilidad — mejor faltar del cálculo que inventarle un resultado.
   }
   return porClave;
 }
@@ -159,7 +201,10 @@ function calcularFilas({ gastoPorCampaña, pedidosPorClave, desde }) {
 
     for (const fecha of fechas) {
       const gasto = gastoPorFecha[fecha] || 0;
-      const { ventas = 0, ingreso = 0, entregados = 0, devueltos = 0 } = pedidosPorFecha[fecha] || {};
+      const {
+        ventas = 0, ingreso = 0, entregados = 0, devueltos = 0,
+        margenEntregados = 0, perdidaDevueltos = 0, margenPendientes = 0, fletePendientes = 0,
+      } = pedidosPorFecha[fecha] || {};
       if (gasto === 0 && ventas === 0 && devueltos === 0) continue;  // día sin nada: no ensucia la tabla
 
       filas.push([
@@ -172,8 +217,12 @@ function calcularFilas({ gastoPorCampaña, pedidosPorClave, desde }) {
         usd(ingreso),
         entregados,
         devueltos,
-        etiquetaSemana(fecha),   // J — la hoja agrupa por acá cuando se elige SEMANA
-        fecha.slice(0, 7),       // K — y por acá cuando se elige MES
+        usd(margenEntregados),      // J
+        usd(perdidaDevueltos),      // K
+        usd(margenPendientes),      // L
+        usd(fletePendientes),       // M
+        etiquetaSemana(fecha),      // N — la hoja agrupa por acá cuando se elige SEMANA
+        fecha.slice(0, 7),          // O — y por acá cuando se elige MES
       ]);
     }
   }
@@ -182,7 +231,7 @@ function calcularFilas({ gastoPorCampaña, pedidosPorClave, desde }) {
 
 async function escribirDatos(filas) {
   const sheets = google.sheets({ version: 'v4', auth: getAuth() });
-  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: `${HOJA_DATOS}!A2:K2000` });
+  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: `${HOJA_DATOS}!A2:O2000` });
   if (filas.length) {
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
@@ -199,7 +248,7 @@ async function escribirDatos(filas) {
   });
 }
 
-async function main() {
+async function correr() {
   if (!SHEET_ID) throw new Error('Falta SHEETS_ID_DROPSHIPPING en .env');
   const token = process.env.META_ADS_TOKEN;
   if (!token) throw new Error('Falta META_ADS_TOKEN en .env (permiso ads_read en las 2 cuentas)');
@@ -218,8 +267,8 @@ async function main() {
   console.log(`Listo — ${filas.length} filas (día × producto) desde ${desde}.`);
 }
 
-module.exports = { insightsDiarios, pedidosDiarios, calcularFilas, escribirDatos, diasAtras, hoyEC, DIAS };
+module.exports = { correr, insightsDiarios, pedidosDiarios, calcularFilas, escribirDatos, diasAtras, hoyEC, DIAS };
 
 if (require.main === module) {
-  main().catch((e) => { console.error('ERROR:', e.message); process.exit(1); });
+  correr().catch((e) => { console.error('ERROR:', e.message); process.exit(1); });
 }

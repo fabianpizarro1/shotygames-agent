@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.shotygames.ventas-mercado</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/user/Projects/KEPLER/scripts/ventas-mercado.sh</string>
+    </array>
+
+    <!-- Cada 30 minutos. Es la resolución la que hace útil la medición: a 1 día
+         de distancia un restock del proveedor tapa las ventas del día entero
+         (pasó el 29 y 30 de agosto con la Freidora). A 30 min tapa media hora. -->
+    <key>StartInterval</key>
+    <integer>1800</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/user/ventas-mercado.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/user/ventas-mercado.log</string>
+</dict>
+</plist>

@@ -2,13 +2,13 @@
  * Arma la hoja PUBLICIDAD (layout + formato + filtro) y su hoja de datos.
  *
  * Dos hojas:
- *   PUBLICIDAD        → lo que Fabián mira. Dropdown de producto en B2 y una
- *                       tabla día a día que se filtra sola con fórmulas.
+ *   PUBLICIDAD        → lo que Fabián mira. Dropdowns de producto/período y la
+ *                       celda editable de % de devolución en B2/D2/F2.
  *   PUBLICIDAD_DATOS  → oculta. Una fila por día y producto, la escribe
  *                       `publicidad-live.js` cada 15 min.
  *
- * El filtro es por FÓRMULA, no por script: cambiar el dropdown actualiza la
- * tabla al instante sin esperar la próxima corrida del cron.
+ * El filtro es por FÓRMULA, no por script: cambiar el dropdown o el % de
+ * devolución actualiza la tabla al instante sin esperar la próxima corrida.
  *
  * Correr de nuevo es seguro: limpia y reescribe el layout, no toca los datos.
  *
@@ -45,22 +45,30 @@ function getAuth() {
 }
 
 /**
- * Columna por la que agrupar según el dropdown "Ver por" (D2):
- * A = fecha (día), J = etiqueta de semana, K = mes. Las escribe publicidad-live.js.
+ * Columna de PUBLICIDAD_DATOS por la que agrupar según el dropdown "Ver por"
+ * (D2): A = fecha (día), N = etiqueta de semana, O = mes.
+ *
+ * Vive en L2 (oculta) — NO puede vivir en una columna visible: la fila 2 es la
+ * misma fila del filtro, así que si L fuera visible esta fórmula aparecería
+ * como texto suelto ahí. Ver el bug real que causó esto: al agregar las
+ * columnas de utilidad, "K" pasó de oculta a visible y esta fórmula (que antes
+ * vivía en K2) se hubiera visto flotando junto al filtro de producto.
  */
-const COLUMNA_AGRUPACION = '=IF($D$2="SEMANA","J",IF($D$2="MES","K","A"))';
+const COLUMNA_AGRUPACION = '=IF($D$2="SEMANA","N",IF($D$2="MES","O","A"))';
 
 /**
  * Filtra por el producto de B2 ("TODOS" = sin filtro) y agrupa por lo que diga
- * $K$2. Orden ASCENDENTE: el día más nuevo queda abajo, como pidió Fabián.
+ * $L$2. Orden ASCENDENTE: el día más nuevo queda abajo.
  *
- * Sale en K6 y ocupa K:Q — columnas ocultas. Las de la vista (A:I) leen de acá.
+ * Sale en L6 y ocupa L:V — columnas ocultas. Las de la vista (A:K) leen de acá.
+ * 10 sumas: gasto, gasto real, ventas, ingreso, entregados, devueltos, margen
+ * entregados, pérdida devueltos, margen pendientes, flete pendientes.
  */
 const QUERY_HELPER =
-  '=IFERROR(QUERY(PUBLICIDAD_DATOS!A2:K, "select "&$K$2&", sum(D), sum(E), sum(F), sum(G), sum(H), sum(I) ' +
+  '=IFERROR(QUERY(PUBLICIDAD_DATOS!A2:O, "select "&$L$2&", sum(D), sum(E), sum(F), sum(G), sum(H), sum(I), sum(J), sum(K), sum(L), sum(M) ' +
   'where A is not null "&IF(OR($B$2="",$B$2="TODOS"),""," and C = \'"&$B$2&"\'")&" ' +
-  'group by "&$K$2&" order by "&$K$2&" asc ' +
-  'label sum(D) \'\', sum(E) \'\', sum(F) \'\', sum(G) \'\', sum(H) \'\', sum(I) \'\'", 0), "")';
+  'group by "&$L$2&" order by "&$L$2&" asc ' +
+  'label sum(D) \'\', sum(E) \'\', sum(F) \'\', sum(G) \'\', sum(H) \'\', sum(I) \'\', sum(J) \'\', sum(K) \'\', sum(L) \'\', sum(M) \'\'", 0), "")';
 
 async function idDeHoja(sheets, titulo) {
   const { data } = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
@@ -106,8 +114,8 @@ async function main() {
   if (!SHEET_ID) throw new Error('Falta SHEETS_ID_DROPSHIPPING en .env');
   const sheets = google.sheets({ version: 'v4', auth: getAuth() });
 
-  const idVista = await asegurarHoja(sheets, HOJA, { filas: FILAS, columnas: 17 });
-  await asegurarHoja(sheets, HOJA_DATOS, { filas: 2000, columnas: 11, oculta: true });
+  const idVista = await asegurarHoja(sheets, HOJA, { filas: FILAS, columnas: 22 });
+  await asegurarHoja(sheets, HOJA_DATOS, { filas: 2000, columnas: 15, oculta: true });
 
   // Encabezado de la hoja de datos (las filas las escribe publicidad-live.js).
   await sheets.spreadsheets.values.update({
@@ -115,12 +123,29 @@ async function main() {
     range: `${HOJA_DATOS}!A1`,
     valueInputOption: 'RAW',
     requestBody: {
-      values: [['FECHA', 'TIENDA', 'PRODUCTO', 'GASTO', 'GASTO REAL', 'VENTAS', 'INGRESO',
-                'ENTREGADOS', 'DEVUELTOS', 'SEMANA', 'MES']]
+      values: [[
+        'FECHA', 'TIENDA', 'PRODUCTO', 'GASTO', 'GASTO REAL', 'VENTAS', 'INGRESO',
+        'ENTREGADOS', 'DEVUELTOS',
+        'MARGEN ENTREGADOS', 'PERDIDA DEVUELTOS', 'MARGEN PENDIENTES', 'FLETE PENDIENTES',
+        'SEMANA', 'MES'
+      ]]
     }
   });
 
-  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: `${HOJA}!A1:Q${FILAS}` });
+  // Lo que Fabián tenga elegido en los filtros se conserva: este script reescribe
+  // el layout entero, y sin esto cada corrida le devolvía la vista a TODOS/DÍA/30%.
+  let filtroProducto = 'TODOS';
+  let filtroVer = 'DÍA';
+  let filtroDevolucion = 0.30;
+  try {
+    const prev = await sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: `${HOJA}!B2:F2` });
+    const f = prev.data.values?.[0] || [];
+    if (f[0]) filtroProducto = f[0];
+    if (f[2]) filtroVer = f[2];
+    if (typeof f[4] === 'number') filtroDevolucion = f[4];
+  } catch { /* hoja recién creada: quedan los defaults */ }
+
+  await sheets.spreadsheets.values.clear({ spreadsheetId: SHEET_ID, range: `${HOJA}!A1:V${FILAS}` });
 
   const productos = [...new Set(campanas.map((p) => p.producto))];
 
@@ -130,8 +155,8 @@ async function main() {
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [
-        ['PUBLICIDAD — gasto real vs ventas reales · últimos 30 días', '', '', '', '', '', '', '', ''],
-        ['Producto:', 'TODOS', 'Ver por:', 'DÍA', '', '', 'Actualizado:', '', ''],
+        ['PUBLICIDAD — gasto real vs ventas reales · últimos 30 días', '', '', '', '', '', '', '', '', '', ''],
+        ['Producto:', filtroProducto, 'Ver por:', filtroVer, '% devolución esperada:', filtroDevolucion, 'Actualizado:', '', ''],
         [
           'TOTAL PERÍODO',
           `=SUM($B$6:$B$${FILAS})`,
@@ -141,26 +166,39 @@ async function main() {
           `=SUM($F$6:$F$${FILAS})`,
           `=IF($E$3+$F$3=0,"",$F$3/($E$3+$F$3))`,
           `=IF($D$3=0,"",$C$3/$D$3)`,
-          `=IF($C$3=0,"",SUM($O$6:$O$${FILAS})/$C$3)`,
+          `=IF($C$3=0,"",SUM($P$6:$P${FILAS})/$C$3)`,  // P = suma de INGRESO (ver mapeo de columnas ocultas L:V)
+          `=SUM($J$6:$J$${FILAS})`,
+          `=SUM($K$6:$K$${FILAS})`,
         ],
-        ['', '', '', '', '', '', '', '', ''],
+        ['', '', '', '', '', '', '', '', '', '', ''],
         [
           '=IF($D$2="SEMANA","SEMANA (lun-dom)",IF($D$2="MES","MES","FECHA"))',
           'GASTO', 'GASTO REAL (+20%)', 'VENTAS REALES',
-          'ENTREGADOS', 'DEVUELTOS', '% DEVOLUCIONES', 'CPA REAL', 'ROAS REAL'
+          'ENTREGADOS', 'DEVUELTOS', '% DEVOLUCIONES', 'CPA REAL', 'ROAS REAL',
+          'UTILIDAD SI SE ENTREGA TODO', 'UTILIDAD AJUSTADA (%DEV)'
         ],
         [
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$K$6:$K$${FILAS}))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$L$6:$L$${FILAS}))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$M$6:$M$${FILAS}))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$N$6:$N$${FILAS}))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$P$6:$P$${FILAS}))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",$Q$6:$Q$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$L$6:$L$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$M$6:$M$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$N$6:$N$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$O$6:$O$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$Q$6:$Q$${FILAS}))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$R$6:$R$${FILAS}))`,
           // % devoluciones sobre lo YA RESUELTO (entregados + devueltos), no sobre
           // el total: los pedidos en tránsito todavía no votaron.
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",IF($P$6:$P$${FILAS}+$Q$6:$Q$${FILAS}=0,"",$Q$6:$Q$${FILAS}/($P$6:$P$${FILAS}+$Q$6:$Q$${FILAS}))))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",IF($N$6:$N$${FILAS}=0,"",$M$6:$M$${FILAS}/$N$6:$N$${FILAS})))`,
-          `=ARRAYFORMULA(IF($K$6:$K$${FILAS}="","",IF($M$6:$M$${FILAS}=0,"",$O$6:$O$${FILAS}/$M$6:$M$${FILAS})))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",IF($Q$6:$Q$${FILAS}+$R$6:$R$${FILAS}=0,"",$R$6:$R$${FILAS}/($Q$6:$Q$${FILAS}+$R$6:$R$${FILAS}))))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",IF($O$6:$O$${FILAS}=0,"",$N$6:$N$${FILAS}/$O$6:$O$${FILAS})))`,
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",IF($N$6:$N$${FILAS}=0,"",$P$6:$P$${FILAS}/$N$6:$N$${FILAS})))`,
+          // UTILIDAD SI SE ENTREGA TODO = margen ya ganado (entregados) − pérdida
+          // ya sufrida (devueltos) + margen de lo pendiente SI TODO entregara −
+          // gasto real. Lo ya resuelto no se toca; el 100% solo aplica a lo que
+          // todavía no se sabe.
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$S$6:$S$${FILAS}-$T$6:$T$${FILAS}+$U$6:$U$${FILAS}-$N$6:$N$${FILAS}))`,
+          // UTILIDAD AJUSTADA (%DEV) = lo mismo, pero lo pendiente se reparte según
+          // el % de devolución editable de F2: (1-%dev) entrega, %dev se devuelve
+          // y solo pierde el flete. F2 es la única celda que Fabián toca para
+          // mover este número — cambia y la tabla entera se recalcula sola.
+          `=ARRAYFORMULA(IF($L$6:$L$${FILAS}="","",$S$6:$S$${FILAS}-$T$6:$T$${FILAS}+((1-$F$2)*$U$6:$U$${FILAS})-($F$2*$V$6:$V$${FILAS})-$N$6:$N$${FILAS}))`,
         ],
       ]
     }
@@ -171,8 +209,8 @@ async function main() {
     requestBody: {
       valueInputOption: 'USER_ENTERED',
       data: [
-        { range: `${HOJA}!K2`, values: [[COLUMNA_AGRUPACION]] },
-        { range: `${HOJA}!K6`, values: [[QUERY_HELPER]] },
+        { range: `${HOJA}!L2`, values: [[COLUMNA_AGRUPACION]] },
+        { range: `${HOJA}!L6`, values: [[QUERY_HELPER]] },
       ]
     }
   });
@@ -191,13 +229,13 @@ async function main() {
     spreadsheetId: SHEET_ID,
     requestBody: {
       requests: [
-        { unmergeCells: { range: rango(0, 1, 0, 9) } },
-        { mergeCells: { range: rango(0, 1, 0, 9), mergeType: 'MERGE_ROWS' } },
+        { unmergeCells: { range: rango(0, 1, 0, 11) } },
+        { mergeCells: { range: rango(0, 1, 0, 11), mergeType: 'MERGE_ROWS' } },
 
         // Título
         {
           repeatCell: {
-            range: rango(0, 1, 0, 9),
+            range: rango(0, 1, 0, 11),
             cell: {
               userEnteredFormat: {
                 backgroundColor: NAVY,
@@ -212,7 +250,7 @@ async function main() {
         // Fila del filtro
         {
           repeatCell: {
-            range: rango(1, 2, 0, 9),
+            range: rango(1, 2, 0, 11),
             cell: { userEnteredFormat: { backgroundColor: AMBAR, textFormat: { bold: true } } },
             fields: 'userEnteredFormat(backgroundColor,textFormat)'
           }
@@ -220,7 +258,7 @@ async function main() {
         // Fila de totales
         {
           repeatCell: {
-            range: rango(2, 3, 0, 9),
+            range: rango(2, 3, 0, 11),
             cell: {
               userEnteredFormat: {
                 backgroundColor: GRIS,
@@ -234,29 +272,50 @@ async function main() {
         // Encabezado de la tabla diaria
         {
           repeatCell: {
-            range: rango(4, 5, 0, 9),
+            range: rango(4, 5, 0, 11),
             cell: {
               userEnteredFormat: {
                 backgroundColor: NAVY,
                 textFormat: { bold: true, foregroundColor: BLANCO },
-                horizontalAlignment: 'CENTER'
+                horizontalAlignment: 'CENTER',
+                wrapStrategy: 'WRAP'
               }
             },
-            fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment)'
+            fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,wrapStrategy)'
           }
         },
 
-        // B,C = plata · D,E,F = conteos · G = % · H = plata · I = roas
+        // B,C = plata · D,E,F = conteos · G = % · H = plata (CPA) · I = roas · J,K = plata (utilidad)
         formato(2, 3, 1, 3, MONEDA),
         formato(2, 3, 3, 6, ENTERO),
         formato(2, 3, 6, 7, PORCENTAJE),
         formato(2, 3, 7, 8, MONEDA),
         formato(2, 3, 8, 9, ROAS),
+        formato(2, 3, 9, 11, MONEDA),
         formato(5, FILAS, 1, 3, MONEDA),
         formato(5, FILAS, 3, 6, ENTERO),
         formato(5, FILAS, 6, 7, PORCENTAJE),
         formato(5, FILAS, 7, 8, MONEDA),
         formato(5, FILAS, 8, 9, ROAS),
+        formato(5, FILAS, 9, 11, MONEDA),
+
+        // F2: el % de devolución editable. Formato porcentaje + borde para que
+        // se note que es la única celda de toda la hoja pensada para tocar.
+        {
+          repeatCell: {
+            range: rango(1, 2, 5, 6),
+            cell: {
+              userEnteredFormat: {
+                numberFormat: { type: 'PERCENT', pattern: '0%' },
+                borders: {
+                  top: { style: 'SOLID_MEDIUM', color: NAVY }, bottom: { style: 'SOLID_MEDIUM', color: NAVY },
+                  left: { style: 'SOLID_MEDIUM', color: NAVY }, right: { style: 'SOLID_MEDIUM', color: NAVY }
+                }
+              }
+            },
+            fields: 'userEnteredFormat(numberFormat,borders)'
+          }
+        },
 
         // Dropdown de producto (B2)
         {
@@ -280,6 +339,17 @@ async function main() {
             }
           }
         },
+        // F2 solo acepta 0–100%: una devolución no puede ser negativa ni pasar el total.
+        {
+          setDataValidation: {
+            range: rango(1, 2, 5, 6),
+            rule: {
+              condition: { type: 'NUMBER_BETWEEN', values: [{ userEnteredValue: '0' }, { userEnteredValue: '1' }] },
+              inputMessage: 'Escribí un número entre 0 y 1 (ej. 0.3 = 30% de devolución esperada)',
+              strict: true
+            }
+          }
+        },
 
         { updateDimensionProperties: { range: col(0), properties: { pixelSize: 175 }, fields: 'pixelSize' } },
         { updateDimensionProperties: { range: col(1), properties: { pixelSize: 100 }, fields: 'pixelSize' } },
@@ -290,10 +360,22 @@ async function main() {
         { updateDimensionProperties: { range: col(6), properties: { pixelSize: 135 }, fields: 'pixelSize' } },
         { updateDimensionProperties: { range: col(7), properties: { pixelSize: 100 }, fields: 'pixelSize' } },
         { updateDimensionProperties: { range: col(8), properties: { pixelSize: 100 }, fields: 'pixelSize' } },
-        // K:Q es el resultado crudo del QUERY — se oculta, no se mira
+        { updateDimensionProperties: { range: col(9), properties: { pixelSize: 150 }, fields: 'pixelSize' } },
+        { updateDimensionProperties: { range: col(10), properties: { pixelSize: 150 }, fields: 'pixelSize' } },
+        // A:K visibles SIEMPRE y de forma explícita. Sin esto, una versión anterior
+        // que ocultaba otro rango dejaba columnas escondidas para siempre: ocultar
+        // el rango nuevo no desoculta el viejo.
         {
           updateDimensionProperties: {
-            range: { sheetId: idVista, dimension: 'COLUMNS', startIndex: 10, endIndex: 17 },
+            range: { sheetId: idVista, dimension: 'COLUMNS', startIndex: 0, endIndex: 11 },
+            properties: { hiddenByUser: false },
+            fields: 'hiddenByUser'
+          }
+        },
+        // L:V es el resultado crudo del QUERY — se oculta, no se mira
+        {
+          updateDimensionProperties: {
+            range: { sheetId: idVista, dimension: 'COLUMNS', startIndex: 11, endIndex: 22 },
             properties: { hiddenByUser: true },
             fields: 'hiddenByUser'
           }

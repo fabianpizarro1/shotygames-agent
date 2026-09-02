@@ -37,9 +37,11 @@ const ESTADOS = [
   'PENDIENTE_CONFIRMACION',
   'EN_DROPI',
   'GUIA_GENERADA',
+  'NOVEDAD',     // problema en la entrega, el paquete sigue vivo
   'ENTREGADO',
   'PAGADO',
-  'CANCELADO'
+  'CANCELADO',   // se cayó ANTES de despachar: se pierde solo el CPA
+  'DEVUELTO'     // salió y volvió: se pierde el CPA y el flete de ida
 ];
 
 const COLUMNAS = [
@@ -74,6 +76,147 @@ const COL = {};
 COLUMNAS.forEach((c, i) => (COL[c.t] = i));
 
 const FILAS = 1000;
+
+/**
+ * Letras de columna de PEDIDOS que necesitan las fórmulas del RESUMEN,
+ * resueltas por TÍTULO a partir del encabezado real.
+ *
+ * ⚠️ Antes estaban escritas a mano ("N" para TOTAL COBRAR). El 2026-08-31 se le
+ * agregaron 3 columnas al Sheet (PRODUCTO2/IDDROPI2/CANTIDAD2), todo se corrió
+ * y esas letras pasaron a apuntar a otra cosa: "Cobrado" sumaba IDs de producto
+ * ($678.696) y "Utilidad" sumaba el flete. Mismo motivo por el que
+ * `sheets-pedidos.js` lee por título — acá se hace igual.
+ */
+const TITULOS_RESUMEN = {
+  tienda: 'TIENDA',
+  estado: 'ESTADO',
+  fecha: 'FECHA',
+  total: 'TOTAL COBRAR',
+  utilidad: 'UTILIDAD REAL',
+  fPago: 'FECHA PAGO',
+};
+
+const normalizarTitulo = (s) =>
+  String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+
+function columnaAletra(i) {
+  let s = '';
+  i += 1;
+  while (i > 0) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
+  return s;
+}
+
+/** `['ID PEDIDO','FECHA',...]` → `{ tienda:'C', estado:'D', total:'P', ... }` */
+function letrasDesdeEncabezado(encabezados) {
+  const norm = encabezados.map(normalizarTitulo);
+  const letras = {};
+  for (const [clave, titulo] of Object.entries(TITULOS_RESUMEN)) {
+    const i = norm.indexOf(normalizarTitulo(titulo));
+    if (i < 0) throw new Error(`La hoja PEDIDOS no tiene la columna "${titulo}" que necesita el RESUMEN`);
+    letras[clave] = columnaAletra(i);
+  }
+  return letras;
+}
+
+/**
+ * Contenido de la hoja RESUMEN. Vive en una función y no suelto adentro de
+ * `crear()` porque `patch-resumen.js` la reaplica sobre el Sheet que ya está en
+ * uso: si el layout estuviera duplicado en dos lados, se desincronizarían.
+ *
+ * ⚠️ Las fórmulas apuntan a filas fijas (B7, B15, B18...). Si se agrega o mueve
+ * una fila hay que recontar las de abajo — por eso van numeradas en el comentario.
+ */
+function filasResumen(L) {
+  const P = 'PEDIDOS!';
+  const cuenta = (estado) =>
+    `=IF($B$4="",COUNTIF(${P}${L.estado}:${L.estado},"${estado}"),` +
+    `COUNTIFS(${P}${L.estado}:${L.estado},"${estado}",${P}${L.tienda}:${L.tienda},$B$4))`;
+
+  return [
+    /*  1 */ ['RESUMEN DE OPERACIÓN'],
+    /*  2 */ ['Se actualiza solo. Filtra por tienda escribiendo en la celda B4.'],
+    /*  3 */ [],
+    /*  4 */ ['Tienda (deja vacío para ver todo)', ''],
+    /*  5 */ [],
+    /*  6 */ ['PEDIDOS POR ESTADO'],
+    /*  7 */ ['Pendiente confirmación', cuenta('PENDIENTE_CONFIRMACION')],
+    /*  8 */ ['En DROPI (esperando guía)', cuenta('EN_DROPI')],
+    /*  9 */ ['Guía generada', cuenta('GUIA_GENERADA')],
+    /* 10 */ ['Novedad (entrega con problema)', cuenta('NOVEDAD')],
+    /* 11 */ ['Entregado', cuenta('ENTREGADO')],
+    /* 12 */ ['Pagado', cuenta('PAGADO')],
+    /* 13 */ ['Cancelado (no llegó a salir)', cuenta('CANCELADO')],
+    /* 14 */ ['Devuelto (salió y volvió)', cuenta('DEVUELTO')],
+    /* 15 */ ['TOTAL PEDIDOS', '=SUM(B7:B14)'],
+    /* 16 */ [],
+    /* 17 */ ['LA MÉTRICA QUE MANDA'],
+    // Despachado = el paquete salió. Incluye NOVEDAD (está en ruta con un problema)
+    // y DEVUELTO (salió y volvió). NO incluye CANCELADO: ese nunca se despachó.
+    // Si el devuelto no fuera al denominador, la tasa se vería mejor de lo que es.
+    /* 18 */ ['Despachados (guía o más)', '=B9+B10+B11+B12+B14'],
+    /* 19 */ ['Entregados (entregado o pagado)', '=B11+B12'],
+    /* 20 */ ['TASA DE ENTREGA REAL', '=IFERROR(B19/B18,"—")'],
+    /* 21 */ ['', 'La calculadora asume 70%. Este es tu número de verdad.'],
+    /* 22 */ [],
+    /* 23 */ ['PLATA'],
+    /* 24 */ ['Cobrado (entregados y pagados)', `=SUMIFS(${P}${L.total}:${L.total},${P}${L.estado}:${L.estado},"ENTREGADO")+SUMIFS(${P}${L.total}:${L.total},${P}${L.estado}:${L.estado},"PAGADO")`],
+    /* 25 */ ['Utilidad real acumulada', `=SUM(${P}${L.utilidad}:${L.utilidad})`],
+    /* 26 */ ['Utilidad por pedido generado', '=IFERROR(B25/B15,"—")'],
+    /* 27 */ ['Ticket promedio', '=IFERROR(B24/B19,"—")'],
+    /* 28 */ [],
+    /* 29 */ ['CICLO DE CAJA'],
+    /* 30 */ ['Días promedio de pedido a pago', `=IFERROR(AVERAGEIF(${P}${L.fPago}:${L.fPago},">0",${P}${L.fPago}:${L.fPago})-AVERAGEIF(${P}${L.fecha}:${L.fecha},">0",${P}${L.fecha}:${L.fecha}),"—")`],
+    /* 31 */ ['', 'Cuántos días tarda un pedido en volverse efectivo.']
+  ];
+}
+
+/**
+ * Formato de la hoja RESUMEN. Va junto a `filasResumen()` porque depende de las
+ * MISMAS filas: si el contenido se corre y el formato no, cada celda hereda el
+ * formato de la fila que ocupaba antes (pasó el 2026-08-31 al agregar NOVEDAD y
+ * DEVUELTO: "Despachados 54" se mostraba como "5400.0%").
+ *
+ * Los índices son 0-based; el número del comentario es la fila real del Sheet.
+ */
+function formatosResumen(sheetId) {
+  const enFila = (fila0, cell, fields, c0 = 0, c1 = 2) => ({
+    repeatCell: { range: { sheetId, startRowIndex: fila0, endRowIndex: fila0 + 1, startColumnIndex: c0, endColumnIndex: c1 }, cell, fields }
+  });
+  const numero = (pattern, type = 'NUMBER') => ({ userEnteredFormat: { numberFormat: { type, pattern } } });
+
+  return [
+    // Título (fila 1)
+    { repeatCell: {
+        range: { sheetId, startRowIndex: 0, endRowIndex: 1 },
+        cell: { userEnteredFormat: { textFormat: { bold: true, fontSize: 14 } } },
+        fields: 'userEnteredFormat.textFormat'
+    }},
+    // Encabezados de sección: filas 6, 17, 23, 29
+    ...[5, 16, 22, 28].map((f) => enFila(f,
+      { userEnteredFormat: { backgroundColor: NAVY, textFormat: { bold: true, foregroundColor: BLANCO } } },
+      'userEnteredFormat(backgroundColor,textFormat)')),
+    // Conteos por estado + total: filas 7-15
+    ...[6, 7, 8, 9, 10, 11, 12, 13, 14].map((f) => enFila(f, numero('#,##0'), 'userEnteredFormat.numberFormat', 1, 2)),
+    // Despachados y entregados: filas 18-19
+    ...[17, 18].map((f) => enFila(f, numero('#,##0'), 'userEnteredFormat.numberFormat', 1, 2)),
+    // TASA DE ENTREGA REAL: fila 20
+    enFila(19,
+      { userEnteredFormat: { numberFormat: { type: 'PERCENT', pattern: '0.0%' }, textFormat: { bold: true, fontSize: 13 } } },
+      'userEnteredFormat(numberFormat,textFormat)', 1, 2),
+    // Plata: filas 24-27
+    ...[23, 24, 25, 26].map((f) => enFila(f, numero('$#,##0.00', 'CURRENCY'), 'userEnteredFormat.numberFormat', 1, 2)),
+    // Días promedio: fila 30
+    enFila(29, numero('#,##0.0'), 'userEnteredFormat.numberFormat', 1, 2),
+    { updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 0, endIndex: 1 },
+        properties: { pixelSize: 260 }, fields: 'pixelSize'
+    }},
+    { updateDimensionProperties: {
+        range: { sheetId, dimension: 'COLUMNS', startIndex: 1, endIndex: 2 },
+        properties: { pixelSize: 150 }, fields: 'pixelSize'
+    }}
+  ];
+}
 
 async function crear() {
   const auth = getAuth();
@@ -119,38 +262,7 @@ async function crear() {
   });
 
   // ── RESUMEN ────────────────────────────────────────────────────────────────
-  const P = 'PEDIDOS!';
-  const resumen = [
-    ['RESUMEN DE OPERACIÓN'],
-    ['Se actualiza solo. Filtra por tienda cambiando la celda B3.'],
-    [],
-    ['Tienda (deja vacío para ver todo)', ''],
-    [],
-    ['PEDIDOS POR ESTADO'],
-    ['Pendiente confirmación', `=IF($B$4="",COUNTIF(${P}D:D,"PENDIENTE_CONFIRMACION"),COUNTIFS(${P}D:D,"PENDIENTE_CONFIRMACION",${P}C:C,$B$4))`],
-    ['En DROPI (esperando guía)', `=IF($B$4="",COUNTIF(${P}D:D,"EN_DROPI"),COUNTIFS(${P}D:D,"EN_DROPI",${P}C:C,$B$4))`],
-    ['Guía generada', `=IF($B$4="",COUNTIF(${P}D:D,"GUIA_GENERADA"),COUNTIFS(${P}D:D,"GUIA_GENERADA",${P}C:C,$B$4))`],
-    ['Entregado', `=IF($B$4="",COUNTIF(${P}D:D,"ENTREGADO"),COUNTIFS(${P}D:D,"ENTREGADO",${P}C:C,$B$4))`],
-    ['Pagado', `=IF($B$4="",COUNTIF(${P}D:D,"PAGADO"),COUNTIFS(${P}D:D,"PAGADO",${P}C:C,$B$4))`],
-    ['Cancelado', `=IF($B$4="",COUNTIF(${P}D:D,"CANCELADO"),COUNTIFS(${P}D:D,"CANCELADO",${P}C:C,$B$4))`],
-    ['TOTAL PEDIDOS', '=SUM(B7:B12)'],
-    [],
-    ['LA MÉTRICA QUE MANDA'],
-    ['Despachados (guía o más)', '=B9+B10+B11'],
-    ['Entregados (entregado o pagado)', '=B10+B11'],
-    ['TASA DE ENTREGA REAL', '=IFERROR(B17/B16,"—")'],
-    ['', 'La calculadora asume 70%. Este es tu número de verdad.'],
-    [],
-    ['PLATA'],
-    ['Cobrado (entregados y pagados)', `=SUMIFS(${P}N:N,${P}D:D,"ENTREGADO")+SUMIFS(${P}N:N,${P}D:D,"PAGADO")`],
-    ['Utilidad real acumulada', `=SUM(${P}R:R)`],
-    ['Utilidad por pedido generado', '=IFERROR(B23/B13,"—")'],
-    ['Ticket promedio', '=IFERROR(B22/B17,"—")'],
-    [],
-    ['CICLO DE CAJA'],
-    ['Días promedio de pedido a pago', `=IFERROR(AVERAGEIF(${P}X:X,">0",${P}X:X)-AVERAGEIF(${P}B:B,">0",${P}B:B),"—")`],
-    ['', 'Cuántos días tarda un pedido en volverse efectivo.']
-  ];
+  const resumen = filasResumen(letrasDesdeEncabezado(COLUMNAS.map((c) => c.t)));
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
@@ -231,9 +343,11 @@ async function crear() {
       ['PENDIENTE_CONFIRMACION', { red: 1, green: 0.97, blue: 0.85 }],
       ['EN_DROPI',               { red: 0.93, green: 0.95, blue: 1 }],
       ['GUIA_GENERADA',          { red: 0.90, green: 0.95, blue: 1 }],
+      ['NOVEDAD',                { red: 1, green: 0.90, blue: 0.75 }],
       ['ENTREGADO',              { red: 0.88, green: 0.96, blue: 0.90 }],
       ['PAGADO',                 { red: 0.80, green: 0.94, blue: 0.84 }],
-      ['CANCELADO',              { red: 0.96, green: 0.92, blue: 0.92 }]
+      ['CANCELADO',              { red: 0.96, green: 0.92, blue: 0.92 }],
+      ['DEVUELTO',               { red: 0.99, green: 0.85, blue: 0.82 }]
     ].map(([estado, color], i) => ({
       addConditionalFormatRule: {
         rule: {
@@ -259,38 +373,7 @@ async function crear() {
     }},
 
     // RESUMEN
-    { repeatCell: {
-        range: { sheetId: hojaResumen, startRowIndex: 0, endRowIndex: 1 },
-        cell: { userEnteredFormat: { textFormat: { bold: true, fontSize: 14 } } },
-        fields: 'userEnteredFormat.textFormat'
-    }},
-    ...[5, 14, 20, 26].map((fila) => ({
-      repeatCell: {
-        range: { sheetId: hojaResumen, startRowIndex: fila, endRowIndex: fila + 1, startColumnIndex: 0, endColumnIndex: 2 },
-        cell: { userEnteredFormat: { backgroundColor: NAVY, textFormat: { bold: true, foregroundColor: BLANCO } } },
-        fields: 'userEnteredFormat(backgroundColor,textFormat)'
-      }
-    })),
-    { repeatCell: {
-        range: { sheetId: hojaResumen, startRowIndex: 17, endRowIndex: 18, startColumnIndex: 1, endColumnIndex: 2 },
-        cell: { userEnteredFormat: { numberFormat: { type: 'PERCENT', pattern: '0.0%' }, textFormat: { bold: true, fontSize: 13 } } },
-        fields: 'userEnteredFormat(numberFormat,textFormat)'
-    }},
-    ...[21, 22, 23, 24].map((fila) => ({
-      repeatCell: {
-        range: { sheetId: hojaResumen, startRowIndex: fila, endRowIndex: fila + 1, startColumnIndex: 1, endColumnIndex: 2 },
-        cell: { userEnteredFormat: { numberFormat: { type: 'CURRENCY', pattern: '$#,##0.00' } } },
-        fields: 'userEnteredFormat.numberFormat'
-      }
-    })),
-    { updateDimensionProperties: {
-        range: { sheetId: hojaResumen, dimension: 'COLUMNS', startIndex: 0, endIndex: 1 },
-        properties: { pixelSize: 260 }, fields: 'pixelSize'
-    }},
-    { updateDimensionProperties: {
-        range: { sheetId: hojaResumen, dimension: 'COLUMNS', startIndex: 1, endIndex: 2 },
-        properties: { pixelSize: 150 }, fields: 'pixelSize'
-    }}
+    ...formatosResumen(hojaResumen)
   ];
 
   await sheets.spreadsheets.batchUpdate({ spreadsheetId, requestBody: { requests: req } });
@@ -311,4 +394,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { crear, ESTADOS, COLUMNAS };
+module.exports = { crear, ESTADOS, COLUMNAS, filasResumen, formatosResumen, letrasDesdeEncabezado };

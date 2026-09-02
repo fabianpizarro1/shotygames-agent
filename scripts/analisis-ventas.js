@@ -11,9 +11,11 @@
  *   - PEDIDOS LOVABLE           → hoja PEDIDOS.  Pedidos web; ESTADO = SIN COMPRAR = carrito abandonado.
  *   - DROPSHIPPING — Pedidos    → hoja PEDIDOS.  Truquito + Avanora, contra entrega (COD).
  *                                 Pedido generado != plata cobrada: solo ESTADO = PAGADO es venta cobrada.
+ *                                 CANCELADO = se cayó antes de despachar. DEVUELTO = salió y volvió.
  */
 require('dotenv').config();
 const { google } = require('googleapis');
+const { hoyEC, aFechaLocal } = require('../fechas.js');
 
 const auth = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
 auth.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
@@ -31,19 +33,10 @@ function monto(val) {
   return isNaN(n) ? 0 : n;
 }
 
-// "05/01/2026" o "1/01/2026" → "2026-01-05". Soporta también seriales de Sheets.
-function aISO(val) {
-  if (val === '' || val == null) return null;
-  const s = String(val).trim();
-  const m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
-  if (/^\d+(\.\d+)?$/.test(s)) {
-    const d = new Date(Date.UTC(1899, 11, 30) + parseFloat(s) * 86400000);
-    return d.toISOString().slice(0, 10);
-  }
-  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m2 ? m2[0] : null;
-}
+// Las fechas se convierten a la zona de Ecuador antes de quedarse con el día.
+// El Sheet de dropshipping guarda instantes UTC, así que un pedido de las 20:42
+// del 30 caía en el 31 y le corría las ventas de la noche al día siguiente.
+// Ver fechas.js.
 
 function diasAtras(iso, n) {
   const d = new Date(iso + 'T12:00:00Z');
@@ -93,7 +86,7 @@ async function main() {
     const i = process.argv.indexOf('--fecha');
     return i > -1 ? process.argv[i + 1] : null;
   })();
-  const hoy = argFecha || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+  const hoy = argFecha || hoyEC();
   const ayer = diasAtras(hoy, 1);
   const inicioSemana = lunesDeEstaSemana(hoy); // semana calendario lunes-domingo, no rolling 7 días
 
@@ -115,7 +108,7 @@ async function main() {
     let sinFecha = 0;
     for (const row of filas) {
       if (!row[idx('NOMBRE')] && !row[idx('TELEFONO')]) continue;
-      const iso = aISO(row[idx('FECHA')]);
+      const iso = aFechaLocal(row[idx('FECHA')]);
       if (!iso) { sinFecha++; continue; }
       const ingreso = monto(row[idx('ANTICIPO')]) + monto(row[idx('SALDO')]);
       acumular(c, iso, ventanas, ingreso, monto(row[idx('UTILIDAD')]));
@@ -133,7 +126,7 @@ async function main() {
     const c = nuevosCubos();
     const pend = nuevosCubos();
     for (const row of filas) {
-      const iso = aISO(row[idx('FECHA')]);
+      const iso = aFechaLocal(row[idx('FECHA')]);
       if (!iso) continue;
       const ingreso = monto(row[idx('INGRESOS')]);
       const estado = String(row[idx('ESTADO')] || '').trim().toUpperCase();
@@ -150,7 +143,7 @@ async function main() {
     const abandonados = nuevosCubos();
     const conAtribucionMeta = nuevosCubos();
     for (const row of filas) {
-      const iso = aISO(row[idx('FECHA')]);
+      const iso = aFechaLocal(row[idx('FECHA')]);
       if (!iso) continue;
       const ingreso = monto(row[idx('INGRESO')]);
       acumular(c, iso, ventanas, ingreso, 0);
@@ -178,8 +171,9 @@ async function main() {
     const tienda = (n) => (porTienda[n] ||= {
       generados: nuevosCubos(),      // por FECHA de creación — lo que produjo el ads
       cobrados: nuevosCubos(),       // por FECHA PAGO — plata que entró de verdad
-      en_ruta: nuevosCubos(),        // EN_DROPI / GUIA_GENERADA — todavía no se sabe
-      cancelados: nuevosCubos(),
+      en_ruta: nuevosCubos(),        // EN_DROPI / GUIA_GENERADA / NOVEDAD — todavía no se sabe
+      cancelados: nuevosCubos(),     // se cayó ANTES de despachar
+      devueltos: nuevosCubos(),      // salió y volvió: pierde CPA + flete de ida
       sin_confirmar: nuevosCubos(),  // PENDIENTE_CONFIRMACION
       productos_semana: {},
     });
@@ -188,28 +182,34 @@ async function main() {
       if (!row[0]) continue;
       const t = String(row[iTienda] || 'sin-tienda').toLowerCase().trim();
       const est = String(row[iEstado] || '').toUpperCase().trim();
-      const iso = aISO(row[iFecha]);
+      const iso = aFechaLocal(row[iFecha]);
       const total = monto(row[iTotal]);
       const util = monto(row[iUtil]);
       const d = tienda(t);
 
       if (iso) {
+        // Un DEVUELTO sí fue un pedido generado por el ads (llegó a despacharse),
+        // por eso cuenta en `generados` igual que antes. Lo que NO puede pasar es
+        // quedar fuera de `cerrados`: sin eso la tasa de cobro se ve mejor de lo
+        // que es, porque la devolución desaparecería del denominador.
         if (est !== 'CANCELADO') acumular(d.generados, iso, ventanas, total, util);
         if (est === 'CANCELADO') acumular(d.cancelados, iso, ventanas, total, 0);
+        if (est === 'DEVUELTO') acumular(d.devueltos, iso, ventanas, total, 0);
         if (est === 'PENDIENTE_CONFIRMACION') acumular(d.sin_confirmar, iso, ventanas, total, 0);
-        if (est === 'EN_DROPI' || est === 'GUIA_GENERADA') acumular(d.en_ruta, iso, ventanas, total, 0);
+        // NOVEDAD también va en ruta: el paquete está vivo, todavía no se resolvió.
+        if (est === 'EN_DROPI' || est === 'GUIA_GENERADA' || est === 'NOVEDAD') acumular(d.en_ruta, iso, ventanas, total, 0);
         if (iso >= inicioSemana && est !== 'CANCELADO') {
           const p = String(row[iProd] || 'SIN DETALLE').trim();
           d.productos_semana[p] = (d.productos_semana[p] || 0) + 1;
         }
       }
       if (est === 'PAGADO') {
-        const isoPago = aISO(row[iFPago]) || iso;
+        const isoPago = aFechaLocal(row[iFPago]) || iso;
         if (isoPago) acumular(d.cobrados, isoPago, ventanas, total, util);
       }
     }
 
-    const todas = { generados: nuevosCubos(), cobrados: nuevosCubos(), en_ruta: nuevosCubos(), cancelados: nuevosCubos(), sin_confirmar: nuevosCubos() };
+    const todas = { generados: nuevosCubos(), cobrados: nuevosCubos(), en_ruta: nuevosCubos(), cancelados: nuevosCubos(), devueltos: nuevosCubos(), sin_confirmar: nuevosCubos() };
     for (const d of Object.values(porTienda)) {
       for (const k of Object.keys(todas)) {
         for (const [n] of ventanas) {
@@ -218,12 +218,13 @@ async function main() {
           todas[k][n].utilidad += d[k][n].utilidad;
         }
       }
-      for (const k of ['generados', 'cobrados', 'en_ruta', 'cancelados', 'sin_confirmar']) redondear(d[k]);
+      for (const k of ['generados', 'cobrados', 'en_ruta', 'cancelados', 'devueltos', 'sin_confirmar']) redondear(d[k]);
     }
     for (const k of Object.keys(todas)) redondear(todas[k]);
 
     // Tasa de entrega real: de los pedidos que ya se resolvieron, cuántos se cobraron.
-    const cerrados = todas.cobrados.total.pedidos + todas.cancelados.total.pedidos;
+    // Los devueltos van en el denominador: son plata perdida, no casos abiertos.
+    const cerrados = todas.cobrados.total.pedidos + todas.cancelados.total.pedidos + todas.devueltos.total.pedidos;
     salida.dropshipping = {
       fuente: 'DROPSHIPPING — Pedidos (Truquito + Avanora) / PEDIDOS',
       regla: 'COD: pedido generado NO es venta. Solo ESTADO = PAGADO es plata cobrada. "generados" va por FECHA de creación (atribuible al ads), "cobrados" por FECHA PAGO.',

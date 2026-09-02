@@ -28,12 +28,12 @@ module.exports = [
     ],
   },
   {
-    idDropi: '110735',
+    idDropi: '155190',
     tienda: 'avanora',
-    producto: 'Inositol Multivitamin',
+    producto: 'Reparador de Esmalte Dental',
     adAccountId: '1284579892343452',
     campañas: [
-      { id: '120251998583790787', nombre: 'Sonda CPA' },
+      { id: '120252312991320787', nombre: 'TEST VIDEOS 31/08' },
     ],
   },
   {

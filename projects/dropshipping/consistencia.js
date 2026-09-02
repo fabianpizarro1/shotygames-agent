@@ -13,6 +13,14 @@
  * porcentaje del movimiento total cayó en una sola ventana. Un producto sano
  * baja en casi todas y ninguna ventana concentra más del ~60%.
  *
+ * ⚠ Esto mide el delta NETO entre snapshots separados por 1-3 días, así que un
+ * restock del proveedor tapa las ventas del día entero: el 29 y 30 de agosto la
+ * Freidora (133468) figuró con 0 ventas porque IMPORSHOP metió +80 y +887
+ * unidades mientras se vendía. Para el volumen REAL de venta de un producto usar
+ * `ventas-mercado.js`, que muestrea cada 30 min y suma solo las bajas.
+ * Este script sigue sirviendo para lo suyo: barrer los 34.000 del catálogo y
+ * detectar candidatos. Aquel mide de cerca unos pocos.
+ *
  * Uso: node projects/dropshipping/consistencia.js [--top 15] [--tienda avanora|truquito]
  */
 

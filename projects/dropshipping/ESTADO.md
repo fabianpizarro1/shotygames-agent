@@ -243,7 +243,8 @@ Scripts relevantes:
 | `sheets-pedidos.js` | Lee y escribe el Sheet de pedidos **por título de columna**, no por índice |
 | `diario.js` | Rutina de las 5 AM: snapshot + ranking + aviso por Telegram + publica el dashboard |
 | `crear-sheet-productos.js` | Arma el Sheet de investigación, una hoja por producto |
-| `consistencia.js` | Velocidad de venta sostenida (no un solo salto de stock) |
+| `consistencia.js` | Velocidad de venta sostenida (no un solo salto de stock). **Ojo: un restock del proveedor le tapa las ventas del día — para volumen real usar `ventas-mercado.js`** |
+| `ventas-mercado.js` | Ventas reales de un producto en DROPI, **de todos los dropshippers**. Muestrea stock cada 30 min (LaunchAgent `com.shotygames.ventas-mercado`) y suma solo las bajas, así el restock no borra las ventas. `medir` / `reporte` / `sembrar` / `watchlist` |
 | `candidatos-tienda.js` | Separa candidatos por tienda: Avanora (salud) vs Truquito (Meta-safe) |
 | `tendencias.js` | Nuevos ganadores y producto del mes, sobre `consistencia.js` |
 | `publicar.js` | Sube todo a Supabase para el dashboard web (`dropi_dashboard`, `dropi_historial`) |
@@ -251,18 +252,225 @@ Scripts relevantes:
 | `publicidad-sheet.js` | Arma el layout de la hoja PUBLICIDAD: dropdown de producto y tabla filtrada por fórmula. Re-correrlo es seguro |
 | `publicidad-live.js` | Llena `PUBLICIDAD_DATOS` cada 15 min: una fila por **día × producto** (campañas del mismo producto **sumadas**), últimos 30 días. Requiere `META_ADS_TOKEN` en `.env` (pendiente, ver Pendientes) |
 
+### `DEVUELTO` es un estado nuevo del Sheet (2026-08-31)
+
+Antes no existía, y eso era un **bug real, no una omisión cosmética**: cuando una transportadora
+reportara una devolución, `sincronizar_guias` no la matcheaba con ningún grupo y el pedido
+quedaba clavado en `GUIA_GENERADA` para siempre. Peor: un texto tipo
+`DEVOLUCION ENTREGADA AL REMITENTE` contiene la palabra `ENTREGADO` y se habría marcado como
+**entrega** — una venta perdida contada como buena, esperando un pago que nunca llega. Por eso la
+clasificación de devolución se evalúa **antes** que `ESTADOS_ENTREGADO`.
+
+#### `clasificarDevolucion()` — tres niveles, no un match por raíz
+
+Lo advirtió Fabián: **`DEVOLUCION DE DISTRIBUCION` no es una devolución.** Es un intento de
+entrega que falló y el paquete vuelve al centro de distribución — sigue vivo y se puede
+reintentar. Un match por raíz (`DEVOLUC`) lo habría marcado `DEVUELTO` y matado un pedido
+todavía cobrable. Por eso:
+
+| Nivel | Qué es | Ejemplos | Qué hace |
+|---|---|---|---|
+| `TRANSITORIA` | Falló el reparto, el paquete sigue en juego | `DEVOLUCION DE DISTRIBUCION`, `DEVOLUCION DE REPARTO`, `…REPROGRAMAD…` | Se trata como tránsito normal |
+| `DEFINITIVA` | Volvió al remitente, orden muerta | `DEVUELTO`, `DEVOLUCION`, `RETORNADO` (**igualdad exacta**) · cualquiera con `AL REMITENTE` / `A ORIGEN` | → estado `DEVUELTO` |
+| `AMBIGUA` | Habla de devolución pero no dice si volvió | `EN PROCESO DE DEVOLUCION`, `RECHAZADO POR EL CLIENTE` | **No toca el estado.** Lo reporta con el texto exacto para que Fabián lo clasifique |
+
+La igualdad exacta en el nivel definitivo es lo que evita que `DEVOLUCION DE DISTRIBUCION`
+matchee con `DEVOLUCION`. Hay tests de los 17 casos (incluidas las trampas) en el historial de
+la sesión del 2026-08-31; ante la duda el sistema **pregunta en vez de adivinar**, porque
+equivocarse cuesta plata en las dos direcciones.
+
+Al 2026-08-31 no hay ninguna devolución, así que **el cambio es inerte**: ningún número actual se
+movió (verificado — `analisis-ventas.js` sigue dando la misma tasa de cobro, 57.1%). Lo que se
+tocó para que quede coherente cuando pase la primera:
+
+| Archivo | Cambio |
+|---|---|
+| `claude-dropshipping.js` | Grupo `ESTADOS_DEVUELTO` + rama antes de ENTREGADO. No manda WhatsApp de guía a un devuelto |
+| `sheets-pedidos.js` | Fórmula de UTILIDAD: un `DEVUELTO` pierde **CPA + flete de ida** (un `CANCELADO` solo el CPA) |
+| `crear-sheet-pedidos.js` | Estado en la validación, color propio, y fila "Devuelto" en RESUMEN |
+| `scripts/analisis-ventas.js` | Cubo `devueltos` y los suma a `cerrados` — si no, la tasa de cobro se vería mejor de lo que es |
+| `publicidad-live.js` | Cuenta `DEVUELTO` (y el `CANCELADO` con guía como respaldo) |
+
+### `NOVEDAD` — estado nuevo (2026-08-31, pedido por Fabián)
+
+`NOVEDAD` en DROPI = la entrega tuvo un problema (dirección mala, nadie en casa, no contesta). **El
+paquete sigue vivo**: puede resolverse y entregarse, o terminar en devolución. Es el estado más
+accionable de todos — una novedad desatendida termina en devolución.
+
+- `esNovedadAbierta()` en `claude-dropshipping.js`. **`NOVEDAD SOLUCIONADA` contiene `NOVEDAD`** —
+  misma trampa que `DEVOLUCION DE DISTRIBUCION`, así que lo resuelto se chequea PRIMERO y vuelve a
+  `GUIA_GENERADA`.
+- `NOVEDAD` está en `EN_CURSO`, así que el sync la sigue revisando. Sin eso, un pedido con novedad
+  quedaría congelado para siempre.
+- Cuenta como **en ruta** en `analisis-ventas.js` (no resuelto), y como venta real en PUBLICIDAD.
+
+**⚠️ IMPORTANTE — el origen NO era n8n, era la landing.** n8n solo copia el campo `fecha` tal
+cual al Sheet (`FECHA: {{ $json.fecha }}`), sin generar nada — el timestamp lo manda
+`api/pedido.ts` en cada landing. **Arreglado y desplegado a producción el 2026-08-31** en los dos
+repos (`projects/avanora` y `projects/truquito`, cada uno con su propio `vercel --prod`, ninguno
+comparte deploy con KEPLER):
+
+```ts
+function fechaHoraEcuador(): string {
+  const OFFSET_MS = 5 * 60 * 60 * 1000;
+  return new Date(Date.now() - OFFSET_MS).toISOString().replace('Z', '-05:00');
+}
+```
+
+Verificado con un pedido de prueba real (`TRQ-94976`, borrado después): la landing mandó
+`2026-08-31T15:13:39.362-05:00` y n8n lo escribió al Sheet exactamente así — hora de Quito, offset
+explícito. **n8n no necesitó ningún cambio.**
+
+### La hoja RESUMEN se parchea con `patch-resumen.js`
+
+`crear-sheet-pedidos.js` **crea un Sheet nuevo** — no sirve para actualizar el que está operando.
+Para eso está `node projects/dropshipping/patch-resumen.js` (sin flags simula; con `--aplicar`
+escribe). Reaplica `filasResumen()` + `formatosResumen()` sobre la hoja en uso, conservando el
+filtro de tienda de B4. Correr después de agregar o renombrar cualquier ESTADO.
+
+⚠️ **Dos trampas que costaron caro el 2026-08-31, las dos ya resueltas — no repetirlas:**
+
+1. **El formato no viaja con el valor.** Al correr el contenido 2 filas hacia abajo, cada celda
+   heredó el formato de la fila que ocupaba antes: "Despachados 54" se mostraba como `5400.0%`.
+   Por eso `formatosResumen()` se aplica siempre junto con las filas, nunca solo los valores.
+2. **Las fórmulas tenían letras de columna escritas a mano** (`N` = TOTAL COBRAR) de cuando se creó
+   el Sheet. Después se le agregaron `PRODUCTO2`/`IDDROPI2`/`CANTIDAD2` y todo se corrió: `N` pasó a
+   ser IDDROPI2, así que "Cobrado" sumaba **IDs de producto** ($678.696) y "Utilidad" sumaba el
+   flete. Ahora las letras se resuelven **por título** con `letrasDesdeEncabezado()`, igual que
+   hace `sheets-pedidos.js`. Hoy: `total=P · utilidad=T · fPago=Z`.
+
+### Automatización activa — `META_ADS_TOKEN` resuelto (2026-09-01)
+
+La hoja PUBLICIDAD **ya se actualiza sola cada 15 minutos**. LaunchAgent
+`com.shotygames.publicidad-live` cargado en `~/Library/LaunchAgents/`, log en
+`~/publicidad-live.log`. Verificado de punta a punta con `launchctl kickstart` → `Salida: 0`.
+
+**El token:** system user **KEPLER**, app **DROPI WINNERS**, permiso `ads_read`, **no caduca**.
+Lee las 2 cuentas y las 5 campañas mapeadas.
+
+#### ⚠️ Por qué costó tanto sacarlo — 3 capas distintas, no una
+
+Generar el token falló varias veces con *"No hay permisos disponibles"*. La causa real solo
+apareció al diagnosticar contra la Graph API en vez de adivinar en la interfaz. En Meta hay
+**tres capas independientes**, y que falte cualquiera da errores que parecen el mismo:
+
+| Capa | Qué es | Síntoma si falta |
+|---|---|---|
+| 1. Producto de la app | La app necesita **Marketing API** agregado en developers.facebook.com | *"No hay permisos disponibles"* al generar el token — la lista sale vacía |
+| 2. Rol de app | El system user necesita acceso a la app (Business Settings → Aplicaciones → Personas) | Mismo mensaje que arriba |
+| 3. Asignación de activos | El system user necesita **cada cuenta publicitaria** asignada | Token válido con `ads_read`, pero `(#200) Ad account owner has NOT grant ads_read permission` |
+
+**El desvío que costó tiempo:** el `META_CAPI_TOKEN` que ya existía *parecía* servir — es SYSTEM_USER,
+no caduca y tiene `ads_read` y `ads_management`. Pero pertenece al system user
+**"Fabian Usuario Sistema"**, que vive en el business **ShotyGames** (`178092136536412`), y solo
+tiene asignada "Cuenta Publicitaria 9". Avanora y Truquito son del business **Avanora**
+(`2102150583288162`), otro portafolio. **Un token no se puede reusar entre businesses distintos.**
+KEPLER sí es el system user del business correcto — por eso el token salió de ahí.
+
+**Cómo diagnosticar esto rápido la próxima vez** (en vez de probar clics a ciegas):
+```
+GET /debug_token?input_token=X&access_token=X   → app, tipo, scopes, caducidad
+GET /me?fields=id,name                           → qué system user es
+GET /{system_user_id}/assigned_ad_accounts       → qué cuentas tiene asignadas ← la capa 3
+GET /act_{id}?fields=name,business               → de qué business es cada cuenta
+```
+El mensaje `(#200) Ad account owner has NOT grant...` **no significa que falte el permiso**:
+significa que falta la **asignación del activo**. Son cosas distintas.
+
+### Dos columnas de utilidad, con % de devolución editable (2026-08-31)
+
+A pedido de Fabián: **UTILIDAD SI SE ENTREGA TODO** y **UTILIDAD AJUSTADA (%DEV)**, esta última
+recalculándose sola cuando cambia la celda **F2** (0–100%, con validación de rango).
+
+**El modelo es el mismo de `calculadora.js`** (margen si se entrega vs. pérdida de flete si se
+devuelve), pero con costo/flete REALES de cada pedido — no los defaults genéricos — y separando
+lo que ya se sabe de lo que todavía no:
+
+- Pedidos **ENTREGADO/PAGADO** → resultado conocido, cuenta su margen real. No se toca aunque
+  F2 cambie: no tiene sentido "ajustar" un hecho.
+- Pedidos **DEVUELTO** (o CANCELADO con guía) → resultado conocido, cuenta su pérdida real
+  (el flete de ida, ya gastado). Tampoco se mueve con F2.
+- Pedidos todavía en tránsito (**EN_DROPI/GUIA_GENERADA/NOVEDAD**) → resultado desconocido. Acá
+  es donde entran las dos columnas:
+  - *Si se entrega todo* asume que el 100% de lo pendiente entrega.
+  - *Ajustada* reparte lo pendiente según F2: `(1-F2)` entrega, `F2` se devuelve y solo pierde
+    el flete.
+
+Fórmula exacta: `utilidad = margenEntregados − pérdidaDevueltos + [(1-F2)×margenPendientes −
+F2×fletePendientes] − gastoReal`. Con F2=0% las dos columnas coinciden exactamente (verificado);
+con F2=100% la ajustada cae a lo más negativo posible.
+
+**El flete usa el real de la columna FLETE del Sheet cuando ya existe** (se llena al generar la
+guía); antes de eso cae al default verificado de `calculadora.js` ($6.38) — es la mejor
+estimación disponible, no un invento.
+
+⚠️ **Bug propio detectado y corregido en la misma sesión:** al insertar el grupo de columnas
+nuevas en el bloque oculto del QUERY, todo se corrió una posición y la fórmula del **ROAS REAL
+total** quedó apuntando a la columna vieja (sumaba VENTAS en vez de INGRESO — daba 0.13x en vez
+de 3.78x). Se cazó comparando contra el número de la sesión anterior, no leyendo el código. Ver
+[[feedback_letras_de_columna_hardcodeadas]] — es el mismo tipo de error, ahora en fórmulas de
+Sheets en lugar de en JS.
+
+### PUBLICIDAD — Inositol fuera, Reparador de Esmalte Dental adentro (2026-08-31)
+
+Fabián decidió no testear Inositol (110735) — sale del mapeo de `campanas.js`. Su campaña
+(`120251998583790787`) ya no aparece ni siquiera al listar campañas de la cuenta, probablemente
+archivada.
+
+**Reparador de Esmalte Dental / Tooth Armor (155190) entra con campaña real, verificada en Meta el
+mismo día:** `120252312991320787` — "TOOTH ARMOR | TEST VIDEOS | ABO | 31-08", ACTIVE, lanzada
+hoy. Gastó $21.25 el primer día.
+
+⚠️ **Ejercitador Pélvico pasó a PAUSED** entre la sesión anterior y esta (Fabián no avisó, se
+detectó consultando Meta en vivo). Se dejó igual en `campanas.js` — una campaña pausada
+simplemente no suma gasto nuevo, no hace falta sacarla del mapeo. Si la reactiva, sigue funcionando
+sin tocar nada.
+
+### Zona horaria: todo va en hora de Ecuador (2026-08-31)
+
+**El bug:** todo se guardaba con `new Date().toISOString()`, que es **UTC**. Ecuador es UTC-5, así
+que a las 20:42 del 30 de agosto en Quito ya son las 01:42 UTC del 31 — y el pedido quedaba
+registrado como del 31. **Todo lo que entraba después de las 19:00 se contaba al día siguiente.**
+
+Lo reportó Fabián y se midió: **31 de 120 pedidos (26%) estaban en el día equivocado.** No era
+cosmético — corría las ventas de la noche al día siguiente, así que el CPA y el ROAS de cada día
+salían mal en los dos sentidos (un día perdía ventas que sí generó, el siguiente se las quedaba).
+Ejemplo: el 23-ago tenía 5 ventas y CPA $6.61; en realidad eran **8 ventas y CPA $4.13**.
+
+**El arreglo** vive en `fechas.js` (raíz del repo, junto a `sheets.js`):
+
+| Función | Para qué |
+|---|---|
+| `ahoraEC()` | Timestamp para **escribir**: `2026-08-30T20:42:50.764-05:00`, con el offset explícito para que nunca más haya que adivinar la zona |
+| `aFechaLocal(v)` | Cualquier fecha del Sheet → `YYYY-MM-DD` del día que fue **en Ecuador** |
+| `hoyEC()` | Hoy en Ecuador |
+
+`aFechaLocal()` aguanta los cuatro formatos que hoy conviven en las hojas: instante UTC con `Z`
+(lo viejo, y lo que **sigue escribiendo n8n**), instante con offset `-05:00` (lo nuevo), ISO sin
+zona (se asume local) y `dd/mm/yyyy` o serial de Sheets (fechas sin hora, no hay nada que
+convertir — así el Sheet de Shotygames sigue leyéndose igual).
+
+Aplicado en: `sheets-pedidos.js` y `claude-dropshipping.js` (escriben), `publicidad-live.js` y
+`scripts/analisis-ventas.js` (leen).
+
+⚠️ **n8n sigue escribiendo UTC** — eso no se toca desde este repo. No hace falta para que los
+números salgan bien, porque la corrección está del lado de la LECTURA y funciona igual con los
+datos viejos. Pero si Fabián quiere que el Sheet **muestre** la hora local, hay que cambiarlo
+también en n8n.
+
 **Cómo está armada la hoja PUBLICIDAD** (rediseñada 2026-08-31 a pedido de Fabián: la primera
 versión, por campaña y con 16 columnas, era confusa):
 
 - **9 columnas:** FECHA · GASTO · GASTO REAL (+20%) · VENTAS REALES · ENTREGADOS · DEVUELTOS ·
   % DEVOLUCIONES · CPA REAL · ROAS REAL.
-- **Qué cuenta como DEVUELTO** (definido el 2026-08-31 mirando los datos, no suponiendo): un
-  `CANCELADO` **que ya tenía guía**. Ni el Sheet ni DROPI tienen estado `DEVUELTO` — verificado
-  contra las 91 órdenes reales de la cuenta 12054 (los estados que existen son ENTREGADO,
-  PENDIENTE, CANCELADO, NOVEDAD, GUIA_GENERADA y variantes de tránsito). La guía es lo único que
-  separa "se cayó antes de despachar" de "salió y volvió". Al 2026-08-31: **0 devoluciones sobre
-  18 cancelados** — los 18 se cayeron antes de que el paquete existiera. Si DROPI algún día expone
-  un estado propio de devolución, se cambia en `pedidosDiarios()` y nada más.
+- **Qué cuenta como DEVUELTO.** DROPI **sí** marca devoluciones, con el texto que use cada
+  transportadora (`DEVUELTO`, `DEVOLUCION`, `DEVUELTO AL REMITENTE`, `RETORNADO`…). Al 2026-08-31
+  todavía **no se generó ninguna**, por eso no aparecen en el barrido de las 91 órdenes de la
+  cuenta — no porque el estado no exista (ese error se cometió y lo corrigió Fabián).
+  - `sincronizar_guias` las traduce al estado `DEVUELTO` del Sheet
+    (`clasificarDevolucion()` en `claude-dropshipping.js`).
+  - Respaldo para lo viejo: un `CANCELADO` **que ya tenía guía** también cuenta como devolución.
+    Un `CANCELADO` sin guía nunca se despachó — no es venta ni devolución.
 - **ENTREGADOS = `ENTREGADO` + `PAGADO`**, y **% DEVOLUCIONES = devueltos / (entregados + devueltos)**
   — sobre lo ya resuelto, no sobre el total: los pedidos en tránsito todavía no votaron. Por eso
   en los días recientes ENTREGADOS sale 0 y el % sale vacío: la entrega tarda días. **Esa columna
@@ -387,9 +595,8 @@ Las dos reglas que mandan sobre todo lo demás:
 
 **Bloqueantes de verdad**
 
-- [ ] **Generar `META_ADS_TOKEN`** (Business Settings > System Users, `ads_read` en las 2 cuentas)
-      para que `publicidad-live.js` corra sola cada 15 min. Sin esto la hoja PUBLICIDAD no se
-      actualiza — el 2026-08-30 se llenó a mano una sola vez para verificar el formato
+- [x] ~~Generar `META_ADS_TOKEN`~~ — **HECHO 2026-09-01.** La hoja PUBLICIDAD ya se actualiza
+      sola cada 15 min (ver "Automatización" más abajo)
 - [ ] Eliminar a mano el anuncio rechazado `120251998682700787`
 
 **Corregido 2026-08-30:** esta sección decía "nadie ha activado ninguna campaña todavía" y que la
