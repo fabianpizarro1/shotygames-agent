@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { provincias, ciudadesPorProvincia } from "@/data/ecuador";
 import { useToast } from "@/hooks/use-toast";
 import emparejadosPortada from "@/assets/thumbs/emparejados-portada.webp";
 import dadosDigitalesPrincipal from "@/assets/thumbs/dados-digitales-principal.webp";
@@ -60,39 +61,6 @@ interface FormData {
   metodoPago: "contraentrega" | "transferencia" | "tarjeta";
 }
 
-const provincias = [
-  "Azuay", "Bolívar", "Cañar", "Carchi", "Chimborazo", "Cotopaxi", "El Oro", 
-  "Esmeraldas", "Galápagos", "Guayas", "Imbabura", "Loja", "Los Ríos", "Manabí",
-  "Morona Santiago", "Napo", "Orellana", "Pastaza", "Pichincha", "Santa Elena",
-  "Santo Domingo de los Tsáchilas", "Sucumbíos", "Tungurahua", "Zamora Chinchipe"
-];
-
-const ciudadesPorProvincia: Record<string, string[]> = {
-  "Azuay": ["Cuenca", "Gualaceo", "Paute", "Santa Isabel", "Sigsig", "Girón", "Chordeleg", "San Fernando", "Nabón", "Oña", "Pucará", "Camilo Ponce Enríquez", "Sevilla de Oro", "El Pan", "Guachapala"],
-  "Bolívar": ["Guaranda", "San Miguel", "Chillanes", "Chimbo", "Echeandía", "Caluma", "Las Naves"],
-  "Cañar": ["Azogues", "Cañar", "La Troncal", "Biblián", "Déleg", "El Tambo", "Suscal"],
-  "Carchi": ["Tulcán", "San Gabriel", "Montúfar", "Bolívar", "Espejo", "Mira", "Huaca"],
-  "Chimborazo": ["Riobamba", "Alausí", "Guano", "Colta", "Pallatanga", "Penipe", "Cumandá", "Chambo", "Chunchi", "Guamote"],
-  "Cotopaxi": ["Latacunga", "La Maná", "Saquisilí", "Pujilí", "Salcedo", "Sigchos", "Pangua"],
-  "El Oro": ["Machala", "Huaquillas", "Pasaje", "Santa Rosa", "Piñas", "Arenillas", "Zaruma", "Portovelo", "Atahualpa", "Balsas", "Chilla", "El Guabo", "Marcabelí", "Las Lajas"],
-  "Esmeraldas": ["Esmeraldas", "Atacames", "Muisne", "Eloy Alfaro", "Quinindé", "Río Verde", "San Lorenzo"],
-  "Galápagos": ["Puerto Baquerizo Moreno", "Puerto Ayora", "Puerto Villamil"],
-  "Guayas": ["Guayaquil", "Durán", "Samborondón", "Daule", "Milagro", "Naranjal", "Naranjito", "El Triunfo", "Yaguachi", "Balao", "Balzar", "Colimes", "Palestina", "Pedro Carbo", "Santa Lucía", "Simón Bolívar", "Coronel Marcelino Maridueña", "Lomas de Sargentillo", "Nobol", "General Antonio Elizalde", "Isidro Ayora", "Alfredo Baquerizo Moreno", "Playas", "Salitre"],
-  "Imbabura": ["Ibarra", "Otavalo", "Cotacachi", "Atuntaqui", "Pimampiro", "Urcuquí"],
-  "Loja": ["Loja", "Catamayo", "Macará", "Cariamanga", "Catacocha", "Celica", "Alamor", "Gonzanamá", "Zapotillo", "Puyango", "Paltas", "Calvas", "Pindal", "Quilanga", "Saraguro", "Sozoranga"],
-  "Los Ríos": ["Babahoyo", "Quevedo", "Ventanas", "Vinces", "Baba", "Buena Fe", "Mocache", "Montalvo", "Palenque", "Pueblo Viejo", "Urdaneta", "Valencia"],
-  "Manabí": ["Manta", "Portoviejo", "Chone", "Bahía de Caráquez", "Jipijapa", "Montecristi", "El Carmen", "Pedernales", "Calceta", "Tosagua", "Rocafuerte", "Santa Ana", "Sucre", "24 de Mayo", "Paján", "Pichincha", "Flavio Alfaro", "Jama", "Jaramijó", "Junín", "Olmedo", "Puerto López"],
-  "Morona Santiago": ["Macas", "Gualaquiza", "Sucúa", "Méndez", "Santiago", "Limón Indanza", "Palora", "San Juan Bosco", "Logroño", "Pablo Sexto", "Huamboya", "Taisha", "Tiwintza"],
-  "Napo": ["Tena", "Archidona", "El Chaco", "Quijos", "Carlos Julio Arosemena Tola"],
-  "Orellana": ["Francisco de Orellana", "Coca", "La Joya de los Sachas", "Loreto", "Aguarico"],
-  "Pastaza": ["Puyo", "Shell", "Mera", "Santa Clara", "Arajuno"],
-  "Pichincha": ["Quito", "Cayambe", "Sangolquí", "Machachi", "Tabacundo", "Pedro Moncayo", "Puerto Quito", "San Miguel de los Bancos", "Pedro Vicente Maldonado", "Rumiñahui"],
-  "Santa Elena": ["Salinas", "La Libertad", "Santa Elena"],
-  "Santo Domingo de los Tsáchilas": ["Santo Domingo"],
-  "Sucumbíos": ["Nueva Loja", "Lago Agrio", "Shushufindi", "Cascales", "Cuyabeno", "Gonzalo Pizarro", "Putumayo", "Sucumbíos"],
-  "Tungurahua": ["Ambato", "Baños", "Pelileo", "Píllaro", "Patate", "Quero", "Cevallos", "Mocha", "Tisaleo"],
-  "Zamora Chinchipe": ["Zamora", "Yantzaza", "Zumbi", "Chinchipe", "El Pangui", "Nangaritza", "Palanda", "Paquisha", "Centinela del Cóndor"]
-};
 
 // Atribución de Meta Ads para poder mandar el Purchase real por Conversions
 // API cuando el pedido se confirma (no cuando se llena este formulario).
@@ -111,8 +79,23 @@ function getAtribucionMeta() {
   };
 }
 
+/** Provincias y ciudades EXACTAS de DROPI, el mismo archivo que usan Avanora y
+ *  Truquito. Antes la provincia salía de una lista escrita a mano y la ciudad
+ *  era texto libre: cualquier tilde, abreviatura o typo hacía que la guía
+ *  reventara con "La ciudad no existe en el departamento ingresado" DESPUÉS de
+ *  haber pagado el clic. Ahora el cliente solo puede elegir lo que existe. */
+
 export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, productImage, productId, upsells = [], isCombo = false, comboIncludes = [], originalPrice, torreSelection, incluyeShotBidu: incluyeShotBiduProp = false }: CheckoutModalProps) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>();
+  const isDigitalProduct = productId === 'emparejados' || productId === 'dadosDigitales' || productId === 'ebook-25-juegos' || productId === 'guia-placer';
+  // Contraentrega viene marcada de entrada en físicos: es la que más convierte
+  // y deja el total del resumen igual al precio de la landing. El default va en
+  // useForm y no solo como defaultValue del RadioGroup, porque RHF no "ve" la
+  // marca visual — sin esto el submit mandaba 'transferencia' y aplicaba el 5%
+  // a alguien que nunca lo eligió.
+  const METODO_POR_DEFECTO = isDigitalProduct ? 'transferencia' : 'contraentrega';
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+    defaultValues: { metodoPago: METODO_POR_DEFECTO as FormData['metodoPago'] },
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -122,7 +105,29 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const metodoPago = watch("metodoPago");
-  const isDigitalProduct = productId === 'emparejados' || productId === 'dadosDigitales' || productId === 'ebook-25-juegos' || productId === 'guia-placer';
+  const ciudadElegida = watch("ciudad");
+  // La ciudad depende de la provincia: solo se ofrecen las que DROPI reconoce
+  // dentro de esa provincia.
+  const ciudades = selectedProvincia ? ciudadesPorProvincia[selectedProvincia] || [] : [];
+
+  // Qué regalo digital lleva cada producto físico. Se usa solo para decirle al
+  // cliente CÓMO le llega según cómo pague: contraentrega viaja en la caja con
+  // QR (no puede salir antes, no hay pago confirmado), anticipado sale por
+  // WhatsApp apenas confirma. Ese contraste es el argumento del pago anticipado
+  // y vive únicamente acá — las landings no lo mencionan.
+  const REGALO_DIGITAL: Record<string, string> = {
+    torreNormal: 'la guía de 20 juegos para fiestas',
+    torrePicante: 'la guía de 20 juegos para fiestas',
+    torreParejas: 'la guía de 30 posiciones',
+    enganchados: 'la guía de 20 juegos para fiestas',
+    partyshots: 'la guía de 20 juegos para fiestas',
+    torres: 'las 2 guías digitales',
+    chuchaqui: 'las 2 guías digitales',
+    previa: 'las 2 guías digitales',
+    'promo-hoy': 'las 2 guías digitales',
+    comboParejas: 'Emparejados y las 2 guías digitales',
+  };
+  const regaloDigital = REGALO_DIGITAL[productId];
 
   // Restore checkout state when coming back from PayPhone
   useEffect(() => {
@@ -142,7 +147,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           setValue('ciudad', context.formData.ciudad || '');
           setValue('direccion', context.formData.direccion || '');
           setValue('referencias', context.formData.referencias || '');
-          setValue('metodoPago', context.formData.metodoPago || 'transferencia');
+          setValue('metodoPago', context.formData.metodoPago || METODO_POR_DEFECTO);
         }
         
         // Restore upsells
@@ -278,7 +283,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     // El fallback tiene que coincidir con el defaultValue del RadioGroup que se
     // muestra: si no, quien deja el default sin tocarlo termina en el flujo
     // equivocado. Digitales no tienen contraentrega.
-    const metodoPagoFinal = data.metodoPago || "transferencia";
+    const metodoPagoFinal = data.metodoPago || METODO_POR_DEFECTO;
     
     let pedido: any;
     
@@ -429,23 +434,29 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl overflow-y-auto">
-        <DialogHeader className="pr-8">
-          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
+      {/* Estructura de hoja, igual que el checkout de Truquito y Avanora:
+          cabecera fija, cuerpo con scroll propio y el botón de confirmar
+          anclado abajo. En móvil el formulario es largo y el CTA quedaba
+          enterrado al final del scroll; así está siempre a la vista. */}
+      <DialogContent className="flex max-h-[92vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-5 py-4">
+          <DialogTitle className="text-xl sm:text-2xl font-extrabold text-center">
             Completa tu pedido
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5">
+
         {/* Resumen del pedido */}
-        <div className="bg-muted/30 rounded-lg p-5 border-2 border-primary/10">
+        <div className="rounded-2xl border bg-muted/40 p-4">
           <div className="flex items-center gap-4 mb-4">
             <img 
               src={productImage} 
               alt={productName} 
-              className="w-20 h-20 object-cover rounded-lg border-2 border-primary/20"
+              className="h-20 w-20 shrink-0 rounded-xl border bg-background object-cover"
             />
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-1">{productName}</h3>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold leading-snug mb-1">{productName}</h3>
               <div className="flex items-center gap-2">
                 {originalPrice && (
                   <p className="text-lg text-muted-foreground line-through">${originalPrice.toFixed(2)}</p>
@@ -590,7 +601,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           Ingresa tus datos para realizar el pedido 📦
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Campo oculto registrado a mano: el RadioGroup de método de pago
               solo llama setValue() en onValueChange, RHF no lo "ve" como
               obligatorio si no está registrado. Sin esto, el submit pasaba
@@ -601,6 +612,18 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
             type="hidden"
             {...register("metodoPago", {
               required: !isDigitalProduct ? "Selecciona un método de pago" : false,
+            })}
+          />
+          <input
+            type="hidden"
+            {...register("provincia", {
+              required: !isDigitalProduct ? "Selecciona tu provincia" : false,
+            })}
+          />
+          <input
+            type="hidden"
+            {...register("ciudad", {
+              required: !isDigitalProduct ? "Selecciona tu ciudad" : false,
             })}
           />
 
@@ -680,18 +703,22 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 <div>
                   <Label htmlFor="provincia">Provincia</Label>
               <Select
+                value={selectedProvincia || undefined}
                 onValueChange={(value) => {
-                  setValue("provincia", value);
+                  setValue("provincia", value, { shouldValidate: true });
                   setSelectedProvincia(value);
+                  // Cambiar de provincia invalida la ciudad: la de antes puede
+                  // no existir en la nueva.
+                  setValue("ciudad", "");
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id="provincia">
                   <SelectValue placeholder="Selecciona tu provincia" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-72">
                   {provincias.map((prov) => (
-                    <SelectItem key={prov} value={prov}>
-                      {prov}
+                    <SelectItem key={prov.valor} value={prov.valor}>
+                      {prov.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -703,14 +730,24 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
 
             <div>
               <Label htmlFor="ciudad">Ciudad</Label>
-              <Input
-                id="ciudad"
-                placeholder="Ingresa tu ciudad"
-                autoComplete="address-level2"
-                inputMode="text"
-                enterKeyHint="next"
-                {...register("ciudad", { required: "La ciudad es requerida" })}
-              />
+              <Select
+                value={ciudadElegida || undefined}
+                disabled={!selectedProvincia}
+                onValueChange={(value) => setValue("ciudad", value, { shouldValidate: true })}
+              >
+                <SelectTrigger id="ciudad">
+                  <SelectValue
+                    placeholder={selectedProvincia ? "Selecciona tu ciudad" : "Elige tu provincia primero"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {ciudades.map((c) => (
+                    <SelectItem key={c.valor} value={c.valor}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.ciudad && (
                 <p className="text-sm text-destructive mt-1">{errors.ciudad.message}</p>
               )}
@@ -1192,6 +1229,47 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           )}
 
           {/* Resumen del pedido - Solo para productos físicos con upsells */}
+          {/* Método de pago - Solo para productos físicos y combos */}
+          {!isDigitalProduct && (
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-lg font-semibold">Elige cómo quieres pagar:</Label>
+              <RadioGroup
+                defaultValue="contraentrega"
+                onValueChange={(value) => setValue("metodoPago", value as any, { shouldValidate: true })}
+                className="space-y-3"
+              >
+                <Label htmlFor="contraentrega" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="contraentrega" id="contraentrega" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2">
+                      <Banknote className="w-4 h-4" />
+                      Pago contra entrega
+                    </span>
+                  </div>
+                </Label>
+
+                <Label htmlFor="transferencia" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
+                  <RadioGroupItem value="transferencia" id="transferencia" className="mt-1" />
+                  <div className="flex-1">
+                    <span className="font-semibold flex items-center gap-2 flex-wrap">
+                      <Truck className="w-4 h-4" />
+                      Pago anticipado por transferencia/depósito
+                      <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0">5% DE DESCUENTO</Badge>
+                      <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
+                    </span>
+                    {regaloDigital && (
+                      <p className="text-xs font-semibold text-primary mt-2 flex items-start gap-1.5">
+                        <span aria-hidden>⚡</span>
+                        Tu regalo ({regaloDigital}) te llega por WhatsApp de inmediato, sin esperar el paquete.
+                      </p>
+                    )}
+                  </div>
+                </Label>
+
+              </RadioGroup>
+              {errors.metodoPago && (
+                <p className="text-sm text-destructive">{errors.metodoPago.message}</p>
+              )}
           {!isDigitalProduct && (
             <div className="bg-muted/50 rounded-lg p-5 border-2 border-primary/20 space-y-3">
               <h4 className="font-semibold text-base mb-3">Resumen de tu pedido</h4>
@@ -1241,85 +1319,22 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
             </div>
           )}
 
-          {/* Método de pago - Solo para productos físicos y combos */}
-          {!isDigitalProduct && (
-            <div className="space-y-4 border-t pt-4">
-              <Label className="text-lg font-semibold">Elige cómo quieres pagar:</Label>
-              <RadioGroup
-                onValueChange={(value) => setValue("metodoPago", value as any, { shouldValidate: true })}
-                className="space-y-3"
-              >
-                <Label htmlFor="contraentrega" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
-                  <RadioGroupItem value="contraentrega" id="contraentrega" className="mt-1" />
-                  <div className="flex-1">
-                    <span className="font-semibold flex items-center gap-2">
-                      <Banknote className="w-4 h-4" />
-                      Pago contra entrega
-                    </span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Pagas en efectivo cuando recibes tu pedido. Para confirmarlo te llevamos a WhatsApp con tu pedido ya escrito, solo lo envías.
-                    </p>
-                    {productId === 'comboParejas' && (
-                      <p className="text-xs text-muted-foreground/80 mt-2 flex items-start gap-1.5">
-                        <span aria-hidden>📦</span>
-                        Emparejados y las 2 guías digitales te llegan dentro del paquete, en tarjetas con código QR.
-                      </p>
-                    )}
-                  </div>
-                </Label>
-
-                <Label htmlFor="transferencia" className="flex items-start space-x-3 border-2 border-green-500/40 bg-green-500/5 rounded-lg p-4 hover:border-green-500 transition-colors cursor-pointer mb-0">
-                  <RadioGroupItem value="transferencia" id="transferencia" className="mt-1" />
-                  <div className="flex-1">
-                    <span className="font-semibold flex items-center gap-2 flex-wrap">
-                      <Truck className="w-4 h-4 text-green-600" />
-                      Pago anticipado por transferencia/depósito
-                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">5% OFF</Badge>
-                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
-                    </span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Pagas antes del envío con 5% de descuento y tu pedido sale primero: te llega en 24-48 horas laborables.
-                    </p>
-                    {productId === 'comboParejas' && (
-                      <p className="text-xs font-semibold text-green-700 mt-2 flex items-start gap-1.5">
-                        <span aria-hidden>⚡</span>
-                        Emparejados y las 2 guías digitales te llegan por WhatsApp de inmediato, sin esperar el paquete.
-                      </p>
-                    )}
-                  </div>
-                </Label>
-
-                <Label htmlFor="tarjeta" className="flex items-start space-x-3 border rounded-lg p-4 hover:border-primary transition-colors cursor-pointer mb-0">
-                  <RadioGroupItem value="tarjeta" id="tarjeta" className="mt-1" />
-                  <div className="flex-1">
-                    <span className="font-semibold flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" />
-                      Pagar con tarjeta
-                      <Badge className="bg-green-600 text-white text-[10px] px-2 py-0">ENVÍO PRIORITARIO</Badge>
-                    </span>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Pago seguro con tarjeta de crédito o débito a través de PayPhone. Tu pedido sale primero: te llega en 24-48 horas laborables.
-                    </p>
-                    {productId === 'comboParejas' && (
-                      <p className="text-xs font-semibold text-primary mt-2 flex items-start gap-1.5">
-                        <span aria-hidden>⚡</span>
-                        Emparejados y las 2 guías digitales te llegan por WhatsApp de inmediato, sin esperar el paquete.
-                      </p>
-                    )}
-                  </div>
-                </Label>
-              </RadioGroup>
-              {errors.metodoPago && (
-                <p className="text-sm text-destructive">{errors.metodoPago.message}</p>
-              )}
             </div>
           )}
 
-          {/* Botón de confirmación */}
+        </form>
+        </div>
+
+        {/* Pie fijo: el CTA no se pierde por más largo que sea el formulario. */}
+        <div className="shrink-0 border-t bg-background px-5 py-4">
+          <p className="mb-2 text-center text-xs font-semibold text-muted-foreground">
+            🔒 Pedido seguro · {isDigitalProduct ? 'Acceso inmediato' : 'Pago al recibir'} · Garantía ShotyGames
+          </p>
           <Button 
             type="submit" 
+            form="checkout-form"
             size="lg" 
-            className="w-full text-lg py-6 gradient-party"
+            className="h-auto w-full rounded-xl py-3.5 text-base font-bold uppercase gradient-party disabled:opacity-60"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
@@ -1330,11 +1345,16 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
             ) : (
               <>
                 <ShoppingBag className="w-5 h-5 mr-2" />
-                {isDigitalProduct ? 'Realizar compra' : 'Realizar Pedido'}
+                {isDigitalProduct ? 'Realizar compra' : `Pedir ahora — $${getFinalTotal(metodoPago).toFixed(2)}`}
               </>
             )}
           </Button>
-        </form>
+          {!isDigitalProduct && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              💵 {metodoPago === 'contraentrega' ? 'Pagas al recibir' : 'Pago anticipado'} · 🚚 Envío gratis
+            </p>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
