@@ -601,7 +601,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           Ingresa tus datos para realizar el pedido 📦
         </p>
 
-        <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Campo oculto registrado a mano: el RadioGroup de método de pago
               solo llama setValue() en onValueChange, RHF no lo "ve" como
               obligatorio si no está registrado. Sin esto, el submit pasaba
@@ -630,8 +630,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           {/* Datos personales */}
           <div className="space-y-5 sm:space-y-4">
             <div>
-              <Label htmlFor="nombre">Nombre completo</Label>
+              <Label htmlFor="nombre" className="mb-1 block text-sm font-semibold">Nombre completo</Label>
               <Input
+                className="h-auto rounded-xl border px-4 py-3 text-base"
                 id="nombre"
                 placeholder="Nombre y apellido"
                 autoComplete="name"
@@ -640,13 +641,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 {...register("nombre", { required: "El nombre es requerido" })}
               />
               {errors.nombre && (
-                <p className="text-sm text-destructive mt-1">{errors.nombre.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.nombre.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="telefono">Teléfono (con WhatsApp)</Label>
+              <Label htmlFor="telefono" className="mb-1 block text-sm font-semibold">Teléfono (con WhatsApp)</Label>
               <Input
+                className="h-auto rounded-xl border px-4 py-3 text-base"
                 id="telefono"
                 type="tel"
                 inputMode="numeric"
@@ -661,18 +663,19 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   }
                 })}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="mt-1 text-xs text-muted-foreground">
                 A este número te llegará la confirmación por WhatsApp.
               </p>
               {errors.telefono && (
-                <p className="text-sm text-destructive mt-1">{errors.telefono.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.telefono.message}</p>
               )}
             </div>
 
             {isDigitalProduct && (
               <div>
-                <Label htmlFor="email">Correo electrónico</Label>
+                <Label htmlFor="email" className="mb-1 block text-sm font-semibold">Correo electrónico</Label>
                 <Input
+                  className="h-auto rounded-xl border px-4 py-3 text-base"
                   id="email"
                   type="email"
                   inputMode="email"
@@ -687,21 +690,22 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                     }
                   })}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {productId === 'guia-placer' || productId === 'ebook-25-juegos'
                     ? 'A este correo te enviaremos el enlace de descarga.'
                     : 'Este correo será tu usuario para entrar al juego. El acceso te llega por WhatsApp.'}
                 </p>
                 {errors.email && (
-                  <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+                  <p className="mt-1 text-xs font-medium text-destructive">{errors.email.message}</p>
                 )}
               </div>
             )}
 
             {!isDigitalProduct && (
               <>
+            <div className="grid gap-3.5 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="provincia">Provincia</Label>
+                  <Label htmlFor="provincia" className="mb-1 block text-sm font-semibold">Provincia</Label>
               <Select
                 value={selectedProvincia || undefined}
                 onValueChange={(value) => {
@@ -712,7 +716,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                   setValue("ciudad", "");
                 }}
               >
-                <SelectTrigger id="provincia">
+                <SelectTrigger id="provincia" className="h-auto rounded-xl border px-4 py-3 text-base">
                   <SelectValue placeholder="Selecciona tu provincia" />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -724,18 +728,18 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 </SelectContent>
               </Select>
               {errors.provincia && (
-                <p className="text-sm text-destructive mt-1">{errors.provincia.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.provincia.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="ciudad">Ciudad</Label>
+              <Label htmlFor="ciudad" className="mb-1 block text-sm font-semibold">Ciudad</Label>
               <Select
                 value={ciudadElegida || undefined}
                 disabled={!selectedProvincia}
                 onValueChange={(value) => setValue("ciudad", value, { shouldValidate: true })}
               >
-                <SelectTrigger id="ciudad">
+                <SelectTrigger id="ciudad" className="h-auto rounded-xl border px-4 py-3 text-base">
                   <SelectValue
                     placeholder={selectedProvincia ? "Selecciona tu ciudad" : "Elige tu provincia primero"}
                   />
@@ -749,13 +753,15 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 </SelectContent>
               </Select>
               {errors.ciudad && (
-                <p className="text-sm text-destructive mt-1">{errors.ciudad.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.ciudad.message}</p>
               )}
+            </div>
             </div>
 
             <div>
-              <Label htmlFor="direccion">Dirección completa</Label>
+              <Label htmlFor="direccion" className="mb-1 block text-sm font-semibold">Dirección completa</Label>
               <Textarea
+                className="h-auto rounded-xl border px-4 py-3 text-base"
                 id="direccion"
                 placeholder="Calle principal, calle secundaria, barrio, zona, piso, número de casa…"
                 autoComplete="street-address"
@@ -764,13 +770,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 {...register("direccion", { required: "La dirección es requerida" })}
               />
               {errors.direccion && (
-                <p className="text-sm text-destructive mt-1">{errors.direccion.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.direccion.message}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="referencias">Referencias de la dirección</Label>
+              <Label htmlFor="referencias" className="mb-1 block text-sm font-semibold">Referencias de la dirección</Label>
               <Textarea
+                className="h-auto rounded-xl border px-4 py-3 text-base"
                 id="referencias"
                 placeholder="Color de la casa, cerca de qué, al lado de qué local, esquina, etc."
                 inputMode="text"
@@ -778,7 +785,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
                 {...register("referencias", { required: "Las referencias son requeridas" })}
               />
               {errors.referencias && (
-                <p className="text-sm text-destructive mt-1">{errors.referencias.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive">{errors.referencias.message}</p>
               )}
             </div>
               </>
@@ -1322,38 +1329,41 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
             </div>
           )}
 
-        </form>
-        </div>
-
-        {/* Pie fijo: el CTA no se pierde por más largo que sea el formulario. */}
-        <div className="shrink-0 border-t bg-background px-5 py-4">
-          <p className="mb-2 text-center text-xs font-semibold text-muted-foreground">
-            🔒 Pedido seguro · {isDigitalProduct ? 'Acceso inmediato' : 'Pago al recibir'} · Garantía ShotyGames
-          </p>
-          <Button 
-            type="submit" 
-            form="checkout-form"
-            size="lg" 
-            className="h-auto w-full rounded-xl py-3.5 text-base font-bold uppercase gradient-party disabled:opacity-60"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Enviando pedido...
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="w-5 h-5 mr-2" />
-                {isDigitalProduct ? 'Realizar compra' : `Pedir ahora — $${getFinalTotal(metodoPago).toFixed(2)}`}
-              </>
-            )}
-          </Button>
-          {!isDigitalProduct && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              💵 {metodoPago === 'contraentrega' ? 'Pagas al recibir' : 'Pago anticipado'} · 🚚 Envío gratis
+          {/* Cierre: el botón va al final y no en un pie fijo. En este checkout
+              el formulario no se puede enviar hasta completarlo entero, así que
+              un botón pegado abajo no es accionable durante casi todo el
+              recorrido — y come ~110px de los 812 de un móvil, justo el alto
+              que le hace falta al formulario. Acá además queda pegado al
+              resumen, que es lo que se lee antes de confirmar. */}
+          <div className="space-y-2 border-t pt-5">
+            <p className="text-center text-xs font-semibold text-muted-foreground">
+              🔒 Pedido seguro · {isDigitalProduct ? 'Acceso inmediato' : 'Pago al recibir'} · Garantía ShotyGames
             </p>
-          )}
+            <Button
+              type="submit"
+              size="lg"
+              className="h-auto w-full rounded-xl py-3.5 text-base font-bold uppercase gradient-party disabled:opacity-60"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Enviando pedido...
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-5 h-5 mr-2" />
+                  {isDigitalProduct ? 'Realizar compra' : `Pedir ahora — $${getFinalTotal(metodoPago).toFixed(2)}`}
+                </>
+              )}
+            </Button>
+            {!isDigitalProduct && (
+              <p className="text-center text-xs text-muted-foreground">
+                💵 {metodoPago === 'contraentrega' ? 'Pagas al recibir' : 'Pago anticipado'} · 🚚 Envío gratis
+              </p>
+            )}
+          </div>
+        </form>
         </div>
       </DialogContent>
     </Dialog>
