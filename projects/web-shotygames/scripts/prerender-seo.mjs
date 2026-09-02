@@ -80,7 +80,7 @@ const pages = [
   },
   {
     route: "/landing/torre-parejas",
-    chunk: "src/pages/TorreParejasLanding.tsx",
+    chunk: "src/pages/TorreParejasV2Landing.tsx",
     hero: "src/assets/torre-parejas-1.webp",
     title: "Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador",
     description:
@@ -90,7 +90,7 @@ const pages = [
   },
   {
     route: "/landing/torre-parejas-v2",
-    chunk: "src/pages/TorreParejasV2Landing.tsx",
+    chunk: "src/pages/TorreParejasLanding.tsx",
     hero: "src/assets/torre-parejas-1.webp",
     title: "Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador",
     description:

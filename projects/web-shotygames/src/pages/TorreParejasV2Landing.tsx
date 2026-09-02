@@ -265,7 +265,7 @@ const TorreParejasV2Landing = () => {
       <Seo
         title="Torre de Shots Parejas ❤️ - Sal de la Rutina | ShotyGames Ecuador"
         description="51 retos para dos que convierten una noche cualquiera en una que van a recordar. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador."
-        canonical="https://www.shotygames.com/landing/torre-parejas-v2"
+        canonical="https://www.shotygames.com/landing/torre-parejas"
         image={`https://www.shotygames.com${torreParejas1}`}
         type="product"
       />

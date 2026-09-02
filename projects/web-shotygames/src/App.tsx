@@ -51,8 +51,13 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
         <Route path="/landing/torre-picante" element={<TorrePicanteLanding />} />
-          <Route path="/landing/torre-parejas" element={<TorreParejasLanding />} />
-          <Route path="/landing/torre-parejas-v2" element={<TorreParejasV2Landing />} />
+          {/* Intercambiadas el 2026-09-02: la variante de creativos pasa a ser la
+              principal (es la ruta a la que apuntan los anuncios) y la original
+              queda como la B. Los nombres de archivo NO se renombraron a
+              propósito: el historial de git y el prerender de SEO los referencian
+              por ruta de archivo. */}
+          <Route path="/landing/torre-parejas" element={<TorreParejasV2Landing />} />
+          <Route path="/landing/torre-parejas-v2" element={<TorreParejasLanding />} />
         <Route path="/landing/partyshots" element={<PartyshotsLanding />} />
         <Route path="/landing/enganchados" element={<EnganchadosLanding />} />
         <Route path="/landing/emparejados" element={<EmparejadosLanding />} />
