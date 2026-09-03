@@ -690,6 +690,37 @@ try {
   console.error('[CRON] Error al iniciar publicidad:', e.message);
 }
 
+// ── PUBLICIDAD SHOTYGAMES: gasto de Meta vs ventas del registro ────
+// Igual que el de dropshipping pero contra "2026 REGISTRO DE VENTAS" y con
+// META_CAPI_TOKEN: las cuentas de Shotygames viven en OTRO Business Manager y
+// META_ADS_TOKEN (system user de Avanora) no puede leerlas.
+// Tampoco escribe en disco, así que vive bien en el contenedor.
+try {
+  const cron = require('node-cron');
+  const { correr: correrPubliSG } = require('./projects/publicidad-shotygames/live');
+
+  const activo = process.env.META_CAPI_TOKEN && process.env.SHEETS_ID
+    && process.env.PUBLICIDAD_SG_EN_SERVIDOR !== '0';
+
+  if (activo) {
+    // Desfasado 7 min del de dropshipping para no pegarle a Meta y a Sheets
+    // con las dos cargas al mismo tiempo.
+    cron.schedule('7,22,37,52 * * * *', () => {
+      correrPubliSG().catch(e => console.error('[PUBLICIDAD-SG] Falló:', e.message));
+    });
+    console.log('[CRON] Publicidad Shotygames: gasto Meta + ventas reales cada 15 min');
+    registrarCron('publicidad_shotygames', true, 'cada 15 min (min 7,22,37,52)');
+  } else if (process.env.PUBLICIDAD_SG_EN_SERVIDOR === '0') {
+    console.log('[CRON] Publicidad Shotygames: apagada a propósito');
+    registrarCron('publicidad_shotygames', false, 'apagada a propósito (PUBLICIDAD_SG_EN_SERVIDOR=0)');
+  } else {
+    console.log('[CRON] Publicidad Shotygames: desactivada (falta META_CAPI_TOKEN o SHEETS_ID)');
+    registrarCron('publicidad_shotygames', false, 'falta META_CAPI_TOKEN o SHEETS_ID en el servidor');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar publicidad Shotygames:', e.message);
+}
+
 // ── CONTENIDO DIARIO (Instagram, manual — bot solo genera y envía) ──
 try {
   const cron = require('node-cron');
