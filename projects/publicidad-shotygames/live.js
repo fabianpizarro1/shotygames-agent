@@ -22,7 +22,7 @@ require('dotenv').config();
 const { google } = require('googleapis');
 const { parseMonto } = require('../../sheets.js');
 const { hoyEC, aFechaLocal } = require('../../fechas.js');
-const { CUENTAS_ADS, ESTADOS } = require('./config.js');
+const { CUENTAS_ADS, ESTADOS, COSTO_CAJA, COLUMNAS_CANTIDAD } = require('./config.js');
 
 const SHEET_ID = process.env.SHEETS_ID;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
@@ -125,13 +125,19 @@ async function pedidosDiarios({ desde }) {
     const envio = parseMonto(f[idx('ENVIO')]) || 0;
     const utilidad = parseMonto(f[idx('UTILIDAD')]) || 0;
 
+    // Una devolución cuesta el envío de ida MÁS $1 por caja: vuelve aplastada y
+    // hay que reponerla antes de revender. El juego en sí no se pierde (es stock
+    // propio), por eso los COSTOS no entran.
+    const cajas = COLUMNAS_CANTIDAD.reduce((n, c) => n + (parseMonto(f[idx(c)]) || 0), 0);
+    const perdidaSiSeDevuelve = envio + cajas * COSTO_CAJA;
+
     porFecha[fecha] ||= { todas: vacio(), meta: vacio() };
     const cubos = conMeta ? [porFecha[fecha].todas, porFecha[fecha].meta] : [porFecha[fecha].todas];
 
     for (const d of cubos) {
       if (en(ESTADOS.devueltos, estado)) {
         d.devueltos += 1;
-        d.perdidaDevueltos += envio;
+        d.perdidaDevueltos += perdidaSiSeDevuelve;
         continue;
       }
       d.ventas += 1;
@@ -141,7 +147,9 @@ async function pedidosDiarios({ desde }) {
         d.margenEntregados += utilidad;
       } else if (en(ESTADOS.pendientes, estado)) {
         d.margenPendientes += utilidad;
-        d.fletePendientes += envio;
+        // Mismo criterio para lo que todavía no se sabe: si se devuelve, cuesta
+        // envío + cajas. Es lo que multiplica el % de devolución esperada.
+        d.fletePendientes += perdidaSiSeDevuelve;
       }
     }
   }

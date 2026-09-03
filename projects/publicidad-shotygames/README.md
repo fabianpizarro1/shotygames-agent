@@ -42,4 +42,11 @@ verdad está en el medio — por eso el selector, en vez de elegir por Fabián.
   `DEVOLUCION` 15 / `Devuelto` 1): comparar **siempre** en mayúsculas.
 - **La UTILIDAD no se recalcula**: se usa la columna `UTILIDAD` que el Sheet ya trae
   (ingreso − costo − envío, sin publicidad). Es el número de Fabián, no uno mío.
+- **Qué cuesta una devolución** (dato de Fabián, 2026-09-02): el **envío de ida** + **$1 por
+  caja**, porque la caja vuelve aplastada y se repone antes de revender. El juego NO se pierde
+  (es stock propio y vuelve al inventario), así que los COSTOS no se descuentan. Las cantidades
+  salen de las columnas `N/P/PAR/ENG/DADOS/EMPA`, que cuadran con el texto de `PRODUCTOS` en 30
+  de 32 pedidos.
+  Ojo: en la columna `UTILIDAD` del Sheet, las 16 devoluciones de 2026 figuran con **+$315,89**
+  como si se hubieran cobrado. Acá se excluyen de la utilidad y se les resta la pérdida real.
 - **`time_range` explícito, nunca `date_preset`**: los presets de N días excluyen el día en curso.

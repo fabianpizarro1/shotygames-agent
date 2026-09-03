@@ -59,4 +59,20 @@ const ESTADOS = {
   pendientes: ['PENDIENTE', 'ENVIADO', 'NOVEDAD'], // todavía no se sabe
 };
 
-module.exports = { CUENTAS_ADS, ESTADOS };
+/**
+ * Qué se pierde cuando un pedido se devuelve (dato de Fabián, 2026-09-02):
+ *
+ *   1. El **envío de ida** (columna ENVIO del pedido).
+ *   2. **$1 por cada caja**: la caja suele volver aplastada y se repone con una
+ *      nueva antes de revender el juego.
+ *
+ * El producto en sí NO se pierde —es stock propio y vuelve al inventario—, por
+ * eso no se descuentan los COSTOS.
+ *
+ * Las cantidades salen de las columnas por producto (N/P/PAR/ENG/DADOS/EMPA),
+ * verificadas contra el texto de PRODUCTOS: coinciden en 30 de 32 pedidos.
+ */
+const COSTO_CAJA = 1.00;
+const COLUMNAS_CANTIDAD = ['N', 'P', 'PAR', 'ENG', 'DADOS', 'EMPA'];
+
+module.exports = { CUENTAS_ADS, ESTADOS, COSTO_CAJA, COLUMNAS_CANTIDAD };
