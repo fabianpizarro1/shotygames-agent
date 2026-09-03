@@ -1,8 +1,11 @@
 /**
  * Rutina diaria de dropshipping.
  *
- * Corre a las 5 AM de Ecuador, cuando la API de DROPI está vacía y el catálogo
- * completo baja en ~9 minutos. A media tarde la misma descarga tarda 25-30.
+ * Corre a las 22:00 de Ecuador. Antes era a las 5 AM (la API de DROPI está
+ * vacía a esa hora y el catálogo baja en ~9 min, contra 25-30 a media tarde),
+ * pero a esa hora el Mac está dormido: la corrida del 2026-08-30 se cortó a
+ * mitad de descarga y la del 31 no ocurrió. Un cron veloz que no corre vale
+ * cero — se cambió velocidad por que efectivamente suceda.
  *
  * Qué hace:
  *   1. Snapshot del catálogo (~33.000 productos)
@@ -14,6 +17,12 @@
  * El delta de stock entre dos snapshots es la única señal honesta de que un
  * producto se vende: no es opinión de nadie ni una tendencia de TikTok, es
  * mercadería que salió de la bodega del proveedor.
+ *
+ * ⚠ Ese delta es NETO, y por eso `ranking.js` se deja tapar por un restock del
+ * proveedor. El conteo de "productos con movimiento" del aviso sale de
+ * `movimientos.js`, que suma solo las bajas y no se deja engañar. El detalle
+ * completo de los ~5.000 va al dashboard web: en Telegram no entra (límite de
+ * 4096 caracteres), así que acá van los 5 mejores y el link.
  */
 
 require('dotenv').config();
@@ -24,6 +33,7 @@ const { guardarSnapshot } = require('./catalogo');
 const { analizar } = require('./ranking');
 
 const DATA_DIR = path.join(__dirname, 'data');
+const DASHBOARD_URL = 'https://dropi-dashboard-sepia.vercel.app';
 const SNAPSHOTS_A_CONSERVAR = 10;   // 10 días de historial · ~130 MB
 
 const usd = (n) => '$' + (Number(n) || 0).toFixed(2);
@@ -69,8 +79,27 @@ function armarMensaje(a) {
 
   return `📦 *Candidatos del día* · ventana ${d.horas.toFixed(0)}h\n\n` +
          lineas.join('\n\n') +
-         `\n\n_${a.total} productos con movimiento · ${d.nuevos.length} nuevos en el catálogo_\n` +
-         `_${a.conRiesgoMeta} de los mostrados tienen riesgo en Meta_`;
+         `\n\n${resumenMovimiento()}\n` +
+         `_${d.nuevos.length} nuevos en el catálogo · ${a.conRiesgoMeta} de los mostrados con riesgo en Meta_`;
+}
+
+/**
+ * Una línea con el movimiento REAL del catálogo entero. Va aparte del ranking
+ * porque `ranking.js` mide delta neto (un restock le borra las ventas) y
+ * `movimientos.js` suma solo las bajas. En Telegram no caben los ~5.000
+ * productos, así que se manda el conteo y el link al dashboard.
+ */
+function resumenMovimiento() {
+  try {
+    const { movimientos } = require('./movimientos');
+    const m = movimientos();
+    const fiables = m.filter((p) => !p.sospechoso).length;
+    const piso = m.filter((p) => p.tapado).length;
+    return `_${m.length} productos con movimiento real (${fiables} sin saltos raros · ${piso} son piso por restock)_\n` +
+           `_Todos en el dashboard → ${DASHBOARD_URL}_`;
+  } catch (e) {
+    return `_No se pudo calcular el movimiento: ${e.message}_`;
+  }
 }
 
 async function avisar(texto) {

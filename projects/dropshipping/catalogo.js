@@ -170,6 +170,11 @@ function resumir(p) {
     sale_price: parseFloat(p.sale_price) || 0,           // lo que TÚ le pagas al proveedor
     suggested_price: parseFloat(p.suggested_price) || 0, // lo que el proveedor sugiere cobrar
     weight: parseFloat(p.weight) || 0,
+    // Cuándo entró el producto al catálogo. Sirve para distinguir un producto
+    // nuevo que arranca de uno viejo que revivió — el dashboard lo muestra
+    // como "Fecha de creación". Los snapshots anteriores al 2026-09-01 no lo
+    // traen, así que puede venir null en el histórico ya guardado.
+    created_at: p.created_at || null,
     user_id: p.user_id,                                  // proveedor dueño del producto
     proveedor: p.user?.store_name || p.user?.name || null,
     categorias: (p.categories || []).map(c => c.name || c.category?.name).filter(Boolean),

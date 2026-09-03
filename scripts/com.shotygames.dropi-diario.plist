@@ -11,12 +11,17 @@
         <string>/Users/user/Projects/KEPLER/scripts/dropi-diario.sh</string>
     </array>
 
-    <!-- Todos los días a las 5:00 AM — la API de DROPI está vacía a esa hora
-         y el catálogo completo (~34.000 productos) baja mucho más rápido. -->
+    <!-- Todos los días a las 22:00. Antes corría a las 5:00 AM porque la API de
+         DROPI está vacía a esa hora y el catálogo baja más rápido — pero a esa
+         hora el Mac está DORMIDO: la corrida del 2026-08-30 se cortó a mitad de
+         descarga y la del 31 no ocurrió nunca. Un cron veloz que no corre vale
+         cero. A las 22:00 la máquina está encendida; la descarga tarda más y no
+         importa. Si el Mac está dormido a las 22:00, launchd la dispara al
+         despertar. -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>5</integer>
+        <integer>22</integer>
         <key>Minute</key>
         <integer>0</integer>
     </dict>

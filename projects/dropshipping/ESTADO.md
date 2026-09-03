@@ -241,7 +241,8 @@ Scripts relevantes:
 | `ranking.js` | Cruza velocidad de venta, rentabilidad y riesgo en Meta |
 | `pedidos.js` | Crea órdenes en DROPI. `crearPedido`, `getOrden`, `getMovimientosWallet` |
 | `sheets-pedidos.js` | Lee y escribe el Sheet de pedidos **por título de columna**, no por índice |
-| `diario.js` | Rutina de las 5 AM: snapshot + ranking + aviso por Telegram + publica el dashboard |
+| `diario.js` | Rutina de las **22:00**: snapshot + ranking + aviso por Telegram + publica el dashboard. Era 5 AM pero el Mac estaba dormido y no corría |
+| `movimientos.js` | Movimiento real de **TODOS** los productos (~5.000), sin filtros de calidad. Suma solo las bajas, así el restock no borra ventas. Marca `tapado` (piso) y `sospechoso` (salto único = corrección de inventario) |
 | `crear-sheet-productos.js` | Arma el Sheet de investigación, una hoja por producto |
 | `consistencia.js` | Velocidad de venta sostenida (no un solo salto de stock). **Ojo: un restock del proveedor le tapa las ventas del día — para volumen real usar `ventas-mercado.js`** |
 | `ventas-mercado.js` | Ventas reales de un producto en DROPI, **de todos los dropshippers**. Muestrea stock cada 30 min (LaunchAgent `com.shotygames.ventas-mercado`) y suma solo las bajas, así el restock no borra las ventas. `medir` / `reporte` / `sembrar` / `watchlist` |
@@ -569,6 +570,13 @@ de usuario. **No funciona:** Meta exige verificación de identidad (subir cédul
 vinculada a un Business Portfolio) para que cualquier app pueda consultar la Ad Library API,
 sin importar el tipo de anuncio — confirmado con un token real, error
 `OAuthException subcode 2332002`. No es un permiso que se activa solo.
+
+**Reafirmado el 2026-09-01:** Fabián pidió ver los anuncios activos dentro de la ficha del
+producto (como DropKiller). Se volvió a probar la Graph API con `META_ADS_TOKEN` y da el
+**mismo** `OAuthException subcode 2332002`. Se le ofrecieron tres caminos (hacer el trámite /
+tarjetas cargadas por chat sin miniatura / dejarlo así) y **eligió dejarlo como está**. Lo que
+sí quedó: botón **"Anuncios activos en Meta ↗"** en el modal del producto, que abre la
+biblioteca ya filtrada por nombre del producto y país EC. **No volver a intentar la API.**
 
 **Decisión de Fabián:** no hacer el trámite de verificación. La sección se sacó del dashboard
 (código revertido, no queda a medias mostrando un error permanente). **El análisis de ads se

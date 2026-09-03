@@ -26,6 +26,7 @@ const path = require('path');
 
 const { analizar: analizarRanking } = require('./ranking');
 const { analizar: analizarConsistencia, series } = require('./consistencia');
+const { movimientos } = require('./movimientos');
 const { analizar: analizarPorTienda } = require('./candidatos-tienda');
 const { nuevosGanadores, productoDelMes } = require('./tendencias');
 const { pagina, urlImagen } = require('./catalogo');
@@ -58,6 +59,9 @@ function cliente() {
  * resumir()), esto se vuelve una capa de respaldo nada más.
  */
 async function enriquecerImagenes(payload) {
+  // `movimientos` queda fuera a propósito: son ~5.000 productos y esto hace una
+  // llamada a la API por cada uno sin imagen. Los snapshots ya traen `imagen`
+  // desde catalogo.js → resumir(), así que la lista completa se sirve con eso.
   const listas = ['ranking', 'consistencia', 'avanora', 'truquito', 'nuevos_ganadores', 'producto_del_mes'];
   const faltantes = new Set();
   for (const clave of listas) for (const p of payload[clave]) if (!p.imagen) faltantes.add(p.id);
@@ -92,15 +96,24 @@ async function enriquecerImagenes(payload) {
 async function armarPayload() {
   const ranking = analizarRanking({ top: 30 });
   const consistencia = analizarConsistencia();
-  const porTienda = analizarPorTienda({ top: 10 });
+  // Sin tope: se pidió ver TODOS los que se mueven, no un top 10 por tienda.
+  // `movimientos` no filtra por calidad — trae los ~5.000 que registraron
+  // alguna baja de stock, marcando cuáles son piso (hubo restock) y cuáles
+  // huelen a corrección de inventario.
+  const porTienda = analizarPorTienda({ top: Infinity });
   const nuevos = nuevosGanadores({ diasAtras: 7, top: 20 });
   const mes = productoDelMes({ top: 10 });
+  const todos = movimientos();
 
   const payload = {
     actualizado_en: new Date().toISOString(),
     ventana_ranking_horas: ranking.ventana.horas,
     ranking: ranking.viables,
     consistencia: consistencia.slice(0, 30),
+    movimientos: todos,
+    movimientos_total: todos.length,
+    movimientos_con_restock: todos.filter(p => p.tapado).length,
+    movimientos_sospechosos: todos.filter(p => p.sospechoso).length,
     avanora: porTienda.avanora,
     truquito: porTienda.truquito,
     nuevos_ganadores: nuevos.entraron,
