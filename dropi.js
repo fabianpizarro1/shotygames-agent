@@ -509,11 +509,19 @@ async function buscarOrden(query, telefono) {
   const apellido = palabras[palabras.length - 1];
   if (apellido !== primerNombre) strategies.push(url(apellido));
 
+  // Una orden anulada en DROPI conserva su número de guía, pero esa guía ya no
+  // sirve para despachar nada. Si se la copiara a un pedido vivo, el Sheet
+  // quedaría con guía y nadie notaría que el paquete no va a salir.
+  const ANULADAS = ['RECHAZADO', 'CANCELADO', 'ANULADO', 'DEVOLUCION', 'DEVUELTO'];
+  const estaAnulada = (o) => ANULADAS.includes(String(o?.status || '').toUpperCase());
+
   let orders = [];
   for (const url of strategies) {
     const data = await doGet(url);
-    orders = extractOrders(data);
-    console.log(`  → ${orders.length} resultados`);
+    const crudas = extractOrders(data);
+    orders = crudas.filter((o) => !estaAnulada(o));
+    const descartadas = crudas.length - orders.length;
+    console.log(`  → ${orders.length} resultados${descartadas ? ` (${descartadas} anuladas descartadas)` : ''}`);
     if (orders.length) break;
   }
 
@@ -531,9 +539,19 @@ async function buscarOrden(query, telefono) {
       return oTel.endsWith(telNorm) || telNorm.endsWith(oTel);
     });
     if (match) ordenFinal = match;
+
+    // Con teléfono a mano, ninguna orden que no sea de ese teléfono es la que
+    // se busca. Las estrategias de fallback buscan por primer nombre y por
+    // apellido: "EDUARDO" devuelve 17 órdenes de 17 clientes distintos, y
+    // quedarse con la primera le copiaba al pedido la guía de otra persona.
+    // Mejor no encontrar nada que devolver la orden equivocada.
+    if (!ordenFinal) {
+      console.log(`DROPI buscarOrden: hay resultados pero ninguno con el teléfono ${telefono} — se descartan todos`);
+      return null;
+    }
   }
 
-  // Si no hay match por teléfono, buscar la más reciente con guía
+  // Sin teléfono no hay forma de desambiguar: la más reciente con guía.
   if (!ordenFinal) {
     ordenFinal = orders.find(o => o.shipping_guide || o.guide_number || o.tracking_number) || orders[0];
   }
