@@ -81,6 +81,99 @@ const CIUDAD_DROPI = {
   // 'NOMBRE_QUE_LLEGA': 'NOMBRE_EN_DROPI',
 };
 
+// ─── Ciudades: catálogo real de DROPI ────────────────────────────────────────
+// El mapa CIUDAD_DROPI de arriba crecía de a una ciudad cada vez que se perdía
+// un pedido ("Agrega más abajo cuando encuentres casos nuevos"). Con 871
+// ciudades en el catálogo y 2 entradas escritas a mano, el resto se mandaba a
+// la suerte: si el nombre no coincidía exacto, DROPI rechazaba con "la ciudad
+// no existe en el departamento ingresado" — aunque a mano sí se pudiera crear.
+// Se consulta el catálogo (GET /city), igual que ya hace la web y
+// projects/dropshipping/ciudades.js, y se busca el nombre real.
+let _ciudades = null;
+let _ciudadesAt = 0;
+const CIUDADES_TTL = 12 * 60 * 60 * 1000;   // el catálogo casi no cambia
+
+const normCiudad = (v) => String(v || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+async function getCiudades() {
+  if (_ciudades && Date.now() - _ciudadesAt < CIUDADES_TTL) return _ciudades;
+  const token = await getToken();
+  let client = makeClient(token);
+  let res;
+  try {
+    res = await client.get('/city');
+  } catch (e) {
+    if (e.response?.status === 401 || e.response?.status === 403) {
+      client = makeClient(await autoLogin());
+      res = await client.get('/city');
+    } else throw e;
+  }
+  const crudas = res.data?.objects || res.data || [];
+  _ciudades = crudas.map((c) => {
+    let tarifas = c.rate_type;
+    if (!Array.isArray(tarifas)) { try { tarifas = JSON.parse(tarifas || '[]'); } catch (_) { tarifas = []; } }
+    return {
+      nombre: c.name,
+      provincia: c.department?.name || '',
+      tarifas,
+      nNombre: normCiudad(c.name),
+      nProvincia: normCiudad(c.department?.name)
+    };
+  });
+  _ciudadesAt = Date.now();
+  console.log(`DROPI: catálogo de ciudades cargado (${_ciudades.length})`);
+  return _ciudades;
+}
+
+/**
+ * Nombre y provincia exactos que espera DROPI para una ciudad.
+ *
+ * Solo considera destinos con la tarifa que se va a usar: acertarle al nombre
+ * no sirve si la transportadora no lleva contra entrega hasta ahí. Si no
+ * resuelve, devuelve null y se cae al mapa a mano de siempre — nunca peor
+ * que antes.
+ */
+async function resolverCiudad(ciudad, provincia, rateType) {
+  const nCiudad = normCiudad(ciudad);
+  if (!nCiudad) return null;
+
+  try {
+    const todas = await getCiudades();
+    const conTarifa = todas.filter((c) => c.tarifas.includes(rateType));
+    const universo = conTarifa.length ? conTarifa : todas;
+
+    const nProv = normCiudad(provincia);
+    const deLaProvincia = nProv ? universo.filter((c) => c.nProvincia === nProv) : [];
+
+    // Si se sabe la provincia y el catálogo la conoce, la búsqueda NO sale de
+    // ahí. Hay una SAN MIGUEL en Cañar y una SAN MIGUEL DE BOLIVAR en Bolívar:
+    // buscar "SAN MIGUEL" en todo el país devuelve la de Cañar y el paquete
+    // se va a 300 km del cliente. Sin provincia sí se busca en todo el país.
+    const ambito = deLaProvincia.length ? deLaProvincia : universo;
+
+    const exacta = ambito.find((c) => c.nNombre === nCiudad);
+    let hit = exacta;
+    if (!hit) {
+      const parciales = ambito.filter((c) => c.nNombre.startsWith(nCiudad) || nCiudad.startsWith(c.nNombre));
+      if (parciales.length === 1) hit = parciales[0];
+      else if (parciales.length > 1) {
+        console.log(`resolverCiudad: "${ciudad}" es ambigua (${parciales.map((c) => `${c.nombre}/${c.provincia}`).join(', ')}) — no se adivina`);
+        return null;
+      }
+    }
+    if (!hit) {
+      console.log(`resolverCiudad: "${ciudad}" no está en el catálogo con tarifa ${rateType}`);
+      return null;
+    }
+    return { ciudad: hit.nombre, provincia: hit.provincia };
+  } catch (e) {
+    console.error('resolverCiudad: no se pudo consultar el catálogo:', e.message);
+    return null;
+  }
+}
+
 // Orden de prioridad: archivo (más reciente) > env var (deploy) > null
 let _token = (() => {
   try {
@@ -219,6 +312,29 @@ async function getToken() {
   }
 }
 
+// DROPI no siempre devuelve la guía en la misma respuesta del PUT: acepta el
+// cambio a GUIA_GENERADA con 200, deja la orden en PENDIENTE y emite el número
+// unos segundos después. Por eso el bot fallaba "a veces": la orden 6835495
+// se reportó sin guía y minutos más tarde tenía la 189590671 tranquila en
+// DROPI. Releer con reintentos convierte ese "a veces" en "siempre".
+async function esperarGuia(orderId, intentos = 5) {
+  const esperas = [1500, 3000, 5000, 8000, 12000];
+  for (let i = 0; i < intentos; i++) {
+    await new Promise((r) => setTimeout(r, esperas[Math.min(i, esperas.length - 1)]));
+    try {
+      const o = await getOrdenPorId(orderId);
+      if (o?.guia) {
+        console.log(`esperarGuia: guía ${o.guia} apareció en el intento ${i + 1}`);
+        return o;
+      }
+      console.log(`esperarGuia: intento ${i + 1}/${intentos} — sigue sin guía (status ${o?.status || '?'})`);
+    } catch (e) {
+      console.log(`esperarGuia: intento ${i + 1} falló: ${e.message}`);
+    }
+  }
+  return null;
+}
+
 async function crearOrden(pedido) {
   const token = await getToken();
   const client = makeClient(token);
@@ -228,11 +344,11 @@ async function crearOrden(pedido) {
   const nombre = partes[0] || '';
   const apellido = partes.slice(1).join(' ') || nombre;
 
-  // Ciudad y provincia — normalizar nombre de ciudad para DROPI
+  // Ciudad y provincia — el catálogo real de DROPI manda; el mapa a mano queda
+  // solo como red de seguridad si el catálogo no se puede consultar.
   const ciudadUpper = (pedido.ciudad || '').toUpperCase().trim();
-  const cityForDropi = CIUDAD_DROPI[ciudadUpper] || pedido.ciudad;  // nombre exacto que espera DROPI
-  // Provincia: mapa local → provincia enviada por el agente → ciudad como último recurso
-  const state = PROVINCIAS[ciudadUpper] || pedido.provincia || pedido.ciudad;
+  let cityForDropi = CIUDAD_DROPI[ciudadUpper] || pedido.ciudad;
+  let state = PROVINCIAS[ciudadUpper] || pedido.provincia || pedido.ciudad;
 
   // Saldo a cobrar. El monto llega formateado para Sheets ("$29,99"): con un
   // replace de coma pelado, parseFloat("$29.99") da NaN y el saldo caía a 0 —
@@ -242,6 +358,15 @@ async function crearOrden(pedido) {
   const aNumero = (v) => parseFloat(String(v ?? '').replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
   const saldo = aNumero(pedido.saldo);
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
+
+  const resuelta = await resolverCiudad(pedido.ciudad, state, rateType);
+  if (resuelta) {
+    if (resuelta.ciudad !== cityForDropi || resuelta.provincia !== state) {
+      console.log(`crearOrden: ciudad "${pedido.ciudad}" → "${resuelta.ciudad}" (${resuelta.provincia}) según catálogo DROPI`);
+    }
+    cityForDropi = resuelta.ciudad;
+    state = resuelta.provincia;
+  }
 
   // Productos
   // Combo Parejas: si el pedido trae Torre Parejas + Dados juntos, ya no se
@@ -431,6 +556,21 @@ async function crearOrden(pedido) {
   // Costo de envío que calculó DROPI
   const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
 
+  // Sin número en la respuesta, la guía puede estar en camino: se relee.
+  if (!sticker) {
+    console.log(`crearOrden: PUT sin número de guía — reintentando lectura de la orden ${orderId}`);
+    const tardia = await esperarGuia(orderId);
+    if (tardia?.guia) {
+      return {
+        ...guideData,
+        sticker: tardia.guia,
+        _orderId: orderId,
+        _shipping: tardia.shipping || shippingAmt,
+        _pdfUrl: tardia.pdfUrl
+      };
+    }
+  }
+
   // URL del PDF de la guía
   const pdfUrl = sticker
     ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
@@ -615,13 +755,23 @@ async function generarGuia(orderId) {
   }
 
   try {
-    return await doGenerate(client);
+    const r = await doGenerate(client);
+    if (!r.guia) {
+      const tardia = await esperarGuia(orderId);
+      if (tardia?.guia) return { guia: tardia.guia, shipping: tardia.shipping, orderId, pdfUrl: tardia.pdfUrl };
+    }
+    return r;
   } catch (e) {
     const status = e.response?.status;
     if (status === 401 || status === 403) {
       const newToken = await autoLogin();
       client = makeClient(newToken);
-      return await doGenerate(client);
+      const r = await doGenerate(client);
+      if (!r.guia) {
+        const tardia = await esperarGuia(orderId);
+        if (tardia?.guia) return { guia: tardia.guia, shipping: tardia.shipping, orderId, pdfUrl: tardia.pdfUrl };
+      }
+      return r;
     }
     const errData = JSON.stringify(e.response?.data)?.slice(0, 200);
     throw new Error(`DROPI generarGuia ${status}: ${errData}`);
@@ -823,4 +973,4 @@ function pagoDeOrden(movimientos, orderId) {
   };
 }
 
-module.exports = { telNacional, telConPais, telLocal, crearOrden, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
+module.exports = { telNacional, telConPais, telLocal, crearOrden, resolverCiudad, getCiudades, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
