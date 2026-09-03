@@ -16,16 +16,17 @@ const tools = [
         dados: { type: "string", description: "Cantidad de Dados FÍSICOS (van en la misma guía de envío — no confundir con Dados Digitales, que no se registran aquí)" },
         emparejados: { type: "string", description: "Cantidad de Emparejados incluidos en el pedido como parte de un combo físico (ej: Torre Parejas + Dados + Emparejados). Va en la columna EMPA de PEDIDOS. No lleva peso propio en la guía de DROPI — es un código digital que se entrega junto con el envío físico." },
         productos: { type: "string", description: "Descripción de productos ej: 1 NORMAL, 1 PAREJA" },
-        anticipo: { type: "string", description: "Monto pagado por anticipado" },
-        saldo: { type: "string", description: "Monto pendiente de cobro" },
-        cuenta: { type: "string", description: "Banco o método de pago: PICHINCHA, PAYPHONE, etc." },
+        pvp_total: { type: "string", description: "OBLIGATORIO. Precio de venta TOTAL del pedido (lo que vale todo junto). Es el valor del pedido, NO tiene nada que ver con si ya pagó o no." },
+        anticipo: { type: "string", description: "Cuánto DINERO YA RECIBIÓ Fabián por adelantado, antes de despachar. Si el cliente no ha transferido nada todavía (contraentrega), va 0 o vacío. NUNCA pongas aquí el precio del pedido: para eso está pvp_total." },
+        saldo: { type: "string", description: "NO lo calcules tú — el sistema lo calcula solo como pvp_total menos anticipo. Se ignora lo que mandes aquí." },
+        cuenta: { type: "string", description: "Banco o método por el que YA entró plata: PICHINCHA, PAYPHONE, etc. Si no ha pagado nada todavía (se cobra al entregar), va DROPI." },
         estado: { type: "string", description: "PAGADO, PENDIENTE o ANTICIPO" },
         envio: { type: "string", description: "Costo del envío" },
         transportadora: { type: "string", description: "SERVIENTREGA u otra transportadora" },
         notas: { type: "string", description: "Notas adicionales del pedido" },
         idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." }
       },
-      required: ["nombre", "telefono", "ciudad", "anticipo", "cuenta", "estado"]
+      required: ["nombre", "telefono", "ciudad", "pvp_total", "estado"]
     }
   },
   {

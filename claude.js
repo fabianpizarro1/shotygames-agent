@@ -81,15 +81,29 @@ Del texto que te mande Fabián saca:
 
 Al llamar registrar_pedido SIEMPRE pasa los campos individuales de cantidad (normal/picante/parejas/enganchados/dados/emparejados si aplica). Al llamar crear_guia_dropi pasa solo normal/picante/parejas/enganchados/dados — NUNCA emparejados, no tiene peso ni producto en DROPI. NO incluyas el campo "productos" — esa columna es automática en Sheets.
 
-### Paso 2 — Calcula saldo, estado y transportadora
+### Paso 2 — Declara el pago, el estado y la transportadora
 - ESTADO: siempre "PENDIENTE" salvo que Fabián diga explícitamente otra cosa (ej: "ENVIADO", "ENTREGADO").
 - TRANSPORTADORA: siempre "SERVIENTREGA" salvo que Fabián diga otra.
-- Si dijo "PAGO X DE ANTICIPO A [CUENTA]":
-  → anticipo = X, saldo = pvp_total - X, cuenta = [CUENTA]
-- Si dijo "PAGADO AL [CUENTA]" o "PAGO COMPLETO":
-  → anticipo = pvp_total, saldo = vacío, cuenta = [CUENTA]
-- Si no mencionó pago (pedido 100% contraentrega):
-  → anticipo vacío, saldo = pvp_total, cuenta = DROPI
+
+**El saldo NO lo calculas tú.** Solo mandas dos hechos y el sistema hace la resta:
+- **pvp_total** = cuánto vale el pedido completo. SIEMPRE va, en todos los pedidos.
+- **anticipo** = cuánta plata YA RECIBIÓ Fabián, transferida antes de despachar. Si no recibió nada todavía → 0.
+
+⚠️ **La regla que más se rompe:** el precio del pedido NO es un anticipo. Que el pedido valga $29,99 no significa que el cliente pagó $29,99. Si no hay una transferencia hecha y confirmada, **anticipo = 0**, aunque el mensaje mencione el monto mil veces.
+
+Cómo leer el mensaje de Fabián:
+
+| Lo que dice el mensaje | anticipo | cuenta |
+|---|---|---|
+| "PAGÓ $X DE ANTICIPO A [BANCO]" | X | [BANCO] |
+| "PAGADO AL [BANCO]" / "PAGO COMPLETO" / "YA TRANSFIRIÓ TODO" | = pvp_total | [BANCO] |
+| **"VALOR A PAGAR $X"** / "A PAGAR" / "TOTAL A PAGAR" | **0** | DROPI |
+| "CONTRAENTREGA" / "PAGA AL RECIBIR" / "COD" | 0 | DROPI |
+| No se menciona ningún pago | 0 | DROPI |
+
+**"Valor a pagar" es plata que TODAVÍA NO entró — es lo que el cliente debe.** Fabián suele reenviarte tal cual el mensaje que le mandó al cliente ("Hemos recibido tu pedido PED-XXXXX... 💰 Valor a pagar $29.99"). Ese mensaje describe un pedido por cobrar, NO un pedido pagado. Va con anticipo 0 y cuenta DROPI.
+
+Solo hay anticipo si Fabián dice explícitamente que el dinero YA ENTRÓ y a qué cuenta. Ante la duda: anticipo 0.
 
 **Formato de montos:** siempre con coma decimal y dos decimales. Ejemplos: $16,50 — $33,00 — $8,00. Nunca usar punto como decimal.
 
@@ -102,7 +116,9 @@ Al llamar registrar_pedido SIEMPRE pasa los campos individuales de cantidad (nor
 
 💰 *PVP TOTAL: $[total con formato $X,XX]*
 - Pagado: $[anticipo] a [cuenta]
-- *Pendiente (CON RECAUDO): $[saldo]* — o — *SIN RECAUDO* si saldo = 0
+- *Pendiente (CON RECAUDO): $[pvp_total − anticipo]* — o — *SIN RECAUDO* si el anticipo cubre todo el pvp_total
+
+⚠️ Esta línea tiene que coincidir con lo que vas a mandar en el tool. Si acá escribís "Pendiente (CON RECAUDO): $29,99", entonces anticipo = 0. Si escribís "SIN RECAUDO", entonces anticipo = pvp_total y hay un banco real en cuenta.
 
 📍 *DATOS DE ENVÍO:*
 - Nombre: [NOMBRE EN MAYÚSCULAS]
@@ -119,7 +135,7 @@ Al llamar registrar_pedido SIEMPRE pasa los campos individuales de cantidad (nor
 No hagas nada hasta que Fabián confirme.
 
 ### Paso 4 — Cuando Fabián confirme
-Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 (nombre, telefono, ciudad, direccion, cantidades, anticipo, saldo, cuenta, transportadora, notas, idPedido si aplica).
+Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 (nombre, telefono, ciudad, direccion, cantidades, **pvp_total**, anticipo, cuenta, transportadora, notas, idPedido si aplica). No mandes "saldo" — el sistema lo calcula solo.
 
 → NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la guía en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte generaría una guía DUPLICADA con flete cobrado dos veces. crear_guia_dropi es SOLO para la sección "Crear guía en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin guía.
 
@@ -280,6 +296,56 @@ async function crearGuiaDropiYActualizar(input) {
   return { ok: true, guia, orden, mensaje: `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}` };
 }
 
+// El recaudo ya no lo decide el modelo. Antes, registrar_pedido recibía
+// "anticipo" y "saldo" como dos campos sueltos y el modelo repartía el dinero
+// entre los dos leyendo el mensaje de Fabián. El 2026-09-02 se equivocó: un
+// pedido 100% contraentrega ("Valor a pagar $29,99") entró con ANTICIPO $29,99
+// y SALDO vacío, y como la guía de DROPI sale CON/SIN RECAUDO según el saldo
+// (dropi.js), se despachó SIN RECAUDO — Servientrega iba a entregar sin cobrar.
+// Ahora el modelo solo declara hechos (cuánto vale el pedido, cuánta plata ya
+// entró) y el saldo se deriva con una resta que no se puede equivocar.
+function normalizarPago(input) {
+  const num = (v) => parseFloat(String(v ?? '').replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+  const fmt = (n) => (n > 0 ? `$${n.toFixed(2).replace('.', ',')}` : '');
+
+  let pvp = num(input.pvp_total);
+  let anticipo = num(input.anticipo);
+  const cuenta = (input.cuenta || '').toUpperCase().trim();
+
+  // Fallback: si el modelo no mandó pvp_total (versión vieja del schema),
+  // reconstruirlo con lo que sí mandó en vez de tratar el pedido como $0.
+  if (pvp <= 0) pvp = anticipo + num(input.saldo);
+
+  // "Cuenta DROPI" significa exactamente una cosa: se cobra al entregar, no
+  // entró plata por adelantado. Un anticipo ahí es siempre un dato mal puesto.
+  if (!cuenta || cuenta === 'DROPI') anticipo = 0;
+
+  // Más anticipo que precio: se cobró de más o el precio está mal. No se
+  // inventa un saldo negativo, se avisa.
+  const avisos = [];
+  if (anticipo > pvp && pvp > 0) {
+    avisos.push(`El anticipo (${fmt(anticipo)}) es mayor que el PVP total (${fmt(pvp)}). Revisá los montos.`);
+    anticipo = pvp;
+  }
+
+  const saldo = Math.max(0, parseFloat((pvp - anticipo).toFixed(2)));
+  const cuentaFinal = anticipo > 0 ? (cuenta || 'DROPI') : 'DROPI';
+
+  return {
+    pvp,
+    anticipo,
+    saldo,
+    avisos,
+    input: {
+      ...input,
+      pvp_total: fmt(pvp),
+      anticipo: fmt(anticipo),
+      saldo: fmt(saldo),
+      cuenta: cuentaFinal
+    }
+  };
+}
+
 async function executeTool(toolName, input) {
   switch (toolName) {
     case 'registrar_pedido': {
@@ -291,9 +357,20 @@ async function executeTool(toolName, input) {
         && (parseInt(input.dados) || 0) > 0
         && (parseInt(input.emparejados) || 0) > 0;
       const yaMarcado = (input.notas || '').toUpperCase().includes('COMBO PAREJAS');
-      const inputConNotas = esComboParejas && !yaMarcado
+      const inputBase = esComboParejas && !yaMarcado
         ? { ...input, notas: ['COMBO PAREJAS', input.notas].filter(Boolean).join(' — ') }
         : input;
+
+      // ANTICIPO / SALDO / CUENTA se recalculan acá — lo que haya mandado el
+      // modelo en "saldo" se descarta. Ver normalizarPago().
+      const pago = normalizarPago(inputBase);
+      const inputConNotas = pago.input;
+      console.log('registrar_pedido pago:', JSON.stringify({
+        pvp: pago.pvp, anticipo: pago.anticipo, saldo: pago.saldo,
+        cuenta: inputConNotas.cuenta, recaudo: pago.saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO'
+      }));
+      const avisoPago = pago.avisos.length ? `\n⚠️ ${pago.avisos.join(' ')}` : '';
+
       await sheets.appendPedido(inputConNotas);
 
       // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
@@ -308,13 +385,22 @@ async function executeTool(toolName, input) {
       const tieneFisico = CAMPOS_FISICOS.some((c) => (parseInt(input[c]) || 0) > 0);
 
       if (transportadora !== 'SERVIENTREGA' || !tieneFisico) {
-        return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.`;
+        return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.${avisoPago}`;
       }
       if (!input.direccion) {
-        return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.`;
+        return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.${avisoPago}`;
       }
 
-      const saldoNum = parseFloat(String(inputConNotas.saldo || '0').replace(',', '.')) || 0;
+      // Freno duro: un pedido que vale plata pero no tiene ni anticipo cobrado
+      // ni saldo por cobrar no puede existir. Si sale una guía así, se entrega
+      // sin cobrar nada. Antes de despachar eso, se para y se pregunta.
+      if (pago.pvp > 0 && pago.saldo === 0 && pago.anticipo === 0) {
+        return `✅ Pedido registrado para ${input.nombre}, pero NO creé la guía en DROPI.\n\n` +
+          `⚠️ El pedido vale $${pago.pvp.toFixed(2).replace('.', ',')} pero quedó sin anticipo cobrado y sin saldo por cobrar — así la guía saldría SIN RECAUDO y se entregaría sin cobrar.\n\n` +
+          `Decime cuál es: ¿ya pagó (a qué cuenta) o se cobra contra entrega?`;
+      }
+
+      const saldoNum = pago.saldo;
       const guiaInput = {
         nombre: inputConNotas.nombre,
         telefono: inputConNotas.telefono,
@@ -331,7 +417,10 @@ async function executeTool(toolName, input) {
         notas: inputConNotas.notas
       };
       const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
-      return `✅ Pedido registrado.\n${guiaResult.mensaje}`;
+      const recaudoStr = pago.saldo > 0
+        ? `💵 CON RECAUDO — cobrar $${pago.saldo.toFixed(2).replace('.', ',')} al entregar`
+        : `✅ SIN RECAUDO — ya está pagado (${inputConNotas.cuenta})`;
+      return `✅ Pedido registrado.\n${recaudoStr}\n${guiaResult.mensaje}${avisoPago}`;
     }
 
     case 'buscar_pedido':
