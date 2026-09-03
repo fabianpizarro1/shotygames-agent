@@ -139,7 +139,13 @@ Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 
 
 → NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la guía en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte generaría una guía DUPLICADA con flete cobrado dos veces. crear_guia_dropi es SOLO para la sección "Crear guía en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin guía.
 
-La respuesta de registrar_pedido ya trae el resultado completo — reenvíasela a Fabián tal cual (confirmación + guía si se creó, o el aviso de qué faltó).
+La respuesta de registrar_pedido ya trae el resultado completo — **reenviásela a Fabián TAL CUAL, palabra por palabra**. No la resumas, no la reescribas, no la suavices.
+
+🚨 **PROHIBIDO INVENTAR QUE HAY GUÍA.** Solo existe guía si el resultado del tool trae un número de guía concreto. Si no lo trae, la guía NO existe.
+
+Nunca escribas cosas como "la guía se generará automáticamente", "se creará en los próximos momentos", "guía pendiente" ni "orden creada, falta la guía" por tu cuenta. Si el resultado dice *GUÍA NO CREADA*, tu respuesta tiene que decir GUÍA NO CREADA, con el motivo textual que venga adentro. Un pedido sin guía no se despacha — si Fabián cree que la guía está en camino cuando no lo está, el pedido se queda parado y él no se entera.
+
+Regla simple: **¿hay número de guía en el resultado? Sí → mostralo. No → decí que no hay guía y por qué.**
 
 ### Paso 5 — Si faltan datos críticos
 Si no puedes extraer nombre, teléfono o productos, pregunta solo lo que falta. No inventes datos.
@@ -258,7 +264,24 @@ Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y m
 // misma lógica de creación/errores en vez de mantenerla duplicada.
 async function crearGuiaDropiYActualizar(input) {
   console.log('crear_guia_dropi input:', JSON.stringify(input));
-  const orden = await dropi.crearOrden(input);
+
+  let orden;
+  try {
+    orden = await dropi.crearOrden(input);
+  } catch (e) {
+    // Que DROPI rechace la orden no puede quedar en una excepción suelta: el
+    // pedido ya está en Sheets y alguien tiene que despacharlo. Se devuelve el
+    // motivo textual para que Fabián lo vea y decida.
+    console.error('crear_guia_dropi: crearOrden falló:', e.message);
+    return {
+      ok: false,
+      mensaje: `❌ *GUÍA NO CREADA* — DROPI no aceptó la orden de ${input.nombre}.\n\n` +
+        `Motivo: ${e.message}\n\n` +
+        `El pedido SÍ quedó registrado en Sheets, pero NO tiene guía y NO se va a despachar solo. ` +
+        `Arreglá lo que dice el motivo y decime *"ponle la guía a ${input.nombre}"*, o creala a mano en DROPI.`
+    };
+  }
+
   const guia = orden?.sticker;
 
   if (orden?._guideError) {
@@ -271,13 +294,13 @@ async function crearGuiaDropiYActualizar(input) {
         console.error('Error guardando DROPI ID en Sheets:', e.message);
       }
     }
-    return { ok: false, mensaje: `⚠️ Orden creada en DROPI (ID: ${orden._orderId}) pero DROPI no generó la guía: ${orden._guideError}\n\nEl ID de la orden quedó guardado en Sheets. Cuando DROPI esté disponible, di *"ponle la guía a ${input.nombre}"* para reintentarlo.` };
+    return { ok: false, mensaje: `❌ *GUÍA NO CREADA* — la orden sí existe en DROPI (ID: ${orden._orderId}) pero la guía no se generó.\n\nMotivo: ${orden._guideError}\n\nEl ID quedó guardado en Sheets. Decime *"ponle la guía a ${input.nombre}"* para reintentar. Hasta que salga la guía, este pedido NO se despacha.` };
   }
   if (!guia) {
     if (input.telefono && orden?._orderId) {
       try { await sheets.actualizarGuia(input.telefono, null, null, orden._orderId); } catch (_) {}
     }
-    return { ok: false, mensaje: `⚠️ Orden DROPI creada (ID: ${orden?._orderId || '?'}) pero no se obtuvo número de guía. Di *"ponle la guía a ${input.nombre}"* para reintentarlo.` };
+    return { ok: false, mensaje: `❌ *GUÍA NO CREADA* — DROPI respondió sin número de guía (orden ID: ${orden?._orderId || 'ninguno'}).\n\nDecime *"ponle la guía a ${input.nombre}"* para reintentar. Hasta que salga la guía, este pedido NO se despacha.` };
   }
 
   console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);

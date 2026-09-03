@@ -349,8 +349,17 @@ async function crearOrden(pedido) {
     || orderData?.data?.id || orderData?.order?.id;
 
   if (!orderId) {
-    console.log('DROPI create response (sin id):', JSON.stringify(orderData).substring(0, 500));
-    return orderData;
+    // DROPI rechaza órdenes devolviendo HTTP 200 con isSuccess:false y el
+    // motivo real adentro (mismo patrón que projects/dropshipping/pedidos.js).
+    // Antes esto se devolvía crudo y el flujo de arriba lo leía como "orden
+    // creada, guía pendiente" — el 2026-09-03 Fabián recibió "Orden creada en
+    // DROPI, se generará la guía en los próximos momentos" cuando en realidad
+    // DROPI no había creado nada. Una orden rechazada tiene que doler, no
+    // parecerse a una orden creada.
+    const motivo = orderData?.data_error || orderData?.message || orderData?.error
+      || 'DROPI no devolvió id de orden';
+    console.log('DROPI create RECHAZADA:', JSON.stringify(orderData).substring(0, 500));
+    throw new Error(`DROPI rechazó la orden: ${motivo}`);
   }
 
   console.log(`Orden DROPI creada. ID: ${orderId} — generando guía...`);
@@ -475,29 +484,30 @@ async function buscarOrden(query, telefono) {
   const strategies = [];
 
   // Por teléfono (más confiable) — probar con y sin prefijo 593
+  // El listado NO acepta page/perPage/search: pide result_number + start y
+  // filtra con textToSearch. Con perPage la API responde 400 ("pageSize or
+  // result_number is required") y buscarOrden devolvía "0 resultados" para
+  // TODO — o sea sincronizar_guia_dropi llevaba tiempo roto en silencio.
+  // Este shape es el mismo que ya usa projects/dropshipping/pedidos.js.
+  const url = (q) => `/orders/myorders?result_number=20&start=0&orderBy=id&orderDirection=desc`
+    + `&user_id=${USER_ID}&textToSearch=${encodeURIComponent(q)}`;
+
   if (telefono) {
-    const tel = telConPais(telefono);
-    const tel2 = telLocal(telefono);
-    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
-    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(tel2)}&user_id=${USER_ID}`);
-    strategies.push(`/orders/myorders?page=1&perPage=10&q=${encodeURIComponent(tel)}&user_id=${USER_ID}`);
+    strategies.push(url(telConPais(telefono)));
+    strategies.push(url(telLocal(telefono)));
   }
 
   // Por nombre completo
-  strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(query)}&user_id=${USER_ID}`);
+  strategies.push(url(query));
 
   // Por primera palabra del nombre (primer nombre)
   const primerNombre = query.split(' ')[0];
-  if (primerNombre !== query) {
-    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(primerNombre)}&user_id=${USER_ID}`);
-  }
+  if (primerNombre !== query) strategies.push(url(primerNombre));
 
   // Por apellido (última palabra)
   const palabras = query.split(' ');
   const apellido = palabras[palabras.length - 1];
-  if (apellido !== primerNombre) {
-    strategies.push(`/orders/myorders?page=1&perPage=10&search=${encodeURIComponent(apellido)}&user_id=${USER_ID}`);
-  }
+  if (apellido !== primerNombre) strategies.push(url(apellido));
 
   let orders = [];
   for (const url of strategies) {
