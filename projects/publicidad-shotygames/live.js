@@ -22,13 +22,22 @@ require('dotenv').config();
 const { google } = require('googleapis');
 const { parseMonto } = require('../../sheets.js');
 const { hoyEC, aFechaLocal } = require('../../fechas.js');
-const { CUENTA_ADS, ESTADOS } = require('./config.js');
+const { CUENTAS_ADS, ESTADOS } = require('./config.js');
 
 const SHEET_ID = process.env.SHEETS_ID;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
 const GRAPH_VERSION = 'v20.0';
 const COMISION_BANCARIA = 1.2;
-const DIAS = 30;
+/**
+ * La ventana arranca el 1 de ENERO del año en curso, no N días atrás.
+ *
+ * Tiene que coincidir con el alcance del Sheet: se llama "2026 REGISTRO DE
+ * VENTAS" y solo tiene pedidos de 2026. Con una ventana rodante de 365 días se
+ * colaban sep-dic 2025, que en Meta SÍ tienen gasto ($12.700) pero no tienen
+ * ventas en este Sheet: salían 4 meses con ROAS 0 y -$15.000 de utilidad
+ * inventada, que además contaminaban el TOTAL.
+ */
+const inicioDelAnio = () => `${hoyEC().slice(0, 4)}-01-01`;
 
 function getAuth() {
   const auth = new google.auth.OAuth2(
@@ -58,17 +67,32 @@ const etiquetaSemana = (iso) => {
   return `${lunes} → ${diasAtras(lunes, -6).slice(5)}`;
 };
 
-/** Gasto por día de TODA la cuenta. { 'YYYY-MM-DD': gasto }. */
+/**
+ * Gasto por día, SUMANDO todas las cuentas de `CUENTAS_ADS`.
+ * Devuelve { 'YYYY-MM-DD': gasto }.
+ *
+ * Pagina con `after`: un año con `time_increment=1` puede pasarse del límite de
+ * una sola respuesta, y si no se pagina se pierden días en silencio.
+ */
 async function gastoDiario(token, { desde, hasta }) {
   const rango = encodeURIComponent(JSON.stringify({ since: desde, until: hasta }));
-  const url = `https://graph.facebook.com/${GRAPH_VERSION}/act_${CUENTA_ADS}/insights` +
-    `?fields=spend&time_increment=1&time_range=${rango}&limit=200&access_token=${token}`;
-  const res = await fetch(url);
-  const json = await res.json();
-  if (!res.ok) throw new Error(`Meta insights cuenta ${CUENTA_ADS}: ${JSON.stringify(json.error || json)}`);
-
   const porFecha = {};
-  for (const f of json.data || []) porFecha[f.date_start] = parseFloat(f.spend || 0);
+
+  for (const cuenta of CUENTAS_ADS) {
+    let url = `https://graph.facebook.com/${GRAPH_VERSION}/act_${cuenta.id}/insights` +
+      `?fields=spend&time_increment=1&time_range=${rango}&limit=200&access_token=${token}`;
+    let paginas = 0;
+    while (url && paginas < 20) {
+      const res = await fetch(url);
+      const json = await res.json();
+      if (!res.ok) throw new Error(`Meta insights ${cuenta.nombre} (${cuenta.id}): ${JSON.stringify(json.error || json)}`);
+      for (const f of json.data || []) {
+        porFecha[f.date_start] = (porFecha[f.date_start] || 0) + parseFloat(f.spend || 0);
+      }
+      url = json.paging?.next || null;
+      paginas++;
+    }
+  }
   return porFecha;
 }
 
@@ -174,7 +198,7 @@ async function correr() {
   if (!token) throw new Error('Falta META_CAPI_TOKEN en .env (es el que lee la cuenta de Shotygames)');
 
   const hoy = hoyEC();
-  const desde = diasAtras(hoy, DIAS);
+  const desde = inicioDelAnio();
   const gastoPorFecha = await gastoDiario(token, { desde, hasta: hoy });
   const pedidosPorFecha = await pedidosDiarios({ desde });
   const filas = calcularFilas({ gastoPorFecha, pedidosPorFecha, desde });
@@ -183,7 +207,7 @@ async function correr() {
   console.log(`Listo — ${filas.length} días desde ${desde}.`);
 }
 
-module.exports = { correr, gastoDiario, pedidosDiarios, calcularFilas, escribirDatos, diasAtras, DIAS };
+module.exports = { correr, gastoDiario, pedidosDiarios, calcularFilas, escribirDatos, diasAtras, inicioDelAnio };
 
 if (require.main === module) {
   correr().catch((e) => { console.error('ERROR:', e.message); process.exit(1); });

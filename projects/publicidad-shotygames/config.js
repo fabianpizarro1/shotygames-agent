@@ -27,8 +27,26 @@
  *    "Ventas a contar" — ver abajo.
  */
 
-/** Única cuenta ACTIVE de Shotygames. Las otras 10 están en UNSETTLED (saldo impago). */
-const CUENTA_ADS = '1451115062090627';   // "Cuenta Publicitaria 10"
+/**
+ * TODAS las cuentas de Shotygames que tuvieron gasto en 2026. El gasto se SUMA.
+ *
+ * No es una sola: Fabián fue rotando de cuenta a medida que se le iban
+ * bloqueando por saldo impago. Verificado el 2026-09-02 barriendo las 11 cuentas
+ * del business — solo estas dos tienen gasto, y son secuenciales (no se pisan):
+ *
+ *   Cuenta Publicitaria 9  → 2026-01-01 a 2026-04-10   $4.032,57   (UNSETTLED hoy)
+ *   Cuenta Publicitaria 10 → 2026-04-13 a hoy          $4.519,25   (ACTIVE)
+ *
+ * ⚠️ Que una cuenta esté UNSETTLED NO impide leer su historial de gasto: sigue
+ * siendo consultable por API. Si se leyera solo la ACTIVE, enero-abril saldría
+ * con ventas y $0 de gasto — o sea, ROAS infinito y CPA $0. Falso y peligroso.
+ *
+ * Al agregar una cuenta nueva acá, el gasto entra solo: no hay que tocar nada más.
+ */
+const CUENTAS_ADS = [
+  { id: '1451115062090627', nombre: 'Cuenta Publicitaria 10' },
+  { id: '1849155598787278', nombre: 'Cuenta Publicitaria 9' },
+];
 
 /**
  * Estados del Sheet de Shotygames, normalizados en MAYÚSCULAS.
@@ -41,4 +59,4 @@ const ESTADOS = {
   pendientes: ['PENDIENTE', 'ENVIADO', 'NOVEDAD'], // todavía no se sabe
 };
 
-module.exports = { CUENTA_ADS, ESTADOS };
+module.exports = { CUENTAS_ADS, ESTADOS };

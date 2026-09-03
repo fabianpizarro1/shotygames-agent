@@ -125,7 +125,7 @@ async function main() {
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID, range: `${HOJA}!A1`, valueInputOption: 'USER_ENTERED',
     requestBody: { values: [
-      ['PUBLICIDAD SHOTYGAMES — gasto real vs ventas reales · últimos 30 días', '', '', '', '', '', '', '', '', '', ''],
+      ['PUBLICIDAD SHOTYGAMES — gasto real vs ventas reales · desde enero', '', '', '', '', '', '', '', '', '', ''],
       ['Actualizado:', '', 'Ver por:', verPor, 'Ventas a contar:', ventas, '% devolución esperada:', devol, '', '', ''],
       ['TOTAL PERÍODO',
         `=SUM($B$6:$B$${FILAS})`, `=SUM($C$6:$C$${FILAS})`, `=SUM($D$6:$D$${FILAS})`,
@@ -188,7 +188,7 @@ async function main() {
 
       { setDataValidation: { range: rango(1, 2, 3, 4), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'DÍA' }, { userEnteredValue: 'SEMANA' }, { userEnteredValue: 'MES' }] }, showCustomUi: true, strict: true } } },
       { setDataValidation: { range: rango(1, 2, 5, 6), rule: { condition: { type: 'ONE_OF_LIST', values: [{ userEnteredValue: 'TODAS' }, { userEnteredValue: 'SOLO META' }] }, showCustomUi: true, strict: true,
-        inputMessage: 'TODAS = todos los pedidos del Sheet (incluye WhatsApp orgánico y recompra). SOLO META = únicamente los que traen atribución de Meta (fbc/fbp), que es el CPA honesto para juzgar los ads.' } } },
+        inputMessage: 'TODAS = todos los pedidos del Sheet (incluye WhatsApp orgánico y recompra).\n\nSOLO META = solo los que traen atribución de Meta (fbc/fbp). OJO: la captura de fbc/fbp arrancó en AGOSTO 2026 — antes de eso no hay ninguno, así que enero-julio salen en cero y esta vista solo sirve de agosto en adelante.' } } },
       { setDataValidation: { range: rango(1, 2, 7, 8), rule: { condition: { type: 'NUMBER_BETWEEN', values: [{ userEnteredValue: '0' }, { userEnteredValue: '1' }] }, inputMessage: 'Número entre 0 y 1 (ej. 0.1 = 10% de devolución esperada)', strict: true } } },
 
       ...[175, 100, 150, 125, 110, 105, 135, 100, 100, 150, 150].map((px, i) => ({ updateDimensionProperties: { range: col(i), properties: { pixelSize: px }, fields: 'pixelSize' } })),
