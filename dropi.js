@@ -234,8 +234,13 @@ async function crearOrden(pedido) {
   // Provincia: mapa local → provincia enviada por el agente → ciudad como último recurso
   const state = PROVINCIAS[ciudadUpper] || pedido.provincia || pedido.ciudad;
 
-  // Saldo a cobrar
-  const saldo = parseFloat(String(pedido.saldo).replace(',', '.')) || 0;
+  // Saldo a cobrar. El monto llega formateado para Sheets ("$29,99"): con un
+  // replace de coma pelado, parseFloat("$29.99") da NaN y el saldo caía a 0 —
+  // o sea la orden salía SIN RECAUDO y con precio $1, y DROPI la rechazaba
+  // entera ("el monto a ganar es menor o igual a cero"). Limpiar TODO lo que
+  // no sea número antes de parsear.
+  const aNumero = (v) => parseFloat(String(v ?? '').replace(/[^0-9.,-]/g, '').replace(',', '.')) || 0;
+  const saldo = aNumero(pedido.saldo);
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
   // Productos
@@ -270,7 +275,7 @@ async function crearOrden(pedido) {
   // CON RECAUDO → saldo / unidades  (lo que se cobra al entregar)
   // SIN RECAUDO → pvp_total / unidades  (precio de venta, para que DROPI vea ganancia)
   const totalUnidades = productosRaw.reduce((s, p) => s + p.quantity, 0);
-  const pvpTotal = parseFloat(String(pedido.pvp_total || 0).replace(',', '.')) || 0;
+  const pvpTotal = aNumero(pedido.pvp_total);
   const basePrice = saldo > 0 ? saldo : (pvpTotal || saldo);
   const precioPorUnidad = basePrice > 0
     ? parseFloat((basePrice / totalUnidades).toFixed(2))
@@ -288,11 +293,30 @@ async function crearOrden(pedido) {
     user_id: USER_ID
   }));
 
+  // El total que se le cobra al cliente es la suma REAL de las líneas, no el
+  // saldo pelado: DROPI rechaza la orden entera si no cuadran. Dividir un
+  // saldo entre varias unidades deja centavos colgando (29,99 ÷ 2 = 14,995 →
+  // 15,00 c/u = 30,00), y ese descuadre de un centavo tumba el pedido.
+  // Se cobra la suma; la diferencia con el saldo nunca pasa de unos centavos.
+  const totalLineas = parseFloat(
+    productos.reduce((acc, p) => acc + p.price * p.quantity, 0).toFixed(2)
+  );
+  if (Math.abs(totalLineas - saldo) > 0.001 && saldo > 0) {
+    console.log(`crearOrden: saldo ${saldo.toFixed(2)} → se cobra ${totalLineas.toFixed(2)} (redondeo entre ${totalUnidades} unidades)`);
+  }
+
   // Teléfono con prefijo 593
   const phone = telConPais(pedido.telefono);
 
   const body = {
-    total_order: Math.round(saldo),   // entero requerido por la API
+    // NO redondear. El comentario viejo decía "entero requerido por la API" y
+    // era falso: las órdenes que DROPI acepta llevan el decimal exacto. Con
+    // saldo 29,99 esto mandaba 30 y DROPI rechazaba la orden entera con
+    // "el monto a ganar es menor o igual a cero(0)" — total_order tiene que
+    // cuadrar con la suma de las líneas (price × quantity), y 30 ≠ 29,99.
+    // Nunca se había notado porque las órdenes salían SIN RECAUDO por el bug
+    // del saldo, y ahí total_order va en 0 y DROPI no valida nada.
+    total_order: saldo > 0 ? totalLineas : 0,
     notes: pedido.notas || '',
     name: nombre,
     surname: apellido,

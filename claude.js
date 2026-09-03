@@ -438,9 +438,10 @@ async function executeTool(toolName, input) {
         parejas: inputConNotas.parejas,
         enganchados: inputConNotas.enganchados,
         dados: inputConNotas.dados,
-        saldo: inputConNotas.saldo,
+        // Números crudos, no los strings con "$" que van a Sheets.
+        saldo: pago.saldo,
         // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
-        pvp_total: saldoNum > 0 ? undefined : inputConNotas.anticipo,
+        pvp_total: saldoNum > 0 ? undefined : pago.anticipo,
         notas: inputConNotas.notas
       };
       const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
