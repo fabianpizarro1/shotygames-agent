@@ -394,7 +394,11 @@ async function executeTool(toolName, input) {
       }));
       const avisoPago = pago.avisos.length ? `\n⚠️ ${pago.avisos.join(' ')}` : '';
 
-      await sheets.appendPedido(inputConNotas);
+      const appendRes = await sheets.appendPedido(inputConNotas);
+      // "PEDIDOS!A611:AH611" → 611. Sirve para dejar el motivo del fallo en la
+      // fila del pedido: el mensaje de WhatsApp lo redacta el modelo y se
+      // pierde en el chat, la celda queda.
+      const filaPedido = parseInt(String(appendRes?.updatedRange || '').match(/[A-Z]+(\d+)/)?.[1]) || null;
 
       // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
       // SEGUNDA llamada a crear_guia_dropi reextrayendo los mismos datos del
@@ -440,6 +444,14 @@ async function executeTool(toolName, input) {
         notas: inputConNotas.notas
       };
       const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
+
+      // Motivo crudo de DROPI en la columna LOG, tal cual vino.
+      if (!guiaResult.ok && filaPedido) {
+        const motivo = String(guiaResult.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
+        try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${motivo}`); }
+        catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
+      }
+
       const recaudoStr = pago.saldo > 0
         ? `💵 CON RECAUDO — cobrar $${pago.saldo.toFixed(2).replace('.', ',')} al entregar`
         : `✅ SIN RECAUDO — ya está pagado (${inputConNotas.cuenta})`;
