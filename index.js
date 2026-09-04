@@ -771,6 +771,41 @@ app.get('/admin/cierre-conta', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ── SALUD DE WHATSAPP ────────────────────────────────────────
+// Revisa cada 30 min que las instancias de Evolution puedan MANDAR de verdad,
+// no que digan estar conectadas. El 2026-09-04 se descubrió que `personal`
+// llevaba 4 días muerta mientras reportaba `state: "open"` — Truquito y Avanora
+// no mandaron un solo mensaje y nadie se enteró hasta que Fabián abrió n8n.
+// Ver salud-whatsapp.js para el detalle de por qué connectionState no sirve.
+try {
+  const cron = require('node-cron');
+  const { revisar } = require('./salud-whatsapp');
+
+  if (process.env.EVOLUTION_API_URL && process.env.TELEGRAM_ADMIN_IDS) {
+    cron.schedule('*/30 * * * *', () => {
+      revisar().catch(e => console.error('[SALUD-WA] Falló:', e.message));
+    });
+    // Una pasada al arrancar, para no esperar media hora tras un redeploy.
+    setTimeout(() => revisar().catch(e => console.error('[SALUD-WA] Falló:', e.message)), 30000);
+    console.log('[CRON] Salud WhatsApp: cada 30 min');
+    registrarCron('salud_whatsapp', true, 'cada 30 min');
+  } else {
+    console.log('[CRON] Salud WhatsApp: desactivada (falta EVOLUTION_API_URL o TELEGRAM_ADMIN_IDS)');
+    registrarCron('salud_whatsapp', false, 'falta EVOLUTION_API_URL o TELEGRAM_ADMIN_IDS');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar salud de WhatsApp:', e.message);
+}
+
+app.get('/admin/salud-whatsapp', async (req, res) => {
+  if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY) return res.status(401).json({ error: 'No autorizado' });
+  try {
+    const { revisar } = require('./salud-whatsapp');
+    const resultados = await revisar({ silencioso: req.query.avisar !== '1' });
+    res.json({ ok: true, resultados });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
   console.log(`Agente Claude corriendo en puerto ${PORT}`);
