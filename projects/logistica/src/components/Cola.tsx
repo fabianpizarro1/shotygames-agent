@@ -45,9 +45,25 @@ const sinTildes = (s: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 
-/** ¿Este pedido entra en ese filtro? */
+/**
+ * ¿Este pedido entra en ese filtro?
+ *
+ * Los filtros mezclan DOS ejes a propósito: las fases salen del estado del
+ * Sheet y "En agencia" sale de dónde está el paquete de verdad. Cuando los dos
+ * hablan del mismo pedido, manda el físico: un paquete parado en la agencia
+ * sigue diciendo ENVIADO en el Sheet, pero NO está en camino — está esperando
+ * que el cliente lo vaya a retirar, que es otro trabajo. Sin esta excepción,
+ * 15 de los 33 "En camino" eran paquetes estacionados (medido 2026-09-04) y
+ * Fabián los revisaba dos veces.
+ */
 const pasaFiltro = (p: Pedido, f: FiltroFase) =>
-  f === 'TODAS' ? true : f === 'agencia' ? p.enAgencia : p.fase === f;
+  f === 'TODAS'
+    ? true
+    : f === 'agencia'
+      ? p.enAgencia
+      : f === 'en-camino'
+        ? p.fase === 'en-camino' && !p.enAgencia
+        : p.fase === f;
 
 const TIENDAS_FILTRO: FiltroTienda[] = ['todas', 'truquito', 'avanora', 'shotygames'];
 
