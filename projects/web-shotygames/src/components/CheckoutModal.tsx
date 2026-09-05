@@ -397,13 +397,28 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       // Enviar webhook a n8n
       const webhookUrl = "https://shotygames-n8n.hetaxg.easypanel.host/webhook/shotygames/pedido-web";
       
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(pedido),
-      });
+      // Timeout explícito. Sin esto el `await` podía quedarse colgado para
+      // siempre si n8n aceptaba la conexión pero no respondía: el botón se
+      // quedaba en "Procesando…" (queda `disabled` por `isSubmitting`) y el
+      // cliente no tenía NINGUNA salida ni mensaje. Se veía como el checkout
+      // congelado. 20s es de sobra — el webhook responde en ~0,3s.
+      const controlador = new AbortController();
+      const corte = setTimeout(() => controlador.abort(), 20000);
+      try {
+        await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(pedido),
+          signal: controlador.signal,
+          // Si el cliente cierra la pestaña justo después de tocar el botón,
+          // el navegador igual termina de mandar el pedido.
+          keepalive: true,
+        });
+      } finally {
+        clearTimeout(corte);
+      }
 
       // Meta Pixel - Lead
       // El Purchase del navegador se sacó de acá (2026-08-19) — mandaba señal
@@ -435,9 +450,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       }
     } catch (error) {
       console.error('Error processing order:', error);
+      // No se le dice "intenta de nuevo" y nada más: si el pedido alcanzó a
+      // entrar, reintentar lo duplica; y si no entró, el cliente se va sin
+      // comprar. Se le deja la salida por WhatsApp, que es la que rescata la
+      // venta en cualquiera de los dos casos.
       toast({
-        title: "Error",
-        description: "Hubo un problema al procesar tu pedido. Por favor intenta de nuevo.",
+        title: "No pudimos confirmar tu pedido",
+        description:
+          "Puede ser tu conexión. Escríbenos por WhatsApp al 0993154462 y lo cerramos ahí mismo, sin que pierdas la promoción.",
         variant: "destructive",
       });
       setIsSubmitting(false);
