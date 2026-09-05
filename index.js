@@ -462,6 +462,34 @@ app.get('/reset/:phone', async (req, res) => {
 const COMMIT = process.env.SOURCE_COMMIT || process.env.RAILWAY_GIT_COMMIT_SHA || 'desconocido';
 const ARRANQUE = new Date().toISOString();
 
+/**
+ * `huella`: hash del CÓDIGO que este proceso tiene realmente en disco.
+ *
+ * Nació el 2026-09-05. `commit` viene en 'desconocido' porque EasyPanel no
+ * inyecta SOURCE_COMMIT, y `arranque` solo dice cuándo levantó el contenedor —
+ * ninguno de los dos responde la pregunta que importa: *¿está corriendo el
+ * código que acabo de pushear, o el viejo?* Ese día se redeployó, el /health
+ * devolvió 200, y el contenedor seguía siendo el de 11 horas antes.
+ *
+ * La huella no depende de que el build inyecte nada: se calcula leyendo los
+ * archivos. Comparando esta huella con la de local se sabe con certeza si el
+ * deploy entró (`node scripts/verificar-deploy.js`).
+ */
+const HUELLA = (() => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const hash = require('crypto').createHash('sha256');
+    for (const f of fs.readdirSync(__dirname).filter(f => f.endsWith('.js')).sort()) {
+      hash.update(f);
+      hash.update(fs.readFileSync(path.join(__dirname, f)));
+    }
+    return hash.digest('hex').slice(0, 12);
+  } catch (e) {
+    return 'error:' + e.message.slice(0, 40);
+  }
+})();
+
 // Estado de los crons, para poder diagnosticar desde afuera sin leer los logs
 // de EasyPanel. Nació el 2026-09-01: el cron de publicidad no corría y no había
 // forma de saber si era código viejo o una env var faltante — las dos se ven
@@ -475,6 +503,7 @@ app.get('/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     commit: COMMIT,
+    huella: HUELLA,
     arranque: ARRANQUE,
     uptimeSegundos: Math.round(process.uptime()),
     crons: CRONS
