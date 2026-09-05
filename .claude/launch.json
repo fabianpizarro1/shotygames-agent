@@ -4,27 +4,64 @@
     {
       "name": "avanora",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "projects/avanora"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "projects/avanora"
+      ],
       "port": 5173
     },
     {
       "name": "truquito",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "projects/truquito", "--", "--port", "5174"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "projects/truquito",
+        "--",
+        "--port",
+        "5174"
+      ],
       "port": 5174
     },
     {
       "name": "web-shotygames",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "projects/web-shotygames"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "projects/web-shotygames"
+      ],
       "port": 5175,
       "autoPort": true
     },
     {
       "name": "dropi-dashboard",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "projects/dropi-dashboard"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "projects/dropi-dashboard"
+      ],
       "port": 3000
+    },
+    {
+      "name": "logistica",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "projects/logistica",
+        "--",
+        "--port",
+        "3077"
+      ],
+      "port": 3077
     }
   ]
 }

@@ -1,0 +1,226 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   SISTEMA VISUAL — consola de logística
+   Oscuro a propósito: es una herramienta de trabajo que se abre muchas veces
+   al día, casi siempre desde el teléfono y muchas veces de noche. Un fondo
+   claro con 50 tarjetas cansa; acá el color solo aparece donde hay que mirar.
+   ============================================================ */
+
+@theme {
+  --color-fondo: #0a0d0c;
+  --color-superficie: #121716;
+  --color-superficie-alta: #1a2120;
+  --color-borde: #232b2a;
+  --color-borde-fuerte: #2f3937;
+
+  --color-texto: #e8efec;
+  --color-texto-suave: #9aa8a3;
+  --color-texto-tenue: #6b7975;
+
+  --color-verde: #34d17e;
+  --color-verde-tenue: #123023;
+  --color-ambar: #f2b544;
+  --color-ambar-tenue: #33260c;
+  --color-rojo: #f2555a;
+  --color-rojo-tenue: #341417;
+  --color-azul: #5aa9f2;
+  --color-azul-tenue: #10222f;
+
+  --radius-tarjeta: 16px;
+}
+
+/* ── Comportamiento de app instalada ──────────────────────────────────────
+   Fabián la guarda en la pantalla de inicio del iPhone. Todo lo de acá abajo
+   existe para que no se note que por dentro es una web. */
+
+html {
+  color-scheme: dark;
+  /* Que iOS no agrande el texto solo al girar el teléfono. */
+  -webkit-text-size-adjust: 100%;
+  /* El fondo llega hasta el notch y la barra de gestos. */
+  background: var(--color-fondo);
+  height: 100%;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Los números tabulares evitan que las columnas de plata bailen al refrescar. */
+  font-variant-numeric: tabular-nums;
+  /* Sin rebote elástico ni "tirar para recargar": en una app nativa la
+     pantalla no se despega del borde. */
+  overscroll-behavior: none;
+  /* El destello gris al tocar un botón es la marca registrada de una web. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* La lupa y el menú de "Copiar" al mantener apretado sobran en los controles.
+   En el contenido NO se tocan: los teléfonos, direcciones y guías hay que
+   poder seleccionarlos y copiarlos. */
+button,
+[role='button'],
+a.pulsable,
+nav,
+header {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS hace zoom solo al enfocar un campo con letra menor a 16px, y después
+   deja la pantalla corrida. 16px es el mínimo que lo evita. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Los tabulares se apagan en el texto corrido, donde solo se ven raros. */
+p,
+.prosa {
+  font-variant-numeric: normal;
+}
+
+::selection {
+  background: var(--color-verde);
+  color: #08110c;
+}
+
+/* Inercia al soltar el dedo dentro de los paneles con scroll propio. */
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scrollbars discretas: la lista es larga y la barra por defecto pesa visualmente. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* En las tiras que se deslizan con el dedo la barra se esconde: iOS no la
+   muestra nunca y verla es lo que hace que se sienta una web dentro de un
+   marco. En desktop, donde no hay dedo, se deja. */
+@media (pointer: coarse) {
+  .tira {
+    scrollbar-width: none;
+  }
+  .tira::-webkit-scrollbar {
+    display: none;
+  }
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-borde-fuerte);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Márgenes del sistema: notch arriba, barra de gestos abajo. Se aplican como
+   utilidades para no repetir el `env()` en cada componente. */
+.pad-arriba {
+  padding-top: env(safe-area-inset-top);
+}
+.pad-abajo {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pad-lados {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── Movimiento ───────────────────────────────────────────────────────────
+   Todo entra con ease-out y bajo 300ms. Nada anima height ni width: solo
+   transform y opacity, que el compositor resuelve sin recalcular layout. */
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes entrar-panel {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes entrar-hoja {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes latir {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.animar-aparecer {
+  animation: aparecer 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animar-panel {
+  animation: entrar-panel 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animar-hoja {
+  animation: entrar-hoja 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.latido {
+  animation: latir 2s ease-in-out infinite;
+}
+
+/* El :active baja la escala apenas: es la única señal táctil que existe en
+   móvil, donde no hay hover que confirme que el dedo tocó algo. */
+.pulsable {
+  transition:
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 140ms ease-out,
+    border-color 140ms ease-out;
+}
+.pulsable:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pulsable:hover {
+    background-color: var(--color-superficie-alta);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .pulsable:active {
+    transform: none;
+  }
+}
