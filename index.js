@@ -810,3 +810,70 @@ const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
   console.log(`Agente Claude corriendo en puerto ${PORT}`);
 });
+
+// ── AUDIENCIAS DE META: excluir a los que ya compraron ────────
+// Todas las noches a las 11:59 PM de Ecuador (04:59 UTC del día siguiente).
+// Cada cliente que compró hoy entra a la audiencia esta misma noche, así que
+// mañana ya no ve el anuncio de algo que tiene en la casa.
+//
+// La ventana son 3 días, no 1, a propósito: subir con ADD es idempotente (Meta
+// deduplica solo), así que si una noche falla el deploy o se cae la API, la
+// corrida siguiente recupera lo que se perdió sin que nadie tenga que darse
+// cuenta. Repetir a alguien que ya estaba no cuesta nada; perderlo sí.
+try {
+  const cron = require('node-cron');
+  const { actualizarAudiencias, resumen } = require('./audiencias-meta');
+  const { hoyEC } = require('./fechas');
+
+  async function correrAudiencias() {
+    try {
+      const hasta = hoyEC();
+      const desde = new Date(Date.parse(hasta + 'T12:00:00Z') - 2 * 86400000).toISOString().slice(0, 10);
+      const r = await actualizarAudiencias({ desde, hasta });
+      const texto = resumen(r);
+      console.log('[AUDIENCIAS]', texto.replace(/<[^>]+>/g, ' | '));
+
+      // Solo molesta por Telegram si algo falló o si de verdad entró gente
+      // nueva. Un "0 clientes hoy" cada noche se vuelve ruido y se deja de leer.
+      const huboError = Object.values(r.audiencias).some(a => a.error);
+      const huboAltas = Object.values(r.audiencias).some(a => a.subidos > 0);
+      if (!huboError && !huboAltas) return;
+
+      const chatIds = (process.env.TELEGRAM_ADMIN_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+      for (const chatId of chatIds) {
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: texto, parse_mode: 'HTML' })
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[AUDIENCIAS] Falló la corrida:', e.message);
+    }
+  }
+
+  if (process.env.SHEETS_ID && (process.env.META_AUDIENCIAS_TOKEN || process.env.META_CAPI_TOKEN)) {
+    cron.schedule('59 4 * * *', correrAudiencias);
+    console.log('[CRON] Audiencias Meta: 11:59 PM Ecuador (04:59 UTC)');
+    registrarCron('audiencias_meta', true, '11:59 PM Ecuador, ventana de 3 días');
+  } else {
+    console.log('[CRON] Audiencias Meta: desactivada (falta SHEETS_ID o token de Meta)');
+    registrarCron('audiencias_meta', false, 'falta SHEETS_ID o META_CAPI_TOKEN/META_AUDIENCIAS_TOKEN');
+  }
+
+  // Para poder dispararlo a mano y ver el resultado sin esperar a la noche.
+  app.get('/admin/audiencias-meta', async (req, res) => {
+    try {
+      const r = await actualizarAudiencias({
+        desde: req.query.desde,
+        hasta: req.query.hasta,
+        dryRun: req.query.dry === '1',
+      });
+      res.json(r);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+} catch (e) {
+  console.error('[CRON] Error al iniciar audiencias de Meta:', e.message);
+}
