@@ -95,8 +95,10 @@ export const PayphoneCheckout = () => {
           return;
         }
         
-        // Format phone number for Ecuador
-        let phoneNumber = pedido.telefono;
+        // Format phone number for Ecuador.
+        // Sin el `?? ''` un pedido sin teléfono reventaba acá con un TypeError
+        // y se llevaba puesta la pantalla de pago entera.
+        let phoneNumber = pedido.telefono ?? '';
         if (phoneNumber.startsWith('0')) {
           phoneNumber = '+593' + phoneNumber.slice(1);
         } else if (!phoneNumber.startsWith('+')) {
@@ -185,11 +187,33 @@ export const PayphoneCheckout = () => {
             <p className="text-muted-foreground">Cargando formulario de pago...</p>
           </div>
         ) : error ? (
-          <div className="text-center py-8 space-y-4">
-            <p className="text-destructive">{error}</p>
-            <Button onClick={() => navigate('/')}>
-              Volver al inicio
-            </Button>
+          /* Si el widget no carga, el cliente NO se queda sin salida: n8n ya le
+             mandó el link de pago por WhatsApp al enviar el pedido (nodo
+             HTTP Request2 -> Enviar texto7), así que eso es literalmente cierto.
+             Antes esta rama decía solo "Error al cargar configuración de pago" y
+             un botón de "Volver al inicio": un callejón sin salida, peor que la
+             pantalla vieja de "el link que te enviaremos". */
+          <div className="py-8 space-y-4 text-center">
+            <p className="font-semibold">No pudimos abrir el formulario de tarjeta aquí</p>
+            <p className="text-sm text-muted-foreground">
+              Tu pedido <span className="font-mono font-bold">{pedido?.idPedido}</span> quedó
+              registrado. Te enviamos el link de pago por WhatsApp al número que pusiste —
+              revísalo y págalo desde ahí.
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button asChild>
+                <a
+                  href="https://wa.me/593993154462"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Escribirnos por WhatsApp
+                </a>
+              </Button>
+              <Button variant="ghost" onClick={() => navigate('/')}>
+                Volver al inicio
+              </Button>
+            </div>
           </div>
         ) : iframeUrl ? (
           <iframe
