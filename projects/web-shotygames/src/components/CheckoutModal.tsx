@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FieldErrors } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -264,6 +264,59 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     });
   };
 
+  // Qué pasa cuando la validación falla y por qué hace falta esto.
+  //
+  // React Hook Form, al fallar, enfoca el primer campo con error para que el
+  // navegador haga scroll solo. Pero `provincia`, `ciudad` y `metodoPago` viven
+  // en <input type="hidden">, y un input oculto NO se puede enfocar: no hay
+  // scroll, no hay foco, no pasa nada. Con el botón al final de un formulario
+  // de ~2300px, el mensaje rojo queda fuera de la pantalla, muy por encima.
+  //
+  // Medido en producción, móvil 375x812, con el cliente abajo en el botón:
+  // "Selecciona tu provincia" en top -767px y "Selecciona tu ciudad" en -665px,
+  // cero toasts, sin navegación, el contenedor se movía 40px de 2295px. Desde
+  // afuera: tocas COMPRAR y la pantalla se queda igual. El cliente se va.
+  //
+  // Así que el scroll lo hacemos nosotros, contra el control visible (el
+  // trigger del Select comparte el id con el input oculto), y además avisamos
+  // con un toast: aunque el scroll fallara, el cliente ve que algo pasó.
+  const onInvalid = (errores: FieldErrors<FormData>) => {
+    const primero = Object.keys(errores)[0] as keyof FormData | undefined;
+    if (!primero) return;
+
+    // Los mensajes se pintan en el mismo render que dispara esto, así que
+    // salimos del ciclo actual antes de buscarlos. `setTimeout` y NO
+    // `requestAnimationFrame`: rAF no dispara en pestañas ocultas o en segundo
+    // plano, y ahí el scroll simplemente nunca ocurría (verificado: el callback
+    // no llegaba a correr y el contenedor se quedaba clavado en 1544px).
+    setTimeout(() => {
+      const control = document.getElementById(primero);
+      // offsetParent null = no ocupa espacio (el input oculto de provincia,
+      // ciudad o metodoPago): no sirve ni para enfocar ni para hacer scroll.
+      const visible =
+        control && control.offsetParent !== null ? (control as HTMLElement) : null;
+
+      if (visible) {
+        // focus() SIN preventScroll: además de llevar el scroll hasta el campo,
+        // saca el foco del botón de enviar. Si no, el Dialog de Radix devuelve
+        // el foco al botón y deshace el scroll que acabamos de hacer.
+        visible.focus();
+        visible.scrollIntoView({ behavior: 'auto', block: 'center' });
+      } else {
+        document
+          .querySelector<HTMLElement>('[role="dialog"] .text-destructive')
+          ?.scrollIntoView({ behavior: 'auto', block: 'center' });
+      }
+    }, 0);
+
+    toast({
+      title: 'Falta un dato para enviar tu pedido',
+      description:
+        errores[primero]?.message ?? 'Revisa los campos marcados en rojo más arriba.',
+      variant: 'destructive',
+    });
+  };
+
   const onSubmit = async (data: FormData) => {
     // Prevenir doble click
     if (isSubmitting) return;
@@ -291,7 +344,14 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     const metodoPagoFinal = data.metodoPago || METODO_POR_DEFECTO;
     
     let pedido: any;
-    
+
+    // El armado del pedido entra al try. Antes arrancaba justo después de
+    // `setIsSubmitting(true)` y terminaba ~110 líneas ANTES del try: cualquier
+    // excepción acá (un upsell inesperado, una torre sin precio, una cookie que
+    // no se puede leer) dejaba el botón en "Enviando pedido..." y `disabled`
+    // para siempre, sin catch, sin mensaje y sin salida. Mismo síntoma que se
+    // arregló el 04/09 para el fetch, en el tramo que aquel fix no cubría.
+    try {
     if (isDigitalProduct) {
       // Pedido simplificado para productos digitales
       pedido = {
@@ -393,7 +453,6 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       };
     }
 
-    try {
       // Enviar webhook a n8n
       const webhookUrl = "https://shotygames-n8n.hetaxg.easypanel.host/webhook/shotygames/pedido-web";
       
@@ -404,8 +463,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       // congelado. 20s es de sobra — el webhook responde en ~0,3s.
       const controlador = new AbortController();
       const corte = setTimeout(() => controlador.abort(), 20000);
+      let respuesta: Response;
       try {
-        await fetch(webhookUrl, {
+        respuesta = await fetch(webhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -418,6 +478,15 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         });
       } finally {
         clearTimeout(corte);
+      }
+
+      // La respuesta se tiraba a la basura. `fetch` solo rechaza si la conexión
+      // falla: un 500 de n8n resolvía como si todo hubiera salido bien, y el
+      // cliente terminaba en la pantalla de confirmación con un pedido que no
+      // existía en ninguna hoja. Nadie se enteraba — ni él, esperando el
+      // paquete, ni nosotros, que simplemente no veíamos la venta.
+      if (!respuesta.ok) {
+        throw new Error(`El webhook de pedidos respondió ${respuesta.status}`);
       }
 
       // Meta Pixel - Lead
@@ -444,9 +513,15 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       } else if (metodoPagoFinal === "transferencia") {
         navigate("/confirmacion-transferencia", { state: { pedido } });
       } else if (metodoPagoFinal === "tarjeta") {
-        // Para pago con tarjeta, ir a confirmación
-        // El link de pago de PayPhone ya fue enviado en el webhook
-        navigate("/confirmacion-tarjeta", { state: { pedido } });
+        // Antes esto iba a /confirmacion-tarjeta, que dice "el link que te
+        // enviaremos": el cliente tenía que salir del sitio, esperar un
+        // WhatsApp y volver — con el link de PayPhone ya generado en ese mismo
+        // instante. El 05/09 Kevin Eras intentó pagar $6,90 tres veces en 34
+        // minutos (tarjeta → transferencia → tarjeta) y las tres se le
+        // generó link; ninguna terminó en pago.
+        // /pago-tarjeta ya existía con el widget de PayPhone embebido y nadie
+        // navegaba a ella. Ahora cobra acá mismo, sin salir.
+        navigate("/pago-tarjeta", { state: { pedido } });
       }
     } catch (error) {
       console.error('Error processing order:', error);
@@ -633,7 +708,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
           Ingresa tus datos para realizar el pedido 📦
         </p>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
           {/* Campo oculto registrado a mano: el RadioGroup de método de pago
               solo llama setValue() en onValueChange, RHF no lo "ve" como
               obligatorio si no está registrado. Sin esto, el submit pasaba

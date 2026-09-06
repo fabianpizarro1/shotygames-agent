@@ -1,19 +1,44 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, ArrowLeft } from "lucide-react";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
+type PedidoPago = {
+  idPedido?: string;
+  total?: number;
+  productoPrincipal?: string;
+  nombre?: string;
+  telefono?: string;
+};
+
 export const PayphoneCheckout = () => {
   const navigate = useNavigate();
+  const { state: locationState } = useLocation();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   
-  // Get pedido from readable URL params
+  // El pedido llega por `state` de la navegación. Los datos del cliente
+  // (nombre, teléfono) NO deben viajar en la URL: quedan en el historial del
+  // navegador, en la barra de direcciones a la vista de cualquiera que mire el
+  // teléfono, y se filtran por Referer al iframe de PayPhone.
+  // Se mantiene la lectura por query params como respaldo, para no romper
+  // ningún link viejo que ya esté circulando por WhatsApp.
   const pedido = useMemo(() => {
+    const desdeState = (locationState as { pedido?: PedidoPago } | null)?.pedido;
+    if (desdeState?.idPedido && desdeState.total != null) {
+      return {
+        idPedido: desdeState.idPedido,
+        total: Number(desdeState.total),
+        productoPrincipal: desdeState.productoPrincipal,
+        nombre: desdeState.nombre,
+        telefono: desdeState.telefono,
+      };
+    }
+
     const id = searchParams.get('id');
     const monto = searchParams.get('monto');
     const producto = searchParams.get('producto');
@@ -31,7 +56,7 @@ export const PayphoneCheckout = () => {
     }
     
     return null;
-  }, [searchParams]);
+  }, [searchParams, locationState]);
 
   // Handle back button
   const handleBack = () => {
