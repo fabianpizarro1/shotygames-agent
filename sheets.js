@@ -361,7 +361,7 @@ async function buscarPedido(nombre) {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
-    range: 'PEDIDOS!A:AD'
+    range: 'PEDIDOS!A:AJ'
   });
   const rows = res.data.values || [];
   const headers = rows[0] || [];

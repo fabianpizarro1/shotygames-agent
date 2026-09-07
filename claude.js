@@ -862,4 +862,4 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
   return { text, updatedHistory: messages };
 }
 
-module.exports = { chat };
+module.exports = { chat, crearGuiaDropiYActualizar };

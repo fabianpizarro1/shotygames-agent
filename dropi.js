@@ -10,9 +10,13 @@ const WAREHOUSE_ID = 338;
 const TOKEN_FILE = '/tmp/.dropi_token';
 
 const PRODUCTS = {
-  normal:      { id: 6007,   name: 'Torre de Shots NORMAL',  weight: '1.00' },
-  picante:     { id: 6008,   name: 'Torre de Shots PICANTE', weight: '1.00' },
-  parejas:     { id: 76998,  name: 'Torre de Shots PAREJAS', weight: '1.00' },
+  // Los IDs 6007/6008/76998 son las torres PÚBLICAS a $9 del catálogo de
+  // dropshippers — no se usan para las guías propias. Las guías de Shotygames
+  // van contra los SKU privados (182789/182790/182791), que son los que tienen
+  // el stock real de la bodega. Ver decisions/log.md 2026-09-07.
+  normal:      { id: 182791, name: 'Torre Normal Priv',   weight: '1.00' },
+  picante:     { id: 182790, name: 'Torre Picante Priv',  weight: '1.00' },
+  parejas:     { id: 182789, name: 'Torre Parejas Priv',  weight: '1.00' },
   enganchados: { id: 6010,   name: 'Enganchados',            weight: '0.50' },
   dados:       { id: 139461, name: 'Dados',                  weight: '0.10' },
   comboParejas: { id: 175606, name: 'Combo Parejas',          weight: '1.10' }
