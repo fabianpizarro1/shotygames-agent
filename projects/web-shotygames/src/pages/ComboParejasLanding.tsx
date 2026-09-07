@@ -28,6 +28,8 @@ import {
   Smartphone,
   Package,
   Wallet,
+  Banknote,
+  Heart,
   Zap,
 } from "lucide-react";
 
@@ -173,7 +175,7 @@ const ComboParejasLanding = () => {
     },
     {
       q: "¿Tengo que pagar algo por adelantado?",
-      a: "No. Pagas los $35 completos en efectivo cuando el paquete llega a tu puerta. Para confirmar el pedido solo te llevamos a WhatsApp con el mensaje ya escrito: lo envías y listo.",
+      a: "No. El combo es pago contraentrega: pagas los $35 completos en efectivo cuando el paquete llega a tu puerta. Para confirmar el pedido solo te llevamos a WhatsApp con el mensaje ya escrito: lo envías y listo.",
     },
     {
       q: "¿Hasta cuándo recibo las dos guías gratis?",
@@ -234,7 +236,7 @@ const ComboParejasLanding = () => {
     >
       <Seo
         title="Combo Parejas 🔥 3 juegos + 2 guías por $35 | ShotyGames Ecuador"
-        description="Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Pagas en efectivo al recibir."
+        description="Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido y pago contraentrega: pagas en efectivo al recibir."
         canonical="https://www.shotygames.com/landing/combo-parejas"
         image={`https://www.shotygames.com${comboFlatlay}`}
         type="product"
@@ -376,7 +378,12 @@ const ComboParejasLanding = () => {
                   <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: "#ffb4cd" }}>
                     <Truck className="h-4 w-4" /> Envío incluido a todo Ecuador
                   </p>
-                  <p className="text-xs text-muted-foreground">Pagas en efectivo al recibir</p>
+                  <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                    <Banknote className="h-4 w-4 text-green-500" />
+                    <span>
+                      <strong className="text-foreground">Pago contraentrega:</strong> pagas en efectivo al recibir
+                    </span>
+                  </p>
                 </div>
 
                 {/* Prueba social temprana: gana confianza antes de pedir el
@@ -394,7 +401,7 @@ const ComboParejasLanding = () => {
 
                 {/* Microbeneficios de confianza */}
                 <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground md:justify-start md:text-xs">
-                  {["Envíos a todo Ecuador", "Productos físicos + digitales", "Compra directa con ShotyGames"].map(
+                  {["Pago contraentrega", "Envíos a todo Ecuador", "Productos físicos + digitales", "Compra directa con ShotyGames"].map(
                     (t) => (
                       <li key={t} className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5" style={{ color: ROSA }} />
@@ -886,7 +893,7 @@ const ComboParejasLanding = () => {
             <div className="mt-5">
               <CtaButton className="text-base sm:text-xl">QUIERO MI COMBO POR $35 🔥</CtaButton>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground md:text-sm">
-                <Wallet className="h-4 w-4" /> Pagas en efectivo al recibir
+                <Wallet className="h-4 w-4" /> Pago contraentrega: pagas en efectivo al recibir
               </p>
             </div>
           </div>
@@ -912,6 +919,43 @@ const ComboParejasLanding = () => {
                 </AccordionItem>
               ))}
             </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------------- REDUCCIÓN DE RIESGO ----------------
+          Misma promesa que la landing de Torre Parejas: contraentrega primero,
+          porque es la objeción que frena la compra (pagar antes a un
+          desconocido), no el precio. */}
+      <section className="border-t border-border/60 bg-[#0d0509] py-12 md:py-16">
+        <div className="container mx-auto px-5">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-center font-display text-[26px] font-extrabold tracking-tight sm:text-4xl">
+              COMPRAR ES SIMPLE
+            </h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-3 md:gap-6">
+              <Card className="border-2 border-green-500/30 bg-green-500/5 p-6 text-center">
+                <Banknote className="mx-auto mb-3 h-10 w-10 text-green-500" />
+                <p className="mb-1 text-base font-bold md:text-lg">Pago contraentrega</p>
+                <p className="text-sm text-muted-foreground">
+                  Pagas los $35 en efectivo cuando el paquete llega a tu puerta. No adelantas nada.
+                </p>
+              </Card>
+              <Card className="border-2 p-6 text-center" style={{ borderColor: `${ROSA}33` }}>
+                <Truck className="mx-auto mb-3 h-10 w-10" style={{ color: ROSA }} />
+                <p className="mb-1 text-base font-bold md:text-lg">Envío gratis</p>
+                <p className="text-sm text-muted-foreground">
+                  A todo Ecuador continental. El envío ya está incluido en el precio del combo.
+                </p>
+              </Card>
+              <Card className="border-2 p-6 text-center" style={{ borderColor: `${ROSA}33` }}>
+                <Heart className="mx-auto mb-3 h-10 w-10" style={{ color: ROSA }} />
+                <p className="mb-1 text-base font-bold md:text-lg">Empaque discreto</p>
+                <p className="text-sm text-muted-foreground">
+                  Llega sellado y sin referencias al contenido por fuera. Nadie sabe qué hay adentro.
+                </p>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
@@ -953,7 +997,9 @@ const ComboParejasLanding = () => {
 
             <div className="mx-auto mt-6 max-w-sm">
               <CtaButton>QUIERO MI COMBO PAREJAS</CtaButton>
-              <p className="mt-3 text-xs text-muted-foreground md:text-sm">Pagas en efectivo al recibir.</p>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground md:text-sm">
+                <Banknote className="h-4 w-4 text-green-500" /> Pago contraentrega: pagas en efectivo al recibir.
+              </p>
             </div>
           </div>
         </div>
@@ -971,6 +1017,7 @@ const ComboParejasLanding = () => {
           <div className="min-w-0">
             <p className="truncate text-[11px] leading-tight text-muted-foreground">Combo Parejas</p>
             <p className="font-display text-xl font-extrabold leading-none tracking-tight">$35</p>
+            <p className="mt-0.5 truncate text-[10px] leading-tight text-green-500">Pago contraentrega</p>
           </div>
           <Button
             onClick={handleBuyClick}
