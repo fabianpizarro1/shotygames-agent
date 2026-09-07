@@ -211,7 +211,7 @@ const pages = [
     hero: "src/assets/combo-parejas-pareja-hero.webp",
     title: "Combo Parejas 🔥 3 juegos + 2 guías por $35 | ShotyGames Ecuador",
     description:
-      "Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido. Pagas en efectivo al recibir.",
+      "Torre Parejas + Dados del Placer + Emparejados digital, y esta semana 2 guías digitales de regalo. Todo por $35 con envío incluido y pago contraentrega: pagas en efectivo al recibir.",
     image: resolveImage("src/assets/combo-parejas-pareja-hero.webp"),
     type: "product",
   },
