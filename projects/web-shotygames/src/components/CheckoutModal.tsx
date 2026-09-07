@@ -513,15 +513,13 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       } else if (metodoPagoFinal === "transferencia") {
         navigate("/confirmacion-transferencia", { state: { pedido } });
       } else if (metodoPagoFinal === "tarjeta") {
-        // Antes esto iba a /confirmacion-tarjeta, que dice "el link que te
-        // enviaremos": el cliente tenía que salir del sitio, esperar un
-        // WhatsApp y volver — con el link de PayPhone ya generado en ese mismo
-        // instante. El 05/09 Kevin Eras intentó pagar $6,90 tres veces en 34
-        // minutos (tarjeta → transferencia → tarjeta) y las tres se le
-        // generó link; ninguna terminó en pago.
-        // /pago-tarjeta ya existía con el widget de PayPhone embebido y nadie
-        // navegaba a ella. Ahora cobra acá mismo, sin salir.
-        navigate("/pago-tarjeta", { state: { pedido } });
+        // Vuelve a la pantalla de confirmación (Fabián, 2026-09-06): hay temas
+        // pendientes con el proveedor de pagos, así que la tarjeta NO se cobra
+        // en el sitio por ahora. El link de PayPhone lo sigue mandando n8n por
+        // WhatsApp, igual que siempre.
+        // /pago-tarjeta queda listo y probado para cuando se resuelva: basta
+        // con cambiar esta línea.
+        navigate("/confirmacion-tarjeta", { state: { pedido } });
       }
     } catch (error) {
       console.error('Error processing order:', error);
