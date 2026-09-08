@@ -657,3 +657,11 @@ pedidos propios en vez del supuesto.
 campañas a la vez**. Dos campañas de $10/día se van en cinco días sin que ninguna llegue a
 decir nada. Primero el Inositol (mejor margen, competencia más débil, nadie con landing web),
 medir el CPA, y recién ahí la segunda.
+
+**2026-09-07 — Favoritos en el dashboard.** Estrella en cada fila de la tabla y en el modal:
+guarda el producto a mano, con nota opcional, y aparece en una pestaña propia (⭐ Favoritos)
+más un contador arriba. No hizo falta tabla nueva ni DDL: viven en una fila más de
+`dropi_dashboard` con `id='favoritos'` (`publicar.js` solo pisa `id='latest'`, así que nunca
+los borra). Se guarda una foto de los datos del momento (nombre, imagen, costo, proveedor)
+para que el favorito siga siendo legible si el producto sale del payload del día; si sigue en
+el payload se muestra la versión fresca. API: `/api/favoritos` GET/POST/DELETE. Deployado.
