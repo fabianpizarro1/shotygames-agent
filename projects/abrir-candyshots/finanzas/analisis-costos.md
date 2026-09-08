@@ -1,6 +1,12 @@
 # Análisis de Costos — CandyShots
 _Última actualización: 2026-05-29_
 
+
+> ⚠️ **DOCUMENTO SUPERADO (2026-09-07).** Los margenes de aqui NO consideran el IVA y estan
+> inflados 4-8 puntos. La fuente de verdad ahora es el Google Sheets de administracion
+> (`../administracion/CandyShots-Administracion.xlsx` → Sheets). Se conserva como referencia
+> historica de los costos base.
+
 > Objetivo: saber si los precios actuales son rentables antes de abrir.
 > Todos los valores en USD. Volumen de vaso: ~350ml (12oz).
 
