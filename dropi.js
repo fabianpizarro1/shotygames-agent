@@ -132,6 +132,61 @@ async function getCiudades() {
 }
 
 /**
+ * Otras formas de escribir la MISMA ciudad dentro de la misma provincia.
+ *
+ * El catálogo trae el mismo cantón cargado dos veces con distinta ortografía y
+ * las dos marcadas como válidas para contraentrega, pero solo una tiene ruta
+ * de verdad: YANZATZA y YANTZAZA son ambas Yantzaza, y la orden a "YANZATZA"
+ * muere con "No se encuentra la combinacion de ciudades" recién al crearse.
+ *
+ * El parecido NO se mide por letras cambiadas: ZUMBA y ZUMBI están a una sola
+ * letra y son cantones distintos, a provincias de distancia — reintentar ahí
+ * manda el paquete a otro lado. Solo cuentan como variantes:
+ *
+ *   1. misma clave fonética (s/c/z, b/v, i/y, h muda, tildes) → PAQUISHA = PAQUIZHA
+ *   2. anagrama de esa clave (las mismas letras en otro orden) → YANZATZA = YANTZAZA
+ *
+ * Las dos dejan a ZUMBA y ZUMBI como ciudades diferentes, que es el punto.
+ */
+const claveFonetica = (v) => normCiudad(v)
+  .replace(/[^A-Z0-9]/g, '')
+  .replace(/H/g, '')
+  .replace(/[ZC]/g, 'S')
+  .replace(/V/g, 'B')
+  .replace(/Y/g, 'I');
+
+// Los dígitos NO se reordenan: "KM 14 QUEVEDO" y "KM 41 QUEVEDO" son dos
+// puntos distintos de la misma vía, y como anagrama darían iguales. Se compara
+// la secuencia de números tal cual, y solo las letras se ordenan.
+const soloDigitos = (v) => v.replace(/\D/g, '');
+const ordenarLetras = (v) => v.replace(/[0-9]/g, '').split('').sort().join('');
+
+async function variantesCiudad(ciudad, provincia, rateType) {
+  try {
+    const todas = await getCiudades();
+    const nProv = normCiudad(provincia);
+    const nCiudad = normCiudad(ciudad);
+    const clave = claveFonetica(ciudad);
+    const anagrama = ordenarLetras(clave);
+    const digitos = soloDigitos(clave);
+
+    return todas
+      .filter((c) => c.tarifas.includes(rateType))
+      .filter((c) => !nProv || c.nProvincia === nProv)
+      .filter((c) => c.nNombre !== nCiudad)
+      .filter((c) => {
+        const k = claveFonetica(c.nombre);
+        if (k === clave) return true;
+        return ordenarLetras(k) === anagrama && soloDigitos(k) === digitos;
+      })
+      .map((c) => ({ ciudad: c.nombre, provincia: c.provincia }));
+  } catch (e) {
+    console.error('variantesCiudad:', e.message);
+    return [];
+  }
+}
+
+/**
  * Nombre y provincia exactos que espera DROPI para una ciudad.
  *
  * Solo considera destinos con la tarifa que se va a usar: acertarle al nombre
@@ -341,7 +396,7 @@ async function esperarGuia(orderId, intentos = 5) {
 
 async function crearOrden(pedido) {
   const token = await getToken();
-  const client = makeClient(token);
+  let client = makeClient(token);   // se reemplaza si hay que reloguear a mitad
 
   // Nombre y apellido
   const partes = (pedido.nombre || '').trim().split(' ');
@@ -476,23 +531,53 @@ async function crearOrden(pedido) {
   };
 
   // Paso 1: crear la orden (con retry automático si el token expiró)
-  let res;
-  try {
-    res = await client.post('/orders/myorders', body);
-  } catch (e) {
-    const status = e.response?.status;
-    if (status === 401 || status === 403) {
-      // Token expirado — intentar auto-login y reintentar UNA vez
-      console.log(`DROPI 401/403 — intentando auto-login y reintento...`);
-      try {
-        const newToken = await autoLogin();
-        const newClient = makeClient(newToken);
-        res = await newClient.post('/orders/myorders', body);
-      } catch (e2) {
-        throw new Error(`DROPI error ${status} y auto-login falló: ${e2.message}`);
+  async function postOrden(cuerpo) {
+    try {
+      return await client.post('/orders/myorders', cuerpo);
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 401 || status === 403) {
+        // Token expirado — intentar auto-login y reintentar UNA vez
+        console.log(`DROPI 401/403 — intentando auto-login y reintento...`);
+        try {
+          const newToken = await autoLogin();
+          client = makeClient(newToken);
+          return await client.post('/orders/myorders', cuerpo);
+        } catch (e2) {
+          throw new Error(`DROPI error ${status} y auto-login falló: ${e2.message}`);
+        }
       }
-    } else {
       throw new Error(`DROPI error ${status}: ${JSON.stringify(e.response?.data)}`);
+    }
+  }
+
+  const traeId = (d) => d?.id || d?.objects?.id || d?.data?.id || d?.order?.id;
+
+  let res = await postOrden(body);
+
+  // El catálogo tiene el mismo cantón cargado con dos ortografías y solo una
+  // tiene ruta real: la otra pasa todos los filtros y muere acá, con la orden
+  // sin crear. Antes de darla por perdida se reintenta con las variantes del
+  // MISMO nombre en la misma provincia (ver variantesCiudad).
+  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado/i
+    .test(String(d?.message || d?.data_error || d?.error || ''));
+
+  if (!traeId(res.data) && esErrorDeCiudad(res.data)) {
+    const variantes = await variantesCiudad(cityForDropi, state, rateType);
+    if (!variantes.length) {
+      console.log(`crearOrden: "${cityForDropi}" sin ruta y sin variantes que probar`);
+    }
+    for (const v of variantes) {
+      console.log(`crearOrden: "${cityForDropi}" no tiene ruta — reintentando como "${v.ciudad}" (${v.provincia})`);
+      const alterno = await postOrden({ ...body, city: v.ciudad, state: v.provincia });
+      if (traeId(alterno.data)) {
+        console.log(`crearOrden: ✅ DROPI aceptó "${v.ciudad}" — usar esa grafía para ${cityForDropi}`);
+        res = alterno;
+        cityForDropi = v.ciudad;
+        state = v.provincia;
+        break;
+      }
+      if (!esErrorDeCiudad(alterno.data)) { res = alterno; break; }
     }
   }
 
@@ -977,4 +1062,4 @@ function pagoDeOrden(movimientos, orderId) {
   };
 }
 
-module.exports = { telNacional, telConPais, telLocal, crearOrden, resolverCiudad, getCiudades, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
+module.exports = { telNacional, telConPais, telLocal, crearOrden, resolverCiudad, getCiudades, variantesCiudad, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
