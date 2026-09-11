@@ -8,12 +8,21 @@
 // La app SUGIERE la que encaja con el tracking real, pero la decisión final es
 // de quien escribe: abre WhatsApp con el texto puesto y nada se manda solo.
 //
-// ⚠️ SIN EMOJI, A PROPÓSITO. Estos textos viajan dentro de un link `wa.me`, y ahí
-// NINGÚN emoji sobrevive en el teléfono de Fabián — ni los astrales (📦 📍) ni los
-// del BMP (✅ ⚠ ☎). Llegan como rombo. Probado con link real el 2026-09-10, y ya
-// se había visto en agosto. Las TILDES sí pasan, así que el texto va acentuado y
-// el énfasis se hace con *negritas*, que son las que WhatsApp respeta.
-// Los mensajes que salen por la API de Evolution (gracias, guía) sí llevan emoji.
+// UN SOLO TEXTO, DOS RENDERIZADOS. El texto se escribe CON emoji, y el canal
+// decide si sobreviven:
+//
+//  · **Evolution API** (botón "Enviar" de la app, cron de avisos, n8n) → con emoji.
+//  · **link `wa.me`** → `linkWhatsApp` les saca los emoji SOLO, porque dentro de
+//    un `wa.me` ningún emoji sobrevive en el teléfono de Fabián: ni los astrales
+//    (📦 📍) ni los del BMP (✅ ⚠ ☎). Llegan como rombo. Probado con link real el
+//    2026-09-10, y ya se había visto en agosto.
+//
+// Por eso el filtro vive DENTRO de `linkWhatsApp` y no en quien la llama: así no
+// existe forma de armar un `wa.me` con emoji por olvido. Las TILDES sí pasan por
+// los dos canales, así que el texto va acentuado en ambos.
+//
+// Hoy solo ShotyGames tiene instancia de Evolution en esta app: Truquito y
+// Avanora siguen saliendo por `wa.me` y por lo tanto sin emoji, automáticamente.
 // ============================================================
 
 import type { Pedido } from './tipos';
@@ -82,22 +91,22 @@ function bloqueAgencia(p: Pedido): string {
 
   if (ag) {
     return (
-      `*Agencia:* ${ag.sucursal.replace(/_/g, ' - ')}\n` +
-      `*Dirección:* ${ag.direccion}\n` +
-      (ag.horario ? `*Horario:* ${ag.horario}\n` : '') +
-      (ag.telefono ? `*Teléfono de la agencia:* ${ag.telefono}\n` : '')
+      `📍 *Agencia:* ${ag.sucursal.replace(/_/g, ' - ')}\n` +
+      `🏠 *Dirección:* ${ag.direccion}\n` +
+      (ag.horario ? `🕒 *Horario:* ${ag.horario}\n` : '') +
+      (ag.telefono ? `☎️ *Teléfono de la agencia:* ${ag.telefono}\n` : '')
     );
   }
-  if (nombre) return `*Agencia:* ${nombre}\n`;
-  return `Está en una agencia de *${transportadora(p)}* en *${p.ciudad || 'su ciudad'}*. Escríbanos y le confirmamos cuál.\n`;
+  if (nombre) return `📍 *Agencia:* ${nombre}\n`;
+  return `📍 Está en una agencia de *${transportadora(p)}* en *${p.ciudad || 'su ciudad'}*. Escríbanos y le confirmamos cuál.\n`;
 }
 
 /** La guía y el PDF, que es lo que el cliente necesita para retirar. */
 function bloqueGuia(p: Pedido): string {
   const pdf = p.tracking?.pdf;
   return (
-    `*Número de guía:* ${p.guia || '—'}\n` +
-    (pdf ? `*Guía en PDF:* ${pdf}\n` : '')
+    `🚛 *Número de guía:* ${p.guia || '—'}\n` +
+    (pdf ? `📄 *Guía en PDF:* ${pdf}\n` : '')
   );
 }
 
@@ -148,19 +157,19 @@ export const PLANTILLAS: Plantilla[] = [
       const intentaron = huboIntentoDeEntrega(p);
 
       const apertura = enCamino
-        ? `Le contamos que su pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retire.`
+        ? `📦 Le contamos que su pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retire.`
         : !intentaron || pidioRetiroEnAgencia(p.direccion)
-          ? `Su pedido *ya llegó a la agencia* y está listo para que lo retire.`
+          ? `📦 Su pedido *ya llegó a la agencia* y está listo para que lo retire.`
           : pidioRetiro(p)
-            ? `Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible. Tal como solicitó, quedó en la agencia para que lo retire.`
-            : `Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible, así que lo dejaron en agencia para que lo retire.`;
+            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible. Tal como solicitó, quedó en la agencia para que lo retire.`
+            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible, así que lo dejaron en agencia para que lo retire.`;
 
       const cierre = enCamino
-        ? `\nApenas llegue le avisamos para que pase a retirarlo. Lleve su cédula.` +
-          (p.aCobrar > 0 ? `\nEl valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '')
-        : `\nRetírelo presentando su cédula.` +
-          (p.aCobrar > 0 ? `\nEl valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '') +
-          `\n\n*Importante:* una vez que el paquete está en agencia ya no vuelve a salir a domicilio, y si no lo retira en los próximos días se devuelve.`;
+        ? `\n🆔 Apenas llegue le avisamos para que pase a retirarlo. Lleve su cédula.` +
+          (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '')
+        : `\n🆔 Retírelo presentando su cédula.` +
+          (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '') +
+          `\n\n⚠️ *Importante:* una vez que el paquete está en agencia ya no vuelve a salir a domicilio, y si no lo retira en los próximos días se devuelve.`;
 
       return saludo(p) + apertura + `\n\n` + bloqueAgencia(p) + `\n` + bloqueGuia(p) + cierre;
     },
@@ -171,9 +180,9 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Ya está en destino, falta el reparto',
     texto: (p) =>
       saludo(p) +
-      `Le contamos que su pedido *ya llegó a ${p.ciudad || 'su ciudad'}*.\n\n` +
-      `Los repartidores se van a comunicar con usted cuando salga a entrega, así que *manténgase atento al celular*.\n\n` +
-      (p.aCobrar > 0 ? `Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` : '') +
+      `📦 Le contamos que su pedido *ya llegó a ${p.ciudad || 'su ciudad'}*.\n\n` +
+      `📞 Los repartidores se van a comunicar con usted cuando salga a entrega, así que *manténgase atento al celular*.\n\n` +
+      (p.aCobrar > 0 ? `💵 Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` : '') +
       bloqueGuia(p),
   },
   {
@@ -182,12 +191,12 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Que esté atento y con el efectivo',
     texto: (p) =>
       saludo(p) +
-      `Buenas noticias: *${transportadora(p)}* nos indicó que su pedido *ya salió a despacho el día de hoy*.\n\n` +
+      `🚚 ¡Buenas noticias! *${transportadora(p)}* nos indicó que su pedido *ya salió a despacho el día de hoy*.\n\n` +
       `Los repartidores se van a comunicar con usted para coordinar la entrega, así que por favor:\n\n` +
-      `- *Manténgase atento al celular*, le van a llamar o escribir\n` +
-      `- Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` +
-      (p.direccion ? `- Entrega en: *${p.direccion}*\n` : '') +
-      `\n¡Que lo disfrute!`,
+      `📞 *Manténgase atento al celular*, le van a llamar o escribir\n` +
+      `💵 Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` +
+      (p.direccion ? `🏠 Entrega en: *${p.direccion}*\n` : '') +
+      `\n¡Que lo disfrute! 🎉`,
   },
   {
     id: 'contacto',
@@ -195,9 +204,9 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Preguntar si el repartidor llamó',
     texto: (p) =>
       saludo(p) +
-      `Su pedido está en camino con *${transportadora(p)}*.\n*Número de guía:* ${p.guia || '—'}\n\n` +
-      `¿Los repartidores se han comunicado con usted para coordinar la entrega?\n\n` +
-      `Queremos asegurarnos de que le llegue sin problema.`,
+      `📦 Su pedido está en camino con *${transportadora(p)}*.\n🚛 *Número de guía:* ${p.guia || '—'}\n\n` +
+      `❓ ¿Los repartidores se han comunicado con usted para coordinar la entrega?\n\n` +
+      `Queremos asegurarnos de que le llegue sin problema 🙌`,
   },
   {
     id: 'intentos',
@@ -205,7 +214,7 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'No hubo quien reciba',
     texto: (p) =>
       saludo(p) +
-      `Nos indican de *${transportadora(p)}* que los repartidores han estado intentando entregarle su pedido, pero *no encontraron quien lo reciba* y no obtuvieron respuesta.`,
+      `⚠️ Nos indican de *${transportadora(p)}* que los repartidores han estado intentando entregarle su pedido, pero *no encontraron quien lo reciba* y no obtuvieron respuesta.`,
   },
   {
     id: 'libre',
@@ -274,7 +283,32 @@ export function telefonoWA(telefono: string): string {
   return n;
 }
 
+/**
+ * Saca los emoji de un texto, para los links `wa.me`.
+ *
+ * Dentro de un `wa.me?text=` ningún emoji sobrevive en el teléfono de Fabián
+ * (probado 2026-09-10: ni 📦 ni ✅ ni ⚠; llegan como rombo). El texto llega con
+ * las tildes intactas, así que solo hay que quitar los pictogramas.
+ *
+ * Después de quitarlos quedan espacios colgando al principio de línea y dobles
+ * espacios en el medio: se limpian, o el mensaje se ve descuidado.
+ */
+export function sinEmoji(texto: string): string {
+  return texto
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{20E3}\u{200D}]/gu, '')
+    .split('\n')
+    .map((linea) => linea.replace(/[ \t]{2,}/g, ' ').replace(/^[ \t]+/, '').trimEnd())
+    .join('\n');
+}
+
+/**
+ * El link que abre WhatsApp con el texto puesto.
+ *
+ * ⚠️ El filtro de emoji va ACÁ y no en quien la llama: mientras todo `wa.me` se
+ * arme con esta función, es imposible mandar un emoji por este canal por olvido.
+ */
 export function linkWhatsApp(p: Pedido, texto: string): string {
   const base = `https://wa.me/${telefonoWA(p.telefono)}`;
-  return texto ? `${base}?text=${encodeURIComponent(texto)}` : base;
+  const limpio = sinEmoji(texto);
+  return limpio ? `${base}?text=${encodeURIComponent(limpio)}` : base;
 }
