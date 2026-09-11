@@ -40,13 +40,13 @@ function buildGuiaMessage(nombre, transportadora, guia, linkRastreo) {
   const cliente = firstName(nombre);
   const transp = String(transportadora || 'SERVIENTREGA').toUpperCase().trim();
 
-  return `*${cliente}* 👋 para informarte que tu pedido ya fue enviado a través de *${transp}*. Te adjunto el número de guía:
+  return `*${cliente}* 👋 para informarle que su pedido ya fue enviado a través de *${transp}*. Le adjunto el número de guía:
 
 🚛 Número de guía: *${guia}*
 
-Los repartidores se comunicarán contigo al momento de la entrega para que por favor estés pendiente 🙏
+Los repartidores se comunicarán con usted al momento de la entrega, por favor esté pendiente 🙏
 
-Si puedes nos avisas cuando lo recibas, muchas gracias por confiar en nosotros 😊`;
+Si puede nos avisa cuando lo reciba, muchas gracias por confiar en nosotros 😊`;
 }
 
 // Cuenta propia de Shotygames: siempre despacha por Servientrega, así que

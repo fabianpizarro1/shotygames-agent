@@ -309,7 +309,7 @@ async function procesarBatchVentas(from, items, firstMessageId) {
     // un mensaje genérico. Sin jerga técnica: no es su problema.
     await sendText(
       from,
-      'Estamos teniendo un problema técnico en este momento. Ya lo estamos revisando — te contactamos apenas se resuelva 🙏',
+      'Estamos teniendo un problema técnico en este momento. Ya lo estamos revisando — le contactamos apenas se resuelva 🙏',
       INSTANCE_VENTAS
     ).catch(() => {});
   }
