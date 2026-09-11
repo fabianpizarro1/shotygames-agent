@@ -11,18 +11,21 @@
 // UN SOLO TEXTO, DOS RENDERIZADOS. El texto se escribe CON emoji, y el canal
 // decide si sobreviven:
 //
-//  · **Evolution API** (botón "Enviar" de la app, cron de avisos, n8n) → con emoji.
-//  · **link `wa.me`** → `linkWhatsApp` les saca los emoji SOLO, porque dentro de
-//    un `wa.me` ningún emoji sobrevive en el teléfono de Fabián: ni los astrales
-//    (📦 📍) ni los del BMP (✅ ⚠ ☎). Llegan como rombo. Probado con link real el
-//    2026-09-10, y ya se había visto en agosto.
+//  · **`wa.me`** — el botón de la app, que es como Fabián manda a mano. Acá
+//    `linkWhatsApp` les saca los emoji SOLO, porque dentro de un `wa.me` NINGUNO
+//    sobrevive en su teléfono: ni los astrales (📦 📍) ni los del BMP (✅ ⚠ ☎).
+//    Llegan como rombo. Probado con link real el 2026-09-10.
+//  · **Evolution API** — hoy solo el cron de avisos (`/api/cron/avisos`, que manda
+//    la plantilla "ciudad"). Ahí los emoji SÍ llegan, así que el texto los lleva.
 //
-// Por eso el filtro vive DENTRO de `linkWhatsApp` y no en quien la llama: así no
-// existe forma de armar un `wa.me` con emoji por olvido. Las TILDES sí pasan por
-// los dos canales, así que el texto va acentuado en ambos.
+// Fabián eligió el 2026-09-11 que tocar una plantilla abra WhatsApp directo, de
+// un toque, en vez de pedir confirmación — sabiendo que por ese camino no hay
+// emoji. Por eso el único mensaje de este archivo que hoy sale con emoji es el
+// automático de "llegó a tu ciudad".
 //
-// Hoy solo ShotyGames tiene instancia de Evolution en esta app: Truquito y
-// Avanora siguen saliendo por `wa.me` y por lo tanto sin emoji, automáticamente.
+// El filtro vive DENTRO de `linkWhatsApp` y no en quien la llama: así no existe
+// forma de armar un `wa.me` con emoji por olvido. Las TILDES sí pasan por los dos
+// canales, así que el texto va acentuado siempre.
 // ============================================================
 
 import type { Pedido } from './tipos';

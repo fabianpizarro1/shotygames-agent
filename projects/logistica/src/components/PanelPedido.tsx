@@ -22,34 +22,14 @@ interface Props {
   }) => Promise<{ error: string | null; aviso: string | null }>;
   /** Marca una plantilla como enviada (solo donde hay columna LOG WA). */
   onMarcarPlantilla: (plantilla: string, enviado: boolean) => Promise<void>;
-  /**
-   * Manda la plantilla por Evolution API. Devuelve el error en texto, o null si
-   * salió. Solo ShotyGames: las otras tiendas no tienen instancia en esta app.
-   */
-  onEnviarPlantilla: (plantilla: string, texto: string) => Promise<string | null>;
 }
 
-export function PanelPedido({
-  p,
-  estados,
-  onCerrar,
-  onGuardar,
-  onMarcarPlantilla,
-  onEnviarPlantilla,
-}: Props) {
+export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla }: Props) {
   const [notas, setNotas] = useState(p.notas);
   const [guardando, setGuardando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [menuWa, setMenuWa] = useState(false);
-  /**
-   * La plantilla elegida, esperando confirmación. Nada sale hasta que Fabián
-   * toque "Enviar" — la lista solo elige, no manda.
-   */
-  const [revisando, setRevisando] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [errorWa, setErrorWa] = useState<string | null>(null);
-  const [enviadoOk, setEnviadoOk] = useState(false);
 
   // Al cambiar de pedido el textarea tiene que seguir al pedido nuevo, no
   // quedarse con lo que se estaba escribiendo del anterior.
@@ -58,9 +38,6 @@ export function PanelPedido({
     setError(null);
     setAviso(null);
     setMenuWa(false);
-    setRevisando(null);
-    setErrorWa(null);
-    setEnviadoOk(false);
   }, [p.fila, p.notas]);
 
   // Escape cierra: en desktop el panel tapa media pantalla y el mouse está
@@ -80,11 +57,6 @@ export function PanelPedido({
   // Solo ShotyGames tiene columna LOG WA; en dropshipping se ofrecen las mismas
   // plantillas pero no hay dónde registrar cuál se mandó.
   const registraPlantillas = p.negocio === 'shotygames';
-  const plRevisando = revisando ? (PLANTILLAS.find((x) => x.id === revisando) ?? null) : null;
-  const textoRevisado = plRevisando ? plRevisando.texto(p) : '';
-  // Enviar por API exige instancia de Evolution, y hoy solo la hay para
-  // ShotyGames. "Sin mensaje" no se manda: no tiene texto.
-  const puedeEnviarPorApi = p.negocio === 'shotygames' && !!plRevisando && plRevisando.id !== 'libre';
 
   async function guardar(clave: string, cambios: { estado?: string; notas?: string }) {
     setGuardando(clave);
@@ -336,94 +308,9 @@ export function PanelPedido({
       {/* ── Acción principal, siempre a mano ──────────────────────────────
           Cada situación necesita pedirle al cliente una cosa distinta, así que
           se elige la plantilla. La app sugiere la que encaja con el tracking,
-          pero la decisión es de quien escribe.
-
-          Elegir una plantilla NO manda nada: abre la vista previa con el texto
-          exacto. Desde ahí hay dos caminos:
-            · "Enviar" → sale por Evolution API, CON emoji (solo ShotyGames).
-            · "Abrir chat" → el `wa.me` de siempre, sin emoji (ver plantillas.ts).
-          Nada sale sin que Fabián lo toque. */}
+          pero la decisión es de quien escribe: abre WhatsApp con el texto
+          puesto y NADA se manda solo. */}
       <div className="absolute inset-x-0 bottom-0 border-t border-[var(--color-borde)] bg-[var(--color-superficie)]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {plRevisando && (
-          <div className="animar-panel mb-3 rounded-xl border border-[var(--color-borde)] bg-[var(--color-fondo)] p-3">
-            <div className="mb-2 flex items-baseline justify-between gap-2">
-              <p className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
-                {plRevisando.etiqueta}
-              </p>
-              <span className="shrink-0 text-[11px] text-[var(--color-texto-tenue)]">
-                para {p.nombre.split(/\s+/)[0]} · {p.telefono}
-              </span>
-            </div>
-
-            {/* El texto EXACTO que va a salir, tal cual. Si se manda por API va
-                con emoji; si se abre el chat, wa.me se los saca solo. */}
-            <pre className="prosa max-h-[34vh] overflow-y-auto rounded-lg border border-[var(--color-borde)] bg-[var(--color-superficie)] p-2.5 text-xs whitespace-pre-wrap">
-              {textoRevisado}
-            </pre>
-
-            {errorWa && (
-              <p className="prosa mt-2 text-xs text-[var(--color-rojo)]">❌ {errorWa}</p>
-            )}
-            {enviadoOk && (
-              <p className="prosa mt-2 text-xs text-[var(--color-verde)]">
-                ✅ Enviado a {p.nombre.split(/\s+/)[0]}
-              </p>
-            )}
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {puedeEnviarPorApi ? (
-                <button
-                  type="button"
-                  disabled={enviando}
-                  onClick={async () => {
-                    setEnviando(true);
-                    setErrorWa(null);
-                    const err = await onEnviarPlantilla(plRevisando.id, textoRevisado);
-                    setEnviando(false);
-                    if (err) {
-                      setErrorWa(err);
-                      return;
-                    }
-                    setEnviadoOk(true);
-                    setRevisando(null);
-                  }}
-                  className="pulsable min-h-11 flex-1 rounded-lg bg-[var(--color-verde)] px-4 font-semibold text-[#08110c] disabled:opacity-60"
-                >
-                  {enviando ? 'Enviando…' : 'Enviar ahora'}
-                </button>
-              ) : (
-                <p className="prosa flex-1 text-[11px] text-[var(--color-texto-tenue)]">
-                  {p.negocio === 'shotygames'
-                    ? 'Esta plantilla no se puede enviar desde la app.'
-                    : 'Truquito y Avanora no tienen instancia de Evolution acá: se manda abriendo el chat (y ahí WhatsApp no muestra emoji).'}
-                </p>
-              )}
-
-              {/* El camino de siempre, como respaldo: si la API falla, Fabián
-                  todavía puede escribirle. Acá el texto va sin emoji. */}
-              <a
-                href={linkWhatsApp(p, textoRevisado)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  if (registraPlantillas) onMarcarPlantilla(plRevisando.id, true);
-                  setRevisando(null);
-                }}
-                className="pulsable inline-flex min-h-11 items-center rounded-lg border border-[var(--color-borde)] px-3.5 text-sm text-[var(--color-texto-suave)]"
-              >
-                Abrir chat ↗
-              </a>
-              <button
-                type="button"
-                onClick={() => setRevisando(null)}
-                className="pulsable min-h-11 rounded-lg px-3 text-sm text-[var(--color-texto-tenue)]"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
-
         {menuWa && (
           <div className="animar-panel mb-3 max-h-[46vh] space-y-1 overflow-y-auto rounded-xl border border-[var(--color-borde)] bg-[var(--color-fondo)] p-1.5">
             {PLANTILLAS.map((pl) => {
@@ -431,22 +318,15 @@ export function PanelPedido({
               const esSugerida = pl.id === sugerida;
               return (
                 <div key={pl.id} className="flex items-stretch gap-1">
-                  <button
-                    type="button"
+                  <a
+                    href={linkWhatsApp(p, pl.texto(p))}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => {
-                      setErrorWa(null);
-                      setEnviadoOk(false);
-                      // "Sin mensaje" no tiene nada que revisar: abre el chat en
-                      // blanco, como antes.
-                      if (pl.id === 'libre') {
-                        window.open(linkWhatsApp(p, ''), '_blank', 'noopener,noreferrer');
-                        setMenuWa(false);
-                        return;
-                      }
-                      setRevisando(pl.id);
                       setMenuWa(false);
+                      if (registraPlantillas && pl.id !== 'libre') onMarcarPlantilla(pl.id, true);
                     }}
-                    className="pulsable min-w-0 flex-1 rounded-lg px-3 py-2 text-left"
+                    className="pulsable min-w-0 flex-1 rounded-lg px-3 py-2"
                   >
                     <span className="flex items-center gap-2">
                       <span className="truncate text-sm font-medium">{pl.etiqueta}</span>
@@ -464,7 +344,7 @@ export function PanelPedido({
                     <span className="prosa mt-0.5 block truncate text-xs text-[var(--color-texto-tenue)]">
                       {pl.desc}
                     </span>
-                  </button>
+                  </a>
 
                   {/* WhatsApp no avisa si de verdad se envió: la marca se pone
                       sola al abrir el chat y se puede sacar a mano. Es el
@@ -493,10 +373,7 @@ export function PanelPedido({
 
         <button
           type="button"
-          onClick={() => {
-            setRevisando(null);
-            setMenuWa((v) => !v);
-          }}
+          onClick={() => setMenuWa((v) => !v)}
           className="pulsable block w-full rounded-xl bg-[var(--color-verde)] px-4 py-3 text-center font-semibold text-[#08110c]"
         >
           {menuWa ? 'Cerrar' : 'Escribirle por WhatsApp'}

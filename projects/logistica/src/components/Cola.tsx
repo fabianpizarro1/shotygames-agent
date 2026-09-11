@@ -201,37 +201,6 @@ export function Cola() {
     [cargar]
   );
 
-  /**
-   * Manda la plantilla por Evolution API (solo ShotyGames).
-   *
-   * A diferencia de `marcarPlantilla`, acá el error SÍ se devuelve: esto le
-   * escribe a un cliente, y si no salió Fabián tiene que enterarse en el momento.
-   */
-  const enviarPlantilla = useCallback(
-    async (p: Pedido, plantilla: string, texto: string): Promise<string | null> => {
-      try {
-        const r = await fetch('/api/pedidos/enviar', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            negocio: p.negocio,
-            fila: p.fila,
-            clave: p.clave,
-            plantilla,
-            texto,
-          }),
-        });
-        const j = await r.json().catch(() => ({}) as { error?: string });
-        if (!r.ok || !j.ok) return j.error || `No se pudo enviar (HTTP ${r.status})`;
-        await cargar();
-        return null;
-      } catch (e) {
-        return e instanceof Error ? e.message : 'No se pudo enviar';
-      }
-    },
-    [cargar]
-  );
-
   const visibles = useMemo(() => {
     const q = sinTildes(busqueda.trim());
     return pedidos.filter((p) => {
@@ -480,7 +449,6 @@ export function Cola() {
                   onCerrar={() => setAbierto(null)}
                   onGuardar={(c) => guardar(seleccionado, c)}
                   onMarcarPlantilla={(pl, ok) => marcarPlantilla(seleccionado, pl, ok)}
-                  onEnviarPlantilla={(pl, txt) => enviarPlantilla(seleccionado, pl, txt)}
                 />
               </div>
             ) : (
@@ -505,7 +473,6 @@ export function Cola() {
             onCerrar={() => setAbierto(null)}
             onGuardar={(c) => guardar(seleccionado, c)}
             onMarcarPlantilla={(pl, ok) => marcarPlantilla(seleccionado, pl, ok)}
-            onEnviarPlantilla={(pl, txt) => enviarPlantilla(seleccionado, pl, txt)}
           />
         </HojaMovil>
       )}
