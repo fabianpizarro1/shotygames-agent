@@ -57,9 +57,9 @@ function primerNombre(nombre: string): string {
 
 /** Texto idéntico al de finanzas-app. Si se cambia uno, cambiar el otro. */
 export function mensajeGracias(nombre: string): string {
-  return `🎉 *¡Su pedido ya fue entregado!*
+  return `🎉 *¡Tu pedido ya fue entregado!*
 
-Hola *${primerNombre(nombre)}*, me informan que ya se entregó el paquete. Quería agradecerle por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
+Hola *${primerNombre(nombre)}*, me informan que ya se entregó el paquete. Quería agradecerte por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
 
 📸 Si suben historias jugando no olviden etiquetarnos como *@shotygames*, nos encantaría verlo.
 

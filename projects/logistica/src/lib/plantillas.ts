@@ -101,7 +101,7 @@ function bloqueAgencia(p: Pedido): string {
     );
   }
   if (nombre) return `📍 *Agencia:* ${nombre}\n`;
-  return `📍 Está en una agencia de *${transportadora(p)}* en *${p.ciudad || 'su ciudad'}*. Escríbanos y le confirmamos cuál.\n`;
+  return `📍 Está en una agencia de *${transportadora(p)}* en *${p.ciudad || 'tu ciudad'}*. Escríbenos y te confirmamos cuál.\n`;
 }
 
 /** La guía y el PDF, que es lo que el cliente necesita para retirar. */
@@ -160,19 +160,19 @@ export const PLANTILLAS: Plantilla[] = [
       const intentaron = huboIntentoDeEntrega(p);
 
       const apertura = enCamino
-        ? `📦 Le contamos que su pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retire.`
+        ? `📦 Te contamos que tu pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retires.`
         : !intentaron || pidioRetiroEnAgencia(p.direccion)
-          ? `📦 Su pedido *ya llegó a la agencia* y está listo para que lo retire.`
+          ? `📦 Tu pedido *ya llegó a la agencia* y está listo para que lo retires.`
           : pidioRetiro(p)
-            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible. Tal como solicitó, quedó en la agencia para que lo retire.`
-            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarle el pedido y no fue posible, así que lo dejaron en agencia para que lo retire.`;
+            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible. Tal como pediste, quedó en la agencia para que lo retires.`
+            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que lo dejaron en agencia para que lo retires.`;
 
       const cierre = enCamino
-        ? `\n🆔 Apenas llegue le avisamos para que pase a retirarlo. Lleve su cédula.` +
+        ? `\n🆔 Apenas llegue te avisamos para que pases a retirarlo. Lleva tu cédula.` +
           (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '')
-        : `\n🆔 Retírelo presentando su cédula.` +
+        : `\n🆔 Retíralo presentando tu cédula.` +
           (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '') +
-          `\n\n⚠️ *Importante:* una vez que el paquete está en agencia ya no vuelve a salir a domicilio, y si no lo retira en los próximos días se devuelve.`;
+          `\n\n⚠️ *Importante:* una vez que el paquete está en agencia ya no vuelve a salir a domicilio, y si no lo retiras en los próximos días se devuelve.`;
 
       return saludo(p) + apertura + `\n\n` + bloqueAgencia(p) + `\n` + bloqueGuia(p) + cierre;
     },
@@ -183,9 +183,9 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Ya está en destino, falta el reparto',
     texto: (p) =>
       saludo(p) +
-      `📦 Le contamos que su pedido *ya llegó a ${p.ciudad || 'su ciudad'}*.\n\n` +
-      `📞 Los repartidores se van a comunicar con usted cuando salga a entrega, así que *manténgase atento al celular*.\n\n` +
-      (p.aCobrar > 0 ? `💵 Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` : '') +
+      `📦 Te contamos que tu pedido *ya llegó a ${p.ciudad || 'tu ciudad'}*.\n\n` +
+      `📞 Los repartidores se van a comunicar contigo cuando salga a entrega, así que *mantente atento al celular*.\n\n` +
+      (p.aCobrar > 0 ? `💵 Ten listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` : '') +
       bloqueGuia(p),
   },
   {
@@ -194,12 +194,12 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Que esté atento y con el efectivo',
     texto: (p) =>
       saludo(p) +
-      `🚚 ¡Buenas noticias! *${transportadora(p)}* nos indicó que su pedido *ya salió a despacho el día de hoy*.\n\n` +
-      `Los repartidores se van a comunicar con usted para coordinar la entrega, así que por favor:\n\n` +
-      `📞 *Manténgase atento al celular*, le van a llamar o escribir\n` +
-      `💵 Tenga listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` +
-      (p.direccion ? `🏠 Entrega en: *${p.direccion}*\n` : '') +
-      `\n¡Que lo disfrute! 🎉`,
+      `🚚 Buenas noticias: *${transportadora(p)}* nos indicó que tu pedido *ya salió a despacho el día de hoy*.\n\n` +
+      `Los repartidores se van a comunicar contigo para coordinar la entrega, así que por favor:\n\n` +
+      `• 📞 *Mantente atento al celular*, te van a llamar o escribir\n` +
+      `• 💵 Ten listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` +
+      (p.direccion ? `• 🏠 Entrega en: *${p.direccion}*\n` : '') +
+      `\n¡Que lo disfrutes! 🎉`,
   },
   {
     id: 'contacto',
@@ -207,9 +207,9 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Preguntar si el repartidor llamó',
     texto: (p) =>
       saludo(p) +
-      `📦 Su pedido está en camino con *${transportadora(p)}*.\n🚛 *Número de guía:* ${p.guia || '—'}\n\n` +
-      `❓ ¿Los repartidores se han comunicado con usted para coordinar la entrega?\n\n` +
-      `Queremos asegurarnos de que le llegue sin problema 🙌`,
+      `📦 Tu pedido está en camino con *${transportadora(p)}*.\n🚛 *Número de guía:* ${p.guia || '—'}\n\n` +
+      `❓ ¿Los repartidores se han comunicado contigo para coordinar la entrega?\n\n` +
+      `Queremos asegurarnos de que te llegue sin problema. 🙌`,
   },
   {
     id: 'intentos',
@@ -217,7 +217,7 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'No hubo quien reciba',
     texto: (p) =>
       saludo(p) +
-      `⚠️ Nos indican de *${transportadora(p)}* que los repartidores han estado intentando entregarle su pedido, pero *no encontraron quien lo reciba* y no obtuvieron respuesta.`,
+      `⚠️ Nos indican de *${transportadora(p)}* que los repartidores han estado intentando entregarte tu pedido, pero *no encontraron quien lo reciba* y no obtuvieron respuesta.`,
   },
   {
     id: 'libre',

@@ -72,19 +72,19 @@ function buildGuiaMessage(nombre, transportadora, guia, linkRastreo, direccion) 
   const link = trackingUrl(transportadora, guia, linkRastreo);
 
   const cierre = esRetiroEnAgencia(direccion)
-    ? `🙏 Le avisaremos apenas el paquete llegue a la agencia para que lo pueda retirar.
+    ? `🙏 Te avisaremos apenas el paquete llegue a la agencia para que lo puedas retirar.
 
-Cualquier cosa nos escribe. ¡Muchas gracias por confiar en nosotros! 😊`
-    : `🙏 Los repartidores se comunicarán con usted al momento de la entrega, por favor esté pendiente.
+Cualquier cosa nos escribes. ¡Muchas gracias por confiar en nosotros! 😊`
+    : `🙏 Los repartidores se comunicarán contigo al momento de la entrega, por favor mantente pendiente.
 
-Si puede nos avisa cuando lo reciba. ¡Muchas gracias por confiar en nosotros! 😊`;
+Si puedes nos avisas cuando lo recibas. ¡Muchas gracias por confiar en nosotros! 😊`;
 
-  return `📦 *¡Su pedido ya fue enviado!*
+  return `📦 *¡Tu pedido ya fue enviado!*
 
-Hola *${cliente}* 👋 le informo que su pedido ya salió a través de *${transp}*. Le adjunto el número de guía:
+Hola *${cliente}* 👋 te informo que tu pedido ya salió a través de *${transp}*. Te adjunto el número de guía:
 
 🚛 Guía: *${guia}*${link ? `
-🔎 Rastree su envío aquí:
+🔎 Rastrea tu envío aquí:
 ${link}` : ''}
 
 ${cierre}`;
