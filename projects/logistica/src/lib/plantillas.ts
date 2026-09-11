@@ -57,6 +57,18 @@ const usd = (n: number) => '$' + (Number(n) || 0).toFixed(2);
 const transportadora = (p: Pedido) => p.transportadora ?? 'la transportadora';
 
 /**
+ * "SERVIENTREGA" → "Servientrega". El Sheet las guarda en mayúsculas, que está
+ * bien cuando el nombre va suelto en su propia línea, pero grita cuando va en
+ * medio de una frase ("los repartidores de SERVIENTREGA se han comunicado").
+ */
+const nombrePropio = (s: string) =>
+  s
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+    .join(' ');
+
+/**
  * De qué agencia se trata, según el tracking. `nom_conc` es campo libre y a
  * veces trae el MOTIVO en vez de la agencia ("NO ESTA", "NO CONTESTA"), así que
  * esos se descartan.
@@ -171,8 +183,7 @@ export const PLANTILLAS: Plantilla[] = [
         ? `\n🆔 Apenas llegue te avisamos para que pases a retirarlo. Lleva tu cédula.` +
           (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '')
         : `\n🆔 Retíralo presentando tu cédula.` +
-          (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '') +
-          `\n\n⚠️ *Importante:* una vez que el paquete está en agencia ya no vuelve a salir a domicilio, y si no lo retiras en los próximos días se devuelve.`;
+          (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '');
 
       return saludo(p) + apertura + `\n\n` + bloqueAgencia(p) + `\n` + bloqueGuia(p) + cierre;
     },
@@ -205,11 +216,13 @@ export const PLANTILLAS: Plantilla[] = [
     id: 'contacto',
     etiqueta: '¿Te contactaron?',
     desc: 'Preguntar si el repartidor llamó',
+    // Una sola pregunta, sin guía ni cierre: acá no se le está informando nada,
+    // se le está preguntando. Todo lo demás era relleno que tapaba la pregunta.
+    // Texto dictado por Fabián (2026-09-11), incluida la grafía de la
+    // transportadora en minúsculas, que es como se lee natural en la frase.
     texto: (p) =>
       saludo(p) +
-      `📦 Tu pedido está en camino con *${transportadora(p)}*.\n🚛 *Número de guía:* ${p.guia || '—'}\n\n` +
-      `❓ ¿Los repartidores se han comunicado contigo para coordinar la entrega?\n\n` +
-      `Queremos asegurarnos de que te llegue sin problema. 🙌`,
+      `Una consulta, los repartidores de ${nombrePropio(transportadora(p))} se han comunicado contigo para coordinar la entrega?`,
   },
   {
     id: 'intentos',
