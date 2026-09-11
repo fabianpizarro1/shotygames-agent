@@ -591,6 +591,11 @@ async function getPedidosParaNotificarGuia(nombre) {
   const fechaIdx   = headers.indexOf('FECHA');
   const transpIdx  = headers.indexOf('TRANSPORTADORA');
   const logIdx     = headers.indexOf('LOG');
+  // El mensaje de guía los necesita: el link de rastreo va en el texto y la
+  // dirección decide el cierre (retiro en agencia vs entrega a domicilio).
+  // Se resuelven por título, nunca por letra fija.
+  const linkIdx    = headers.indexOf('LINK RASTREO');
+  const dirIdx     = headers.indexOf('DIRECCION');
   const dropiIdx   = 33; // columna AH, guardado como "DROPI:XXXXX"
 
   const toCandidato = (i) => {
@@ -602,6 +607,8 @@ async function getPedidosParaNotificarGuia(nombre) {
       guia: rows[i][guiaIdx] || '',
       transportadora: rows[i][transpIdx] || 'SERVIENTREGA',
       log: rows[i][logIdx] || '',
+      linkRastreo: linkIdx >= 0 ? (rows[i][linkIdx] || '') : '',
+      direccion: dirIdx >= 0 ? (rows[i][dirIdx] || '') : '',
       dropiId: dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null
     };
   };

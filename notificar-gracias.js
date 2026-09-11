@@ -32,11 +32,13 @@ function firstName(nombre) {
 
 function buildGraciasMessage(nombre) {
   const cliente = firstName(nombre);
-  return `Hola ${cliente}, me informan que ya se entregó el paquete. Quería agradecerle por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
+  return `🎉 *¡Su pedido ya fue entregado!*
 
-Si suben historias jugando no olviden etiquetarnos como *@shotygames*, nos encantaría verlo.
+Hola *${cliente}*, me informan que ya se entregó el paquete. Quería agradecerle por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
 
-Muchas gracias 🥳`;
+📸 Si suben historias jugando no olviden etiquetarnos como *@shotygames*, nos encantaría verlo.
+
+¡Muchas gracias! 🥳`;
 }
 
 function nowStr() {

@@ -57,11 +57,13 @@ function primerNombre(nombre: string): string {
 
 /** Texto idéntico al de finanzas-app. Si se cambia uno, cambiar el otro. */
 export function mensajeGracias(nombre: string): string {
-  return `Hola ${primerNombre(nombre)}, me informan que ya se entregó el paquete. Quería agradecerle por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
+  return `🎉 *¡Su pedido ya fue entregado!*
 
-Si suben historias jugando no olviden etiquetarnos como *@shotygames*, nos encantaría verlo.
+Hola *${primerNombre(nombre)}*, me informan que ya se entregó el paquete. Quería agradecerle por confiar en nosotros y esperamos que se diviertan con nuestros productos 😊
 
-Muchas gracias 🥳`;
+📸 Si suben historias jugando no olviden etiquetarnos como *@shotygames*, nos encantaría verlo.
+
+¡Muchas gracias! 🥳`;
 }
 
 /** Hora de Ecuador (UTC-5), como la escribe finanzas-app en el LOG. */
