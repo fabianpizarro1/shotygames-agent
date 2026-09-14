@@ -19,7 +19,11 @@ const PRODUCTS = {
   parejas:     { id: 182789, name: 'Torre Parejas Priv',  weight: '1.00' },
   enganchados: { id: 6010,   name: 'Enganchados',            weight: '0.50' },
   dados:       { id: 139461, name: 'Dados',                  weight: '0.10' },
-  comboParejas: { id: 175606, name: 'Combo Parejas',          weight: '1.10' }
+  // Emparejados dejó de ser solo un código digital: ahora va como producto
+  // propio en la guía. Cuando el pedido trae Torre Parejas + Dados +
+  // Emparejados, cada uno sale como línea suelta — ya NO se arma el SKU
+  // "Combo Parejas" (175606). Ver decisions/log.md 2026-09-13.
+  emparejados: { id: 185791, name: 'EMPAREJADOS DIGITAL',    weight: '1.00' }
 };
 
 // ─── Normalización de teléfonos ecuatorianos ─────────────────────────────────
@@ -427,30 +431,26 @@ async function crearOrden(pedido) {
     state = resuelta.provincia;
   }
 
-  // Productos
-  // Combo Parejas: si el pedido trae Torre Parejas + Dados juntos, ya no se
-  // mandan como 2 productos sueltos a DROPI — hay un SKU armado para esto
-  // (id 175606). Emparejados no cuenta para el combo, es digital, no pesa.
+  // Productos — cada artículo va como línea suelta, sin agrupar en combos.
   const cantidades = {
     normal: parseInt(pedido.normal) || 0,
     picante: parseInt(pedido.picante) || 0,
     parejas: parseInt(pedido.parejas) || 0,
     enganchados: parseInt(pedido.enganchados) || 0,
-    dados: parseInt(pedido.dados) || 0
+    dados: parseInt(pedido.dados) || 0,
+    emparejados: parseInt(pedido.emparejados) || 0
   };
 
   const productosRaw = [];
-  const comboQty = Math.min(cantidades.parejas, cantidades.dados);
-  if (comboQty > 0) {
-    productosRaw.push({ ...PRODUCTS.comboParejas, quantity: comboQty });
-    cantidades.parejas -= comboQty;
-    cantidades.dados -= comboQty;
-  }
-
-  const campos = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
+  const campos = ['normal', 'picante', 'parejas', 'enganchados', 'dados', 'emparejados'];
   for (const campo of campos) {
     const qty = cantidades[campo];
-    if (qty > 0) productosRaw.push({ ...PRODUCTS[campo], quantity: qty });
+    if (!qty) continue;
+    const prod = PRODUCTS[campo];
+    // Mejor reventar acá con un mensaje claro que mandar una línea sin id y
+    // que DROPI cree una orden rota o la rechace con un error indescifrable.
+    if (!prod.id) throw new Error(`El producto "${prod.name}" todavía no tiene ID de DROPI configurado. Créalo en DROPI y pásame el ID.`);
+    productosRaw.push({ ...prod, quantity: qty });
   }
 
   if (!productosRaw.length) throw new Error('No hay productos para crear la guía.');
