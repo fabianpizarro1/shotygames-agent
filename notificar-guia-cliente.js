@@ -40,15 +40,21 @@ function toE164Ec(raw) {
  * día; acá quedó sin reponer hasta el 2026-09-10 — o sea que el mismo pedido
  * recibía un mensaje distinto según quién lo disparara. Misma regla que allá.
  *
- * Normalmente el link llega en la columna LINK RASTREO, pero un pedido viejo o
- * cargado a mano puede tener guía y no tener link: en ese caso se reconstruye,
- * en vez de mandar el mensaje sin rastreo.
+ * LA GUÍA MANDA, no la columna LINK RASTREO. Esa columna es una copia derivada
+ * que solo se reescribe cuando el cambio pasa por actualizarGuia(); si Fabián
+ * edita la celda GUIA a mano en el Sheet, queda apuntando a la guía vieja.
+ * Pasó de verdad (fila 645, 2026-09-10): el texto llevaba la guía nueva
+ * 189637704 y el link rastreaba la anterior, 189629834.
+ *
+ * LINK RASTREO queda solo como fallback para lo que no se puede reconstruir:
+ * otra transportadora, o un link cargado a mano.
  */
 function trackingUrl(transportadora, guia, linkRastreo) {
-  if (linkRastreo) return String(linkRastreo).trim();
   const t = String(transportadora || '').toLowerCase();
-  if (!guia || !t.includes('servientrega')) return '';
-  return `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
+  if (guia && t.includes('servientrega')) {
+    return `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
+  }
+  return linkRastreo ? String(linkRastreo).trim() : '';
 }
 
 /**
