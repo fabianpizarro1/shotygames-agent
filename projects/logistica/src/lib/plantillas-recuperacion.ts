@@ -15,10 +15,11 @@
 // se le escribe nada**: no hay plantilla para eso a propósito.
 //
 // Dos cosas se mantienen de la versión anterior:
-//  · **Se presenta la tienda.** En logística no se hace, pero acá pasaron días
-//    desde el resumen y el cliente puede no tener el número agendado.
+//  · **NO se presenta la tienda.** Se había puesto un "te escribimos de
+//    ShotyGames" y Fabián lo sacó: el cliente ya recibió el resumen del pedido
+//    por este mismo chat, así que presentarse es tratarlo como desconocido.
 //  · **Se repite lo que pidió** — producto, total y ciudad, para que se ubique
-//    en la primera línea en vez de preguntar "¿quién es?".
+//    en la primera línea en vez de preguntar "¿de qué pedido me hablas?".
 //
 // Salen por `wa.me` con el mismo filtro de emoji de `plantillas.ts`, y nada se
 // manda sin que Fabián apriete enviar.
@@ -34,8 +35,6 @@ export interface PlantillaRecuperacion {
   texto: (c: Candidato) => string;
 }
 
-const MARCA = 'ShotyGames';
-
 const saludo = (c: Candidato) => {
   const n = (c.nombre || '').trim().split(/\s+/)[0] ?? '';
   const bonito = n ? n.charAt(0).toUpperCase() + n.slice(1).toLowerCase() : '';
@@ -43,6 +42,14 @@ const saludo = (c: Candidato) => {
 };
 
 const usd = (n: number) => '$' + (Number(n) || 0).toFixed(2);
+
+/**
+ * "$5" y no "$5.00". El abono es una cifra redonda y así la escribe Fabián a
+ * mano; los centavos en un número exacto lo hacen ver más grande de lo que es.
+ * El saldo sí lleva decimales: ahí el centavo es real.
+ */
+const usdCorto = (n: number) =>
+  Number.isInteger(n) ? '$' + n : usd(n);
 
 /**
  * "SANTO DOMINGO DE LOS COLORADOS" → "Santo Domingo de los Colorados".
@@ -96,8 +103,10 @@ function motivoDevoluciones(c: Candidato): string {
   if (d === 0) {
     return 'la entrega contra entrega en tu zona nos viene fallando seguido';
   }
+  // "que TIENES", no "que tu número tiene" (Fabián, 2026-09-14): hablarle del
+  // número en tercera persona suena a expediente; hablarle a él, a una charla.
   const cuantas = d === 1 ? '*1 devolución*' : `*${d} devoluciones*`;
-  return `en el sistema de la transportadora nos refleja que tu número ya tiene ${cuantas}`;
+  return `en el sistema de la transportadora nos refleja que tienes ${cuantas}`;
 }
 
 export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
@@ -110,10 +119,9 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
     // que un "vimos que dejaste este pedido".
     texto: (c) =>
       saludo(c) +
-      `Te escribimos de *${MARCA}*.\n\n` +
-      `Te enviamos el resumen de tu pedido pero todavía no hemos recibido tu confirmación:\n\n` +
+      `\n\nTe enviamos el resumen de tu pedido pero todavía no hemos recibido tu confirmación:\n\n` +
       bloquePedido(c) +
-      `¿Lo confirmas para despacharlo? Lo pagas en efectivo cuando lo recibas.`,
+      `¿Me confirmas que podrás recibirlo para despacharlo?`,
   },
   {
     id: 'anticipo',
@@ -140,10 +148,12 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
       `En esos casos ya no podemos enviarlo todo contra entrega, porque a nosotros ` +
       `nos cobran el valor del envío en cuanto el paquete sale de la bodega, se ` +
       `entregue o no.\n\n` +
-      `Pero sí te lo podemos enviar. Solo necesitamos un abono para asegurar el envío:\n\n` +
-      `• Abonas *${usd(ANTICIPO_ENVIO)}* ahora\n` +
-      `• Los *${usd(c.saldoConAnticipo)}* restantes los pagas en efectivo al momento de la entrega\n\n` +
-      `¿Lo hacemos así y te lo despachamos? 🤝`,
+      // El cierre es textual de Fabián, pasado a tuteo. Mi versión lo abría en
+      // dos viñetas y un "¿lo hacemos así?" y él lo bajó: en una sola frase la
+      // oferta se lee como una salida, no como una negociación con condiciones.
+      `Si deseas te lo podemos enviar, pero tendrías que hacer un abono de ` +
+      `*${usdCorto(ANTICIPO_ENVIO)}* para asegurar el envío y el valor restante ` +
+      `(*${usd(c.saldoConAnticipo)}*) lo podrías pagar en efectivo al momento de la entrega.`,
   },
   {
     id: 'libre',
