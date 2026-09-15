@@ -15,9 +15,12 @@ export const ETIQUETA_BALDE: Record<Balde, string> = {
  */
 export const MOTIVO_BALDE: Record<Balde, string> = {
   riesgo:
-    'Devuelve más que el promedio del mercado (32%). Contra entrega completo es perder el flete: pedile el anticipo.',
-  ojo: 'Devolvió alguna, pero no más que el promedio del mercado. Decidí vos: el mensaje sugerido no lo acusa de nada.',
-  sano: 'Nunca devolvió un pedido. Solo falta que confirme.',
+    'Devuelve más que el promedio de DROPI (32%). Contra entrega completo es arriesgar el flete: pedile el anticipo.',
+  ojo: 'Devolvió alguna, pero no más que el promedio de DROPI. Decidí vos: el mensaje sugerido no lo acusa de nada.',
+  // No dice "es seguro": 3 de las 7 devoluciones reales de ShotyGames fueron de
+  // clientes que nunca habían devuelto nada. Prometer que va a llegar sería
+  // pasarle a Fabián una certeza que el dato no da.
+  sano: 'Nunca devolvió un pedido, aunque eso no lo garantiza. Solo falta que confirme.',
   nuevo: 'Sin historial en DROPI. No hay motivo para frenarlo.',
 };
 

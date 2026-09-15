@@ -492,10 +492,20 @@ al cliente 4 pedidos imaginarios con la tasa del mercado.
 tasa ajustada = (devueltos + 4 × 31,9%) / (pedidos + 4)
 ```
 
-El **31,9%** es la tasa de devolución de todo el mercado, medida sobre los 302 teléfonos
-únicos de la hoja (487 de 1.529 pedidos, 2026-09-14). Importa por dos motivos: en este
-mercado devolver es normal, así que un cliente al 30% **no** "devuelve seguido" — está en
-el promedio; y es la mejor apuesta sobre alguien de quien no se sabe nada.
+El **31,9%** es el promedio de devoluciones de **toda la plataforma DROPI**, sumando el
+historial de los 302 teléfonos únicos de la hoja (487 de 1.529 pedidos, 2026-09-14).
+
+⚠️ **No confundirlo con la tasa de ShotyGames, que es 3,2%** (20 devoluciones de 632
+pedidos con desenlace, hoja oficial). Diez veces menos. La primera versión de esta
+pantalla lo llamaba "la tasa de tu mercado", que estaba mal.
+
+Aun así el 31,9% es el prior correcto, y cambiarlo por el 3,2% **rompería el cálculo**: el
+prior tiene que estar en la misma escala que la evidencia, y la evidencia es el historial
+del cliente en todo DROPI. Mezclar escalas no es más exacto, es incoherente — con el prior
+en 3,2% el sistema no detecta ninguna de las 7 devoluciones reales que hay para validar,
+contra 2 de 7 con el prior correcto.
+
+Lo que sale de acá es un **ranking**, no la probabilidad de que este pedido se devuelva.
 
 | dev/ped | cruda | ajustada | queda en |
 |---|---|---|---|
@@ -503,7 +513,7 @@ el promedio; y es la mejor apuesta sobre alguien de quien no se sabe nada.
 | 2/2 | 100% | 55% | riesgo |
 | 0/2 | 0% | 21% | nunca devolvió |
 | 3/14 | 21% | 24% | ojo |
-| 40/187 | 21% | 22% | ojo — devuelve, pero menos que el mercado |
+| 40/187 | 21% | 22% | ojo — devuelve, pero menos que el promedio de DROPI |
 | 11/11 | 100% | 82% | riesgo |
 | 0/16 | 0% | 6% | el mejor cliente de la lista |
 
@@ -516,9 +526,37 @@ el promedio; y es la mejor apuesta sobre alguien de quien no se sabe nada.
 | **Nunca devolvió** | tiene pedidos y **0** devueltos | Pedir confirmación |
 | **Cliente nuevo** | 0 pedidos en DROPI, o sin dato todavía | Pedir confirmación |
 
-La vara del 35% está por encima del 31,9% del mercado a propósito: marca a quien devuelve
-MÁS que el promedio, no a cualquiera que esté en el promedio. Es una constante
-(`UMBRAL_DEVOLUCIONES`) — subirla a 40% mueve 8 pedidos de riesgo a ojo.
+## ¿Sirve de algo? Lo medido
+
+Cruzando la hoja oficial con la reputación DROPI de cada cliente:
+
+| Pedidos de ShotyGames que terminaron… | n | tasa DROPI promedio | mediana |
+|---|---|---|---|
+| **DEVOLUCIÓN** | 7 | **31,4%** | 20% |
+| ENTREGADO / PAGADO | 70 | **6,9%** | 0% |
+
+La señal separa **4,5x**: sirve. Pero con dos límites que hay que tener presentes.
+
+**El punto ciego.** De esas 7 devoluciones, **3 fueron de clientes con CERO devoluciones
+previas** (0/1, 0/4, 0/2). Ninguna vara las detecta. "Nunca devolvió" y "cliente nuevo"
+**no son una garantía** de que el pedido llegue, y la pantalla no lo promete.
+
+**La vara no la eligieron los datos.** Con 7 devoluciones para validar, entre 35% y 45%
+detectan lo mismo (2 de 7) con casi las mismas falsas alarmas (3 vs 2 de 70). Ningún
+umbral es demostrablemente mejor. Se eligió el extremo permisivo por economía: los pedidos
+de esta lista **ya no se concretaron**, así que una falsa alarma cuesta pedirle $5 a
+alguien que igual estaba en cero. Si esto se aplicara a pedidos vivos habría que subirla —
+una devolución cuesta $6,47 de flete contra un ticket promedio de $36,51, y ahí el riesgo
+de matar la venta pesa más que el flete.
+
+`UMBRAL_DEVOLUCIONES` es una constante. Reparto de los 112 al mover la vara:
+
+| Vara | Riesgo | Ojo | Nunca devolvió | Nuevo |
+|---|---|---|---|---|
+| 35% | 55 | 11 | 16 | 30 |
+| 40% | 47 | 19 | 16 | 30 |
+| 45% | 37 | 29 | 16 | 30 |
+| 50% | 23 | 43 | 16 | 30 |
 
 **"Nunca devolvió" significa exactamente eso.** Es la única cosa que esa palabra puede
 significar sin mentir, y por eso el que devolvió aunque sea una vez tiene su propio balde.

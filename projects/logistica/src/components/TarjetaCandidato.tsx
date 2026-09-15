@@ -146,8 +146,10 @@ export function TarjetaCandidato({
           <dl className="mb-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs sm:grid-cols-3">
             <Dato t="Teléfono" v={c.telefono || '—'} />
             <Dato t="Pedido del" v={c.fecha ? fechaCorta(c.fecha) : '—'} />
+            {/* Es el historial en TODA la plataforma DROPI, comprándole a
+                cualquier dropshipper — no los pedidos que te hizo a vos. */}
             <Dato
-              t="Historial DROPI"
+              t="Historial en todo DROPI"
               v={
                 c.dropi
                   ? `${c.dropi.pedidos} pedidos · ${c.dropi.entregados} entregados · ${c.dropi.devueltos} devueltos`
@@ -161,7 +163,7 @@ export function TarjetaCandidato({
             {c.tasaAjustada !== null && (
               <Dato
                 t="Tasa de devolución"
-                v={`${c.tasaAjustada}% ajustada · ${c.tasaDevolucion}% cruda · mercado 32%`}
+                v={`${c.tasaAjustada}% ajustada · ${c.tasaDevolucion}% cruda · promedio DROPI 32%`}
                 ancho
               />
             )}

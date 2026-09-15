@@ -74,28 +74,64 @@ export const RECUPERABLES = ['SIN COMPRAR', ESTADO_FRENADO, 'AVISADO'];
 export type Balde = 'riesgo' | 'ojo' | 'sano' | 'nuevo';
 
 /**
- * La tasa de devolución de TODO el mercado, medida sobre los 302 teléfonos
- * únicos de la hoja: **487 de 1.529 pedidos = 31,9%** (2026-09-14).
+ * El promedio de devoluciones **de toda la plataforma DROPI**: 487 de 1.529
+ * pedidos = **31,9%**, sumando el historial de los 302 teléfonos únicos de la
+ * hoja (2026-09-14).
  *
- * El número importa por dos motivos. Uno: en este mercado devolver es normal,
- * así que un cliente al 30% **no** "devuelve seguido" — está en el promedio.
- * Dos: es la mejor apuesta sobre alguien de quien no se sabe nada, y por eso es
- * hacia acá que se corrige la tasa de quien tiene pocos pedidos.
+ * ⚠️ **Esto NO es la tasa de ShotyGames.** La de ShotyGames es **3,2%** (20
+ * devoluciones de 632 pedidos con desenlace, hoja oficial). Diez veces menos.
+ * La primera versión de esto lo llamaba "la tasa de tu mercado" en la pantalla,
+ * y Fabián preguntó de dónde salía justamente porque no le cerraba — tenía
+ * razón, la etiqueta estaba mal.
+ *
+ * Pero el número **sí** es el prior correcto, y cambiarlo por el 3,2% rompería
+ * el cálculo: el prior tiene que estar en la MISMA ESCALA que la evidencia, y
+ * la evidencia es el historial del cliente en todo DROPI, cuyo promedio es
+ * 31,9%. Mezclar escalas no es más exacto, es incoherente: con el prior en
+ * 3,2% el sistema no detecta NINGUNA de las 7 devoluciones reales que hay para
+ * validar, contra 2 de 7 con el prior correcto.
+ *
+ * Lo que sale de acá es un **ranking** de clientes, no una probabilidad de que
+ * ESTE pedido se devuelva. Para eso, lo único medido: los pedidos de ShotyGames
+ * que terminaron en devolución eran de clientes con 31,4% de tasa DROPI
+ * promedio, contra 6,9% de los que se entregaron. La señal separa 4,5x.
  */
-export const TASA_BASE_MERCADO = 0.319;
+export const TASA_BASE_DROPI = 0.319;
 
 /**
- * Cuánto pesa la media del mercado frente al historial propio del cliente,
+ * La tasa de devolución propia de ShotyGames: 20 de 632 pedidos con desenlace.
+ * No entra en el cálculo — está acá porque es el número que hay que tener a
+ * mano para no volver a confundir "el promedio de DROPI" con "lo que me pasa
+ * a mí".
+ */
+export const TASA_PROPIA_SHOTYGAMES = 0.032;
+
+/**
+ * Cuánto pesa el promedio de DROPI frente al historial propio del cliente,
  * medido en "pedidos imaginarios". Con 4, un cliente de 1 pedido queda a mitad
- * de camino entre su dato y el mercado; uno de 187 queda prácticamente en su
+ * de camino entre su dato y el promedio; uno de 187 queda prácticamente en su
  * dato real.
  */
 export const PESO_PRIOR = 4;
 
 /**
- * La vara: **35% de tasa ajustada**. Está por encima del 31,9% del mercado a
- * propósito — la idea es marcar a quien devuelve MÁS que el promedio, no a
- * cualquiera que esté en el promedio.
+ * La vara: **35% de tasa ajustada**, o sea por encima del 31,9% promedio de
+ * DROPI — marca a quien devuelve más que el resto de la plataforma.
+ *
+ * ⚠️ **Esta vara NO la eligieron los datos y no se puede fingir que sí.** Solo
+ * hay 7 devoluciones con reputación conocida para validar, y entre 35% y 45%
+ * detectan lo mismo (2 de 7) con casi las mismas falsas alarmas (3 vs 2 de 70).
+ * Con esa muestra ningún umbral es demostrablemente mejor.
+ *
+ * Se eligió el extremo permisivo a propósito, y el motivo es económico: los
+ * pedidos de esta lista **ya no se concretaron**. No hay venta que arruinar, así
+ * que una falsa alarma cuesta pedirle $5 a alguien que igual estaba en cero.
+ * Si esto se aplicara alguna vez a pedidos vivos habría que subirla: una
+ * devolución cuesta $6,47 de flete y el ticket promedio es $36,51 — ahí el
+ * riesgo de matar la venta supera al de comerse el flete.
+ *
+ * Mover la vara cambia el reparto de los 112 así (medido 2026-09-14):
+ * 35% → 55 riesgo · 40% → 47 · 45% → 37 · 50% → 23.
  */
 export const UMBRAL_DEVOLUCIONES = 0.35;
 
@@ -113,13 +149,17 @@ export const UMBRAL_DEVOLUCIONES = 0.35;
  * Un mínimo de pedidos no arregla eso, solo mueve el problema a un escalón
  * arbitrario. Lo que corresponde es que la poca evidencia **pese poco** en vez
  * de no contar: se le suman al cliente `PESO_PRIOR` pedidos imaginarios con la
- * tasa del mercado. Así 1/1 da 46% (mala señal, pero no 100%) y 40/187 da 22%
- * (mejor que el mercado, que es la verdad aunque sean 40 devoluciones).
+ * promedio de DROPI. Así 1/1 da 46% (mala señal, pero no 100%) y 40/187 da 22%
+ * (mejor que el promedio de DROPI, que es la verdad aunque sean 40 devoluciones).
+ *
+ * ⚠️ **Punto ciego.** De las 7 devoluciones reales de ShotyGames, **3 fueron de
+ * clientes con CERO devoluciones previas** (0/1, 0/4, 0/2). Ninguna vara las
+ * detecta. `sano` y `nuevo` no son una garantía de que el pedido llegue.
  */
 export function tasaAjustada(dropi: PedidoWeb['dropi']): number {
   const p = dropi?.pedidos ?? 0;
   const d = dropi?.devueltos ?? 0;
-  return (d + PESO_PRIOR * TASA_BASE_MERCADO) / (p + PESO_PRIOR);
+  return (d + PESO_PRIOR * TASA_BASE_DROPI) / (p + PESO_PRIOR);
 }
 
 /** Cuánto se le pide de adelanto al de riesgo: el flete, redondeado. */
