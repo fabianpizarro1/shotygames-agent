@@ -7,7 +7,17 @@ import { NextRequest, NextResponse } from 'next/server';
 // colores y los iconos. Los .png ya salen libres por el filtro de abajo.
 // `/api/cron/*` no lleva la cookie de sesión (lo llama Vercel, no un navegador)
 // y se protege con su propio secreto — ver la ruta.
-const PUBLICAS = ['/login', '/api/auth', '/manifest.webmanifest', '/api/cron/'];
+// `/comprobante/` es público a propósito: lo abre el CLIENTE desde WhatsApp, sin
+// cuenta. No queda desprotegido — la URL lleva una firma HMAC y sin ella la
+// página devuelve 404, así que no se puede adivinar el pedido de otro. Ver
+// `src/lib/comprobante.ts`.
+const PUBLICAS = [
+  '/login',
+  '/api/auth',
+  '/manifest.webmanifest',
+  '/api/cron/',
+  '/comprobante/',
+];
 
 export function proxy(request: NextRequest) {
   // `request.url` en vez de `request.nextUrl`: Turbopack tiene un bug con NextURL.
