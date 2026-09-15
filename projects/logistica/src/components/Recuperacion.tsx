@@ -24,7 +24,8 @@ type Filtro = 'TODOS' | Balde;
 const FILTROS: { clave: Filtro; texto: string }[] = [
   { clave: 'TODOS', texto: 'Todos' },
   { clave: 'riesgo', texto: 'Riesgo' },
-  { clave: 'limpio', texto: 'Sanos' },
+  { clave: 'ojo', texto: 'Ojo' },
+  { clave: 'sano', texto: 'Sanos' },
   { clave: 'nuevo', texto: 'Nuevos' },
 ];
 

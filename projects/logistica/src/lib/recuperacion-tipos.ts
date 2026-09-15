@@ -14,6 +14,9 @@
 //    en DROPI que hace que mandarlo contra entrega sea perder el flete. Hay
 //    que contarle el motivo y ofrecerle el anticipo del envío.
 //
+// Cuánto "devuelve" un cliente NO se mide con `devueltos / pedidos` a secas —
+// ver `tasaAjustada()`, que es donde está el único cálculo delicado de acá.
+//
 // ⚠️ **En el dato los dos son lo mismo**: las dos situaciones quedan
 // `SIN COMPRAR` y no hay forma de distinguirlas mirando la hoja. Por eso el
 // mensaje NO se elige por el estado histórico sino por la **reputación DROPI**,
@@ -68,15 +71,56 @@ export const ESTADO_FRENADO = 'FRENADO';
 export const RECUPERABLES = ['SIN COMPRAR', ESTADO_FRENADO, 'AVISADO'];
 
 /** En qué balde cae el cliente, que es lo que decide el mensaje. */
-export type Balde = 'riesgo' | 'limpio' | 'nuevo';
+export type Balde = 'riesgo' | 'ojo' | 'sano' | 'nuevo';
 
 /**
- * La vara, fijada con Fabián el 2026-09-14: **30% de devoluciones con 3 pedidos
- * o más**. Los 3 pedidos mínimos son lo que evita que "1 de 1 devuelto" pese
- * igual que "11 de 11" — con un solo caso no hay patrón, hay mala suerte.
+ * La tasa de devolución de TODO el mercado, medida sobre los 302 teléfonos
+ * únicos de la hoja: **487 de 1.529 pedidos = 31,9%** (2026-09-14).
+ *
+ * El número importa por dos motivos. Uno: en este mercado devolver es normal,
+ * así que un cliente al 30% **no** "devuelve seguido" — está en el promedio.
+ * Dos: es la mejor apuesta sobre alguien de quien no se sabe nada, y por eso es
+ * hacia acá que se corrige la tasa de quien tiene pocos pedidos.
  */
-export const UMBRAL_DEVOLUCIONES = 0.3;
-export const MINIMO_PEDIDOS = 3;
+export const TASA_BASE_MERCADO = 0.319;
+
+/**
+ * Cuánto pesa la media del mercado frente al historial propio del cliente,
+ * medido en "pedidos imaginarios". Con 4, un cliente de 1 pedido queda a mitad
+ * de camino entre su dato y el mercado; uno de 187 queda prácticamente en su
+ * dato real.
+ */
+export const PESO_PRIOR = 4;
+
+/**
+ * La vara: **35% de tasa ajustada**. Está por encima del 31,9% del mercado a
+ * propósito — la idea es marcar a quien devuelve MÁS que el promedio, no a
+ * cualquiera que esté en el promedio.
+ */
+export const UMBRAL_DEVOLUCIONES = 0.35;
+
+/**
+ * La tasa de devolución del cliente, corregida por cuánta evidencia hay.
+ *
+ * ⚠️ **Por qué no se usa `devueltos / pedidos` a secas.** La primera versión de
+ * esto tenía un mínimo de 3 pedidos para no juzgar con poca evidencia, y el
+ * resultado fue que 22 de los 38 clientes etiquetados "historial sano" habían
+ * devuelto algo — 12 de ellos el 100% de lo que pidieron. Fabián lo cazó al
+ * toque: "¿por qué a alguien que tiene un pedido y ese pedido fue devuelto le
+ * pones sano?". Tenía razón: 1 de 1 devuelto no es sano, es mala señal con
+ * poca evidencia, que no es lo mismo.
+ *
+ * Un mínimo de pedidos no arregla eso, solo mueve el problema a un escalón
+ * arbitrario. Lo que corresponde es que la poca evidencia **pese poco** en vez
+ * de no contar: se le suman al cliente `PESO_PRIOR` pedidos imaginarios con la
+ * tasa del mercado. Así 1/1 da 46% (mala señal, pero no 100%) y 40/187 da 22%
+ * (mejor que el mercado, que es la verdad aunque sean 40 devoluciones).
+ */
+export function tasaAjustada(dropi: PedidoWeb['dropi']): number {
+  const p = dropi?.pedidos ?? 0;
+  const d = dropi?.devueltos ?? 0;
+  return (d + PESO_PRIOR * TASA_BASE_MERCADO) / (p + PESO_PRIOR);
+}
 
 /** Cuánto se le pide de adelanto al de riesgo: el flete, redondeado. */
 export const ANTICIPO_ENVIO = 5;
@@ -89,8 +133,13 @@ export function baldeDe(dropi: PedidoWeb['dropi']): Balde {
   // alguien de devolver paquetes porque el cron todavía no pasó por su fila
   // sería mandarle el mensaje equivocado.
   if (!dropi || dropi.pedidos === 0) return 'nuevo';
-  const tasa = dropi.devueltos / dropi.pedidos;
-  return dropi.pedidos >= MINIMO_PEDIDOS && tasa >= UMBRAL_DEVOLUCIONES ? 'riesgo' : 'limpio';
+
+  if (tasaAjustada(dropi) >= UMBRAL_DEVOLUCIONES) return 'riesgo';
+
+  // No llega a la vara, pero devolvió alguna: no es "sano". `sano` queda
+  // reservado para el que **nunca** devolvió nada, que es lo único que esa
+  // palabra puede significar sin mentir.
+  return dropi.devueltos > 0 ? 'ojo' : 'sano';
 }
 
 /** Qué plantillas ya se le mandaron, del formato "id|fecha ; id|fecha". */
@@ -116,8 +165,14 @@ export function marcarAviso(logWa: string, idPlantilla: string, ahora: string): 
 export interface Candidato extends PedidoWeb {
   dias: number;
   balde: Balde;
-  /** Porcentaje de devoluciones, 0-100. `null` si no hay reputación cargada. */
+  /** Porcentaje crudo de devoluciones, 0-100. `null` si no hay reputación. */
   tasaDevolucion: number | null;
+  /**
+   * Porcentaje ajustado por evidencia, 0-100 — el que decide el balde. Es el
+   * número que hay que mirar; el crudo está al lado solo para entender de dónde
+   * salió. `null` si no hay reputación cargada.
+   */
+  tasaAjustada: number | null;
   /** Lo que ya se le escribió desde esta pantalla. */
   avisos: { id: string; fecha: string }[];
   /**

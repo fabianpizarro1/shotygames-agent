@@ -58,6 +58,27 @@ function bloquePedido(c: Candidato): string {
   return lineas.length ? lineas.join('\n') + '\n\n' : '';
 }
 
+/**
+ * Cómo se le nombra el problema, según cuántas devoluciones tiene de verdad.
+ *
+ * ⚠️ Esto **no** puede ser un texto fijo. Desde que la tasa se ajusta por
+ * evidencia (ver `tasaAjustada` en `recuperacion-tipos.ts`), al balde de riesgo
+ * entra gente con UNA sola devolución — y decirle "tienes varios pedidos
+ * anteriores que volvieron" a quien pidió una vez es mentirle en la cara, con
+ * el agravante de que él sabe que es mentira y ahí se termina la conversación.
+ */
+function motivoDevoluciones(c: Candidato): string {
+  const d = c.dropi?.devueltos ?? 0;
+  if (d === 0) {
+    // Fabián puede elegir esta plantilla a mano en cualquier pedido, y en uno
+    // sin devoluciones el motivo no existe: se le pide el anticipo por la zona,
+    // sin inventarle un historial que no tiene.
+    return 'la entrega contra reembolso en tu zona nos está fallando seguido';
+  }
+  if (d === 1) return 'un pedido anterior tuyo no se llegó a entregar y se devolvió';
+  return 'tu número tiene varios pedidos anteriores que volvieron sin poder entregarse';
+}
+
 export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
   {
     id: 'confirmar',
@@ -83,9 +104,8 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
       `te escribimos de *${MARCA}* por el pedido que dejaste en nuestra página:\n\n` +
       bloquePedido(c) +
       `Te cuento con sinceridad por qué todavía no salió: al revisar el sistema ` +
-      `de la transportadora, tu número tiene varios pedidos anteriores que ` +
-      `volvieron sin poder entregarse. Cuando eso pasa el envío nos lo cobran ` +
-      `igual, así que no podemos mandarlo todo contra entrega.\n\n` +
+      `de la transportadora, ${motivoDevoluciones(c)}. Cuando eso pasa el envío ` +
+      `nos lo cobran igual, así que no podemos mandarlo todo contra entrega.\n\n` +
       `Pero no queremos dejarte sin tu pedido, así que te propongo algo:\n\n` +
       `• Adelantas solo *${usd(ANTICIPO_ENVIO)}* del envío\n` +
       `• El resto, *${usd(c.saldoConAnticipo)}*, lo pagas al recibirlo\n\n` +

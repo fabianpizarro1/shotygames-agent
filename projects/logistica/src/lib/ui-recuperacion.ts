@@ -4,7 +4,8 @@ import type { Balde } from './recuperacion-tipos';
 
 export const ETIQUETA_BALDE: Record<Balde, string> = {
   riesgo: 'Riesgo',
-  limpio: 'Historial sano',
+  ojo: 'Ojo',
+  sano: 'Nunca devolvió',
   nuevo: 'Cliente nuevo',
 };
 
@@ -13,14 +14,16 @@ export const ETIQUETA_BALDE: Record<Balde, string> = {
  * razón por la que el mensaje sugerido es el que es.
  */
 export const MOTIVO_BALDE: Record<Balde, string> = {
-  riesgo: 'Devuelve seguido: contra entrega completo es perder el flete. Pedile el anticipo.',
-  limpio: 'Su historial está bien. Solo falta que confirme.',
+  riesgo:
+    'Devuelve más que el promedio del mercado (32%). Contra entrega completo es perder el flete: pedile el anticipo.',
+  ojo: 'Devolvió alguna, pero no más que el promedio del mercado. Decidí vos: el mensaje sugerido no lo acusa de nada.',
+  sano: 'Nunca devolvió un pedido. Solo falta que confirme.',
   nuevo: 'Sin historial en DROPI. No hay motivo para frenarlo.',
 };
 
 /**
- * Rojo = mandarlo así es perder plata · verde = no hay problema · azul = no se
- * sabe nada de él. El gris no se usa: acá los tres baldes piden una acción.
+ * Rojo = mandarlo así es perder plata · ámbar = devolvió alguna pero no pasa la
+ * vara · verde = nunca devolvió · azul = no se sabe nada de él.
  */
 export const ESTILO_BALDE: Record<Balde, { texto: string; fondo: string; punto: string }> = {
   riesgo: {
@@ -28,7 +31,12 @@ export const ESTILO_BALDE: Record<Balde, { texto: string; fondo: string; punto: 
     fondo: 'bg-[var(--color-rojo-tenue)]',
     punto: 'bg-[var(--color-rojo)]',
   },
-  limpio: {
+  ojo: {
+    texto: 'text-[var(--color-ambar)]',
+    fondo: 'bg-[var(--color-ambar-tenue)]',
+    punto: 'bg-[var(--color-ambar)]',
+  },
+  sano: {
     texto: 'text-[var(--color-verde)]',
     fondo: 'bg-[var(--color-verde-tenue)]',
     punto: 'bg-[var(--color-verde)]',

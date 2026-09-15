@@ -154,8 +154,16 @@ export function TarjetaCandidato({
                   : 'sin datos todavía'
               }
             />
-            {c.tasaDevolucion !== null && (
-              <Dato t="Tasa de devolución" v={`${c.tasaDevolucion}%`} />
+            {/* La AJUSTADA es la que decide el balde; la cruda va al lado para
+                que se entienda de dónde salió. Mostrar solo la cruda haría
+                parecer un error que alguien "al 100%" no sea el peor de la
+                lista, y solo la ajustada obligaría a confiar a ciegas. */}
+            {c.tasaAjustada !== null && (
+              <Dato
+                t="Tasa de devolución"
+                v={`${c.tasaAjustada}% ajustada · ${c.tasaDevolucion}% cruda · mercado 32%`}
+                ancho
+              />
             )}
             <Dato t="Con anticipo cobra" v={`${usd(ANTICIPO_ENVIO)} ahora + ${usd(c.saldoConAnticipo)} al entregar`} />
             {c.direccion && <Dato t="Dirección" v={c.direccion} ancho />}
@@ -263,14 +271,11 @@ export function TarjetaCandidato({
 }
 
 /**
- * Rojo = pasa la vara y hay que pedirle anticipo · verde = nunca devolvió ·
- * ámbar = devolvió alguna pero son muy pocos pedidos para sacar conclusiones.
+ * El color sale del balde, que ya distingue los cuatro casos: rojo pasa la vara,
+ * ámbar devolvió alguna sin pasarla, verde nunca devolvió, azul no se sabe.
  */
 function colorDevoluciones(c: Candidato): string {
-  if (!c.dropi) return 'text-[var(--color-texto-tenue)]';
-  if (c.balde === 'riesgo') return 'text-[var(--color-rojo)]';
-  if (c.dropi.devueltos === 0) return 'text-[var(--color-verde)]';
-  return 'text-[var(--color-ambar)]';
+  return c.dropi ? ESTILO_BALDE[c.balde].texto : 'text-[var(--color-texto-tenue)]';
 }
 
 function Dato({ t, v, ancho }: { t: string; v: string; ancho?: boolean }) {

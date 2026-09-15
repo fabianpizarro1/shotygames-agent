@@ -19,6 +19,7 @@ import {
   avisosDe,
   baldeDe,
   RECUPERABLES,
+  tasaAjustada,
   VENTANA_DIAS,
   type Balde,
   type Candidato,
@@ -59,6 +60,8 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
         p.dropi && p.dropi.pedidos > 0
           ? Math.round((p.dropi.devueltos / p.dropi.pedidos) * 100)
           : null,
+      tasaAjustada:
+        p.dropi && p.dropi.pedidos > 0 ? Math.round(tasaAjustada(p.dropi) * 100) : null,
       avisos: avisosDe(p.logWa),
       avisoPedidoVivo: vivos.get(telefonoClave(p.telefono)) ?? null,
       saldoConAnticipo: redondear(Math.max(0, p.monto - ANTICIPO_ENVIO)),
@@ -72,7 +75,8 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
   const vacio = () => ({ pedidos: 0, monto: 0 });
   const porBalde: Record<Balde, { pedidos: number; monto: number }> = {
     riesgo: vacio(),
-    limpio: vacio(),
+    ojo: vacio(),
+    sano: vacio(),
     nuevo: vacio(),
   };
   for (const c of candidatos) {

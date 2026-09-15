@@ -476,18 +476,59 @@ Fabián frenó a propósito quedan `SIN COMPRAR`. No hay columna que los disting
 
 Así que el mensaje se elige por la **reputación del cliente en DROPI** (las columnas
 `DROPI PEDIDOS / ENTREGADOS / DEVUELTOS`, que un cron de KEPLER llena cada 2 h), que sí es
-un hecho verificable:
+un hecho verificable.
+
+## La tasa ajustada
+
+`devueltos / pedidos` **no se usa a secas**, y tampoco sirve un mínimo de pedidos. La
+primera versión tenía ese mínimo (3 pedidos) y el resultado fue que **22 de los 38
+clientes etiquetados "historial sano" habían devuelto algo — 12 de ellos el 100% de lo que
+pidieron**. Un mínimo no arregla el problema, solo lo mueve a un escalón arbitrario.
+
+Lo que corresponde es que la poca evidencia **pese poco** en vez de no contar: se le suman
+al cliente 4 pedidos imaginarios con la tasa del mercado.
+
+```
+tasa ajustada = (devueltos + 4 × 31,9%) / (pedidos + 4)
+```
+
+El **31,9%** es la tasa de devolución de todo el mercado, medida sobre los 302 teléfonos
+únicos de la hoja (487 de 1.529 pedidos, 2026-09-14). Importa por dos motivos: en este
+mercado devolver es normal, así que un cliente al 30% **no** "devuelve seguido" — está en
+el promedio; y es la mejor apuesta sobre alguien de quien no se sabe nada.
+
+| dev/ped | cruda | ajustada | queda en |
+|---|---|---|---|
+| 1/1 | 100% | **46%** | riesgo |
+| 2/2 | 100% | 55% | riesgo |
+| 0/2 | 0% | 21% | nunca devolvió |
+| 3/14 | 21% | 24% | ojo |
+| 40/187 | 21% | 22% | ojo — devuelve, pero menos que el mercado |
+| 11/11 | 100% | 82% | riesgo |
+| 0/16 | 0% | 6% | el mejor cliente de la lista |
+
+## Los cuatro baldes
 
 | Balde | Regla | Qué se le manda |
 |---|---|---|
-| **Riesgo** | 3 pedidos o más y ≥30% devueltos | El motivo real + anticipo de $5 del envío, resto contra entrega |
-| **Historial sano** | tiene pedidos y no llega a la vara | Pedir confirmación |
+| **Riesgo** | tasa ajustada ≥ 35% | El motivo real + anticipo de $5 del envío, resto contra entrega |
+| **Ojo** | devolvió alguna pero no llega a la vara | Pedir confirmación — el mensaje no lo acusa de nada |
+| **Nunca devolvió** | tiene pedidos y **0** devueltos | Pedir confirmación |
 | **Cliente nuevo** | 0 pedidos en DROPI, o sin dato todavía | Pedir confirmación |
 
-Los 3 pedidos mínimos son lo que evita que "1 de 1 devuelto" pese igual que "11 de 11":
-con un solo caso no hay patrón, hay mala suerte. Y sin dato de reputación el cliente cae
-en **nuevo, nunca en riesgo** — acusarlo de devolver paquetes porque el cron no pasó por su
-fila sería mandarle el mensaje equivocado.
+La vara del 35% está por encima del 31,9% del mercado a propósito: marca a quien devuelve
+MÁS que el promedio, no a cualquiera que esté en el promedio. Es una constante
+(`UMBRAL_DEVOLUCIONES`) — subirla a 40% mueve 8 pedidos de riesgo a ojo.
+
+**"Nunca devolvió" significa exactamente eso.** Es la única cosa que esa palabra puede
+significar sin mentir, y por eso el que devolvió aunque sea una vez tiene su propio balde.
+Y sin dato de reputación el cliente cae en **nuevo, nunca en riesgo** — acusarlo de
+devolver paquetes porque el cron no pasó por su fila sería mandarle el mensaje equivocado.
+
+⚠️ **El texto del mensaje de riesgo se adapta al número real de devoluciones.** Desde que
+la tasa se ajusta, al balde de riesgo entra gente con UNA sola devolución, y decirle
+"tienes varios pedidos anteriores que volvieron" a quien pidió una vez es mentirle en la
+cara — con el agravante de que él sabe que es mentira. Ver `motivoDevoluciones()`.
 
 El estado `FRENADO` existe para que de acá en adelante quede escrito cuál fue una decisión
 de Fabián y cuál un silencio del cliente.
