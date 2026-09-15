@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import type { Fase, Negocio, Pedido, Resumen, Tienda } from '@/lib/tipos';
 import type { EstadoSheet } from '@/lib/estados';
 import { tiendaUI, usd } from '@/lib/ui';
@@ -268,6 +269,16 @@ export function Cola() {
             >
               {buscando ? '✕' : '⌕'}
             </button>
+
+            {/* La otra mitad del trabajo: los pedidos web que nunca se
+                cerraron. Son más plata que esta cola y no se veían en ningún
+                lado — ver `recuperacion.ts`. */}
+            <Link
+              href="/recuperar"
+              className="pulsable min-h-11 rounded-full border border-[var(--color-borde)] px-4 text-sm leading-[2.75rem]"
+            >
+              Recuperar
+            </Link>
 
             <button
               type="button"

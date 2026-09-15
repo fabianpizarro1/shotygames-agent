@@ -443,6 +443,7 @@ O desde KEPLER, `preview_start` con el nombre `logistica` (puerto 3077).
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | Las mismas del `.env` de KEPLER |
 | `SHEETS_ID_DROPSHIPPING` | El Sheet de pedidos de Truquito y Avanora |
 | `SHEETS_ID_SHOTYGAMES` | El Sheet REAL de pedidos de ShotyGames (el mismo `GOOGLE_SHEETS_PEDIDOS_ID` de `adm.shotygames.com`, no el espejo IMPORTRANGE) |
+| `SHEETS_ID_PEDIDOS_WEB` | El Sheet "PEDIDOS LOVABLE" — pedidos que entraron por la web. Solo lo usa `/recuperar` |
 | `DROPI2_EMAIL`, `DROPI2_PASSWORD`, `DROPI2_TOTP_SECRET` | Cuenta **dropshipper** de DROPI (la segunda), con 2FA |
 | `DROPI_EMAIL`, `DROPI_PASSWORD`, `DROPI_TOTP_SECRET` | Cuenta de **ShotyGames**, donde Fabián es el proveedor |
 | `APP_PASSWORD` | La inventás — es el login de la app |
@@ -453,6 +454,71 @@ Un token de una cuenta **no sirve** para consultar órdenes de la otra: da 403 s
 Si se pierde un `*_TOTP_SECRET` y el 2FA ya está escaneado en Google Authenticator, se
 recupera sin desactivar nada: exportar la cuenta desde Authenticator y decodificar el QR
 con `KEPLER/scripts/decodificar-qr-2fa.py`.
+
+---
+
+# La otra pantalla: `/recuperar`
+
+Mientras la cola de arriba mira los ~20 pedidos que están viajando, esta mira los que
+**nunca salieron**: el que llenó el checkout de la web y no se convirtió en venta. El
+2026-09-14 eran **112 pedidos y $3.610** en 30 días. Era la mayor parte de la plata en
+juego y no se veía en ninguna pantalla.
+
+Lee otro Sheet, **"PEDIDOS LOVABLE"** (`SHEETS_ID_PEDIDOS_WEB`), que guarda todo el que
+pasó por el checkout haya pagado o no. Su `ESTADO` se mantiene solo: cuando el pedido se
+registra como venta real en la hoja oficial, `buscarAtribucionWeb()` (en KEPLER,
+`sheets.js`) le escribe `COMPRADO`. Por eso `SIN COMPRAR` es un dato confiable.
+
+## Por qué el mensaje NO sale del estado
+
+Hay dos situaciones y en el dato son **la misma**: tanto el que nunca contestó como el que
+Fabián frenó a propósito quedan `SIN COMPRAR`. No hay columna que los distinga.
+
+Así que el mensaje se elige por la **reputación del cliente en DROPI** (las columnas
+`DROPI PEDIDOS / ENTREGADOS / DEVUELTOS`, que un cron de KEPLER llena cada 2 h), que sí es
+un hecho verificable:
+
+| Balde | Regla | Qué se le manda |
+|---|---|---|
+| **Riesgo** | 3 pedidos o más y ≥30% devueltos | El motivo real + anticipo de $5 del envío, resto contra entrega |
+| **Historial sano** | tiene pedidos y no llega a la vara | Pedir confirmación |
+| **Cliente nuevo** | 0 pedidos en DROPI, o sin dato todavía | Pedir confirmación |
+
+Los 3 pedidos mínimos son lo que evita que "1 de 1 devuelto" pese igual que "11 de 11":
+con un solo caso no hay patrón, hay mala suerte. Y sin dato de reputación el cliente cae
+en **nuevo, nunca en riesgo** — acusarlo de devolver paquetes porque el cron no pasó por su
+fila sería mandarle el mensaje equivocado.
+
+El estado `FRENADO` existe para que de acá en adelante quede escrito cuál fue una decisión
+de Fabián y cuál un silencio del cliente.
+
+## Lo que escribe
+
+Tres cosas, y solo en esa hoja:
+
+- `ESTADO` — `FRENADO`, `AVISADO`, `CANCELADO` o volver a `SIN COMPRAR`. **`COMPRADO` no
+  se ofrece**: eso lo escribe el registro del pedido en la hoja oficial. Ponerlo a mano
+  haría desaparecer el pedido de la lista sin que exista la venta.
+- `LOG WA` — a quién se le abrió el chat, con qué plantilla y cuándo (`id|fecha ; …`). Se
+  **agrega**, nunca se pisa. Se sella al TOCAR el botón, no al enviar: `wa.me` abre
+  WhatsApp y no hay forma de saber si apretó enviar.
+- `NOTA RECUP` — en qué quedó la conversación.
+
+Las dos columnas y el estado `FRENADO` los agregó `scripts/preparar-recuperacion.js`
+(idempotente, corré con `--dry` primero). Ningún encabezado existente se movió ni se
+renombró.
+
+## Lo que NO hace
+
+- **No manda nada solo.** Igual que el resto de la app, es un `wa.me` y Fabián aprieta
+  enviar. Con 112 en cola, mandar en tanda por Evolution es pedirle un bloqueo a Meta.
+- **No excluye por teléfono.** El único cruce con la hoja oficial es por `PED-XXXXX`
+  exacto. Un cliente que compró en agosto y abandonó un carrito ayer tiene el mismo
+  teléfono en las dos hojas y desaparecería de la lista sin motivo. Cuando el teléfono sí
+  tiene un pedido vivo en la oficial, la tarjeta lo **avisa** en vez de decidir sola: puede
+  ser este mismo pedido registrado a mano sin el código de la web.
+
+---
 
 ## Deploy
 
