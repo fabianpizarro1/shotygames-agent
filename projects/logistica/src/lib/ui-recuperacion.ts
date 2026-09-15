@@ -1,6 +1,6 @@
 // Presentación de la pantalla de recuperación. Corre en el cliente.
 
-import type { Balde } from './recuperacion-tipos';
+import type { Accion, Balde } from './recuperacion-tipos';
 
 export const ETIQUETA_BALDE: Record<Balde, string> = {
   riesgo: 'Riesgo',
@@ -60,3 +60,41 @@ export const ESTILO_METODO: Record<string, string> = {
 
 export const estiloMetodo = (m: string) =>
   ESTILO_METODO[m] ?? 'bg-[var(--color-superficie-alta)] text-[var(--color-texto-suave)]';
+
+/**
+ * La acción es lo que ordena el trabajo del día, así que es lo que va grande en
+ * la tarjeta. El balde queda como el dato que la explica.
+ */
+export const ETIQUETA_ACCION: Record<Accion, string> = {
+  'ofrecer-anticipo': 'Pedirle el abono',
+  'pedir-confirmacion': 'Falta que confirme',
+  'no-escribir': 'No escribirle',
+};
+
+export const MOTIVO_ACCION: Record<Accion, string> = {
+  'ofrecer-anticipo':
+    'Confirmó el pedido pero devuelve seguido. Contale el motivo y ofrecele el abono de $5 del envío.',
+  'pedir-confirmacion':
+    'Recibió el resumen y nunca contestó, y su historial no da problema. Pedile la confirmación.',
+  'no-escribir':
+    'No confirmó y además devuelve seguido. No se le escribe: insistirle para que confirme un contra entrega que no vas a despachar es trabajo para llegar a la misma respuesta. Si confirma por su cuenta, marcalo como FRENADO y ahí le ofrecés el abono.',
+};
+
+export const ESTILO_ACCION: Record<Accion, { texto: string; fondo: string; punto: string }> = {
+  'ofrecer-anticipo': {
+    texto: 'text-[var(--color-ambar)]',
+    fondo: 'bg-[var(--color-ambar-tenue)]',
+    punto: 'bg-[var(--color-ambar)]',
+  },
+  'pedir-confirmacion': {
+    texto: 'text-[var(--color-verde)]',
+    fondo: 'bg-[var(--color-verde-tenue)]',
+    punto: 'bg-[var(--color-verde)]',
+  },
+  // Gris y no rojo: no es una alarma, es trabajo que no hay que hacer.
+  'no-escribir': {
+    texto: 'text-[var(--color-texto-tenue)]',
+    fondo: 'bg-[var(--color-superficie-alta)]',
+    punto: 'bg-[var(--color-texto-tenue)]',
+  },
+};

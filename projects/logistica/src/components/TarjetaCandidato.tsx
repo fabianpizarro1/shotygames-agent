@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { ANTICIPO_ENVIO, type Candidato } from '@/lib/recuperacion-tipos';
 import { PLANTILLAS_RECUPERACION, linkRecuperacion, plantillaSugerida } from '@/lib/plantillas-recuperacion';
-import { ESTILO_BALDE, ETIQUETA_BALDE, MOTIVO_BALDE, estiloMetodo } from '@/lib/ui-recuperacion';
+import {
+  ESTILO_ACCION,
+  ESTILO_BALDE,
+  ETIQUETA_ACCION,
+  ETIQUETA_BALDE,
+  MOTIVO_ACCION,
+  estiloMetodo,
+} from '@/lib/ui-recuperacion';
 import { fechaCorta, haceCuanto } from '@/lib/fechas';
 import { usd } from '@/lib/ui';
 
@@ -39,7 +46,9 @@ export function TarjetaCandidato({
   onGuardar: (cambios: Cambios) => Promise<string | null>;
 }) {
   const b = ESTILO_BALDE[c.balde];
+  const acc = ESTILO_ACCION[c.accion];
   const sugerida = plantillaSugerida(c);
+  const noEscribir = c.accion === 'no-escribir';
 
   // Mientras se escribe manda el borrador; cuando no hay borrador manda la
   // hoja. Así un refresco de la lista (que los hay: el cron de reputación y el
@@ -64,9 +73,10 @@ export function TarjetaCandidato({
         abierta ? 'border-[var(--color-borde-fuerte)]' : 'border-[var(--color-borde)]'
       }`}
     >
-      {/* Franja: el de riesgo se distingue antes de leer una palabra. */}
-      {c.balde === 'riesgo' && (
-        <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-[var(--color-rojo)]" />
+      {/* Franja en lo que hay que HACER, no en el tipo de cliente: ámbar =
+          pedirle el abono, verde = falta que confirme, nada = no escribirle. */}
+      {!noEscribir && (
+        <span aria-hidden className={`absolute inset-y-0 left-0 w-[3px] ${acc.punto}`} />
       )}
 
       <button type="button" onClick={onAbrir} className="pulsable w-full p-4 text-left">
@@ -74,9 +84,14 @@ export function TarjetaCandidato({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${b.fondo} ${b.texto}`}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${acc.fondo} ${acc.texto}`}
               >
-                <span className={`size-1.5 rounded-full ${b.punto}`} />
+                <span className={`size-1.5 rounded-full ${acc.punto}`} />
+                {ETIQUETA_ACCION[c.accion]}
+              </span>
+
+              {/* El balde queda como el dato que explica la acción. */}
+              <span className={`text-[11px] font-semibold ${b.texto}`}>
                 {ETIQUETA_BALDE[c.balde]}
               </span>
 
@@ -140,8 +155,14 @@ export function TarjetaCandidato({
             </p>
           )}
 
-          <p className="prosa mb-3 text-xs text-[var(--color-texto-suave)]">
-            {MOTIVO_BALDE[c.balde]}
+          <p
+            className={`prosa mb-3 rounded-lg px-3 py-2 text-xs ${
+              noEscribir
+                ? `${acc.fondo} text-[var(--color-texto-suave)]`
+                : 'text-[var(--color-texto-suave)]'
+            }`}
+          >
+            {MOTIVO_ACCION[c.accion]}
           </p>
 
           <dl className="mb-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs sm:grid-cols-3">
@@ -174,7 +195,7 @@ export function TarjetaCandidato({
 
           {/* ── WhatsApp ───────────────────────────────────────── */}
           <p className="mb-2 text-[10px] font-semibold tracking-[0.15em] text-[var(--color-texto-tenue)] uppercase">
-            Escribirle
+            {noEscribir ? 'Mensajes (ninguno recomendado)' : 'Escribirle'}
           </p>
           {/* La marca se pone sola al tocar el mensaje, **y se puede destildar**.
               Fabián lo pidió así el 2026-09-14: "a veces solo le toco abre WS

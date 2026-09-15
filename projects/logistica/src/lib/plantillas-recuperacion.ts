@@ -2,18 +2,26 @@
 // PLANTILLAS DE WHATSAPP PARA RECUPERAR PEDIDOS WEB
 //
 // Aparte de `plantillas.ts` a propósito: ese archivo le habla a alguien que ya
-// compró y tiene un paquete viajando. Acá el cliente **no compró** y puede que
-// no recuerde ni haber dejado el pedido, así que hay dos diferencias de fondo:
+// compró y tiene un paquete viajando. Acá el cliente **no compró**.
 //
-//  1. **Se presenta la tienda.** En logística no se hace (Fabián lo sacó: el
-//     cliente ya sabe quién le escribe). Acá es el primer contacto después del
-//     checkout y sin el nombre el mensaje parece una estafa.
-//  2. **Se repite lo que pidió.** Nombre del producto, total y ciudad. Es lo
-//     que hace que se acuerde en la primera línea en vez de preguntar "¿quién
-//     es?".
+// ⚠️ **Estos NUNCA son el primer mensaje.** Al hacer el pedido en la web el
+// cliente ya recibió el resumen para confirmar (Fabián, 2026-09-14). Así que no
+// se le "descubre" el pedido — se retoma una conversación que ya empezó. La
+// primera versión decía "vimos que dejaste este pedido en nuestra página", que
+// sonaba a contacto en frío y borraba el mensaje que él ya había recibido.
 //
-// Salen por `wa.me` con el mismo `linkWhatsApp` de `plantillas.ts`, así que los
-// emoji se filtran solos y nada se manda sin que Fabián apriete enviar.
+// Cuál va se decide por la ACCIÓN, no por el balde — ver `accionDe` en
+// `recuperacion-tipos.ts`. Y al que devuelve seguido y encima no confirmó **no
+// se le escribe nada**: no hay plantilla para eso a propósito.
+//
+// Dos cosas se mantienen de la versión anterior:
+//  · **Se presenta la tienda.** En logística no se hace, pero acá pasaron días
+//    desde el resumen y el cliente puede no tener el número agendado.
+//  · **Se repite lo que pidió** — producto, total y ciudad, para que se ubique
+//    en la primera línea en vez de preguntar "¿quién es?".
+//
+// Salen por `wa.me` con el mismo filtro de emoji de `plantillas.ts`, y nada se
+// manda sin que Fabián apriete enviar.
 // ============================================================
 
 import { sinEmoji } from './plantillas';
@@ -72,57 +80,70 @@ function bloquePedido(c: Candidato): string {
 }
 
 /**
- * Cómo se le nombra el problema, según cuántas devoluciones tiene de verdad.
+ * Cómo se le nombra el problema: **con el número concreto de devoluciones**.
  *
- * ⚠️ Esto **no** puede ser un texto fijo. Desde que la tasa se ajusta por
- * evidencia (ver `tasaAjustada` en `recuperacion-tipos.ts`), al balde de riesgo
- * entra gente con UNA sola devolución — y decirle "tienes varios pedidos
- * anteriores que volvieron" a quien pidió una vez es mentirle en la cara, con
- * el agravante de que él sabe que es mentira y ahí se termina la conversación.
+ * Así lo escribe Fabián a mano ("nos refleja que ya ha tenido 4 devoluciones")
+ * y tiene razón contra mi primera versión, que lo dejaba en "varios pedidos
+ * anteriores". El número es verificable y el cliente lo reconoce; el vago se
+ * discute. Además al balde de riesgo entra gente con UNA sola devolución, y
+ * decirle "varios" a quien tuvo una es mentirle sabiendo que él lo sabe.
+ *
+ * Con 0 devoluciones no se nombra ningún historial: Fabián puede elegir esta
+ * plantilla a mano en cualquier pedido y no se le inventa un pasado.
  */
 function motivoDevoluciones(c: Candidato): string {
   const d = c.dropi?.devueltos ?? 0;
   if (d === 0) {
-    // Fabián puede elegir esta plantilla a mano en cualquier pedido, y en uno
-    // sin devoluciones el motivo no existe: se le pide el anticipo por la zona,
-    // sin inventarle un historial que no tiene.
-    return 'la entrega contra reembolso en tu zona nos está fallando seguido';
+    return 'la entrega contra entrega en tu zona nos viene fallando seguido';
   }
-  if (d === 1) return 'un pedido anterior tuyo no se llegó a entregar y se devolvió';
-  return 'tu número tiene varios pedidos anteriores que volvieron sin poder entregarse';
+  const cuantas = d === 1 ? '*1 devolución*' : `*${d} devoluciones*`;
+  return `en el sistema de la transportadora nos refleja que tu número ya tiene ${cuantas}`;
 }
 
 export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
   {
     id: 'confirmar',
-    etiqueta: 'Pedir confirmación',
-    desc: 'Dejó el pedido y nunca confirmó',
+    etiqueta: 'Falta su confirmación',
+    desc: 'Recibió el resumen y nunca contestó',
+    // No le anuncia el pedido: le recuerda que YA le mandamos el resumen y que
+    // falta su respuesta. Es lo que de verdad pasó, y es más difícil de ignorar
+    // que un "vimos que dejaste este pedido".
     texto: (c) =>
       saludo(c) +
       `Te escribimos de *${MARCA}*.\n\n` +
-      `Vimos que dejaste este pedido en nuestra página:\n\n` +
+      `Te enviamos el resumen de tu pedido pero todavía no hemos recibido tu confirmación:\n\n` +
       bloquePedido(c) +
-      `Pero no llegamos a confirmarlo contigo. ¿Todavía lo quieres?\n\n` +
-      `Si me confirmas, lo despachamos y lo pagas cuando lo recibas. 📦`,
+      `¿Lo confirmas para despacharlo? Lo pagas en efectivo cuando lo recibas.`,
   },
   {
     id: 'anticipo',
-    etiqueta: 'Ofrecer anticipo de envío',
-    desc: 'Frenado por devoluciones — explicar y ofrecer los $5',
-    // El motivo va SIN cifras. Decirle "tienes 11 de 11 devueltos" es exacto
-    // pero suena a que lo estuvimos investigando y la conversación se muere
-    // ahí. Lo que importa es que entienda por qué y que hay salida.
+    etiqueta: 'Pedir abono de $5',
+    desc: 'Confirmó, pero devuelve seguido',
+    // Fusión de la plantilla que Fabián ya venía mandando a mano con el formato
+    // de acá. De la suya se conserva lo que funcionaba: el número concreto de
+    // devoluciones, el "nos cobran el envío en cuanto sale de la bodega" (que
+    // es el porqué — sin eso, pedir un abono parece desconfianza), "abono" y
+    // "en efectivo al momento de la entrega".
+    //
+    // Lo agregado: arranca agradeciendo la confirmación, porque este mensaje va
+    // justo después de que el cliente confirmó; el pedido concreto; el saldo con
+    // el número exacto en vez de "el valor restante"; y cierre con pregunta, que
+    // es lo que Fabián eligió en la plantilla de agosto.
+    //
+    // Lo quitado: "como le comentamos", que daba por dicho algo que
+    // probablemente no se dijo en ese hilo.
     texto: (c) =>
       saludo(c) +
-      `Te escribimos de *${MARCA}* por el pedido que dejaste en nuestra página:\n\n` +
+      `Gracias por confirmar tu pedido.\n\n` +
       bloquePedido(c) +
-      `Te cuento con sinceridad por qué todavía no salió: al revisar el sistema ` +
-      `de la transportadora, ${motivoDevoluciones(c)}. Cuando eso pasa el envío ` +
-      `nos lo cobran igual, así que no podemos mandarlo todo contra entrega.\n\n` +
-      `Pero no queremos dejarte sin tu pedido, así que te propongo algo:\n\n` +
-      `• Adelantas solo *${usd(ANTICIPO_ENVIO)}* del envío\n` +
-      `• El resto, *${usd(c.saldoConAnticipo)}*, lo pagas al recibirlo\n\n` +
-      `Con eso lo despachamos de una. ¿Te parece? 🤝`,
+      `Antes de despacharlo te cuento algo con sinceridad: ${motivoDevoluciones(c)}. ` +
+      `En esos casos ya no podemos enviarlo todo contra entrega, porque a nosotros ` +
+      `nos cobran el valor del envío en cuanto el paquete sale de la bodega, se ` +
+      `entregue o no.\n\n` +
+      `Pero sí te lo podemos enviar. Solo necesitamos un abono para asegurar el envío:\n\n` +
+      `• Abonas *${usd(ANTICIPO_ENVIO)}* ahora\n` +
+      `• Los *${usd(c.saldoConAnticipo)}* restantes los pagas en efectivo al momento de la entrega\n\n` +
+      `¿Lo hacemos así y te lo despachamos? 🤝`,
   },
   {
     id: 'libre',
@@ -133,12 +154,15 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
 ];
 
 /**
- * Cuál plantilla le corresponde. Sale del BALDE, o sea de la reputación real en
- * DROPI — no del estado de la hoja, que no distingue "no contestó" de "lo
- * frené" (ver el encabezado de `recuperacion.ts`).
+ * Cuál plantilla le corresponde. Sale de la ACCIÓN, que cruza la reputación en
+ * DROPI con si el cliente confirmó — ver `accionDe` en `recuperacion-tipos.ts`.
+ *
+ * Devuelve `null` cuando no hay que escribirle: el que devuelve seguido y
+ * encima no confirmó no recibe nada. No sugerir nada es la sugerencia.
  */
-export function plantillaSugerida(c: Candidato): string {
-  return c.balde === 'riesgo' ? 'anticipo' : 'confirmar';
+export function plantillaSugerida(c: Candidato): string | null {
+  if (c.accion === 'no-escribir') return null;
+  return c.accion === 'ofrecer-anticipo' ? 'anticipo' : 'confirmar';
 }
 
 function telefonoWA(telefono: string): string {

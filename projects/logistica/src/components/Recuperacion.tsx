@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ESTADO_FRENADO,
-  type Balde,
+  type Accion,
   type Candidato,
   type ResumenRecuperacion,
 } from '@/lib/recuperacion-tipos';
@@ -19,14 +19,15 @@ interface Respuesta {
   error?: string;
 }
 
-type Filtro = 'TODOS' | Balde;
+// Se filtra por ACCIÓN y no por balde: lo que Fabián necesita elegir es qué
+// tanda de mensajes va a mandar ahora, no qué tipo de cliente quiere mirar.
+type Filtro = 'TODOS' | Accion;
 
 const FILTROS: { clave: Filtro; texto: string }[] = [
   { clave: 'TODOS', texto: 'Todos' },
-  { clave: 'riesgo', texto: 'Riesgo' },
-  { clave: 'ojo', texto: 'Ojo' },
-  { clave: 'sano', texto: 'Sanos' },
-  { clave: 'nuevo', texto: 'Nuevos' },
+  { clave: 'ofrecer-anticipo', texto: 'Pedir abono' },
+  { clave: 'pedir-confirmacion', texto: 'Falta confirmar' },
+  { clave: 'no-escribir', texto: 'No escribir' },
 ];
 
 const VENTANAS = [15, 30, 60, 90];
@@ -40,8 +41,10 @@ const VENTANAS = [15, 30, 60, 90];
 const ESTADOS: OpcionEstado[] = [
   {
     literal: ESTADO_FRENADO,
-    texto: 'Frenado',
-    desc: 'Decidí no despacharlo por su historial de devoluciones',
+    // Es la marca que hace posible distinguir al que confirmó del que no
+    // contestó — y con eso, cuál de los dos mensajes le toca.
+    texto: 'Confirmó, lo frené',
+    desc: 'Confirmó el pedido pero no lo despaché por su historial. Pasa a "pedirle el abono".',
   },
   { literal: 'AVISADO', texto: 'Avisado', desc: 'Ya le escribí, esperando que conteste' },
   { literal: 'CANCELADO', texto: 'Cancelado', desc: 'No lo quiere o no contesta: cerrado' },
@@ -120,7 +123,7 @@ export function Recuperacion() {
   const visibles = useMemo(() => {
     const q = sinTildes(busqueda.trim());
     return candidatos.filter((c) => {
-      if (filtro !== 'TODOS' && c.balde !== filtro) return false;
+      if (filtro !== 'TODOS' && c.accion !== filtro) return false;
       if (soloSinAvisar && c.avisos.length > 0) return false;
       if (!q) return true;
       return sinTildes([c.nombre, c.id, c.telefono, c.ciudad, c.descripcion].join(' ')).includes(q);
@@ -187,7 +190,7 @@ export function Recuperacion() {
             const n =
               f.clave === 'TODOS'
                 ? candidatos.length
-                : candidatos.filter((c) => c.balde === f.clave).length;
+                : candidatos.filter((c) => c.accion === f.clave).length;
             const activo = filtro === f.clave;
             return (
               <button

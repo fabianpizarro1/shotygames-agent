@@ -519,12 +519,42 @@ Lo que sale de acá es un **ranking**, no la probabilidad de que este pedido se 
 
 ## Los cuatro baldes
 
-| Balde | Regla | Qué se le manda |
-|---|---|---|
-| **Riesgo** | tasa ajustada ≥ 35% | El motivo real + anticipo de $5 del envío, resto contra entrega |
-| **Ojo** | devolvió alguna pero no llega a la vara | Pedir confirmación — el mensaje no lo acusa de nada |
-| **Nunca devolvió** | tiene pedidos y **0** devueltos | Pedir confirmación |
-| **Cliente nuevo** | 0 pedidos en DROPI, o sin dato todavía | Pedir confirmación |
+| Balde | Regla |
+|---|---|
+| **Riesgo** | tasa ajustada ≥ 35% |
+| **Ojo** | devolvió alguna pero no llega a la vara |
+| **Nunca devolvió** | tiene pedidos y **0** devueltos |
+| **Cliente nuevo** | 0 pedidos en DROPI, o sin dato todavía |
+
+## Pero el balde NO decide el mensaje: la ACCIÓN sí
+
+**Fabián nunca escribe primero.** Al hacer el pedido en la web el cliente ya recibió el
+resumen para confirmar, así que lo que se decide acá es el SEGUNDO mensaje — y eso depende
+de dos cosas, no de una (dictado por él, 2026-09-14):
+
+| Historial | ¿Confirmó? | Acción | Mensaje |
+|---|---|---|---|
+| bueno | no | **Falta que confirme** | "te enviamos el resumen y no hemos recibido tu confirmación" |
+| malo | **no** | **No escribirle** | ninguno |
+| malo | sí | **Pedirle el abono** | el motivo con el número real de devoluciones + abono de $5 |
+
+Al que devuelve seguido y encima no confirmó **no se le escribe**: insistirle para que
+confirme un contra entrega que no se va a despachar es trabajo para llegar a la misma
+respuesta. Siguen en la lista (al final, en gris) para poder verlos y cerrarlos, no para
+trabajarlos.
+
+### `FRENADO` es lo que hace posible todo esto
+
+"No contestó" y "confirmó pero lo frené" **son el mismo dato** en la hoja, y las dos
+acciones son opuestas. `FRENADO` es la marca que pone Fabián cuando el cliente confirmó y
+él decidió no despacharlo: sin ella no hay forma de distinguirlos. Cualquier otro estado
+recuperable (`SIN COMPRAR`, `AVISADO`) significa que no confirmó.
+
+Por eso el balde **Pedir abono arranca vacío** y se llena a medida que Fabián marca. El
+flujo real: el cliente confirma por WhatsApp → busca su número en esta pantalla → ve el
+historial → "Confirmó, lo frené" → le manda el mensaje del abono.
+
+Reparto al 2026-09-14: **57 falta que confirme ($1.820) · 55 no escribirle · 0 abono**.
 
 ## ¿Sirve de algo? Lo medido
 

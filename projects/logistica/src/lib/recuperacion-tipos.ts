@@ -183,6 +183,43 @@ export function baldeDe(dropi: PedidoWeb['dropi']): Balde {
 }
 
 /**
+ * Qué corresponde HACER con este pedido. Es el eje real de la pantalla: el
+ * balde solo dice cómo es el cliente, la acción sale de cruzarlo con si el
+ * cliente **confirmó o no**.
+ *
+ * Fabián nunca escribe primero: al hacer el pedido en la web el cliente ya
+ * recibe el resumen para confirmar. Así que lo que se decide acá es el SEGUNDO
+ * mensaje, y depende de las dos cosas (2026-09-14, dictado por él):
+ *
+ * | Historial | ¿Confirmó? | Acción |
+ * |---|---|---|
+ * | bueno | no  | pedirle la confirmación que falta |
+ * | malo  | no  | **nada** — no se le escribe |
+ * | malo  | sí  | ofrecerle el anticipo de $5 |
+ *
+ * **Cómo se sabe si confirmó**: por el ESTADO de la hoja, porque no hay otra
+ * forma. `FRENADO` es la marca que pone Fabián cuando el cliente SÍ confirmó y
+ * él decidió no despacharlo por el historial. Cualquier otro estado
+ * recuperable (`SIN COMPRAR`, `AVISADO`) significa que no confirmó.
+ *
+ * Esto es lo que le da sentido a `FRENADO`: sin esa marca, "no contestó" y "lo
+ * frené" son el mismo dato y las dos acciones son opuestas.
+ */
+export type Accion = 'pedir-confirmacion' | 'ofrecer-anticipo' | 'no-escribir';
+
+export function accionDe(estado: string, balde: Balde): Accion {
+  // Confirmó y Fabián lo frenó: acá va la oferta del abono.
+  if (estado === ESTADO_FRENADO) return 'ofrecer-anticipo';
+
+  // No confirmó y encima devuelve seguido: no se le escribe. Insistirle para
+  // que confirme un contra entrega que no se va a despachar es trabajo para
+  // llegar a la misma respuesta que no escribiéndole.
+  if (balde === 'riesgo') return 'no-escribir';
+
+  return 'pedir-confirmacion';
+}
+
+/**
  * Qué plantillas están marcadas como enviadas, del formato "id|fecha ; id|fecha".
  *
  * Mismo formato que la columna LOG WA de la hoja oficial, para que lo que se
@@ -224,6 +261,8 @@ export function marcarAviso(
 export interface Candidato extends PedidoWeb {
   dias: number;
   balde: Balde;
+  /** Qué hacer con él — cruza el balde con si confirmó. Ver `accionDe`. */
+  accion: Accion;
   /** Porcentaje crudo de devoluciones, 0-100. `null` si no hay reputación. */
   tasaDevolucion: number | null;
   /**
@@ -248,6 +287,7 @@ export interface ResumenRecuperacion {
   total: number;
   monto: number;
   porBalde: Record<Balde, { pedidos: number; monto: number }>;
+  porAccion: Record<Accion, { pedidos: number; monto: number }>;
   /** A cuántos ya se les escribió al menos una vez. */
   avisados: number;
 }

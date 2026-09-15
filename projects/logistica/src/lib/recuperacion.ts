@@ -15,12 +15,14 @@ import {
   telefonosConPedidoVivo,
 } from './sheet-lovable';
 import {
+  accionDe,
   ANTICIPO_ENVIO,
   avisosDe,
   baldeDe,
   RECUPERABLES,
   tasaAjustada,
   VENTANA_DIAS,
+  type Accion,
   type Balde,
   type Candidato,
   type Lista,
@@ -52,10 +54,13 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
     const dias = diasEntre(p.fecha || null, hoy);
     if (p.fecha && dias > ventana) continue;
 
+    const balde = baldeDe(p.dropi);
+
     candidatos.push({
       ...p,
       dias,
-      balde: baldeDe(p.dropi),
+      balde,
+      accion: accionDe(p.estado, balde),
       tasaDevolucion:
         p.dropi && p.dropi.pedidos > 0
           ? Math.round((p.dropi.devueltos / p.dropi.pedidos) * 100)
@@ -68,9 +73,18 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
     });
   }
 
-  // Lo más fresco primero, y entre dos del mismo día el de más plata. Un
-  // carrito de ayer se recupera; uno de hace tres semanas ya casi nunca.
-  candidatos.sort((a, b) => a.dias - b.dias || b.monto - a.monto);
+  // Primero lo que hay que hacer, después lo más fresco, y entre dos del mismo
+  // día el de más plata. Los "no escribir" van al final: están en la lista para
+  // poder verlos y cambiarles el estado, no para trabajarlos.
+  const ORDEN: Record<Accion, number> = {
+    'ofrecer-anticipo': 0,
+    'pedir-confirmacion': 1,
+    'no-escribir': 2,
+  };
+  candidatos.sort(
+    (a, b) =>
+      ORDEN[a.accion] - ORDEN[b.accion] || a.dias - b.dias || b.monto - a.monto
+  );
 
   const vacio = () => ({ pedidos: 0, monto: 0 });
   const porBalde: Record<Balde, { pedidos: number; monto: number }> = {
@@ -79,9 +93,16 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
     sano: vacio(),
     nuevo: vacio(),
   };
+  const porAccion: Record<Accion, { pedidos: number; monto: number }> = {
+    'pedir-confirmacion': vacio(),
+    'ofrecer-anticipo': vacio(),
+    'no-escribir': vacio(),
+  };
   for (const c of candidatos) {
     porBalde[c.balde].pedidos++;
     porBalde[c.balde].monto = redondear(porBalde[c.balde].monto + c.monto);
+    porAccion[c.accion].pedidos++;
+    porAccion[c.accion].monto = redondear(porAccion[c.accion].monto + c.monto);
   }
 
   return {
@@ -90,6 +111,7 @@ export async function construirLista(ventana = VENTANA_DIAS): Promise<Lista> {
       total: candidatos.length,
       monto: redondear(candidatos.reduce((a, c) => a + c.monto, 0)),
       porBalde,
+      porAccion,
       avisados: candidatos.filter((c) => c.avisos.length > 0).length,
     },
     hoy,
