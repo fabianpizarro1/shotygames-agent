@@ -11,15 +11,17 @@
 //     validación (`DATOS!C2:C19`). Escribir cualquier otra cosa deja la celda
 //     fuera del desplegable y los filtros del Sheet dejan de verla.
 //
-// La marca de aviso NO se pisa: se relee el LOG WA y se le agrega la nueva
-// entrada, para no perder los avisos anteriores si dos pestañas escriben.
+// La marca de aviso NO se pisa: se relee el LOG WA y se toca solo la entrada de
+// esa plantilla, para no perder las otras si dos pestañas escriben. `enviado`
+// decide si se marca o se desmarca — **nunca se marca sola al abrir WhatsApp**,
+// ver `marcarAviso` en `recuperacion-tipos.ts`.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { actualizarFila, leerFila } from '@/lib/sheet-lovable';
 import { marcarAviso } from '@/lib/recuperacion-tipos';
 import { estadosDeLaHojaWeb } from '@/lib/estados-web';
 import { PLANTILLAS_RECUPERACION } from '@/lib/plantillas-recuperacion';
-import { ahoraEC } from '@/lib/fechas';
+import { selloEC } from '@/lib/fechas';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,13 +31,15 @@ interface Cuerpo {
   id?: string;
   estado?: string;
   nota?: string;
-  /** Id de la plantilla que se acaba de mandar, para sellar el LOG WA. */
+  /** Id de la plantilla a marcar o desmarcar en el LOG WA. */
   aviso?: string;
+  /** `true` marca, `false` desmarca. Lo decide Fabián con el check. */
+  enviado?: boolean;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { fila, id, estado, nota, aviso } = (await req.json()) as Cuerpo;
+    const { fila, id, estado, nota, aviso, enviado = true } = (await req.json()) as Cuerpo;
 
     if (!fila || !Number.isInteger(fila) || fila < 2) {
       return NextResponse.json({ ok: false, error: 'Fila inválida' }, { status: 400 });
@@ -83,7 +87,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      logWa = marcarAviso(String(datos[C.LOG_WA] ?? ''), aviso, ahoraEC());
+      logWa = marcarAviso(String(datos[C.LOG_WA] ?? ''), aviso, selloEC(), enviado);
     }
 
     const { error } = await actualizarFila(fila, id, { estado, nota, logWa });

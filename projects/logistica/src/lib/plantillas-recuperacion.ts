@@ -36,12 +36,25 @@ const saludo = (c: Candidato) => {
 
 const usd = (n: number) => '$' + (Number(n) || 0).toFixed(2);
 
+/**
+ * "SANTO DOMINGO DE LOS COLORADOS" → "Santo Domingo de los Colorados".
+ *
+ * Las preposiciones y artículos quedan en minúscula: capitalizar todas las
+ * palabras daba "Santo Domingo De Los Colorados", que se lee a plantilla
+ * automática. La primera palabra siempre va en mayúscula, aunque sea una de
+ * esas ("La Libertad", "El Guabo").
+ */
+const MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'el', 'los', 'y', 'en']);
+
 const ciudadBonita = (c: Candidato) =>
   c.ciudad
     ? c.ciudad
         .toLowerCase()
         .split(/\s+/)
-        .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+        .filter(Boolean)
+        .map((w, i) =>
+          i > 0 && MINUSCULAS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)
+        )
         .join(' ')
     : '';
 
@@ -86,7 +99,7 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
     desc: 'Dejó el pedido y nunca confirmó',
     texto: (c) =>
       saludo(c) +
-      `te escribimos de *${MARCA}*.\n\n` +
+      `Te escribimos de *${MARCA}*.\n\n` +
       `Vimos que dejaste este pedido en nuestra página:\n\n` +
       bloquePedido(c) +
       `Pero no llegamos a confirmarlo contigo. ¿Todavía lo quieres?\n\n` +
@@ -101,7 +114,7 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
     // ahí. Lo que importa es que entienda por qué y que hay salida.
     texto: (c) =>
       saludo(c) +
-      `te escribimos de *${MARCA}* por el pedido que dejaste en nuestra página:\n\n` +
+      `Te escribimos de *${MARCA}* por el pedido que dejaste en nuestra página:\n\n` +
       bloquePedido(c) +
       `Te cuento con sinceridad por qué todavía no salió: al revisar el sistema ` +
       `de la transportadora, ${motivoDevoluciones(c)}. Cuando eso pasa el envío ` +

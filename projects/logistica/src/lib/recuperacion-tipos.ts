@@ -182,24 +182,43 @@ export function baldeDe(dropi: PedidoWeb['dropi']): Balde {
   return dropi.devueltos > 0 ? 'ojo' : 'sano';
 }
 
-/** Qué plantillas ya se le mandaron, del formato "id|fecha ; id|fecha". */
+/**
+ * Qué plantillas están marcadas como enviadas, del formato "id|fecha ; id|fecha".
+ *
+ * Mismo formato que la columna LOG WA de la hoja oficial, para que lo que se
+ * marca acá se siga leyendo desde `finanzas-app` y desde la cola de logística.
+ */
 export function avisosDe(logWa: string): { id: string; fecha: string }[] {
-  return logWa
-    .split(';')
-    .map((x) => x.trim())
-    .filter(Boolean)
-    .map((x) => {
-      const [id, fecha = ''] = x.split('|');
-      return { id: id.trim(), fecha: fecha.trim() };
-    })
-    .filter((x) => x.id);
+  const porId = new Map<string, string>();
+  for (const tramo of String(logWa || '').split(';')) {
+    const [id, fecha = ''] = tramo.split('|').map((x) => x.trim());
+    // Si un id se repite queda el último: la marca es un estado por plantilla,
+    // no un historial de cuántas veces se tocó el botón.
+    if (id) porId.set(id, fecha);
+  }
+  return [...porId].map(([id, fecha]) => ({ id, fecha }));
 }
 
-/** Una marca nueva agregada al LOG WA, sin perder las que ya estaban. */
-export function marcarAviso(logWa: string, idPlantilla: string, ahora: string): string {
-  const previos = logWa.trim();
-  const marca = `${idPlantilla}|${ahora}`;
-  return previos ? `${previos} ; ${marca}` : marca;
+/**
+ * Marca o desmarca una plantilla en el LOG WA, conservando las demás.
+ *
+ * Se marca sola al abrir WhatsApp **y se puede destildar**, como pidió Fabián
+ * el 2026-09-14: *"a veces solo le toco abre WS pero no le mando el mensaje"*.
+ * Un `wa.me` no avisa si se apretó enviar, así que el automático es una
+ * suposición y el check es lo que la corrige. Es el registro de lo que Fabián
+ * dice que mandó, no una confirmación de entrega — y existe para no escribirle
+ * dos veces al mismo cliente, así que tiene que poder corregirse.
+ */
+export function marcarAviso(
+  logWa: string,
+  idPlantilla: string,
+  ahora: string,
+  enviado = true
+): string {
+  const marcas = new Map(avisosDe(logWa).map((a) => [a.id, a.fecha]));
+  if (enviado) marcas.set(idPlantilla, ahora);
+  else marcas.delete(idPlantilla);
+  return [...marcas].map(([id, f]) => `${id}|${f}`).join(' ; ');
 }
 
 export interface Candidato extends PedidoWeb {

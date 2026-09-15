@@ -17,6 +17,7 @@ export interface Cambios {
   estado?: string;
   nota?: string;
   aviso?: string;
+  enviado?: boolean;
 }
 
 /**
@@ -175,44 +176,81 @@ export function TarjetaCandidato({
           <p className="mb-2 text-[10px] font-semibold tracking-[0.15em] text-[var(--color-texto-tenue)] uppercase">
             Escribirle
           </p>
+          {/* La marca se pone sola al tocar el mensaje, **y se puede destildar**.
+              Fabián lo pidió así el 2026-09-14: "a veces solo le toco abre WS
+              pero no le mando el mensaje". Un `wa.me` no avisa si se apretó
+              enviar, así que el automático es una suposición — el check es lo
+              que la corrige. Sin poder destildar, el registro mentiría justo en
+              lo único que tiene que saber: a quién ya le escribió.
+              Mismo criterio que la cola de logística. */}
           <div className="mb-4 flex flex-col gap-2">
             {PLANTILLAS_RECUPERACION.map((p) => {
               const esSugerida = p.id === sugerida;
-              const yaMandada = c.avisos.find((a) => a.id === p.id);
+              const marcada = c.avisos.find((a) => a.id === p.id);
+              // El chat en blanco no se marca: no hay mensaje que registrar.
+              const marcable = p.id !== 'libre';
               return (
-                <a
+                <div
                   key={p.id}
-                  href={linkRecuperacion(c, p.texto(c))}
-                  target="_blank"
-                  rel="noreferrer"
-                  // El sello va al TOCAR, no al enviar: `wa.me` abre WhatsApp y
-                  // no hay forma de saber si apretó enviar. Es un registro de
-                  // "le abrí el chat con este mensaje", que es lo que sirve
-                  // para no repetirlo, y se puede corregir con la nota.
-                  onClick={() => void aplicar({ aviso: p.id })}
-                  className={`pulsable flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm ${
-                    esSugerida
+                  className={`flex items-stretch gap-1 rounded-lg border ${
+                    marcada
                       ? 'border-[var(--color-verde)]/40 bg-[var(--color-verde-tenue)]'
-                      : 'border-[var(--color-borde)]'
+                      : esSugerida
+                        ? 'border-[var(--color-verde)]/40'
+                        : 'border-[var(--color-borde)]'
                   }`}
                 >
-                  <span className="min-w-0">
+                  <a
+                    href={linkRecuperacion(c, p.texto(c))}
+                    target="_blank"
+                    rel="noreferrer"
+                    // Marca al abrir. Si ya estaba marcada no se reescribe la
+                    // fecha: la primera vez que se lo mandó es el dato útil.
+                    onClick={() => {
+                      if (marcable && !marcada) void aplicar({ aviso: p.id, enviado: true });
+                    }}
+                    className="pulsable min-w-0 flex-1 rounded-lg px-3 py-2.5 text-sm"
+                  >
                     <span className="block font-medium">
                       {p.etiqueta}
-                      {esSugerida && (
+                      {esSugerida && !marcada && (
                         <span className="ml-2 text-[10px] font-semibold text-[var(--color-verde)]">
                           SUGERIDO
                         </span>
                       )}
                     </span>
                     <span className="block truncate text-xs text-[var(--color-texto-tenue)]">
-                      {yaMandada ? `Ya se le mandó el ${yaMandada.fecha}` : p.desc}
+                      {marcada ? `Mandado el ${marcada.fecha}` : p.desc}
                     </span>
-                  </span>
-                  <span className="shrink-0 text-[var(--color-texto-tenue)]">→</span>
-                </a>
+                  </a>
+
+                  {marcable && (
+                    <button
+                      type="button"
+                      aria-pressed={!!marcada}
+                      aria-label={
+                        marcada
+                          ? `Destildar: al final no le mandé "${p.etiqueta}"`
+                          : `Marcar que le mandé "${p.etiqueta}"`
+                      }
+                      disabled={guardando}
+                      onClick={() => void aplicar({ aviso: p.id, enviado: !marcada })}
+                      className={`pulsable grid w-14 shrink-0 place-items-center rounded-lg border-l text-lg disabled:opacity-40 ${
+                        marcada
+                          ? 'border-[var(--color-verde)]/30 text-[var(--color-verde)]'
+                          : 'border-[var(--color-borde)] text-[var(--color-texto-tenue)]'
+                      }`}
+                    >
+                      {marcada ? '☑' : '☐'}
+                    </button>
+                  )}
+                </div>
               );
             })}
+            <p className="prosa px-1 text-[11px] text-[var(--color-texto-tenue)]">
+              Se marca solo al abrir WhatsApp. Si al final no lo mandaste,
+              destildá el check.
+            </p>
           </div>
 
           {/* ── Estado ─────────────────────────────────────────── */}

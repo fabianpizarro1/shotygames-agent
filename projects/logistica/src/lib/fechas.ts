@@ -28,6 +28,16 @@ export function ahoraEC(d = new Date()): string {
 }
 
 /**
+ * "2026-09-14 23:26" — para sellar a mano en una celda que además se LEE en
+ * pantalla. `ahoraEC()` sirve para guardar un instante exacto, pero puesto en
+ * la tarjeta se ve "Mandado el 2026-09-14T23:26:58.6…", que no se lee.
+ * Mismo formato que la columna LOG WA de la cola de logística.
+ */
+export function selloEC(d = new Date()): string {
+  return new Date(d.getTime() - OFFSET_MS).toISOString().slice(0, 16).replace('T', ' ');
+}
+
+/**
  * Cualquier fecha del Sheet o de DROPI → "YYYY-MM-DD" del día que fue en Ecuador.
  * Tiene que aguantar los formatos que conviven hoy:
  *   "2026-08-31T01:42:50.764Z"       instante UTC (lo que escribe n8n) → se convierte
