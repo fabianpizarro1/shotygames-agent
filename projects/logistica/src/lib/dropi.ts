@@ -207,52 +207,6 @@ async function conSesion(cuenta: Cuenta, sesion: Sesion, forzar = false): Promis
 }
 
 /**
- * POST autenticado contra DROPI. Igual que `apiGet` pero con cuerpo: el
- * historial del cliente solo se puede pedir por POST.
- */
-async function apiPost(
-  cuenta: Cuenta,
-  sesion: Sesion,
-  path: string,
-  body: unknown
-): Promise<Record<string, unknown>> {
-  const call = (token: string) =>
-    conRitmo(() =>
-      fetch(`${BASE}${path}`, {
-        method: 'POST',
-        headers: {
-          ...HEADERS_BASE,
-          'content-type': 'application/json',
-          referer: 'https://app.dropi.ec/',
-          'x-authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(20_000),
-      })
-    );
-
-  let token = await conSesion(cuenta, sesion);
-  let res = await call(token);
-
-  if (res.status === 401 || res.status === 403) {
-    token = await conSesion(cuenta, sesion, true);
-    res = await call(token);
-  }
-
-  for (let intento = 0; res.status === 429 && intento < 3; intento++) {
-    await dormir(700 * (intento + 1));
-    res = await call(token);
-  }
-
-  if (!res.ok) {
-    const e = new Error(`DROPI ${path} devolvió ${res.status}`) as Error & { status?: number };
-    e.status = res.status;
-    throw e;
-  }
-  return (await res.json()) as Record<string, unknown>;
-}
-
-/**
  * GET autenticado contra DROPI. `sesion` guarda el token de ESTA cuenta — el
  * token es por cuenta y usar el de la otra da 403 sin mensaje útil.
  */
@@ -454,26 +408,9 @@ export interface Lote {
   fallaron: Map<number, string>;
 }
 
-/**
- * El historial de un cliente en TODA la plataforma DROPI, no solo en esta
- * cuenta. Es lo que se le muestra como prueba cuando se le pide el abono.
- *
- * `ultimaIncidencia` es el campo que faltaba: el motivo textual de su última
- * devolución, tal como lo registró la transportadora ("DESTINATARIO INDICA QUE
- * YA NO DESEA EL PRODUCTO"). Es más convincente que el número, porque el
- * cliente reconoce su propia acción y no hay nada que discutir.
- */
-export interface HistorialCliente {
-  pedidos: number;
-  entregados: number;
-  devueltos: number;
-  ultimaIncidencia: string | null;
-}
-
 export interface ClienteDropi {
   id: string;
   getTrackingBatch(ids: number[]): Promise<Lote>;
-  getHistorialCliente(telefono: string): Promise<HistorialCliente | null>;
 }
 
 /**
@@ -550,78 +487,7 @@ function crearCliente(cuenta: Cuenta): ClienteDropi {
     return { tracking, inexistentes, fallaron };
   }
 
-  /**
-   * El historial del cliente por teléfono.
-   *
-   * ⚠️ **El endpoint exige `products`.** DROPI usa los productos del pedido
-   * para buscar coincidencias, y con la lista vacía devuelve todo en cero como
-   * si el cliente no tuviera historial — que es la peor forma de fallar acá.
-   * Se manda un SKU real de la bodega (ver `PRODUCTO_MUESTRA`).
-   *
-   * Cacheado 10 minutos igual que el tracking: el historial de un cliente no
-   * cambia entre dos cargas de la misma pantalla, y así abrir un comprobante
-   * dos veces no gasta dos consultas.
-   */
-  async function getHistorialCliente(telefono: string): Promise<HistorialCliente | null> {
-    const tel = telNacionalDropi(telefono);
-    if (!tel) return null;
-
-    try {
-      return await unstable_cache(
-        async () => {
-          const data = await apiPost(cuenta, sesion, '/orders/getclientclasification', {
-            phone: tel,
-            products: [PRODUCTO_MUESTRA],
-          });
-
-          // Rechazo disfrazado de éxito, como en el resto de la API.
-          if ((data as { isSuccess?: boolean }).isSuccess === false) {
-            throw new Error('DROPI no devolvió el historial');
-          }
-
-          const incidencia = str(data.last_incidence_this_client);
-          return {
-            pedidos: num(data.client_total_orders),
-            entregados: num(data.client_total_orders_delivered),
-            devueltos: num(data.client_total_orders_returneds),
-            ultimaIncidencia: incidencia || null,
-          };
-        },
-        ['dropi-historial-cliente', cuenta.id, tel],
-        { revalidate: TTL_S, tags: [`dropi-historial-${cuenta.id}`] }
-      )();
-    } catch (e) {
-      console.error(`DROPI ${cuenta.id} historial ${tel}:`, e instanceof Error ? e.message : e);
-      return null;
-    }
-  }
-
-  return { id: cuenta.id, getTrackingBatch, getHistorialCliente };
-}
-
-/**
- * Un SKU real de la bodega, solo para que el endpoint del historial tenga con
- * qué buscar. No se crea ni se toca ninguna orden — es un parámetro de consulta.
- * `182791` es la Torre Normal privada (ver `dropi.js` en KEPLER).
- */
-const PRODUCTO_MUESTRA = {
-  id: 182791,
-  name: 'Torre Normal Priv',
-  quantity: 1,
-  price: 23,
-  type: 'SIMPLE',
-  user_id: 11362,
-};
-
-/**
- * El formato de teléfono que usa DROPI internamente: 9 dígitos, sin el 0 y sin
- * el 593. Acepta 0993154462 / 993154462 / 593993154462 / +593993154462.
- */
-function telNacionalDropi(telefono: string): string {
-  let n = String(telefono ?? '').replace(/\D/g, '');
-  if (n.startsWith('593')) n = n.slice(3);
-  if (n.length === 10 && n.startsWith('0')) n = n.slice(1);
-  return n.length === 9 ? n : '';
+  return { id: cuenta.id, getTrackingBatch };
 }
 
 /** Cuenta de ShotyGames — Fabián es el PROVEEDOR y despacha su propio producto. */
