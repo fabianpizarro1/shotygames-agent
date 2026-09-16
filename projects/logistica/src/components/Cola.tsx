@@ -56,12 +56,17 @@ const sinTildes = (s: string) =>
  * que el cliente lo vaya a retirar, que es otro trabajo. Sin esta excepción,
  * 15 de los 33 "En camino" eran paquetes estacionados (medido 2026-09-04) y
  * Fabián los revisaba dos veces.
+ *
+ * La NOVEDAD manda sobre todo lo demás (2026-09-15): un pedido con novedad
+ * sale SOLO en "Novedades". Antes un paquete con novedad parado en agencia
+ * salía también en "En agencia" y Fabián lo trabajaba dos veces. Las fases ya
+ * son excluyentes entre sí; el único cruce era el corte físico de agencia.
  */
 const pasaFiltro = (p: Pedido, f: FiltroFase) =>
   f === 'TODAS'
     ? true
     : f === 'agencia'
-      ? p.enAgencia
+      ? p.enAgencia && p.fase !== 'novedad'
       : f === 'en-camino'
         ? p.fase === 'en-camino' && !p.enAgencia
         : p.fase === f;
