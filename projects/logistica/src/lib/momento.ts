@@ -75,9 +75,37 @@ const ES_DEVOLUCION =
 /** Está físicamente en la agencia. "Novedad en CS" también: la novedad es ahí. */
 const ES_EN_AGENCIA = /^INGRESANDO EN AGENCIA|^NOVEDAD EN CS|^NO RECLAMO EN OFICINA/;
 
-/** Movimientos que sacan el paquete de la agencia. */
+/**
+ * Movimientos que sacan el paquete de la agencia.
+ *
+ * "EN RUTA A" NO está y no puede volver: es ruido de la ruta del camión, no
+ * del paquete — ver `ES_RUIDO_DE_RUTA`. Sacar de la agencia exige una salida
+ * CONFIRMADA: que lo recolecten, que arranque la devolución, que salga a
+ * repartir, que lo entreguen, o que LLEGUE a otro punto.
+ */
 const ES_SALIDA_AGENCIA =
-  /^RECOLECTADO EN AGENCIA|^DEVUELTO DE CS|^EN RUTA A|^EN DISTRIBUCION A CLIENTE|^REPORTADO ENTREGADO|^INGRESANDO OPERATIVO|^INGRESANDO A CL/;
+  /^RECOLECTADO EN AGENCIA|^DEVUELTO DE CS|^EN DISTRIBUCION A CLIENTE|^REPORTADO ENTREGADO|^INGRESANDO OPERATIVO|^INGRESANDO A CL/;
+
+/**
+ * RUIDO DE RUTA — no es un movimiento del paquete.
+ *
+ * "En Ruta a Centro Logistico CL X" es el despacho del CAMIÓN, y Servientrega
+ * se lo estampa a todos los envíos de esa sesión. Medido sobre la cola del
+ * 2026-09-15: la marca **17:08 aparece idéntica en 6 pedidos con destinos
+ * distintos** (Esmeraldas, Quevedo, Santo Domingo, Babahoyo) y **19:27 en
+ * otros 8**. Un evento que le pasa a catorce paquetes a la misma hora no dice
+ * dónde está ninguno.
+ *
+ * Además llega TARDE: STEVEN BAIDAL entró a la agencia de Mocache a las 10:56
+ * y a las 17:08 apareció este "En Ruta a CL QUEVEDO" —hacia atrás— que lo
+ * mostraba en tránsito con el paquete ya esperando al cliente en la agencia.
+ * Siete de los siete pedidos que ya habían entrado a una agencia estaban mal
+ * por esto.
+ *
+ * Por eso no define el momento y no saca al paquete de ningún lado: se salta,
+ * y manda el último movimiento REAL.
+ */
+const ES_RUIDO_DE_RUTA = /^EN RUTA A/;
 
 /** Va camino a la agencia — todavía NO llegó. */
 const ES_HACIA_AGENCIA = /^EN DISTRIBUCION PARA ENTREGA EN AGENCIA/;
@@ -104,12 +132,17 @@ const ES_LLEGADA = /^INGRESANDO|^INGRESO A(?!\s*CONFIRMACION)/;
 export function momentoDelPaquete(p: Pedido): Momento {
   const t: Tracking | null = p.tracking;
   const movs = t?.movimientos ?? [];
-  const ultimo = movs[0];
-  if (!ultimo) return 'sin-datos';
+  if (!movs.length) return 'sin-datos';
 
-  const mov = norm(ultimo.movimiento);
+  // El último movimiento REAL: los "En Ruta a" de arriba son del camión, no del
+  // paquete, y taparían lo que de verdad pasó (ver `ES_RUIDO_DE_RUTA`). Si TODO
+  // el historial es ruido de ruta, se usa igual el primero: es lo único que hay.
+  const iReal = movs.findIndex((m) => !ES_RUIDO_DE_RUTA.test(norm(m.movimiento)));
+  const i = iReal >= 0 ? iReal : 0;
+
+  const mov = norm(movs[i].movimiento);
   const destino = ciudadDestino(p);
-  const anteriores = movs.slice(1).map((m) => norm(m.movimiento));
+  const anteriores = movs.slice(i + 1).map((m) => norm(m.movimiento));
 
   if (ES_ENTREGA.test(mov)) return 'entregado';
 
@@ -217,7 +250,11 @@ export interface Prediccion {
  * tabla se actualiza sola.
  */
 export function prediccion(p: Pedido): Prediccion | null {
-  const ultimo = p.tracking?.movimientos[0];
+  const movs = p.tracking?.movimientos ?? [];
+  // Desde el último movimiento REAL, por lo mismo que el momento: predecir
+  // desde el "En Ruta" del camión le decía a STEVEN BAIDAL "lo más probable:
+  // que llegue al centro logístico" con el paquete ya en la agencia de Mocache.
+  const ultimo = movs.find((m) => !ES_RUIDO_DE_RUTA.test(norm(m.movimiento))) ?? movs[0];
   if (!ultimo) return null;
 
   const ops = (TRANSICIONES as Record<string, { m: string; p: number }[]>)[
