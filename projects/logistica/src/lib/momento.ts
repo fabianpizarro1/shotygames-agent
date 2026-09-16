@@ -78,13 +78,25 @@ const ES_EN_AGENCIA = /^INGRESANDO EN AGENCIA|^NOVEDAD EN CS|^NO RECLAMO EN OFIC
 /**
  * Movimientos que sacan el paquete de la agencia.
  *
- * "EN RUTA A" NO está y no puede volver: es ruido de la ruta del camión, no
- * del paquete — ver `ES_RUIDO_DE_RUTA`. Sacar de la agencia exige una salida
- * CONFIRMADA: que lo recolecten, que arranque la devolución, que salga a
- * repartir, que lo entreguen, o que LLEGUE a otro punto.
+ * Para sacar un paquete de la agencia hace falta un movimiento que hable de LA
+ * AGENCIA (lo recolectaron, arrancó la devolución) o una acción inequívoca
+ * sobre el paquete (salió a repartir, lo entregaron). Nada más alcanza:
+ *
+ *  · "EN RUTA A" es ruido de la ruta del camión — ver `ES_RUIDO_DE_RUTA`.
+ *  · "INGRESANDO A CL X" / "INGRESANDO OPERATIVO A CL X" son movimientos de
+ *    CENTRO LOGÍSTICO y no dicen nada de la agencia. En la cola del 2026-09-15,
+ *    4 de los 6 "Ingresando a CL X" venían justo después de "NO HAY QUIEN
+ *    RECIBA": es el repartidor volviendo al centro logístico tras un intento
+ *    fallido, o sea parte del ciclo de entrega A DOMICILIO. Un paquete que está
+ *    en una agencia no lo está repartiendo nadie, así que no puede "volver" de
+ *    un reparto. Los otros 2 (CRISTIAN, JESUS ESPINOZA) eran exactamente eso:
+ *    estaban en la agencia que el cliente pidió y se mostraban en tránsito.
+ *
+ * El caso legítimo —nadie lo retiró y el paquete se devuelve— sí queda cubierto:
+ * arranca con "Devuelto de CS <agencia>", que además dispara `en-devolucion`.
  */
 const ES_SALIDA_AGENCIA =
-  /^RECOLECTADO EN AGENCIA|^DEVUELTO DE CS|^EN DISTRIBUCION A CLIENTE|^REPORTADO ENTREGADO|^INGRESANDO OPERATIVO|^INGRESANDO A CL/;
+  /^RECOLECTADO EN AGENCIA|^DEVUELTO DE CS|^EN DISTRIBUCION A CLIENTE|^REPORTADO ENTREGADO/;
 
 /**
  * RUIDO DE RUTA — no es un movimiento del paquete.
