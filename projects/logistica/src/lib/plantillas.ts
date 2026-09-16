@@ -92,6 +92,18 @@ function nombreAgencia(p: Pedido): string | null {
 }
 
 /**
+ * La agencia del pedido: la del directorio si se pudo emparejar, y el nombre
+ * crudo del tracking. Con ninguna de las dos no sabemos cuál es, y el mensaje
+ * no puede anunciarla.
+ */
+function agenciaDelPedido(p: Pedido) {
+  const nombre = nombreAgencia(p);
+  // El destino que declara Servientrega manda sobre el del Sheet: la hoja
+  // escribe las ciudades a mano y no siempre igual que el directorio.
+  return { ag: buscarAgencia(p.tracking?.destino || p.ciudad, nombre), nombre };
+}
+
+/**
  * El bloque con la agencia: nombre, dirección exacta, teléfono y horario.
  *
  * La dirección sale del directorio oficial de Servientrega (844 agencias). Si
@@ -99,10 +111,7 @@ function nombreAgencia(p: Pedido): string | null {
  * equivocada hace que el cliente viaje al otro lado de la ciudad.
  */
 function bloqueAgencia(p: Pedido): string {
-  const nombre = nombreAgencia(p);
-  // El destino que declara Servientrega manda sobre el del Sheet: la hoja
-  // escribe las ciudades a mano y no siempre igual que el directorio.
-  const ag = buscarAgencia(p.tracking?.destino || p.ciudad, nombre);
+  const { ag, nombre } = agenciaDelPedido(p);
 
   if (ag) {
     return (
@@ -161,11 +170,18 @@ export const PLANTILLAS: Plantilla[] = [
       // decide el tracking; la dirección es apenas un respaldo.
       const intentaron = huboIntentoDeEntrega(p);
 
+      // Sin agencia identificada el bloque de abajo no la nombra, así que la
+      // apertura tampoco puede presentarla con dos puntos.
+      const { ag, nombre } = agenciaDelPedido(p);
+      const sabemosCual = Boolean(ag || nombre);
+
       const apertura = enCamino
         ? `📦 Te contamos que tu pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retires.`
         : !intentaron || pidioRetiroEnAgencia(p.direccion)
           ? `📦 Tu pedido *ya llegó a la agencia* y está listo para que lo retires.`
-          : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que dejaron el paquete en la siguiente agencia para su retiro:`;
+          : sabemosCual
+            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que dejaron el paquete en la siguiente agencia para su retiro:`
+            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que lo dejaron en una agencia para su retiro.`;
 
       const cierre = enCamino
         ? `\n🆔 Apenas llegue te avisamos para que pases a retirarlo. Lleva tu cédula.` +
