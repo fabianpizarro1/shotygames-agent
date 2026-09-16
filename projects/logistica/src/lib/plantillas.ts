@@ -126,16 +126,6 @@ function bloqueGuia(p: Pedido): string {
 }
 
 /**
- * ¿El cliente pidió él mismo retirar en agencia?
- *
- * Servientrega lo deja explícito en el tracking. Es la diferencia entre "tal
- * como pediste, está en la agencia" y "no se pudo entregar y quedó ahí".
- */
-function pidioRetiro(p: Pedido): boolean {
-  return (p.tracking?.movimientos ?? []).some((m) => /SOLICITA\s+RETIRAR/i.test(m.movimiento));
-}
-
-/**
  * ¿Alguna vez salió el repartidor a entregarlo?
  *
  * Es LA pregunta para armar el mensaje de agencia, y se responde con el
@@ -157,9 +147,9 @@ export const PLANTILLAS: Plantilla[] = [
     etiqueta: 'Está en agencia',
     desc: 'Dónde retirarlo, con dirección y guía',
     texto: (p) => {
-      // Tres situaciones distintas y el cliente merece que no las mezclemos:
-      //  · nació para retiro en oficina → nunca hubo intento de entrega;
-      //  · el cliente pidió retirarlo → hubo intento y él lo redirigió;
+      // Dos situaciones distintas y el cliente merece que no las mezclemos:
+      //  · nació para retiro en oficina (o él lo pidió) → nunca hubo intento
+      //    de entrega que contarle: el paquete ya lo está esperando;
       //  · no se pudo entregar → quedó en agencia sin que lo pidiera.
       // ⚠️ Solo se afirma que YA llegó cuando el tracking lo confirma. Para
       // cualquier otro momento se usa el texto de "va en camino": si Fabián
@@ -175,9 +165,7 @@ export const PLANTILLAS: Plantilla[] = [
         ? `📦 Te contamos que tu pedido *va en camino* a una agencia de *${transportadora(p)}* para que lo retires.`
         : !intentaron || pidioRetiroEnAgencia(p.direccion)
           ? `📦 Tu pedido *ya llegó a la agencia* y está listo para que lo retires.`
-          : pidioRetiro(p)
-            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible. Tal como pediste, quedó en la agencia para su retiro.`
-            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que lo dejaron en agencia para su retiro.`;
+          : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que dejaron el paquete en la siguiente agencia para su retiro:`;
 
       const cierre = enCamino
         ? `\n🆔 Apenas llegue te avisamos para que pases a retirarlo. Lleva tu cédula.` +
