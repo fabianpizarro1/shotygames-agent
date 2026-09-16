@@ -176,14 +176,14 @@ export const PLANTILLAS: Plantilla[] = [
         : !intentaron || pidioRetiroEnAgencia(p.direccion)
           ? `📦 Tu pedido *ya llegó a la agencia* y está listo para que lo retires.`
           : pidioRetiro(p)
-            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible. Tal como pediste, quedó en la agencia para que lo retires.`
-            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que lo dejaron en agencia para que lo retires.`;
+            ? `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible. Tal como pediste, quedó en la agencia para su retiro.`
+            : `📦 Nos indican de *${transportadora(p)}* que intentaron entregarte el pedido y no fue posible, así que lo dejaron en agencia para su retiro.`;
 
       const cierre = enCamino
         ? `\n🆔 Apenas llegue te avisamos para que pases a retirarlo. Lleva tu cédula.` +
           (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '')
-        : `\n🆔 Retíralo presentando tu cédula.` +
-          (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '');
+        : (p.aCobrar > 0 ? `\n💵 El valor a pagar es de *${usd(p.aCobrar)}* en efectivo.` : '') +
+          `\n☺️ Si puedes, nos avisas cuando lo retires. ¡Muchas gracias!`;
 
       return saludo(p) + apertura + `\n\n` + bloqueAgencia(p) + `\n` + bloqueGuia(p) + cierre;
     },
