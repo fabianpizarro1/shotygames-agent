@@ -1,219 +1,217 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Heart, Zap, ShoppingCart, Eye } from "lucide-react";
+import { Check, Eye, ShoppingCart, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { LazyCheckoutModal as CheckoutModal } from "./LazyCheckoutModal";
-import comboPromoHoyImg from "@/assets/combo-promo-hoy.webp";
-import comboTorresImg from "@/assets/combo-torres.webp";
-import comboChuchaquiImg from "@/assets/combo-chuchaqui.webp";
+import comboParejasImg from "@/assets/combo-parejas-banner.webp";
+import comboParejasThumb from "@/assets/thumbs/combo-parejas-flatlay.webp";
+import torreNormalThumb from "@/assets/thumbs/torre-normal-brillo.webp";
+import torrePicanteThumb from "@/assets/thumbs/torre-picante.webp";
 
-const combos = [
+/**
+ * Sección de combos de la home.
+ *
+ * Historia: este componente existía desde antes con 4 combos, pero NUNCA se
+ * renderizó — no estaba importado en Index.tsx. Por eso sus precios se
+ * quedaron viejos (decía "antes $60" para el Combo Torres cuando su landing
+ * dice $75, y "antes $85" para el Chuchaqui cuando su landing dice $105): nadie
+ * los veía, así que nadie los corrigió.
+ *
+ * Hoy arranca con UN solo combo, el de Parejas, decidido con Fabián el
+ * 2026-09-15. Los demás combos siguen vivos en sus landings (/landing/promo-hoy,
+ * /landing/combo-la-previa, /landing/combo-chuchaqui, /landing/3-torres) y se
+ * irán agregando acá de a uno. El "Combo Torres" a $45 quedó deprecado: son las
+ * mismas 3 torres que /landing/3-torres vende a $49, así que no va en la home.
+ *
+ * REGLA al agregar un combo: copiar precio, originalPrice, includes y upsells
+ * EXACTOS de su landing. No hay catálogo central — si acá y la landing no
+ * coinciden, el cliente ve un precio en la home y otro al hacer clic.
+ */
+
+type Combo = {
+  id: string;
+  productId: "comboParejas";
+  nombre: string;
+  gancho: string;
+  precio: number;
+  precioAntes: number;
+  imagen: string;
+  imagenCheckout: string;
+  badge: string;
+  ruta: string;
+  incluye: string[];
+  upsells: Array<{
+    id: "torreNormal" | "torrePicante" | "torreParejas" | "enganchados" | "emparejados" | "dadosPlacer";
+    name: string;
+    price: number;
+    image: string;
+  }>;
+};
+
+// Fuente: src/pages/ComboParejasLanding.tsx (mantener sincronizado)
+const combos: Combo[] = [
   {
-    id: "promo-hoy",
-    name: "Promo de Hoy",
-    description: "2 Torres a elección + Regalos Exclusivos",
-    price: 35,
-    originalPrice: 55,
-    savings: 20,
-    icon: Zap,
-    includes: ["2 Torres de Shots a elección (Normal, Picante o Parejas)", "🎁 Guía digital de 30 posiciones sexuales", "🎁 Guía digital de 20 juegos para fiestas", "🎁 Shot BIDU de regalo"],
-    badge: "OFERTA HOY 🔥",
-    landingRoute: "/landing/promo-hoy",
-    image: comboPromoHoyImg,
-    torreSelection: { required: true, count: 2 },
-  },
-  {
-    id: "torres",
-    name: "Combo Torres",
-    description: "3 Torres + Shot Bidu + Guías Digitales",
-    price: 45,
-    originalPrice: 60,
-    savings: 15,
-    icon: Package,
-    includes: ["Torre La Previa", "Torre Picante", "Torre Parejas", "🎁 Shot Bidu de regalo", "🎁 Guía digital de 30 posiciones sexuales", "🎁 Guía digital de 20 juegos para fiestas"],
-    badge: "MÁS VENDIDO",
-    landingRoute: "/landing/combo-torres",
-    image: comboTorresImg,
-    torreSelection: undefined,
-  },
-  {
-    id: "previa",
-    name: "Combo la Previa",
-    description: "2 Torres a elección + Enganchados + Regalos",
-    price: 50,
-    originalPrice: 80,
-    savings: 30,
-    icon: Zap,
-    includes: ["2 Torres a elección (Normal, Picante o Parejas)", "Enganchados", "🎁 Shot Bidu de regalo", "🎁 Guía digital de 30 posiciones sexuales", "🎁 Guía digital de 20 juegos para fiestas"],
-    badge: "PREVIA PERFECTA 🍻",
-    landingRoute: "/landing/combo-la-previa",
-    image: comboPromoHoyImg,
-    torreSelection: { required: true, count: 2 },
-  },
-  {
-    id: "chuchaqui",
-    name: "Combo Chuchaqui",
-    description: "4 Juegos completos + Botella + Guías",
-    price: 65,
-    originalPrice: 85,
-    savings: 20,
-    icon: Heart,
-    includes: ["Torre La Previa", "Torre Picante", "Torre Parejas", "Enganchados", "🎁 Botella de regalo", "🎁 Guía digital de 30 posiciones sexuales", "🎁 Guía digital de 20 juegos para fiestas"],
-    badge: "PACK COMPLETO 🔥",
-    landingRoute: "/landing/combo-chuchaqui",
-    image: comboChuchaquiImg,
-    torreSelection: undefined,
+    id: "combo-parejas",
+    productId: "comboParejas",
+    nombre: "Combo Parejas",
+    gancho: "Todo lo que necesitan para una noche distinta, en un solo pedido.",
+    precio: 35,
+    precioAntes: 49.9,
+    imagen: comboParejasImg,
+    imagenCheckout: comboParejasThumb,
+    badge: "PROMO DE LA SEMANA ❤️",
+    ruta: "/landing/combo-parejas",
+    incluye: [
+      "Torre Parejas + 1 vaso tequilero",
+      "Dados del Placer — 4 dados: Acción, Zona, Tiempo e Intensidad",
+      "Emparejados — 72 cartas (digital + PDF imprimible)",
+      "🎁 Guía 30 Posiciones — GRATIS por la promo",
+      "🎁 Guía Digital del Placer — GRATIS por la promo",
+    ],
+    upsells: [
+      { id: "torreNormal", name: "Torre La Previa (para grupos)", price: 10, image: torreNormalThumb },
+      { id: "torrePicante", name: "Torre Picante (para grupos)", price: 10, image: torrePicanteThumb },
+    ],
   },
 ];
 
 const Combos = () => {
   const navigate = useNavigate();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [selectedCombo, setSelectedCombo] = useState<typeof combos[0] | null>(null);
+  const [comboActivo, setComboActivo] = useState<Combo | null>(null);
 
-  const handleBuyCombo = (combo: typeof combos[0]) => {
-    // Meta Pixel - InitiateCheckout event
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: combo.name,
-        content_type: 'product',
-        value: combo.price,
-        currency: 'USD'
+  const comprar = (combo: Combo) => {
+    if (typeof (window as any).fbq !== "undefined") {
+      (window as any).fbq("track", "InitiateCheckout", {
+        content_name: combo.nombre,
+        content_type: "product",
+        value: combo.precio,
+        currency: "USD",
       });
     }
-    
-    setSelectedCombo(combo);
+    setComboActivo(combo);
     setCheckoutOpen(true);
   };
 
-  const handleViewMore = (landingRoute: string) => {
-    navigate(landingRoute);
-  };
-
-  const getProductIdForCombo = (comboId: string) => {
-    const comboIdMap: Record<string, 'promo-hoy' | 'torres' | 'previa' | 'chuchaqui'> = {
-      'promo-hoy': 'promo-hoy',
-      'torres': 'torres',
-      'previa': 'previa',
-      'chuchaqui': 'chuchaqui',
-    };
-    return comboIdMap[comboId] || 'promo-hoy';
-  };
-
   return (
-    <section id="combos" className="py-20 bg-background">
+    <section id="combos" className="bg-muted/30 py-20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <Badge className="mb-4 gradient-party text-white font-bold text-lg px-6 py-2">
-            OFERTAS ESPECIALES
-          </Badge>
-          <h2 className="font-display text-4xl md:text-5xl mb-4">
-            Combos <span className="text-gradient">Irresistibles</span>
+        <div className="mb-12 text-center">
+          <h2 className="font-display mb-4 text-4xl md:text-5xl">
+            <span className="text-gradient">Combos</span> con descuento
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Ahorra más comprando nuestros packs. Incluyen regalos digitales exclusivos.
+          <p className="mx-auto max-w-2xl text-xl text-muted-foreground">
+            Packs armados para que salga más barato que comprar cada juego por separado.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="mx-auto max-w-4xl space-y-8">
           {combos.map((combo) => {
-            const Icon = combo.icon;
+            const ahorro = combo.precioAntes - combo.precio;
             return (
-              <Card 
-                key={combo.id} 
-                className="relative overflow-hidden border-2 hover:border-primary transition-smooth hover:shadow-glow"
+              <Card
+                key={combo.id}
+                className="overflow-hidden border-2 transition-smooth hover:border-primary hover:shadow-glow"
               >
-                <Badge className="absolute top-4 right-4 gradient-party text-white font-bold">
-                  {combo.badge}
-                </Badge>
+                <div className="grid md:grid-cols-2">
+                  {/* Imagen */}
+                  <button
+                    type="button"
+                    onClick={() => navigate(combo.ruta)}
+                    aria-label={`Ver ${combo.nombre}`}
+                    className="relative aspect-[4/5] overflow-hidden bg-muted/20 md:aspect-auto"
+                  >
+                    <img
+                      src={combo.imagen}
+                      alt={`${combo.nombre} — ${combo.gancho}`}
+                      width={800}
+                      height={993}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-full w-full object-cover transition-smooth hover:scale-105"
+                    />
+                    <Badge className="gradient-party absolute left-3 top-3 font-bold text-white">
+                      {combo.badge}
+                    </Badge>
+                  </button>
 
-                <CardHeader className="text-center pt-8">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <Icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <CardTitle className="font-display text-3xl mb-2">
-                    {combo.name}
-                  </CardTitle>
-                  <p className="text-muted-foreground">{combo.description}</p>
-                </CardHeader>
+                  {/* Contenido */}
+                  <CardContent className="flex flex-col gap-5 p-6 md:p-8">
+                    <div>
+                      <h3 className="font-display text-3xl md:text-4xl">{combo.nombre}</h3>
+                      <p className="mt-2 text-muted-foreground">{combo.gancho}</p>
+                    </div>
 
-                <CardContent className="space-y-6">
-                  {/* Pricing */}
-                  <div className="text-center">
-                    <div className="flex items-baseline justify-center gap-3 mb-2">
-                      <span className="text-4xl font-display font-bold text-primary">
-                        ${combo.price}
+                    <div className="flex flex-wrap items-baseline gap-3">
+                      <span className="font-display text-4xl font-bold text-primary">
+                        ${combo.precio}
                       </span>
                       <span className="text-xl text-muted-foreground line-through">
-                        ${combo.originalPrice}
+                        ${combo.precioAntes.toFixed(2)}
+                      </span>
+                      <span className="rounded-md bg-primary/10 px-2 py-1 text-sm font-bold text-primary">
+                        Ahorras ${ahorro.toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-lg font-semibold text-primary">
-                      Ahorras ${combo.savings}
-                    </p>
-                  </div>
 
-                  {/* Includes */}
-                  <div className="space-y-2">
-                    <p className="font-semibold text-sm text-muted-foreground uppercase">
-                      Incluye:
-                    </p>
                     <ul className="space-y-2">
-                      {combo.includes.map((item, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-primary mt-1">✓</span>
-                          <span className="text-sm">{item}</span>
+                      {combo.incluye.map((item) => (
+                        <li key={item} className="flex items-start gap-2 text-sm">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <span>{item}</span>
                         </li>
                       ))}
                     </ul>
-                  </div>
 
-                  {/* CTAs */}
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      variant="hero"
-                      className="w-full"
-                      size="lg"
-                      onClick={() => handleBuyCombo(combo)}
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      COMPRAR
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      className="w-full"
-                      size="lg"
-                      onClick={() => handleViewMore(combo.landingRoute)}
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Ver más
-                    </Button>
-                  </div>
-                </CardContent>
+                    <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+                      <Truck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      Envío gratis a todo Ecuador · Pagas al recibir
+                    </p>
+
+                    <div className="mt-auto flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        variant="hero"
+                        size="lg"
+                        className="w-full sm:flex-1"
+                        onClick={() => comprar(combo)}
+                      >
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        COMPRAR
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="w-full sm:flex-1"
+                        onClick={() => navigate(combo.ruta)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver más
+                      </Button>
+                    </div>
+                  </CardContent>
+                </div>
               </Card>
             );
           })}
         </div>
-
-        {/* Checkout Modal */}
-        {selectedCombo && (
-          <CheckoutModal
-            open={checkoutOpen}
-            onOpenChange={setCheckoutOpen}
-            productName={selectedCombo.name}
-            productPrice={selectedCombo.price}
-            productImage={selectedCombo.image}
-            productId={getProductIdForCombo(selectedCombo.id)}
-            upsells={[]}
-            isCombo={true}
-            comboIncludes={selectedCombo.includes}
-            originalPrice={selectedCombo.originalPrice}
-            torreSelection={selectedCombo.torreSelection}
-          />
-        )}
       </div>
+
+      {comboActivo && (
+        <CheckoutModal
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          productName={comboActivo.nombre}
+          productPrice={comboActivo.precio}
+          productImage={comboActivo.imagenCheckout}
+          productId={comboActivo.productId}
+          isCombo
+          comboIncludes={comboActivo.incluye}
+          originalPrice={comboActivo.precioAntes}
+          upsells={comboActivo.upsells}
+        />
+      )}
     </section>
   );
 };

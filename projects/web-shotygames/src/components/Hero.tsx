@@ -25,7 +25,11 @@ const Hero = () => {
         <img 
           src={heroImage} 
           alt="Fiesta con juegos de mesa para beber - ShotyGames Ecuador"
-          fetchPriority="high"
+          /* En minúsculas por spread: React 18 no reconoce `fetchPriority` en
+             camelCase — avisaba en consola y NO emitía el atributo, así que la
+             imagen LCP de la home nunca llegó a tener prioridad alta. Mismo
+             arreglo que ya estaba en ComboParejasLanding y TorreParejasV2. */
+          {...{ fetchpriority: "high" }}
           decoding="async"
           width={1920}
           height={1280}
@@ -58,8 +62,20 @@ const Hero = () => {
             
           </div>
 
+          {/* Enlace a combos: va como texto y no como tercer botón a propósito
+              — tres botones del mismo peso en móvil no dejan elegir ninguno.
+              Este handler ya existía sin nada que lo llamara: la sección
+              #combos no se renderizaba hasta el 2026-09-15. */}
+          <button
+            type="button"
+            onClick={scrollToCombos}
+            className="mt-6 text-base text-white/80 underline underline-offset-4 transition-colors hover:text-white md:text-lg"
+          >
+            o mira los combos con descuento →
+          </button>
+
           {/* Trust Badges */}
-          
+
         </div>
       </div>
 
