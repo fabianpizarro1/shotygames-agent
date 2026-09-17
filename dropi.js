@@ -54,6 +54,7 @@ function telLocal(tel) {
 
 const PROVINCIAS = {
   'GUAYAQUIL': 'Guayas', 'DURAN': 'Guayas', 'MILAGRO': 'Guayas', 'SAMBORONDON': 'Guayas', 'DAULE': 'Guayas',
+  'EL EMPALME': 'Guayas', 'VELASCO IBARRA': 'Guayas',
   'CUENCA': 'Azuay', 'GUALACEO': 'Azuay', 'SIGSIG': 'Azuay',
   'QUITO': 'Pichincha', 'SANGOLQUI': 'Pichincha', 'CAYAMBE': 'Pichincha', 'MEJIA': 'Pichincha',
   'MACHALA': 'El Oro', 'PASAJE': 'El Oro', 'HUAQUILLAS': 'El Oro', 'SANTA ROSA': 'El Oro', 'ARENILLAS': 'El Oro', 'ZARUMA': 'El Oro',
@@ -190,6 +191,23 @@ async function variantesCiudad(ciudad, provincia, rateType) {
   }
 }
 
+// Cuando la misma ciudad existe en varias provincias y no se sabe cuál es, se
+// prueba primero donde más se vende. No es un desempate perfecto — es el orden
+// en que conviene gastar el primer intento; DROPI rechaza sola la que no tiene
+// ruta.
+const PRIORIDAD_PROVINCIA = [
+  'GUAYAS', 'PICHINCHA', 'MANABI', 'LOS RIOS', 'AZUAY', 'EL ORO', 'TUNGURAHUA',
+  'SANTO DOMINGO DE LOS TSACHILAS', 'ESMERALDAS', 'CHIMBORAZO', 'IMBABURA',
+  'LOJA', 'SANTA ELENA', 'COTOPAXI', 'CANAR', 'BOLIVAR', 'SUCUMBIOS',
+  'ORELLANA', 'MORONA SANTIAGO', 'CARCHI', 'NAPO', 'PASTAZA', 'ZAMORA CHINCHIPE'
+];
+
+const ordenarPorPrioridad = (lista) => [...lista].sort((a, b) => {
+  const ia = PRIORIDAD_PROVINCIA.indexOf(a.nProvincia);
+  const ib = PRIORIDAD_PROVINCIA.indexOf(b.nProvincia);
+  return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+});
+
 /**
  * Nombre y provincia exactos que espera DROPI para una ciudad.
  *
@@ -216,21 +234,40 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     // se va a 300 km del cliente. Sin provincia sí se busca en todo el país.
     const ambito = deLaProvincia.length ? deLaProvincia : universo;
 
-    const exacta = ambito.find((c) => c.nNombre === nCiudad);
-    let hit = exacta;
-    if (!hit) {
+    // Homónimos: el catálogo tiene la MISMA ciudad cargada en varias provincias
+    // (hay 4 "EL EMPALME": Guayas, Los Ríos, Loja y "VELASCO IBARRA (EL EMPALME)").
+    // Antes esto era un `find` que agarraba el primero de la lista y seguía
+    // callado: el 2026-09-16 el pedido de EL EMPALME (Guayas) salió a la de
+    // Los Ríos y DROPI lo mató con "No se encuentra la combinacion de
+    // ciudades". Ahora se devuelven TODOS ordenados por prioridad y crearOrden
+    // reintenta con los siguientes si el primero no tiene ruta.
+    const exactas = ordenarPorPrioridad(ambito.filter((c) => c.nNombre === nCiudad));
+    let candidatos = exactas;
+    if (!candidatos.length) {
       const parciales = ambito.filter((c) => c.nNombre.startsWith(nCiudad) || nCiudad.startsWith(c.nNombre));
-      if (parciales.length === 1) hit = parciales[0];
+      // Un parcial es otro NOMBRE (SAN MIGUEL vs SAN MIGUEL DE BOLIVAR): ahí
+      // sigue sin adivinarse. Un homónimo exacto es la misma ciudad escrita
+      // igual, y probar la siguiente provincia no manda el paquete a otro lado
+      // porque DROPI rechaza la que no tiene ruta.
+      if (parciales.length === 1) candidatos = parciales;
       else if (parciales.length > 1) {
         console.log(`resolverCiudad: "${ciudad}" es ambigua (${parciales.map((c) => `${c.nombre}/${c.provincia}`).join(', ')}) — no se adivina`);
         return null;
       }
     }
-    if (!hit) {
+    if (!candidatos.length) {
       console.log(`resolverCiudad: "${ciudad}" no está en el catálogo con tarifa ${rateType}`);
       return null;
     }
-    return { ciudad: hit.nombre, provincia: hit.provincia };
+    if (candidatos.length > 1) {
+      console.log(`resolverCiudad: "${ciudad}" existe en ${candidatos.length} provincias (${candidatos.map((c) => c.provincia).join(', ')}) — se intenta en ese orden`);
+    }
+    const [hit, ...resto] = candidatos;
+    return {
+      ciudad: hit.nombre,
+      provincia: hit.provincia,
+      alternativas: resto.map((c) => ({ ciudad: c.nombre, provincia: c.provincia }))
+    };
   } catch (e) {
     console.error('resolverCiudad: no se pudo consultar el catálogo:', e.message);
     return null;
@@ -423,6 +460,8 @@ async function crearOrden(pedido) {
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
   const resuelta = await resolverCiudad(pedido.ciudad, state, rateType);
+  // Mismas ciudades homónimas en otra provincia, por si la primera no tiene ruta.
+  const otrasProvincias = resuelta?.alternativas || [];
   if (resuelta) {
     if (resuelta.ciudad !== cityForDropi || resuelta.provincia !== state) {
       console.log(`crearOrden: ciudad "${pedido.ciudad}" → "${resuelta.ciudad}" (${resuelta.provincia}) según catálogo DROPI`);
@@ -563,7 +602,12 @@ async function crearOrden(pedido) {
     .test(String(d?.message || d?.data_error || d?.error || ''));
 
   if (!traeId(res.data) && esErrorDeCiudad(res.data)) {
-    const variantes = await variantesCiudad(cityForDropi, state, rateType);
+    // Primero los homónimos exactos en otra provincia (misma ciudad escrita
+    // igual), después las variantes ortográficas dentro de la misma provincia.
+    const variantes = [
+      ...otrasProvincias,
+      ...await variantesCiudad(cityForDropi, state, rateType)
+    ];
     if (!variantes.length) {
       console.log(`crearOrden: "${cityForDropi}" sin ruta y sin variantes que probar`);
     }
