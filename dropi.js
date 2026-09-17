@@ -435,6 +435,46 @@ async function esperarGuia(orderId, intentos = 5) {
   return null;
 }
 
+/**
+ * Relee la orden en DROPI y compara sus líneas contra lo que se pidió.
+ *
+ * El 2026-09-16 se descubrió que las guías de Torre Parejas + Dados +
+ * Emparejados salían con 2 líneas en vez de 3: una capa intermedia descartaba
+ * el campo y DROPI aceptaba la orden igual. No hubo error, ni rechazo, ni log
+ * — 4 paquetes se despacharon incompletos porque el armado se hace leyendo la
+ * guía. El fix cerró ese caso; esto cierra la CLASE de caso.
+ *
+ * No falla nunca: si no se puede leer la orden (429, timeout), devuelve
+ * `error` y quien llama avisa "no se pudo verificar" — nunca "falta algo".
+ * Ver [[feedback_dropi_429_y_no_existe]]: un 429 no es una línea faltante.
+ */
+async function verificarLineas(orderId, esperados, client) {
+  try {
+    const res = await client.get(`/orders/myorders/${orderId}`);
+    const orden = res.data?.order || res.data?.objects || res.data?.data || res.data;
+    const lineas = orden?.orderdetails || orden?.order_details || [];
+    if (!lineas.length) return { error: 'DROPI no devolvió las líneas de la orden' };
+
+    const enDropi = new Map();
+    for (const l of lineas) {
+      const id = l.product?.id;
+      if (id == null) continue;
+      enDropi.set(id, (enDropi.get(id) || 0) + (parseFloat(l.quantity) || 0));
+    }
+
+    const faltantes = [];
+    for (const p of esperados) {
+      const puesto = enDropi.get(p.id) || 0;
+      if (puesto < p.quantity) {
+        faltantes.push(`${p.name} (pedido ${p.quantity}, en la guía ${puesto})`);
+      }
+    }
+    return { ok: !faltantes.length, faltantes, lineas: lineas.length };
+  } catch (e) {
+    return { error: `${e.response?.status || ''} ${e.message}`.trim() };
+  }
+}
+
 async function crearOrden(pedido) {
   const token = await getToken();
   let client = makeClient(token);   // se reemplaza si hay que reloguear a mitad
@@ -699,7 +739,8 @@ async function crearOrden(pedido) {
         sticker: tardia.guia,
         _orderId: orderId,
         _shipping: tardia.shipping || shippingAmt,
-        _pdfUrl: tardia.pdfUrl
+        _pdfUrl: tardia.pdfUrl,
+        _verificacion: await verificarLineas(orderId, productosRaw, activeClient)
       };
     }
   }
@@ -709,7 +750,16 @@ async function crearOrden(pedido) {
     ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
     : null;
 
-  return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl };
+  // Lo que DROPI guardó tiene que ser lo que se pidió — el paquete se arma
+  // leyendo la guía, no el Sheet.
+  const verificacion = await verificarLineas(orderId, productosRaw, activeClient);
+  if (verificacion.faltantes?.length) {
+    console.error(`crearOrden: ❌ la guía ${sticker} salió INCOMPLETA — falta ${verificacion.faltantes.join(', ')}`);
+  } else if (verificacion.error) {
+    console.log(`crearOrden: no se pudo verificar las líneas de la orden ${orderId}: ${verificacion.error}`);
+  }
+
+  return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl, _verificacion: verificacion };
 }
 
 // Obtiene una orden de DROPI por su ID y devuelve guía + envío

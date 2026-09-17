@@ -321,7 +321,20 @@ async function crearGuiaDropiYActualizar(input) {
   const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
   const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
 
-  return { ok: true, guia, orden, mensaje: `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}` };
+  // La guía existe, pero eso no garantiza que tenga TODO adentro. Si a DROPI le
+  // falta una línea, el paquete se arma incompleto y nadie se entera hasta que
+  // el cliente reclama — pasó con 4 pedidos de Emparejados entre el 15 y el 16
+  // de septiembre. El aviso va en el mensaje Y en la columna LOG.
+  const v = orden._verificacion;
+  let aviso = '';
+  if (v?.faltantes?.length) {
+    aviso = `\n\n❌ *LA GUÍA SALIÓ INCOMPLETA* — falta ${v.faltantes.join(', ')}.\n` +
+      `El paquete se arma leyendo la guía: agregalo a mano al armarlo o la entrega sale sin eso.`;
+  } else if (v?.error) {
+    aviso = `\n\n⚠️ No pude verificar que la guía tenga todos los productos (${v.error}). Revisala antes de armar.`;
+  }
+
+  return { ok: true, guia, orden, aviso, mensaje: `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}${aviso}` };
 }
 
 // El recaudo ya no lo decide el modelo. Antes, registrar_pedido recibía
@@ -455,6 +468,14 @@ async function executeTool(toolName, input) {
         notas: inputConNotas.notas
       };
       const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
+
+      // Una guía incompleta se despacha igual: el aviso tiene que sobrevivir al
+      // chat. La celda queda; el mensaje de WhatsApp se pierde.
+      if (guiaResult.ok && guiaResult.aviso && filaPedido) {
+        const nota = String(guiaResult.aviso).replace(/\*/g, '').replace(/\n+/g, ' ').trim().slice(0, 480);
+        try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${nota}`); }
+        catch (e) { console.error('No se pudo escribir el aviso en LOG:', e.message); }
+      }
 
       // Motivo crudo de DROPI en la columna LOG, tal cual vino.
       if (!guiaResult.ok && filaPedido) {
