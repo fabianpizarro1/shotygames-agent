@@ -1,7 +1,7 @@
 // ============================================================
 // DIRECTORIO DE AGENCIAS DE SERVIENTREGA
 //
-// 844 agencias en 242 ciudades, bajadas del "Centro de Soluciones" del sitio
+// 845 agencias en 242 ciudades, bajadas del "Centro de Soluciones" del sitio
 // oficial (`scripts/bajar-agencias.js`) y guardadas en `agencias.json`. Se
 // commitean a propósito: cambian pocas veces al año y así la app no depende en
 // cada carga de que el sitio de Servientrega esté arriba.
@@ -18,7 +18,10 @@ export interface Agencia {
   sucursal: string;
   direccion: string;
   telefono: string;
+  /** Horario de lunes a viernes, tal cual lo publica Servientrega. */
   horario: string;
+  /** Horario del sábado. Cadena vacía = no abre. */
+  sabado: string;
 }
 
 const DIRECTORIO = datos as Record<string, Agencia[]>;

@@ -117,7 +117,11 @@ function bloqueAgencia(p: Pedido): string {
     return (
       `📍 *Agencia:* ${ag.sucursal.replace(/_/g, ' - ')}\n` +
       `🏠 *Dirección:* ${ag.direccion}\n` +
-      (ag.horario ? `🕒 *Horario:* ${ag.horario}\n` : '') +
+      // El sábado se guarda aparte porque Servientrega lo publica aparte, y
+      // callarlo hacía que el cliente que solo puede el sábado no supiera si
+      // ir: de 845 agencias, 726 abren sábado y ninguna lo decía.
+      (ag.horario ? `🕒 *Horario:* Lunes a viernes ${ag.horario}\n` : '') +
+      (ag.sabado ? `🕒 *Sábados:* ${ag.sabado}\n` : `🕒 *Sábados:* no atiende\n`) +
       (ag.telefono ? `☎️ *Teléfono de la agencia:* ${ag.telefono}\n` : '')
     );
   }
