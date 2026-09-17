@@ -413,7 +413,11 @@ async function executeTool(toolName, input) {
       // producto físico, la guía se crea automáticamente acá mismo con los
       // datos que ya se usaron para registrar — un solo lugar, un solo extract.
       const transportadora = (input.transportadora || 'SERVIENTREGA').toUpperCase();
+      // FISICOS decide si hay algo que despachar (emparejados solo es digital y
+      // no genera guía). CAMPOS_GUIA es lo que VIAJA a DROPI, y ahí emparejados
+      // sí entra: desde 2026-09-13 es un producto propio en la guía.
       const CAMPOS_FISICOS = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
+      const CAMPOS_GUIA = [...CAMPOS_FISICOS, 'emparejados'];
       const tieneFisico = CAMPOS_FISICOS.some((c) => (parseInt(input[c]) || 0) > 0);
 
       if (transportadora !== 'SERVIENTREGA' || !tieneFisico) {
@@ -433,16 +437,17 @@ async function executeTool(toolName, input) {
       }
 
       const saldoNum = pago.saldo;
+      // Las cantidades se copian por lista, no campo por campo: cuando estaban
+      // enumeradas a mano se quedó "emparejados" afuera y las guías de Torre
+      // Parejas + Dados + Emparejados salían sin el Emparejados — el paquete se
+      // arma leyendo la guía, así que se despachaba incompleto.
+      const cantidades = Object.fromEntries(CAMPOS_GUIA.map((c) => [c, inputConNotas[c]]));
       const guiaInput = {
         nombre: inputConNotas.nombre,
         telefono: inputConNotas.telefono,
         ciudad: inputConNotas.ciudad,
         direccion: inputConNotas.direccion,
-        normal: inputConNotas.normal,
-        picante: inputConNotas.picante,
-        parejas: inputConNotas.parejas,
-        enganchados: inputConNotas.enganchados,
-        dados: inputConNotas.dados,
+        ...cantidades,
         // Números crudos, no los strings con "$" que van a Sheets.
         saldo: pago.saldo,
         // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
