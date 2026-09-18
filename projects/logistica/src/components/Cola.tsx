@@ -498,22 +498,30 @@ export function Cola() {
               nada para ellos (el panel del medio sigue mostrando su propio
               "Escribirle por WhatsApp" de siempre). */}
           {tieneChat && seleccionado && (
-            <aside className="sticky top-[136px] hidden max-h-[calc(100dvh-160px)] flex-col overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:flex">
-              <div className="border-b border-[var(--color-borde)] px-4 py-3">
-                <h3 className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
-                  WhatsApp
-                </h3>
-                <p className="mt-0.5 truncate text-sm font-medium">
-                  {seleccionado.nombre || 'Sin nombre'}
-                </p>
-              </div>
-              <div className="min-h-0 flex-1 p-3">
-                <ChatPedido
-                  key={idDe(seleccionado)}
-                  telefono={seleccionado.telefono}
-                  nombre={seleccionado.nombre}
-                  llenarAltura
-                />
+            <aside className="sticky top-[136px] hidden max-h-[calc(100dvh-160px)] overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:block">
+              {/* Alto explícito, no `max-height`: un `flex-1` de adentro solo
+                  llena "el resto del alto disponible" si el contenedor tiene
+                  una altura de verdad — con `max-height` a secas el chat no
+                  scrolleaba solo y el scroll se lo comía la lista de la
+                  izquierda. Mismo patrón que el panel del medio, un poco más
+                  arriba. */}
+              <div className="flex h-[calc(100dvh-160px)] flex-col">
+                <div className="shrink-0 border-b border-[var(--color-borde)] px-4 py-3">
+                  <h3 className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
+                    WhatsApp
+                  </h3>
+                  <p className="mt-0.5 truncate text-sm font-medium">
+                    {seleccionado.nombre || 'Sin nombre'}
+                  </p>
+                </div>
+                <div className="min-h-0 flex-1 p-3">
+                  <ChatPedido
+                    key={idDe(seleccionado)}
+                    telefono={seleccionado.telefono}
+                    nombre={seleccionado.nombre}
+                    llenarAltura
+                  />
+                </div>
               </div>
             </aside>
           )}
