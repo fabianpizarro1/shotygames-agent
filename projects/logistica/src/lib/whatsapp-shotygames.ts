@@ -40,7 +40,7 @@ function getSheets(): sheets_v4.Sheets {
   return google.sheets({ version: 'v4', auth });
 }
 
-function toE164Ec(raw: string): string {
+export function toE164Ec(raw: string): string {
   const n = String(raw || '').replace(/\D/g, '');
   if (!n) return '';
   if (/^5939\d{8}$/.test(n)) return n;

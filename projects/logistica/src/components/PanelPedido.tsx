@@ -9,6 +9,7 @@ import { ESTILO_MOMENTO, ESTILO_PAGO, linkRastreo, tiendaUI, usd } from '@/lib/u
 import { ETIQUETA_PAGO, ETIQUETA_PAGO_LARGA } from '@/lib/pago';
 import { ETIQUETA_MOMENTO } from '@/lib/momento';
 import { LineaTiempo } from './LineaTiempo';
+import { ChatPedido } from './ChatPedido';
 
 interface Props {
   p: Pedido;
@@ -131,6 +132,15 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
               </li>
             ))}
           </ul>
+        )}
+
+        {/* ── WhatsApp ──────────────────────────────────────────────────── */}
+        {/* Solo ShotyGames: es el único negocio con el número conectado a
+            Evolution (mismo que manda el agradecimiento). */}
+        {p.negocio === 'shotygames' && p.telefono && (
+          <Seccion titulo="WhatsApp">
+            <ChatPedido telefono={p.telefono} nombre={p.nombre} />
+          </Seccion>
         )}
 
         {/* ── La plata en juego ─────────────────────────────────────────── */}
