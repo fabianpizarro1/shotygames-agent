@@ -33,10 +33,10 @@ export function TarjetaPedido({
       type="button"
       onClick={onAbrir}
       aria-current={activa || undefined}
-      className={`pulsable animar-aparecer relative w-full overflow-hidden rounded-[var(--radius-tarjeta)] border bg-[var(--color-superficie)] p-4 text-left ${
+      className={`pulsable animar-aparecer relative w-full overflow-hidden rounded-[var(--radius-tarjeta)] border p-4 text-left ${
         activa
-          ? 'border-[var(--color-borde-fuerte)] ring-1 ring-[var(--color-verde)]/40'
-          : 'border-[var(--color-borde)]'
+          ? 'border-[var(--color-verde)]/50 bg-[var(--color-verde-tenue)] ring-1 ring-[var(--color-verde)]/40'
+          : 'border-[var(--color-borde)] bg-[var(--color-superficie)]'
       }`}
     >
       {/* Franja de riesgo: la señal se ve antes de leer una sola palabra. */}

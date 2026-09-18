@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Fase, Negocio, Pedido, Resumen, Tienda } from '@/lib/tipos';
 import type { EstadoSheet } from '@/lib/estados';
 import { tiendaUI, usd } from '@/lib/ui';
+import { PLANTILLAS, marcasEnviadas, plantillaSugerida } from '@/lib/plantillas';
 import { TarjetaPedido } from './TarjetaPedido';
 import { PanelPedido } from './PanelPedido';
 import { HojaMovil } from './HojaMovil';
@@ -507,7 +508,11 @@ export function Cola() {
               mostrar — ver el comentario de más arriba. El resto de los
               negocios no tiene el número conectado, así que acá no aparece
               nada para ellos (el panel del medio sigue mostrando su propio
-              "Escribirle por WhatsApp" de siempre). */}
+              "Escribirle por WhatsApp" de siempre, ver `tieneChatVivo` en
+              PanelPedido.tsx). Las plantillas van acá también: tocar una
+              llena el cuadro y desde acá manda directo, sin pasar por wa.me —
+              por eso el botón del panel del medio se esconde en esta
+              pantalla. */}
           {tieneChat && seleccionado && (
             <aside className="hidden overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:block xl:h-full">
               <div className="flex h-full flex-col">
@@ -525,6 +530,14 @@ export function Cola() {
                     telefono={seleccionado.telefono}
                     nombre={seleccionado.nombre}
                     llenarAltura
+                    plantillas={PLANTILLAS.filter((pl) => pl.id !== 'libre').map((pl) => ({
+                      id: pl.id,
+                      etiqueta: pl.etiqueta,
+                      texto: pl.texto(seleccionado),
+                    }))}
+                    sugeridaId={plantillaSugerida(seleccionado)}
+                    yaEnviadas={marcasEnviadas(seleccionado.logWa)}
+                    onPlantillaEnviada={(id) => marcarPlantilla(seleccionado, id, true)}
                   />
                 </div>
               </div>

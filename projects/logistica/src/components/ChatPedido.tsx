@@ -19,19 +19,50 @@ interface MensajeChat {
 
 const INTERVALO_MS = 8000;
 
+/** Una plantilla ya resuelta a texto — ChatPedido no sabe de dónde salió
+ * (pedido de logística o candidato de recuperación), solo la manda. */
+export interface PlantillaChat {
+  id: string;
+  etiqueta: string;
+  texto: string;
+}
+
 interface Props {
   telefono: string;
   nombre: string;
   /** Columna propia de escritorio: llena el alto del contenedor en vez del
    * widget compacto de altura fija que se usa adentro del panel del pedido. */
   llenarAltura?: boolean;
+  /** Atajos para no escribir el mensaje de cero. Al tocar uno se pone el
+   * texto en el cuadro — no se manda solo, hay que apretar Enviar, igual que
+   * el link de wa.me deja el texto puesto sin mandarlo. */
+  plantillas?: PlantillaChat[];
+  /** Cuál plantilla sugiere la app para esta situación (o null si ninguna). */
+  sugeridaId?: string | null;
+  /** Qué plantillas ya se le mandaron a este cliente — id → fecha. */
+  yaEnviadas?: Record<string, string>;
+  /** Se llama cuando el ENVÍO que salió del cuadro vino de tocar esta
+   * plantilla — así se puede marcar en el LOG WA, igual que hace el botón de
+   * wa.me. Si el texto se escribió a mano, no se llama. */
+  onPlantillaEnviada?: (id: string) => void;
 }
 
-export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
+export function ChatPedido({
+  telefono,
+  nombre,
+  llenarAltura,
+  plantillas,
+  sugeridaId,
+  yaEnviadas,
+  onPlantillaEnviada,
+}: Props) {
   const [mensajes, setMensajes] = useState<MensajeChat[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
+  // Qué plantilla llenó el cuadro por última vez — se usa para avisar arriba
+  // cuál se mandó, y se limpia apenas se toca el texto a mano.
+  const [plantillaActiva, setPlantillaActiva] = useState<string | null>(null);
   const listaRef = useRef<HTMLDivElement>(null);
   const ultimoId = useRef<string | null>(null);
 
@@ -50,6 +81,8 @@ export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
   useEffect(() => {
     setMensajes(null);
     setError(null);
+    setTexto('');
+    setPlantillaActiva(null);
     cargar();
     const id = setInterval(cargar, INTERVALO_MS);
     return () => clearInterval(id);
@@ -80,7 +113,11 @@ export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
       });
       const data = await r.json();
       if (!data.ok) throw new Error(data.error || 'Error enviando el WhatsApp');
+      // Si lo que se mandó vino de una plantilla, se marca — igual que el
+      // link de wa.me la marca al abrirla. Texto escrito a mano no marca nada.
+      if (plantillaActiva) onPlantillaEnviada?.(plantillaActiva);
       setTexto('');
+      setPlantillaActiva(null);
       await cargar();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error enviando el WhatsApp');
@@ -137,10 +174,42 @@ export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
         </p>
       )}
 
+      {/* Plantillas: tocar una llena el cuadro, no manda sola — el toque de
+          Enviar sigue siendo de quien escribe. */}
+      {plantillas && plantillas.length > 0 && (
+        <div className="tira flex gap-1.5 overflow-x-auto border-t border-[var(--color-borde)] bg-[var(--color-superficie)] px-2 pt-2">
+          {plantillas.map((pl) => {
+            const cuando = yaEnviadas?.[pl.id];
+            const esSugerida = pl.id === sugeridaId;
+            return (
+              <button
+                key={pl.id}
+                type="button"
+                onClick={() => {
+                  setPlantillaActiva(pl.id);
+                  setTexto(pl.texto);
+                }}
+                className={`pulsable shrink-0 rounded-full border px-3 py-1.5 text-xs whitespace-nowrap ${
+                  esSugerida
+                    ? 'border-[var(--color-verde)]/50 bg-[var(--color-verde-tenue)] text-[var(--color-verde)]'
+                    : 'border-[var(--color-borde)] text-[var(--color-texto-suave)]'
+                }`}
+              >
+                {pl.etiqueta}
+                {cuando && <span className="opacity-70"> ✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex items-end gap-2 border-t border-[var(--color-borde)] bg-[var(--color-superficie)] p-2">
         <textarea
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            setPlantillaActiva(null);
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();

@@ -9,8 +9,12 @@ import {
   type ResumenRecuperacion,
 } from '@/lib/recuperacion-tipos';
 import { usd } from '@/lib/ui';
-import { TarjetaCandidato, type OpcionEstado } from './TarjetaCandidato';
+import { PLANTILLAS_RECUPERACION, plantillaSugerida } from '@/lib/plantillas-recuperacion';
+import { TarjetaCandidato, type Cambios, type OpcionEstado } from './TarjetaCandidato';
+import { PanelCandidato } from './PanelCandidato';
+import { HojaMovil } from './HojaMovil';
 import { InterruptorTema } from './InterruptorTema';
+import { ChatPedido } from './ChatPedido';
 
 interface Respuesta {
   ok: boolean;
@@ -100,10 +104,7 @@ export function Recuperacion() {
    * que lo único confiable es volver a leerla.
    */
   const guardar = useCallback(
-    async (
-      c: Candidato,
-      cambios: { estado?: string; nota?: string; aviso?: string }
-    ): Promise<string | null> => {
+    async (c: Candidato, cambios: Cambios): Promise<string | null> => {
       try {
         const r = await fetch('/api/recuperacion/actualizar', {
           method: 'POST',
@@ -131,14 +132,27 @@ export function Recuperacion() {
     });
   }, [candidatos, filtro, soloSinAvisar, busqueda]);
 
-  const montoVisible = useMemo(
-    () => visibles.reduce((a, c) => a + c.monto, 0),
-    [visibles]
+  const montoVisible = useMemo(() => visibles.reduce((a, c) => a + c.monto, 0), [visibles]);
+
+  const seleccionado = useMemo(
+    () => visibles.find((c) => c.id === abierto) ?? null,
+    [visibles, abierto]
   );
 
+  // Todos los candidatos son de ShotyGames (la hoja web es solo de ahí), así
+  // que alcanza con que tenga teléfono — mismo criterio que `tieneChat` en
+  // Cola.tsx, sin el chequeo de negocio porque acá no hace falta.
+  const tieneChat = Boolean(seleccionado?.telefono);
+
+  useEffect(() => {
+    if (abierto && !candidatos.some((c) => c.id === abierto)) setAbierto(null);
+  }, [candidatos, abierto]);
+
   return (
-    <div className="mx-auto min-h-dvh max-w-[1100px]">
-      <header className="pad-arriba sticky top-0 z-30 border-b border-[var(--color-borde)] bg-[var(--color-fondo)]/90 backdrop-blur">
+    // Mismo esquema que Cola.tsx: desde `lg` la página deja de scrollear como
+    // un todo y cada columna scrollea la suya — ver el comentario allá.
+    <div className="mx-auto min-h-dvh max-w-[1500px] lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden">
+      <header className="pad-arriba sticky top-0 z-30 shrink-0 border-b border-[var(--color-borde)] bg-[var(--color-fondo)]/90 backdrop-blur">
         <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-2 sm:px-6 sm:pt-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -260,7 +274,7 @@ export function Recuperacion() {
         </div>
       </header>
 
-      <main className="px-4 py-4 sm:px-6">
+      <div className="px-4 py-4 sm:px-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
         {error && (
           <p className="prosa mb-4 rounded-lg bg-[var(--color-rojo-tenue)] px-3 py-2 text-sm text-[var(--color-rojo)]">
             ❌ {error}
@@ -275,19 +289,90 @@ export function Recuperacion() {
           </p>
         )}
 
-        <div className="flex flex-col gap-3">
-          {visibles.map((c) => (
-            <TarjetaCandidato
-              key={c.id}
-              c={c}
-              abierta={abierto === c.id}
-              estados={ESTADOS}
-              onAbrir={() => setAbierto(abierto === c.id ? null : c.id)}
-              onGuardar={(cambios) => guardar(c, cambios)}
-            />
-          ))}
+        {/* ── Lista + detalle (+ chat en pantalla ancha) ───────────────────
+            Mismo patrón que Cola.tsx: fila de alto fijo desde `lg`, cada
+            columna con su propio scroll. */}
+        <div
+          className={`grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch ${
+            tieneChat ? 'xl:grid-cols-[minmax(0,1fr)_420px_380px]' : ''
+          }`}
+        >
+          <div className="flex flex-col gap-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pb-6">
+            {visibles.map((c) => (
+              <TarjetaCandidato
+                key={c.id}
+                c={c}
+                activa={abierto === c.id}
+                onAbrir={() => setAbierto(abierto === c.id ? null : c.id)}
+              />
+            ))}
+          </div>
+
+          <aside className="hidden overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] lg:block lg:h-full">
+            {seleccionado ? (
+              <div className="animar-panel relative h-full">
+                <PanelCandidato
+                  key={seleccionado.id}
+                  c={seleccionado}
+                  estados={ESTADOS}
+                  onCerrar={() => setAbierto(null)}
+                  onGuardar={(cambios) => guardar(seleccionado, cambios)}
+                />
+              </div>
+            ) : (
+              <div className="grid h-64 place-items-center px-6 text-center">
+                <p className="prosa text-sm text-[var(--color-texto-tenue)]">
+                  Elegí un pedido para ver el detalle y escribirle.
+                </p>
+              </div>
+            )}
+          </aside>
+
+          {tieneChat && seleccionado && (
+            <aside className="hidden overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:block xl:h-full">
+              <div className="flex h-full flex-col">
+                <div className="shrink-0 border-b border-[var(--color-borde)] px-4 py-3">
+                  <h3 className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
+                    WhatsApp
+                  </h3>
+                  <p className="mt-0.5 truncate text-sm font-medium">
+                    {seleccionado.nombre || 'Sin nombre'}
+                  </p>
+                </div>
+                <div className="min-h-0 flex-1 p-3">
+                  <ChatPedido
+                    key={seleccionado.id}
+                    telefono={seleccionado.telefono}
+                    nombre={seleccionado.nombre}
+                    llenarAltura
+                    plantillas={PLANTILLAS_RECUPERACION.filter((pl) => pl.id !== 'libre').map((pl) => ({
+                      id: pl.id,
+                      etiqueta: pl.etiqueta,
+                      texto: pl.texto(seleccionado),
+                    }))}
+                    sugeridaId={plantillaSugerida(seleccionado)}
+                    yaEnviadas={Object.fromEntries(seleccionado.avisos.map((a) => [a.id, a.fecha]))}
+                    onPlantillaEnviada={(id) => guardar(seleccionado, { aviso: id, enviado: true })}
+                  />
+                </div>
+              </div>
+            </aside>
+          )}
         </div>
-      </main>
+      </div>
+
+      {/* Móvil: misma hoja que la cola de logística. */}
+      {seleccionado && (
+        <HojaMovil onCerrar={() => setAbierto(null)}>
+          <PanelCandidato
+            key={seleccionado.id}
+            c={seleccionado}
+            estados={ESTADOS}
+            onCerrar={() => setAbierto(null)}
+            onGuardar={(cambios) => guardar(seleccionado, cambios)}
+          />
+        </HojaMovil>
+      )}
     </div>
   );
 }

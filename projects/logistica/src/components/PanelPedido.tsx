@@ -58,6 +58,10 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
   // Solo ShotyGames tiene columna LOG WA; en dropshipping se ofrecen las mismas
   // plantillas pero no hay dónde registrar cuál se mandó.
   const registraPlantillas = p.negocio === 'shotygames';
+  // Mismo cálculo que `tieneChat` en Cola.tsx: si hay chat en vivo (columna de
+  // escritorio ancho), el botón de wa.me sobra ahí — las plantillas ya están
+  // en el chat y mandan directo, sin pasar por WhatsApp Web.
+  const tieneChatVivo = p.negocio === 'shotygames' && Boolean(p.telefono);
 
   async function guardar(clave: string, cambios: { estado?: string; notas?: string }) {
     setGuardando(clave);
@@ -116,7 +120,11 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-28">
+      <div
+        className={`flex-1 overflow-y-auto overscroll-contain px-5 pt-5 ${
+          tieneChatVivo ? 'pb-28 xl:pb-5' : 'pb-28'
+        }`}
+      >
         {p.alertas.length > 0 && (
           <ul className="mb-5 space-y-2">
             {p.alertas.map((a, i) => (
@@ -324,8 +332,15 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           Cada situación necesita pedirle al cliente una cosa distinta, así que
           se elige la plantilla. La app sugiere la que encaja con el tracking,
           pero la decisión es de quien escribe: abre WhatsApp con el texto
-          puesto y NADA se manda solo. */}
-      <div className="absolute inset-x-0 bottom-0 border-t border-[var(--color-borde)] bg-[var(--color-superficie)]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+          puesto y NADA se manda solo.
+          `xl:hidden` cuando hay chat en vivo: en esa pantalla las mismas
+          plantillas ya están en la columna del chat y mandan directo, así
+          que este botón (que abre wa.me) sobra y confunde teniendo los dos. */}
+      <div
+        className={`absolute inset-x-0 bottom-0 border-t border-[var(--color-borde)] bg-[var(--color-superficie)]/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur ${
+          tieneChatVivo ? 'xl:hidden' : ''
+        }`}
+      >
         {menuWa && (
           <div className="animar-panel mb-3 max-h-[46vh] space-y-1 overflow-y-auto rounded-xl border border-[var(--color-borde)] bg-[var(--color-fondo)] p-1.5">
             {PLANTILLAS.map((pl) => {
