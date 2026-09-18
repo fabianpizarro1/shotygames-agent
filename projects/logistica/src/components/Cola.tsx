@@ -240,11 +240,17 @@ export function Cola() {
   }, [pedidos, abierto]);
 
   return (
-    <div className="mx-auto min-h-dvh max-w-[1500px]">
+    // `lg:h-dvh lg:overflow-hidden`: desde acá para arriba la página deja de
+    // scrollear como un todo — cada columna de abajo scrollea la suya. Antes
+    // las columnas 2 y 3 eran `sticky` con un offset fijo (136px) calculado a
+    // mano para el alto del encabezado; en cuanto el encabezado medía otra
+    // cosa (buscador abierto, filtros que envuelven), quedaban tapadas por
+    // arriba. En móvil no cambia nada: estas clases son todas `lg:`.
+    <div className="mx-auto min-h-dvh max-w-[1500px] lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden">
       {/* ── Cabecera ─────────────────────────────────────────────────────── */}
       {/* `pad-arriba` baja la cabecera por debajo del notch cuando la app está
           instalada; en el navegador `env()` vale 0 y no cambia nada. */}
-      <header className="pad-arriba sticky top-0 z-30 border-b border-[var(--color-borde)] bg-[var(--color-fondo)]/90 backdrop-blur">
+      <header className="pad-arriba sticky top-0 z-30 shrink-0 border-b border-[var(--color-borde)] bg-[var(--color-fondo)]/90 backdrop-blur">
         <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-2 sm:px-6 sm:pt-4 sm:pb-3">
           <div>
             <div className="flex items-center gap-2">
@@ -379,7 +385,7 @@ export function Cola() {
         </div>
       </header>
 
-      <div className="px-4 pt-4 sm:px-6 sm:pt-5">
+      <div className="px-4 pt-4 sm:px-6 sm:pt-5 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-hidden">
         {/* ── Resumen ────────────────────────────────────────────────────── */}
         {/* En móvil el resumen es una tira que se desliza: como grilla de 2
             columnas empujaba el primer pedido fuera de la pantalla, y lo que
@@ -434,9 +440,13 @@ export function Cola() {
         {/* La tercera columna necesita más ancho que el punto donde ya vale
             la pena partir en 2 (`lg`, 1024px): a 1024 el chat dejaría la
             lista en un hilo. Se activa recién en `xl` (1280px) y solo cuando
-            hay algo que mostrar ahí — ver `tieneChat`. */}
+            hay algo que mostrar ahí — ver `tieneChat`.
+            `lg:grid-rows-[minmax(0,1fr)] lg:items-stretch`: la fila ocupa
+            todo el alto que sobra (viene de `flex-1` del contenedor de
+            arriba) y cada columna se estira a esa altura — de ahí sale el
+            alto real que usa cada columna para su propio scroll interno. */}
         <div
-          className={`grid gap-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start ${
+          className={`grid gap-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:pb-0 ${
             tieneChat ? 'xl:grid-cols-[minmax(0,1fr)_420px_380px]' : ''
           }`}
         >
@@ -444,7 +454,7 @@ export function Cola() {
               por defecto y no encoge por debajo de su contenido, así que un
               nombre largo de cliente ensanchaba la columna y sacaba las
               tarjetas de la pantalla del teléfono. */}
-          <div className="min-w-0 space-y-2.5">
+          <div className="min-w-0 space-y-2.5 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pb-6">
             {cargando && pedidos.length === 0 && <Esqueleto />}
 
             {!cargando && visibles.length === 0 && (
@@ -470,10 +480,11 @@ export function Cola() {
             ))}
           </div>
 
-          {/* Desktop: el detalle vive al lado y queda fijo mientras se baja la lista. */}
-          <aside className="sticky top-[136px] hidden max-h-[calc(100dvh-160px)] overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] lg:block">
+          {/* Desktop: el detalle vive al lado, con su propio alto y su propio
+              scroll (adentro de PanelPedido) — ya no depende de `sticky`. */}
+          <aside className="hidden overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] lg:block lg:h-full">
             {seleccionado ? (
-              <div className="animar-panel relative h-[calc(100dvh-160px)]">
+              <div className="animar-panel relative h-full">
                 <PanelPedido
                   key={idDe(seleccionado)}
                   p={seleccionado}
@@ -498,14 +509,8 @@ export function Cola() {
               nada para ellos (el panel del medio sigue mostrando su propio
               "Escribirle por WhatsApp" de siempre). */}
           {tieneChat && seleccionado && (
-            <aside className="sticky top-[136px] hidden max-h-[calc(100dvh-160px)] overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:block">
-              {/* Alto explícito, no `max-height`: un `flex-1` de adentro solo
-                  llena "el resto del alto disponible" si el contenedor tiene
-                  una altura de verdad — con `max-height` a secas el chat no
-                  scrolleaba solo y el scroll se lo comía la lista de la
-                  izquierda. Mismo patrón que el panel del medio, un poco más
-                  arriba. */}
-              <div className="flex h-[calc(100dvh-160px)] flex-col">
+            <aside className="hidden overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:block xl:h-full">
+              <div className="flex h-full flex-col">
                 <div className="shrink-0 border-b border-[var(--color-borde)] px-4 py-3">
                   <h3 className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
                     WhatsApp

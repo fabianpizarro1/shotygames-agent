@@ -116,7 +116,7 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-5 pt-5 pb-28">
+      <div className="flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-28">
         {p.alertas.length > 0 && (
           <ul className="mb-5 space-y-2">
             {p.alertas.map((a, i) => (

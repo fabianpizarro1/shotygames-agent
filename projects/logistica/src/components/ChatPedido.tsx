@@ -101,7 +101,7 @@ export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
     >
       <div
         ref={listaRef}
-        className={`space-y-2 overflow-y-auto bg-[var(--color-fondo)] p-3 ${
+        className={`space-y-2 overflow-y-auto overscroll-contain bg-[var(--color-fondo)] p-3 ${
           llenarAltura ? 'min-h-0 flex-1' : 'max-h-72'
         }`}
       >
