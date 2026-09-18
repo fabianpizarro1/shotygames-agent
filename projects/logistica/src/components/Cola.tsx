@@ -9,6 +9,7 @@ import { TarjetaPedido } from './TarjetaPedido';
 import { PanelPedido } from './PanelPedido';
 import { HojaMovil } from './HojaMovil';
 import { InterruptorTema } from './InterruptorTema';
+import { ChatPedido } from './ChatPedido';
 
 interface Respuesta {
   ok: boolean;
@@ -228,6 +229,10 @@ export function Cola() {
     [visibles, abierto]
   );
 
+  // Solo ShotyGames tiene el número conectado a Evolution — ver ChatPedido.
+  // Determina si aparece la tercera columna en escritorio ancho.
+  const tieneChat = Boolean(seleccionado?.negocio === 'shotygames' && seleccionado?.telefono);
+
   // Si el pedido abierto salió de la cola (pasó a ENTREGADO, PAGADO…), el panel
   // se cierra solo: ya no hay nada que gestionar ahí.
   useEffect(() => {
@@ -425,8 +430,16 @@ export function Cola() {
           </p>
         ))}
 
-        {/* ── Lista + detalle ────────────────────────────────────────────── */}
-        <div className="grid gap-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
+        {/* ── Lista + detalle (+ chat en pantalla ancha) ───────────────────── */}
+        {/* La tercera columna necesita más ancho que el punto donde ya vale
+            la pena partir en 2 (`lg`, 1024px): a 1024 el chat dejaría la
+            lista en un hilo. Se activa recién en `xl` (1280px) y solo cuando
+            hay algo que mostrar ahí — ver `tieneChat`. */}
+        <div
+          className={`grid gap-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start ${
+            tieneChat ? 'xl:grid-cols-[minmax(0,1fr)_420px_380px]' : ''
+          }`}
+        >
           {/* `min-w-0` no es decorativo: un item de grilla es `min-width:auto`
               por defecto y no encoge por debajo de su contenido, así que un
               nombre largo de cliente ensanchaba la columna y sacaba las
@@ -478,6 +491,32 @@ export function Cola() {
               </div>
             )}
           </aside>
+
+          {/* Tercera columna, solo en pantalla ancha y solo con chat que
+              mostrar — ver el comentario de más arriba. El resto de los
+              negocios no tiene el número conectado, así que acá no aparece
+              nada para ellos (el panel del medio sigue mostrando su propio
+              "Escribirle por WhatsApp" de siempre). */}
+          {tieneChat && seleccionado && (
+            <aside className="sticky top-[136px] hidden max-h-[calc(100dvh-160px)] flex-col overflow-hidden rounded-[var(--radius-tarjeta)] border border-[var(--color-borde)] xl:flex">
+              <div className="border-b border-[var(--color-borde)] px-4 py-3">
+                <h3 className="text-[11px] font-semibold tracking-[0.14em] text-[var(--color-texto-tenue)] uppercase">
+                  WhatsApp
+                </h3>
+                <p className="mt-0.5 truncate text-sm font-medium">
+                  {seleccionado.nombre || 'Sin nombre'}
+                </p>
+              </div>
+              <div className="min-h-0 flex-1 p-3">
+                <ChatPedido
+                  key={idDe(seleccionado)}
+                  telefono={seleccionado.telefono}
+                  nombre={seleccionado.nombre}
+                  llenarAltura
+                />
+              </div>
+            </aside>
+          )}
         </div>
       </div>
 

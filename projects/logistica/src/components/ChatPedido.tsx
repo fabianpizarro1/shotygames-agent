@@ -19,7 +19,15 @@ interface MensajeChat {
 
 const INTERVALO_MS = 8000;
 
-export function ChatPedido({ telefono, nombre }: { telefono: string; nombre: string }) {
+interface Props {
+  telefono: string;
+  nombre: string;
+  /** Columna propia de escritorio: llena el alto del contenedor en vez del
+   * widget compacto de altura fija que se usa adentro del panel del pedido. */
+  llenarAltura?: boolean;
+}
+
+export function ChatPedido({ telefono, nombre, llenarAltura }: Props) {
   const [mensajes, setMensajes] = useState<MensajeChat[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [texto, setTexto] = useState('');
@@ -84,10 +92,18 @@ export function ChatPedido({ telefono, nombre }: { telefono: string; nombre: str
   if (!telefono) return null;
 
   return (
-    <div className="mb-6 overflow-hidden rounded-xl border border-[var(--color-borde)]">
+    <div
+      className={
+        llenarAltura
+          ? 'flex h-full flex-col overflow-hidden rounded-xl border border-[var(--color-borde)]'
+          : 'mb-6 overflow-hidden rounded-xl border border-[var(--color-borde)]'
+      }
+    >
       <div
         ref={listaRef}
-        className="max-h-72 space-y-2 overflow-y-auto bg-[var(--color-fondo)] p-3"
+        className={`space-y-2 overflow-y-auto bg-[var(--color-fondo)] p-3 ${
+          llenarAltura ? 'min-h-0 flex-1' : 'max-h-72'
+        }`}
       >
         {mensajes === null && !error && (
           <p className="py-4 text-center text-xs text-[var(--color-texto-tenue)]">Cargando…</p>

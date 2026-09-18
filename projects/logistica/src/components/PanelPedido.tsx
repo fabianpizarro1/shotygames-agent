@@ -136,11 +136,16 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
 
         {/* ── WhatsApp ──────────────────────────────────────────────────── */}
         {/* Solo ShotyGames: es el único negocio con el número conectado a
-            Evolution (mismo que manda el agradecimiento). */}
+            Evolution (mismo que manda el agradecimiento). `xl:hidden`: en
+            pantalla ancha el chat vive en su propia columna (ver Cola.tsx) —
+            acá solo queda para el celular y las pantallas medianas, donde no
+            entra una tercera columna. */}
         {p.negocio === 'shotygames' && p.telefono && (
-          <Seccion titulo="WhatsApp">
-            <ChatPedido telefono={p.telefono} nombre={p.nombre} />
-          </Seccion>
+          <div className="xl:hidden">
+            <Seccion titulo="WhatsApp">
+              <ChatPedido telefono={p.telefono} nombre={p.nombre} />
+            </Seccion>
+          </div>
         )}
 
         {/* ── La plata en juego ─────────────────────────────────────────── */}
