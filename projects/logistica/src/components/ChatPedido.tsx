@@ -18,6 +18,9 @@ interface MensajeChat {
 }
 
 const INTERVALO_MS = 8000;
+/** Hasta acá crece el cuadro solo; de ahí para arriba scrollea adentro en
+ * vez de seguir empujando el resto del chat hacia arriba. */
+const ALTO_MAXIMO_CUADRO = 208;
 
 /** Una plantilla ya resuelta a texto — ChatPedido no sabe de dónde salió
  * (pedido de logística o candidato de recuperación), solo la manda. */
@@ -65,6 +68,17 @@ export function ChatPedido({
   const [plantillaActiva, setPlantillaActiva] = useState<string | null>(null);
   const listaRef = useRef<HTMLDivElement>(null);
   const ultimoId = useRef<string | null>(null);
+  const cuadroRef = useRef<HTMLTextAreaElement>(null);
+
+  // El cuadro crece con el texto en vez de quedar fijo en una línea — una
+  // plantilla larga se veía toda amontonada y recortada. Crece hasta
+  // ALTO_MAXIMO_CUADRO y de ahí scrollea adentro (ver className del textarea).
+  useEffect(() => {
+    const el = cuadroRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, ALTO_MAXIMO_CUADRO)}px`;
+  }, [texto]);
 
   async function cargar() {
     try {
@@ -205,6 +219,7 @@ export function ChatPedido({
 
       <div className="flex items-end gap-2 border-t border-[var(--color-borde)] bg-[var(--color-superficie)] p-2">
         <textarea
+          ref={cuadroRef}
           value={texto}
           onChange={(e) => {
             setTexto(e.target.value);
@@ -218,7 +233,8 @@ export function ChatPedido({
           }}
           rows={1}
           placeholder="Escribir…"
-          className="min-h-11 flex-1 resize-none rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2 text-sm outline-none focus:border-[var(--color-verde)]"
+          style={{ maxHeight: ALTO_MAXIMO_CUADRO }}
+          className="min-h-11 flex-1 resize-none overflow-y-auto rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2 text-sm outline-none focus:border-[var(--color-verde)]"
         />
         <button
           type="button"
