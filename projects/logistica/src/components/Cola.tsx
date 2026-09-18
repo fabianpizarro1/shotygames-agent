@@ -8,6 +8,7 @@ import { tiendaUI, usd } from '@/lib/ui';
 import { TarjetaPedido } from './TarjetaPedido';
 import { PanelPedido } from './PanelPedido';
 import { HojaMovil } from './HojaMovil';
+import { InterruptorTema } from './InterruptorTema';
 
 interface Respuesta {
   ok: boolean;
@@ -258,6 +259,8 @@ export function Cola() {
                 {actualizado}
               </span>
             )}
+
+            <InterruptorTema />
 
             <button
               type="button"

@@ -2,12 +2,40 @@
 
 /* ============================================================
    SISTEMA VISUAL — consola de logística
-   Oscuro a propósito: es una herramienta de trabajo que se abre muchas veces
-   al día, casi siempre desde el teléfono y muchas veces de noche. Un fondo
-   claro con 50 tarjetas cansa; acá el color solo aparece donde hay que mirar.
+   Claro por defecto: Fabián la usa en la calle, a plena luz, y un fondo
+   oscuro se apaga con el sol. Quien prefiera oscuro (de noche, en casa) lo
+   elige con el interruptor del header — ver InterruptorTema.tsx — y queda
+   guardado en `localStorage` para la próxima vez.
    ============================================================ */
 
 @theme {
+  --color-fondo: #f5f7f6;
+  --color-superficie: #ffffff;
+  --color-superficie-alta: #eaf0ed;
+  --color-borde: #dbe3df;
+  --color-borde-fuerte: #c2cdc8;
+
+  --color-texto: #10201b;
+  --color-texto-suave: #4b5955;
+  --color-texto-tenue: #76837e;
+
+  --color-verde: #17914f;
+  --color-verde-tenue: #dbf3e4;
+  --color-ambar: #9c6600;
+  --color-ambar-tenue: #f9ecce;
+  --color-rojo: #c22f35;
+  --color-rojo-tenue: #fbdfe0;
+  --color-azul: #1f66b8;
+  --color-azul-tenue: #dbebfb;
+
+  --radius-tarjeta: 16px;
+}
+
+/* El interruptor pone `data-theme="oscuro"` en <html> — ver
+   InterruptorTema.tsx y el script bloqueante en layout.tsx que lo aplica
+   antes del primer pintado, para que no haya flash del tema equivocado. */
+html[data-theme='oscuro'] {
+  color-scheme: dark;
   --color-fondo: #0a0d0c;
   --color-superficie: #121716;
   --color-superficie-alta: #1a2120;
@@ -26,8 +54,6 @@
   --color-rojo-tenue: #341417;
   --color-azul: #5aa9f2;
   --color-azul-tenue: #10222f;
-
-  --radius-tarjeta: 16px;
 }
 
 /* ── Comportamiento de app instalada ──────────────────────────────────────
@@ -35,7 +61,7 @@
    existe para que no se note que por dentro es una web. */
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   /* Que iOS no agrande el texto solo al girar el teléfono. */
   -webkit-text-size-adjust: 100%;
   /* El fondo llega hasta el notch y la barra de gestos. */

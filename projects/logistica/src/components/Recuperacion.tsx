@@ -10,6 +10,7 @@ import {
 } from '@/lib/recuperacion-tipos';
 import { usd } from '@/lib/ui';
 import { TarjetaCandidato, type OpcionEstado } from './TarjetaCandidato';
+import { InterruptorTema } from './InterruptorTema';
 
 interface Respuesta {
   ok: boolean;
@@ -152,6 +153,7 @@ export function Recuperacion() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <InterruptorTema />
             <Link
               href="/"
               className="pulsable min-h-11 rounded-full border border-[var(--color-borde)] px-4 text-sm leading-[2.75rem]"

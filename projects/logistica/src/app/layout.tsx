@@ -33,12 +33,33 @@ export const viewport: Viewport = {
   // `cover` deja el fondo llegando hasta el notch y la barra de gestos; el
   // contenido se separa con env(safe-area-inset-*) en globals.css.
   viewportFit: 'cover',
-  themeColor: '#0a0d0c',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f5f7f6' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0d0c' },
+  ],
 };
 
+// Bloqueante a propósito, antes de cualquier otra cosa: lee la preferencia
+// guardada por InterruptorTema.tsx y la aplica a <html> antes del primer
+// pintado. Sin esto, la página pintaría claro (el default) y saltaría a
+// oscuro un instante después para quien lo eligió — el flash típico de los
+// selectores de tema que corren en un useEffect normal.
+const SCRIPT_TEMA = `
+try {
+  var t = localStorage.getItem('tema');
+  if (t === 'oscuro') document.documentElement.dataset.theme = 'oscuro';
+} catch (e) {}
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // suppressHydrationWarning: el script de abajo cambia `data-theme` antes de
+  // que React hidrate, así que el HTML del servidor y el del cliente
+  // difieren en ese atributo a propósito — no es un bug para avisar.
   return (
-    <html lang="es-EC">
+    <html lang="es-EC" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA }} />
+      </head>
       <body className="min-h-dvh antialiased">{children}</body>
     </html>
   );
