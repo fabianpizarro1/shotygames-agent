@@ -189,9 +189,13 @@ export function ChatPedido({
       )}
 
       {/* Plantillas: tocar una llena el cuadro, no manda sola — el toque de
-          Enviar sigue siendo de quien escribe. */}
+          Enviar sigue siendo de quien escribe.
+          `flex-wrap`, no scroll horizontal: en una columna angosta las
+          últimas quedaban cortadas a la mitad contra el borde, sin ninguna
+          seña de que había más para el lado. Acomodadas en líneas se ven
+          todas enteras. */}
       {plantillas && plantillas.length > 0 && (
-        <div className="tira flex gap-1.5 overflow-x-auto border-t border-[var(--color-borde)] bg-[var(--color-superficie)] px-2 pt-2">
+        <div className="flex flex-wrap gap-1.5 border-t border-[var(--color-borde)] bg-[var(--color-superficie)] px-2 pt-2 pb-1.5">
           {plantillas.map((pl) => {
             const cuando = yaEnviadas?.[pl.id];
             const esSugerida = pl.id === sugeridaId;

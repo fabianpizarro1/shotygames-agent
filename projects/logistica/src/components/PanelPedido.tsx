@@ -118,6 +118,55 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             ✕
           </button>
         </div>
+
+        {/* ── Estado + rastreo/guía, siempre a mano ───────────────────────
+            Antes esto vivía como una grilla de botones al final de un panel
+            largo — para cambiar el estado o abrir el PDF había que bajar
+            todo. Ahora queda pegado arriba, sin scroll de por medio. */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <select
+            value=""
+            disabled={guardando !== null}
+            onChange={(e) => {
+              const literal = e.target.value;
+              if (literal) guardar(literal, { estado: literal });
+            }}
+            className="pulsable min-h-9 max-w-full rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-2.5 text-xs text-[var(--color-texto-suave)] outline-none disabled:opacity-50"
+          >
+            <option value="" disabled>
+              {guardando ? 'Actualizando…' : `Estado: ${p.etiquetaEstado}`}
+            </option>
+            {/* Los estados salen del desplegable del Sheet de ESTE negocio,
+                menos los que no tienen sentido acá: todo lo que llega a esta
+                cola ya está confirmado y despachado. Ver NO_OFRECIBLES en
+                estados.ts. */}
+            {estados
+              .filter((e) => e.ofrecible && e.literal.toUpperCase() !== p.estado.toUpperCase())
+              .map((e) => (
+                <option key={e.literal} value={e.literal}>
+                  Pasar a: {e.etiqueta}
+                </option>
+              ))}
+          </select>
+
+          {rastreo && (
+            <Enlace href={rastreo}>Rastrear en {p.transportadora}</Enlace>
+          )}
+          {tr?.pdf && <Enlace href={tr.pdf}>Ver la guía (PDF)</Enlace>}
+        </div>
+
+        {p.estadoSugerido && (
+          <button
+            type="button"
+            disabled={guardando !== null}
+            onClick={() => guardar('sugerido', { estado: p.estadoSugerido! })}
+            className="pulsable mt-2 w-full rounded-lg border border-[var(--color-verde)]/40 bg-[var(--color-verde-tenue)] px-3 py-2 text-left text-xs text-[var(--color-verde)] disabled:opacity-40"
+          >
+            {guardando === 'sugerido'
+              ? 'Actualizando…'
+              : `DROPI ya lo tiene como ${p.estadoSugerido} — pasarlo en el Sheet`}
+          </button>
+        )}
       </header>
 
       <div
@@ -141,6 +190,44 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             ))}
           </ul>
         )}
+
+        {/* ── Recorrido ─────────────────────────────────────────────────── */}
+        {/* Primero: es lo que más se mira al abrir un pedido — dónde está el
+            paquete AHORA, no cuánto vale. */}
+        <Seccion
+          titulo="Recorrido"
+          extra={
+            p.momento !== 'sin-datos'
+              ? `${ETIQUETA_MOMENTO[p.momento]}${tr?.fuente === 'servientrega' ? ' · según Servientrega' : ''}`
+              : undefined
+          }
+        >
+          {p.prediccion && (
+            <p className="prosa mb-3 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2 text-xs text-[var(--color-texto-suave)]">
+              Lo más probable ahora: <strong>{p.prediccion.texto}</strong> ({p.prediccion.probabilidad}%
+              de los casos parecidos)
+            </p>
+          )}
+
+          <LineaTiempo
+            movimientos={
+              tr?.movimientos.length
+                ? tr.movimientos
+                : (tr?.historial ?? []).map((h) => ({
+                    movimiento: h.estado,
+                    motivo: '',
+                    fecha: h.fecha,
+                  }))
+            }
+            vacio={
+              !p.pasaPorDropi
+                ? 'Este envío no pasa por DROPI, así que no hay tracking que mostrar.'
+                : p.ordenDropi
+                  ? 'DROPI todavía no reporta movimientos de esta orden.'
+                  : 'Este pedido no tiene orden de DROPI, así que no hay nada que rastrear.'
+            }
+          />
+        </Seccion>
 
         {/* ── WhatsApp ──────────────────────────────────────────────────── */}
         {/* Solo ShotyGames: es el único negocio con el número conectado a
@@ -208,49 +295,6 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           )}
         </Seccion>
 
-        {(rastreo || tr?.pdf) && (
-          <div className="mb-6 flex flex-wrap gap-2">
-            {rastreo && <Enlace href={rastreo}>Rastrear en {p.transportadora}</Enlace>}
-            {tr?.pdf && <Enlace href={tr.pdf}>Ver la guía (PDF)</Enlace>}
-          </div>
-        )}
-
-        {/* ── Recorrido ─────────────────────────────────────────────────── */}
-        <Seccion
-          titulo="Recorrido"
-          extra={
-            p.momento !== 'sin-datos'
-              ? `${ETIQUETA_MOMENTO[p.momento]}${tr?.fuente === 'servientrega' ? ' · según Servientrega' : ''}`
-              : undefined
-          }
-        >
-          {p.prediccion && (
-            <p className="prosa mb-3 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2 text-xs text-[var(--color-texto-suave)]">
-              Lo más probable ahora: <strong>{p.prediccion.texto}</strong> ({p.prediccion.probabilidad}%
-              de los casos parecidos)
-            </p>
-          )}
-
-          <LineaTiempo
-            movimientos={
-              tr?.movimientos.length
-                ? tr.movimientos
-                : (tr?.historial ?? []).map((h) => ({
-                    movimiento: h.estado,
-                    motivo: '',
-                    fecha: h.fecha,
-                  }))
-            }
-            vacio={
-              !p.pasaPorDropi
-                ? 'Este envío no pasa por DROPI, así que no hay tracking que mostrar.'
-                : p.ordenDropi
-                  ? 'DROPI todavía no reporta movimientos de esta orden.'
-                  : 'Este pedido no tiene orden de DROPI, así que no hay nada que rastrear.'
-            }
-          />
-        </Seccion>
-
         {/* ── Notas ─────────────────────────────────────────────────────── */}
         <Seccion titulo="Notas">
           <textarea
@@ -268,46 +312,6 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           >
             {guardando === 'notas' ? 'Guardando…' : 'Guardar nota'}
           </button>
-        </Seccion>
-
-        {/* ── Cambiar estado ────────────────────────────────────────────── */}
-        <Seccion titulo="Cambiar estado">
-          {p.estadoSugerido && (
-            <button
-              type="button"
-              disabled={guardando !== null}
-              onClick={() => guardar('sugerido', { estado: p.estadoSugerido! })}
-              className="pulsable mb-3 w-full rounded-xl border border-[var(--color-verde)]/40 bg-[var(--color-verde-tenue)] px-3 py-2.5 text-left text-sm text-[var(--color-verde)] disabled:opacity-40"
-            >
-              {guardando === 'sugerido'
-                ? 'Actualizando…'
-                : `DROPI ya lo tiene como ${p.estadoSugerido} — pasarlo en el Sheet`}
-            </button>
-          )}
-
-          {/* Los estados salen del desplegable del Sheet de ESTE negocio, menos
-              los que no tienen sentido acá: todo lo que llega a esta cola ya
-              está confirmado y despachado. Ver NO_OFRECIBLES en estados.ts. */}
-          <div className="grid grid-cols-2 gap-2">
-            {estados
-              .filter((e) => e.ofrecible && e.literal.toUpperCase() !== p.estado.toUpperCase())
-              .map((e) => (
-                <button
-                  key={e.literal}
-                  type="button"
-                  disabled={guardando !== null}
-                  onClick={() => guardar(e.literal, { estado: e.literal })}
-                  className="pulsable min-h-11 rounded-lg border border-[var(--color-borde)] px-3 text-xs text-[var(--color-texto-suave)] disabled:opacity-40"
-                >
-                  {guardando === e.literal ? '…' : e.etiqueta}
-                </button>
-              ))}
-          </div>
-          <p className="prosa mt-2 text-xs text-[var(--color-texto-tenue)]">
-            {p.negocio === 'dropshipping'
-              ? 'Cambiar el estado escribe en el Sheet y sella la fecha que corresponda.'
-              : 'Pasarlo a ENTREGADO o PAGADO dispara el WhatsApp de agradecimiento, igual que antes. No se manda dos veces.'}
-          </p>
         </Seccion>
 
         {error && (
