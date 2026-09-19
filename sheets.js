@@ -170,6 +170,8 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
     const idxFbc = headers.indexOf('FBC');
     const idxFbp = headers.indexOf('FBP');
     const idxFbclid = headers.indexOf('FBCLID');
+    const idxTtclid = headers.indexOf('TTCLID');
+    const idxTtp = headers.indexOf('TTP');
     const idxEstado = headers.indexOf('ESTADO');
     if (idxTel === -1) return null;
 
@@ -183,8 +185,10 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
         if (!row || String(row[idxPedido] || '').trim().toUpperCase() !== idBuscado) continue;
         const fbc = row[idxFbc] || '';
         const fbp = row[idxFbp] || '';
-        if (!fbc && !fbp) continue;
-        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+        const ttclid = idxTtclid !== -1 ? (row[idxTtclid] || '') : '';
+        const ttp = idxTtp !== -1 ? (row[idxTtp] || '') : '';
+        if (!fbc && !fbp && !ttclid && !ttp) continue;
+        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '', ttclid, ttp };
         matchRowNum = i + 1;
         break;
       }
@@ -199,8 +203,10 @@ async function buscarAtribucionWeb({ idPedido, telefono } = {}) {
         if (normalizarTelefono(row[idxTel]) !== telNormalizado) continue;
         const fbc = row[idxFbc] || '';
         const fbp = row[idxFbp] || '';
-        if (!fbc && !fbp) continue;
-        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '' };
+        const ttclid = idxTtclid !== -1 ? (row[idxTtclid] || '') : '';
+        const ttp = idxTtp !== -1 ? (row[idxTtp] || '') : '';
+        if (!fbc && !fbp && !ttclid && !ttp) continue;
+        match = { idPedido: row[idxPedido] || '', fbc, fbp, fbclid: row[idxFbclid] || '', ttclid, ttp };
         matchRowNum = i + 1; // sigue iterando — se queda con el más reciente
       }
     }
@@ -338,8 +344,9 @@ async function appendPedido(pedido) {
     resource: { values: [row] }
   });
 
-  // Atribución de Meta (cols AK:AN) — best-effort: si esto falla, el pedido
-  // ya quedó registrado arriba y no hay que bloquear la venta por esto.
+  // Atribución de Meta (cols AK:AN) y TikTok (cols AV:AW) — best-effort: si
+  // esto falla, el pedido ya quedó registrado arriba y no hay que bloquear
+  // la venta por esto.
   try {
     const atribucion = await buscarAtribucionWeb({ idPedido: pedido.idPedido, telefono: pedido.telefono });
     if (atribucion) {
@@ -349,9 +356,17 @@ async function appendPedido(pedido) {
         valueInputOption: 'USER_ENTERED',
         resource: { values: [[atribucion.idPedido, atribucion.fbc, atribucion.fbp, atribucion.fbclid]] }
       });
+      if (atribucion.ttclid || atribucion.ttp) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEETS_ID,
+          range: `PEDIDOS!AV${nextRow}:AW${nextRow}`,
+          valueInputOption: 'USER_ENTERED',
+          resource: { values: [[atribucion.ttclid, atribucion.ttp]] }
+        });
+      }
     }
   } catch (e) {
-    console.error('appendPedido: fallo al guardar atribución Meta:', e.message);
+    console.error('appendPedido: fallo al guardar atribución Meta/TikTok:', e.message);
   }
 
   return result.data.updates;
