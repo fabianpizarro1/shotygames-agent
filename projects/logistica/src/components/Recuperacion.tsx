@@ -297,7 +297,13 @@ export function Recuperacion() {
             tieneChat ? 'xl:grid-cols-[minmax(0,1fr)_420px_380px]' : ''
           }`}
         >
-          <div className="flex flex-col gap-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pb-6">
+          {/* `space-y-3`, no `flex flex-col`: adentro de un contenedor de alto
+              fijo, los hijos de un flex-column se ACHICAN para entrar todos en
+              vez de desbordar y scrollear — cada tarjeta quedaba recortada a
+              ~34px, mostrando solo la primera línea. Con block normal, las
+              tarjetas conservan su alto y el contenedor desborda como
+              corresponde (mismo patrón que la lista de Logística). */}
+          <div className="space-y-3 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pb-6">
             {visibles.map((c) => (
               <TarjetaCandidato
                 key={c.id}
