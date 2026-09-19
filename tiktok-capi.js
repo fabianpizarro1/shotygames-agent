@@ -103,7 +103,7 @@ const FUENTES = [
   {
     nombre: 'PEDIDOS (físicos)',
     spreadsheetId: process.env.SHEETS_ID,
-    range: 'PEDIDOS!A:AN',
+    range: 'PEDIDOS!A:AX',
     columnasRequeridas: ['TELEFONO', 'CAPI_TIKTOK', 'IDPEDIDO', 'TTCLID', 'TTP'],
     extraer(row, idx, i) {
       const ttclid = row[idx('TTCLID')] || '';
@@ -122,7 +122,7 @@ const FUENTES = [
   {
     nombre: 'VENTAS DIGITALES',
     spreadsheetId: process.env.SHEETS_ID_VENTAS_DIGITALES,
-    range: 'VENTAS!A:P',
+    range: 'VENTAS!A:S',
     columnasRequeridas: ['ESTADO', 'CAPI_TIKTOK', 'ID', 'TTCLID', 'TTP'],
     extraer(row, idx, i) {
       const ttclid = row[idx('TTCLID')] || '';

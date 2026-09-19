@@ -80,6 +80,22 @@ function getAtribucionMeta() {
   };
 }
 
+// Atribución de TikTok Ads, mismo propósito que getAtribucionMeta.
+// _ttp lo pone solo el pixel de TikTok (como _fbp). ttclid NO lo persiste
+// el pixel en una cookie propia como sí hace Meta con _fbc — si llega en la
+// URL se guarda acá mismo para que sobreviva a la navegación dentro de la
+// SPA hasta que el usuario complete el checkout en otra landing.
+function getAtribucionTikTok() {
+  const ttclidUrl = new URLSearchParams(window.location.search).get('ttclid') || '';
+  if (ttclidUrl) {
+    document.cookie = `_ttclid=${encodeURIComponent(ttclidUrl)}; max-age=${60 * 60 * 24 * 7}; path=/`;
+  }
+  return {
+    ttclid: ttclidUrl || leerCookie('_ttclid'),
+    ttp: leerCookie('_ttp'),
+  };
+}
+
 /** Provincias y ciudades EXACTAS de DROPI, el mismo archivo que usan Avanora y
  *  Truquito. Antes la provincia salía de una lista escrita a mano y la ciudad
  *  era texto libre: cualquier tilde, abreviatura o typo hacía que la guía
@@ -381,7 +397,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         metodoPago: metodoPagoFinal,
         esProductoDigital: true,
         fechaHoraPedido: new Date().toISOString(),
-        ...getAtribucionMeta()
+        ...getAtribucionMeta(),
+        ...getAtribucionTikTok()
       };
     } else {
       // Crear objeto con todos los campos de upsells (siempre presentes)
@@ -450,7 +467,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         metodoPago: metodoPagoFinal,
         esProductoDigital: false,
         fechaHoraPedido: new Date().toISOString(),
-        ...getAtribucionMeta()
+        ...getAtribucionMeta(),
+        ...getAtribucionTikTok()
       };
     }
 
