@@ -686,6 +686,26 @@ try {
   console.error('[CRON] Error al iniciar Meta CAPI:', e.message);
 }
 
+// ── TIKTOK CAPI: Purchase real desde PEDIDOS ──────────────────
+// Mismo mecanismo que Meta CAPI, apuntando a TikTok Events API. Queda
+// desactivado hasta que existan TIKTOK_ACCESS_TOKEN y las columnas
+// TTCLID/TTP/CAPI_TIKTOK en los Sheets — ver tiktok-capi.js.
+try {
+  const cron = require('node-cron');
+  const { procesarPendientes: procesarPendientesTikTok } = require('./tiktok-capi');
+
+  if (process.env.TIKTOK_ACCESS_TOKEN) {
+    cron.schedule('*/15 * * * *', () => {
+      procesarPendientesTikTok().catch(e => console.error('[TIKTOK-CAPI] Falló:', e.message));
+    });
+    console.log('[CRON] TikTok CAPI: Purchase real cada 15 min');
+  } else {
+    console.log('[CRON] TikTok CAPI: desactivado (falta TIKTOK_ACCESS_TOKEN)');
+  }
+} catch (e) {
+  console.error('[CRON] Error al iniciar TikTok CAPI:', e.message);
+}
+
 // ── PUBLICIDAD: gasto de Meta vs ventas reales en el Sheet ────
 // Corre 24/7 cada 15 min. A diferencia del catálogo diario, este job NO escribe
 // nada en disco (lee Meta + Sheets y escribe en Sheets), así que vive bien en el
