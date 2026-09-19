@@ -19,7 +19,7 @@ import torreNormalImg from "@/assets/thumbs/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/thumbs/torre-picante.webp";
 import torreParejasImg from "@/assets/thumbs/torre-parejas.webp";
 import { Gift, Truck, ShoppingBag, CreditCard, Banknote } from "lucide-react";
-import { trackPlaceAnOrder } from "@/lib/pixels";
+import { trackPlaceAnOrder, identifyTikTok } from "@/lib/pixels";
 
 interface UpsellConfig {
   id: 'torreNormal' | 'torrePicante' | 'torreParejas' | 'enganchados' | 'emparejados' | 'dadosPlacer';
@@ -507,6 +507,11 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
       if (!respuesta.ok) {
         throw new Error(`El webhook de pedidos respondió ${respuesta.status}`);
       }
+
+      // TikTok Advanced Matching: identifica al usuario (email/teléfono
+      // hasheados en el navegador) ANTES del evento para mejorar la tasa de
+      // coincidencia. Va antes de trackPlaceAnOrder a propósito.
+      await identifyTikTok({ email: data.email, telefono: data.telefono });
 
       // Meta Pixel (Lead) + TikTok Pixel (PlaceAnOrder)
       // El Purchase del navegador se sacó de acá (2026-08-19) — mandaba señal
