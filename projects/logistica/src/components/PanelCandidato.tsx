@@ -95,6 +95,30 @@ export function PanelCandidato({
             ✕
           </button>
         </div>
+
+        {/* ── Estado, siempre a mano ───────────────────────────────────────
+            Mismo patrón que PanelPedido: un desplegable pegado arriba en vez
+            de una fila de botones al final del panel. */}
+        <select
+          value=""
+          disabled={guardando}
+          onChange={(e) => {
+            const literal = e.target.value;
+            if (literal) void aplicar({ estado: literal });
+          }}
+          className="pulsable mt-3 min-h-9 w-full rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-2.5 text-xs text-[var(--color-texto-suave)] outline-none disabled:opacity-50"
+        >
+          <option value="" disabled>
+            {guardando ? 'Actualizando…' : `Estado: ${c.estado}`}
+          </option>
+          {estados
+            .filter((e) => e.literal !== c.estado)
+            .map((e) => (
+              <option key={e.literal} value={e.literal} title={e.desc}>
+                Pasar a: {e.texto}
+              </option>
+            ))}
+        </select>
       </header>
 
       <div className="flex-1 overflow-y-auto overscroll-contain px-5 pt-5 pb-5">
@@ -212,27 +236,6 @@ export function PanelCandidato({
               Se marca solo al abrir WhatsApp. Si al final no lo mandaste, destildá el check.
             </p>
           </div>
-        </div>
-
-        {/* ── Estado ────────────────────────────────────────────────── */}
-        <p className="mb-2 text-[10px] font-semibold tracking-[0.15em] text-[var(--color-texto-tenue)] uppercase">
-          Marcarlo como
-        </p>
-        <div className="mb-6 flex flex-wrap gap-2">
-          {estados
-            .filter((e) => e.literal !== c.estado)
-            .map((e) => (
-              <button
-                key={e.literal}
-                type="button"
-                title={e.desc}
-                disabled={guardando}
-                onClick={() => void aplicar({ estado: e.literal })}
-                className="pulsable min-h-10 rounded-full border border-[var(--color-borde)] px-3.5 text-xs font-medium disabled:opacity-50"
-              >
-                {e.texto}
-              </button>
-            ))}
         </div>
 
         {/* ── Nota ──────────────────────────────────────────────────── */}
