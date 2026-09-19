@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import Footer from "@/components/Footer";
 import guiaPlacerPortada from "@/assets/guia-placer-portada.webp";
 import Seo from "@/components/Seo";
+import { trackViewContent } from "@/lib/pixels";
 
 const PRECIO = 6.90;
 const PRECIO_ANTERIOR = 15.00;
@@ -24,14 +25,11 @@ const GuiaPlacerLanding = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: PRODUCT_NAME,
-        content_category: 'Productos Digitales',
-        value: PRECIO,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: PRODUCT_NAME,
+      content_category: 'Productos Digitales',
+      value: PRECIO,
+    });
   }, []);
 
   const openCheckout = () => setIsCheckoutOpen(true);

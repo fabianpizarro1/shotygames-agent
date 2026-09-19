@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Gift, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import comboParejasBanner from "@/assets/combo-parejas-banner.webp";
+import { trackViewContent } from "@/lib/pixels";
 
 /**
  * Banda de "Promo de esta semana": una sola promo destacada, arriba del
@@ -33,14 +34,10 @@ const PromoBanner = () => {
   const irAlCombo = () => {
     // Igual que las tarjetas de producto: el pixel marca la intención acá,
     // el InitiateCheckout real lo dispara la landing cuando abre el checkout.
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "ViewContent", {
-        content_name: "Combo Parejas",
-        content_type: "product",
-        value: PRECIO,
-        currency: "USD",
-      });
-    }
+    trackViewContent({
+      content_name: "Combo Parejas",
+      value: PRECIO,
+    });
     navigate(RUTA);
   };
 

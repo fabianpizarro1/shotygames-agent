@@ -54,6 +54,7 @@ import testimonial5 from "@/assets/testimonial-5.jpg";
 import testimonial6 from "@/assets/testimonial-6.jpg";
 import torreNormalUpsellThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torrePicanteUpsellThumb from "@/assets/thumbs/torre-picante.webp";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 /**
  * Landing del COMBO PAREJAS ($35).
@@ -112,14 +113,11 @@ const ComboParejasLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "ViewContent", {
-        content_name: productName,
-        content_category: "Combos",
-        value: productPrice,
-        currency: "USD",
-      });
-    }
+    trackViewContent({
+      content_name: productName,
+      content_category: "Combos",
+      value: productPrice,
+    });
   }, []);
 
   // La barra sticky aparece recién cuando el usuario pasó el hero: antes es
@@ -132,14 +130,11 @@ const ComboParejasLanding = () => {
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "InitiateCheckout", {
-        content_name: productName,
-        content_type: "product",
-        value: productPrice,
-        currency: "USD",
-      });
-    }
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: "Combos",
+      value: productPrice,
+    });
     setCheckoutOpen(true);
   };
 

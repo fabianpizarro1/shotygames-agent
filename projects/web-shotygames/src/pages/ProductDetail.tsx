@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, ArrowLeft, ShoppingCart } from "lucide-react";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 import torreNormal from "@/assets/torre-normal-brillo.webp";
 import torrePicante from "@/assets/torre-picante.jpg";
@@ -141,25 +142,19 @@ const ProductDetail = () => {
   }
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: product.name,
-        content_category: 'Juegos de Mesa',
-        value: product.price,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: product.name,
+      content_category: 'Juegos de Mesa',
+      value: product.price,
+    });
   }, [product.name, product.price]);
 
   const handleBuy = () => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: product.name,
-        content_category: 'Juegos de Mesa',
-        value: product.price,
-        currency: 'USD',
-      });
-    }
+    trackInitiateCheckout({
+      content_name: product.name,
+      content_category: 'Juegos de Mesa',
+      value: product.price,
+    });
     const message = encodeURIComponent(`Hola! Quiero comprar ${product.name} - $${product.price}`);
     window.open(`https://wa.me/593987654321?text=${message}`, '_blank');
   };

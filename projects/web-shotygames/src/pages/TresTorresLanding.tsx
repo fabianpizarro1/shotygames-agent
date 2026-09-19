@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 // OJO: no usar combo-torres.webp — esa imagen tiene impreso "$45" (precio
 // viejo, el actual es $49). Se usan fotos sin precio impreso para evitar
@@ -388,26 +389,20 @@ const TresTorresLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "ViewContent", {
-        content_name: "Las 3 Torres de Shots",
-        content_category: "Juegos de Mesa",
-        value: 49,
-        currency: "USD",
-      });
-    }
+    trackViewContent({
+      content_name: "Las 3 Torres de Shots",
+      content_category: "Juegos de Mesa",
+      value: 49,
+    });
   }, []);
 
   const abrirCheckout = (plan: Plan) => {
     setPlanActivo(plan);
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "InitiateCheckout", {
-        content_name: plan.nombre,
-        content_category: "Juegos de Mesa",
-        value: plan.precio,
-        currency: "USD",
-      });
-    }
+    trackInitiateCheckout({
+      content_name: plan.nombre,
+      content_category: "Juegos de Mesa",
+      value: plan.precio,
+    });
     setCheckoutOpen(true);
   };
 

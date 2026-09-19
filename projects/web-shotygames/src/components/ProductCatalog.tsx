@@ -10,6 +10,7 @@ import cartasPartyshots from "@/assets/cartas-partyshots.jpg";
 import emparejadosPortada from "@/assets/emparejados-portada.jpg";
 import dadosDigitalesPrincipal from "@/assets/dados-digitales-principal.webp";
 import dadosDelPlacer from "@/assets/dados-del-placer.webp";
+import { trackInitiateCheckout } from "@/lib/pixels";
 
 const physicalProducts = [{
   id: "torre-normal",
@@ -145,10 +146,14 @@ const ProductCatalog = () => {
   };
   
   const handleBuy = (productName: string, productPrice: number, productImage: string, productId: string) => {
-    // Meta Pixel - InitiateCheckout event
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout');
-    }
+    // Antes esto disparaba fbq('track', 'InitiateCheckout') sin datos —
+    // productName/productPrice ya estaban en scope y sin usar. Se completa
+    // acá de paso al agregar el equivalente de TikTok.
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
     const upsells = getUpsellsForProduct(productId);
     setSelectedProduct({ 
       name: productName, 

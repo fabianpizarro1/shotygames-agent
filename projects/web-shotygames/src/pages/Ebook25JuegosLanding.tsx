@@ -7,6 +7,7 @@ import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutMod
 import portadaEbook from "@/assets/ebook-25-juegos-portada.webp";
 import ejemploJuego from "@/assets/ebook-25-juegos-ejemplo.webp";
 import Seo from "@/components/Seo";
+import { trackViewContent } from "@/lib/pixels";
 
 const PRECIO = 4.90;
 const PRECIO_ANTERIOR = 12.99;
@@ -26,14 +27,11 @@ const Ebook25JuegosLanding = () => {
   }, []);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: PRODUCT_NAME,
-        content_category: 'Productos Digitales',
-        value: PRECIO,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: PRODUCT_NAME,
+      content_category: 'Productos Digitales',
+      value: PRECIO,
+    });
   }, []);
 
   const scrollToModes = () => {

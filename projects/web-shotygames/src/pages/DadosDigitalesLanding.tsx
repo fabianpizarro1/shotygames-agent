@@ -18,6 +18,7 @@ import dadosImg8 from "@/assets/dados-digitales-8.webp";
 import dadosImg9 from "@/assets/dados-digitales-9.webp";
 import dadosPreview1 from "@/assets/dados-preview-1.webp";
 import dadosPreview2 from "@/assets/dados-preview-2.webp";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 const DadosDigitalesLanding = () => {
   const productName = "Dados Digitales de Posiciones";
@@ -34,25 +35,19 @@ const DadosDigitalesLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: productName,
-        content_category: 'Juegos Digitales',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: productName,
+      content_category: 'Juegos Digitales',
+      value: productPrice,
+    });
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: productName,
-        content_category: 'Juegos Digitales',
-        value: productPrice,
-        currency: 'USD'
-      });
-    }
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: 'Juegos Digitales',
+      value: productPrice,
+    });
     setCheckoutOpen(true);
   };
 

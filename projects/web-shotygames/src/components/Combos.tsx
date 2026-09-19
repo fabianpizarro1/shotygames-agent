@@ -9,6 +9,7 @@ import comboParejasImg from "@/assets/combo-parejas-banner.webp";
 import comboParejasThumb from "@/assets/thumbs/combo-parejas-flatlay.webp";
 import torreNormalThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torrePicanteThumb from "@/assets/thumbs/torre-picante.webp";
+import { trackInitiateCheckout } from "@/lib/pixels";
 
 /**
  * Sección de combos de la home.
@@ -83,14 +84,10 @@ const Combos = () => {
   const [comboActivo, setComboActivo] = useState<Combo | null>(null);
 
   const comprar = (combo: Combo) => {
-    if (typeof (window as any).fbq !== "undefined") {
-      (window as any).fbq("track", "InitiateCheckout", {
-        content_name: combo.nombre,
-        content_type: "product",
-        value: combo.precio,
-        currency: "USD",
-      });
-    }
+    trackInitiateCheckout({
+      content_name: combo.nombre,
+      value: combo.precio,
+    });
     setComboActivo(combo);
     setCheckoutOpen(true);
   };

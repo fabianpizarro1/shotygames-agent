@@ -32,6 +32,7 @@ import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 const TorrePicanteLanding = () => {
   const productName = "Torre de Shots Picante";
@@ -50,25 +51,19 @@ const TorrePicanteLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
     setCheckoutOpen(true);
   };
 

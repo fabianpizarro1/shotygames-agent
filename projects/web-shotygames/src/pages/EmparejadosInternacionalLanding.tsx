@@ -15,30 +15,25 @@ import productImage2 from "@/assets/emparejados-prod-2.webp";
 import productImage3 from "@/assets/emparejados-prod-3.webp";
 import productImage4 from "@/assets/emparejados-prod-4.webp";
 import ebookImage from "@/assets/ebook-30-posiciones.webp";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 const HOTMART_URL = "https://pay.hotmart.com/V103157355N?checkoutMode=10";
 
 const EmparejadosInternacionalLanding = () => {
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: 'Emparejados Internacional',
-        content_category: 'Juegos de Cartas',
-        value: 3.90,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: 'Emparejados Internacional',
+      content_category: 'Juegos de Cartas',
+      value: 3.90,
+    });
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof window !== 'undefined' && (window as any).fbq) {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: 'Emparejados Internacional',
-        content_category: 'Juegos de Cartas',
-        value: 3.90,
-        currency: 'USD'
-      });
-    }
+    trackInitiateCheckout({
+      content_name: 'Emparejados Internacional',
+      content_category: 'Juegos de Cartas',
+      value: 3.90,
+    });
     window.open(HOTMART_URL, '_blank');
   };
 

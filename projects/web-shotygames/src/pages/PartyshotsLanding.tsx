@@ -21,6 +21,7 @@ import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 const PartyshotsLanding = () => {
   const navigate = useNavigate();
@@ -37,25 +38,19 @@ const PartyshotsLanding = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
     setCheckoutOpen(true);
   };
 

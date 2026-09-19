@@ -31,6 +31,7 @@ import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { LazyVideo } from "@/components/LazyVideo";
 import { useRegaloDeHoy } from "@/hooks/useRegaloDeHoy";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
 // Creativos del set de septiembre 2026. A diferencia de la landing original,
 // acá el copy de la mitad de arriba va QUEMADO EN LA IMAGEN: cada pieza es un
@@ -124,25 +125,19 @@ const TorreParejasV2Landing = () => {
   }, [shouldOpenCheckout, setShouldOpenCheckout]);
 
   useEffect(() => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'ViewContent', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackViewContent({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
   }, []);
 
   const handleBuyClick = () => {
-    if (typeof (window as any).fbq !== 'undefined') {
-      (window as any).fbq('track', 'InitiateCheckout', {
-        content_name: productName,
-        content_category: 'Juegos de Mesa',
-        value: productPrice,
-        currency: 'USD',
-      });
-    }
+    trackInitiateCheckout({
+      content_name: productName,
+      content_category: 'Juegos de Mesa',
+      value: productPrice,
+    });
     setCheckoutOpen(true);
   };
 

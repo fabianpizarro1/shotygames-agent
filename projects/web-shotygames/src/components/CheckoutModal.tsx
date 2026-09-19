@@ -19,6 +19,7 @@ import torreNormalImg from "@/assets/thumbs/torre-normal-brillo.webp";
 import torrePicanteImg from "@/assets/thumbs/torre-picante.webp";
 import torreParejasImg from "@/assets/thumbs/torre-parejas.webp";
 import { Gift, Truck, ShoppingBag, CreditCard, Banknote } from "lucide-react";
+import { trackPlaceAnOrder } from "@/lib/pixels";
 
 interface UpsellConfig {
   id: 'torreNormal' | 'torrePicante' | 'torreParejas' | 'enganchados' | 'emparejados' | 'dadosPlacer';
@@ -489,23 +490,20 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
         throw new Error(`El webhook de pedidos respondió ${respuesta.status}`);
       }
 
-      // Meta Pixel - Lead
+      // Meta Pixel (Lead) + TikTok Pixel (PlaceAnOrder)
       // El Purchase del navegador se sacó de acá (2026-08-19) — mandaba señal
       // falsa al completar el checkout, sin esperar confirmación de pago real
       // (~20-22% de los pedidos de pago mixto no se cobraban al final, ver
-      // decisions/log.md). El Purchase real ahora se manda por Conversions
-      // API cuando el pedido se confirma vendido en el Sheet oficial — ver
-      // meta-capi.js en el repo de KEPLER. Reusa el mismo idPedido como
-      // eventID, así que si algún día vuelve este Purchase, Meta deduplica
-      // solo entre pixel y CAPI.
-      if (typeof (window as any).fbq !== 'undefined') {
-        (window as any).fbq('track', 'Lead', {
-          value: getFinalTotal(metodoPagoFinal),
-          currency: 'USD',
-          content_name: productName,
-          content_type: 'product'
-        });
-      }
+      // decisions/log.md). El Purchase real de cada plataforma se manda por
+      // su propia Conversions/Events API cuando el pedido se confirma
+      // vendido en el Sheet oficial — ver meta-capi.js en el repo de KEPLER.
+      // Reusa el mismo idPedido como eventID, así que si algún día vuelve
+      // este Purchase, cada plataforma deduplica sola entre pixel y CAPI.
+      trackPlaceAnOrder({
+        content_name: productName,
+        value: getFinalTotal(metodoPagoFinal),
+        currency: 'USD',
+      });
 
       // Redirigir según método de pago
       if (metodoPagoFinal === "contraentrega") {
