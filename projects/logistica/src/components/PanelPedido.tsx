@@ -122,8 +122,11 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
         {/* ── Estado + rastreo/guía, siempre a mano ───────────────────────
             Antes esto vivía como una grilla de botones al final de un panel
             largo — para cambiar el estado o abrir el PDF había que bajar
-            todo. Ahora queda pegado arriba, sin scroll de por medio. */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+            todo. Ahora queda pegado arriba, sin scroll de por medio.
+            Rastreo y guía son solo ícono: como texto ("Rastrear en
+            SERVIENTREGA ↗") ocupaban casi todo el ancho de la columna
+            angosta y empujaban el desplegable a otra línea. */}
+        <div className="mt-3 flex items-center gap-2">
           <select
             value=""
             disabled={guardando !== null}
@@ -131,7 +134,7 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
               const literal = e.target.value;
               if (literal) guardar(literal, { estado: literal });
             }}
-            className="pulsable min-h-9 max-w-full rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-2.5 text-xs text-[var(--color-texto-suave)] outline-none disabled:opacity-50"
+            className="pulsable min-h-9 min-w-0 flex-1 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-2.5 text-xs text-[var(--color-texto-suave)] outline-none disabled:opacity-50"
           >
             <option value="" disabled>
               {guardando ? 'Actualizando…' : `Estado: ${p.etiquetaEstado}`}
@@ -150,9 +153,15 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           </select>
 
           {rastreo && (
-            <Enlace href={rastreo}>Rastrear en {p.transportadora}</Enlace>
+            <IconoEnlace href={rastreo} etiqueta={`Rastrear en ${p.transportadora}`}>
+              📍
+            </IconoEnlace>
           )}
-          {tr?.pdf && <Enlace href={tr.pdf}>Ver la guía (PDF)</Enlace>}
+          {tr?.pdf && (
+            <IconoEnlace href={tr.pdf} etiqueta="Ver la guía (PDF)">
+              📄
+            </IconoEnlace>
+          )}
         </div>
 
         {p.estadoSugerido && (
@@ -462,15 +471,28 @@ function Fila({ etiqueta, valor, nota }: { etiqueta: string; valor: string; nota
   );
 }
 
-function Enlace({ href, children }: { href: string; children: React.ReactNode }) {
+/** Enlace que abre en otra pestaña, reducido a un ícono — para el encabezado,
+ * donde el texto ("Rastrear en SERVIENTREGA ↗") ocupaba casi todo el ancho
+ * de la columna angosta. */
+function IconoEnlace({
+  href,
+  etiqueta,
+  children,
+}: {
+  href: string;
+  etiqueta: string;
+  children: React.ReactNode;
+}) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="pulsable inline-flex min-h-11 items-center rounded-lg border border-[var(--color-borde)] px-3.5 text-sm text-[var(--color-texto-suave)]"
+      title={etiqueta}
+      aria-label={etiqueta}
+      className="pulsable grid size-9 shrink-0 place-items-center rounded-lg border border-[var(--color-borde)] text-base"
     >
-      {children} ↗
+      {children}
     </a>
   );
 }
