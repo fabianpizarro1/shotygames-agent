@@ -22,6 +22,16 @@ const INTERVALO_MS = 8000;
  * vez de seguir empujando el resto del chat hacia arriba. */
 const ALTO_MAXIMO_CUADRO = 208;
 
+/** Curados para este chat, no una librería entera: los que ya aparecen en
+ * las plantillas (📦 🚚 💵 🎉 ✅) más los básicos de una conversación de
+ * venta/postventa. Van por Evolution, no por wa.me — acá SÍ llegan al
+ * teléfono del cliente (ver whatsapp-chat.ts). */
+const EMOJIS = [
+  '😊', '😁', '😅', '🙏', '👍', '👋', '🤝', '❤️',
+  '📦', '🚚', '📍', '📄', '💵', '🎉', '🎁', '📸',
+  '✅', '❌', '⚠️', '🔥', '😢', '😉', '🙌', '💪',
+];
+
 /** Una plantilla ya resuelta a texto — ChatPedido no sabe de dónde salió
  * (pedido de logística o candidato de recuperación), solo la manda. */
 export interface PlantillaChat {
@@ -66,9 +76,27 @@ export function ChatPedido({
   // Qué plantilla llenó el cuadro por última vez — se usa para avisar arriba
   // cuál se mandó, y se limpia apenas se toca el texto a mano.
   const [plantillaActiva, setPlantillaActiva] = useState<string | null>(null);
+  const [mostrarEmoji, setMostrarEmoji] = useState(false);
   const listaRef = useRef<HTMLDivElement>(null);
   const ultimoId = useRef<string | null>(null);
   const cuadroRef = useRef<HTMLTextAreaElement>(null);
+
+  /** Inserta en la posición del cursor, no al final — para poder meter un
+   * emoji en medio de una frase que ya se estaba escribiendo. */
+  function insertarEmoji(emoji: string) {
+    const el = cuadroRef.current;
+    const inicio = el?.selectionStart ?? texto.length;
+    const fin = el?.selectionEnd ?? texto.length;
+    const nuevo = texto.slice(0, inicio) + emoji + texto.slice(fin);
+    setTexto(nuevo);
+    // El foco y la posición del cursor se restauran después del re-render,
+    // si no el próximo carácter que escriba cae al final del texto.
+    requestAnimationFrame(() => {
+      el?.focus();
+      const pos = inicio + emoji.length;
+      el?.setSelectionRange(pos, pos);
+    });
+  }
 
   // El cuadro crece con el texto en vez de quedar fijo en una línea — una
   // plantilla larga se veía toda amontonada y recortada. Crece hasta
@@ -97,6 +125,7 @@ export function ChatPedido({
     setError(null);
     setTexto('');
     setPlantillaActiva(null);
+    setMostrarEmoji(false);
     cargar();
     const id = setInterval(cargar, INTERVALO_MS);
     return () => clearInterval(id);
@@ -132,6 +161,7 @@ export function ChatPedido({
       if (plantillaActiva) onPlantillaEnviada?.(plantillaActiva);
       setTexto('');
       setPlantillaActiva(null);
+      setMostrarEmoji(false);
       await cargar();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error enviando el WhatsApp');
@@ -221,7 +251,45 @@ export function ChatPedido({
         </div>
       )}
 
+      {/* Selector de emoji: en flujo normal, no `position: absolute` — el
+          contenedor del chat tiene `overflow-hidden` (por las esquinas
+          redondeadas) y un panel flotante que se abre hacia arriba quedaba
+          recortado, invisible. Como franja fija empuja el layout en vez de
+          flotar, igual que la fila de plantillas de arriba.
+          Va por Evolution, no por wa.me — acá los emoji SÍ le llegan al
+          cliente (a diferencia del botón de plantillas de wa.me, que los
+          tiene que sacar — ver plantillas.ts). Sin librería: los que ya se
+          usan en las plantillas más los básicos de una charla de venta. */}
+      {mostrarEmoji && (
+        <div className="animar-aparecer grid grid-cols-8 gap-0.5 border-t border-[var(--color-borde)] bg-[var(--color-superficie)] p-2">
+          {EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onClick={() => insertarEmoji(emoji)}
+              className="pulsable grid size-7 place-items-center rounded-md text-lg"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-end gap-2 border-t border-[var(--color-borde)] bg-[var(--color-superficie)] p-2">
+        <button
+          type="button"
+          onClick={() => setMostrarEmoji((v) => !v)}
+          aria-label={mostrarEmoji ? 'Cerrar emojis' : 'Insertar emoji'}
+          aria-expanded={mostrarEmoji}
+          className={`pulsable grid size-11 shrink-0 place-items-center rounded-lg border text-lg ${
+            mostrarEmoji
+              ? 'border-[var(--color-verde)]/50 bg-[var(--color-verde-tenue)]'
+              : 'border-[var(--color-borde)] bg-[var(--color-fondo)]'
+          }`}
+        >
+          😊
+        </button>
+
         <textarea
           ref={cuadroRef}
           value={texto}
