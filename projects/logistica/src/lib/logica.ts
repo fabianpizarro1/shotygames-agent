@@ -14,7 +14,7 @@ import { diasEntre } from './fechas';
 import { norm, type Fase } from './negocios';
 import type { EstadoSheet } from './estados';
 import type { Alerta, Base, Pedido, Resumen, Tracking } from './tipos';
-import { momentoDelPaquete, prediccion } from './momento';
+import { diasEnAgencia, momentoDelPaquete, prediccion } from './momento';
 
 /** Qué pasó al preguntarle a DROPI por la orden de este pedido. */
 export type EstadoConsulta = 'ok' | 'no-existe' | 'fallo' | 'sin-orden';
@@ -130,6 +130,13 @@ function ultimaSenal(t: Tracking | null): string | null {
  * Por qué este pedido pide atención. El orden importa: lo primero de la lista
  * es lo que se muestra en la tarjeta cerrada.
  */
+/**
+ * Servientrega suele devolver el paquete al remitente si el cliente no lo
+ * retira en unos 7 días de estar en la agencia — no es una regla que
+ * publiquen, es lo que Fabián observa en la operación día a día (2026-09-21).
+ */
+const DIAS_ANTES_DE_DEVOLUCION = 7;
+
 function calcularAlertas(
   b: Base,
   p: {
@@ -139,6 +146,7 @@ function calcularAlertas(
     estadoSugerido: string | null;
     consulta: EstadoConsulta;
     momento: import('./momento').Momento;
+    diasEnAgencia: number | null;
   }
 ): Alerta[] {
   const a: Alerta[] = [];
@@ -181,11 +189,27 @@ function calcularAlertas(
   // casos reales (2026-09-03) solo 1 decía en la dirección que el retiro era
   // intencional y 4 habían llegado ahí por una novedad; los otros 9 no se
   // podían distinguir. Marcarlos NOVEDAD en el Sheet habría sido inventar.
+  //
+  // Con los días contados (2026-09-21) la alerta escala sola a rojo cerca del
+  // plazo de devolución — sin el número, "esperando que lo retire" se lee
+  // igual el primer día que el sexto, y el sexto es cuando hay que insistir.
   if (p.momento === 'en-agencia') {
-    a.push({
-      nivel: 'ambar',
-      texto: 'En agencia esperando que el cliente lo retire — si no va, se devuelve',
-    });
+    const dias = p.diasEnAgencia;
+    if (dias !== null) {
+      const faltan = DIAS_ANTES_DE_DEVOLUCION - dias;
+      a.push({
+        nivel: faltan <= 2 ? 'rojo' : 'ambar',
+        texto:
+          faltan > 0
+            ? `En agencia hace ${dias} día${dias === 1 ? '' : 's'} — Servientrega suele devolverlo a los ${DIAS_ANTES_DE_DEVOLUCION}, quedan ${faltan}`
+            : `En agencia hace ${dias} días — ya pasó el plazo típico de ${DIAS_ANTES_DE_DEVOLUCION} días, puede devolverse en cualquier momento`,
+      });
+    } else {
+      a.push({
+        nivel: 'ambar',
+        texto: 'En agencia esperando que el cliente lo retire — si no va, se devuelve',
+      });
+    }
   }
 
   if (p.estadoSugerido && norm(p.estadoSugerido) !== norm(b.estado)) {
@@ -223,6 +247,7 @@ export function armarPedido(
   // El momento se calcula antes que las alertas porque varias dependen de él.
   const parcial = { ...b, dias, diasQuieto, tracking } as Pedido;
   const momento = momentoDelPaquete(parcial);
+  const diasAgencia = diasEnAgencia(parcial);
 
   const alertas = calcularAlertas(b, {
     dias,
@@ -231,6 +256,7 @@ export function armarPedido(
     estadoSugerido,
     consulta,
     momento,
+    diasEnAgencia: diasAgencia,
   });
 
   return {
@@ -245,6 +271,7 @@ export function armarPedido(
     diasQuieto,
     tracking,
     enAgencia: momento === 'en-agencia',
+    diasEnAgencia: diasAgencia,
     estadoSugerido,
     alertas,
     prioridad: alertas.some((x) => x.nivel === 'rojo') ? 0 : alertas.length ? 1 : 2,

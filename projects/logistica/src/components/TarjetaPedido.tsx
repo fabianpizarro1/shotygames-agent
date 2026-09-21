@@ -57,6 +57,9 @@ export function TarjetaPedido({
             >
               <span className={`size-1.5 rounded-full ${est.punto}`} />
               {ETIQUETA_MOMENTO[p.momento]}
+              {/* Servientrega suele devolver cerca de los 7 días sin retiro —
+                  se ve de un vistazo, sin tener que abrir el pedido. */}
+              {p.diasEnAgencia !== null && ` · ${p.diasEnAgencia}d`}
             </span>
             <span className={`text-[11px] font-semibold ${t.color}`}>{t.nombre}</span>
 

@@ -31,6 +31,7 @@
 // ============================================================
 
 import type { Pedido, Tracking } from './tipos';
+import { aFechaLocal, diasEntre, hoyEC } from './fechas';
 import TRANSICIONES from './transiciones.json';
 
 export type Momento =
@@ -195,6 +196,28 @@ export function momentoDelPaquete(p: Pedido): Momento {
   if (ES_LLEGADA.test(mov) && nombraDestino(mov, destino)) return 'en-ciudad';
 
   return 'en-transito';
+}
+
+/**
+ * Cuántos días lleva el paquete en la agencia, o `null` si no está ahí.
+ *
+ * Servientrega suele devolver el paquete al remitente si el cliente no lo
+ * retira en unos 7 días — esto es la alarma temprana, antes de perder la
+ * venta y el flete. Mismo criterio que `momentoDelPaquete` para encontrar el
+ * movimiento de entrada (el primero, de más reciente a más viejo, que
+ * confirma que nada POSTERIOR lo sacó): reusarlo evita que un día se calcule
+ * sobre una entrada a agencia vieja mientras el momento dice otra cosa.
+ */
+export function diasEnAgencia(p: Pedido): number | null {
+  const movs = p.tracking?.movimientos ?? [];
+  const iEntroAgencia = movs.findIndex((m) => ES_EN_AGENCIA.test(norm(m.movimiento)));
+  if (iEntroAgencia < 0) return null;
+
+  const posteriores = movs.slice(0, iEntroAgencia).map((m) => norm(m.movimiento));
+  if (posteriores.some((m) => ES_SALIDA_AGENCIA.test(m))) return null;
+
+  const fechaISO = aFechaLocal(movs[iEntroAgencia].fecha);
+  return fechaISO ? diasEntre(fechaISO, hoyEC()) : null;
 }
 
 export const ETIQUETA_MOMENTO: Record<Momento, string> = {

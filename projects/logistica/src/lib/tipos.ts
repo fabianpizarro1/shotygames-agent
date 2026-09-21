@@ -139,6 +139,12 @@ export interface Pedido extends Base {
    * distinguir, por eso es un aviso y no un estado.
    */
   enAgencia: boolean;
+  /**
+   * Cuántos días lleva en esa agencia — `null` si `enAgencia` es falso.
+   * Servientrega suele devolverlo al remitente cerca de los 7 días sin que
+   * lo retiren. Ver `diasEnAgencia` en `momento.ts`.
+   */
+  diasEnAgencia: number | null;
   /** Estado que el Sheet debería tener según DROPI, si difiere del actual. */
   estadoSugerido: string | null;
   alertas: Alerta[];

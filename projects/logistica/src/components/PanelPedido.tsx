@@ -207,7 +207,11 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           titulo="Recorrido"
           extra={
             p.momento !== 'sin-datos'
-              ? `${ETIQUETA_MOMENTO[p.momento]}${tr?.fuente === 'servientrega' ? ' · según Servientrega' : ''}`
+              ? `${ETIQUETA_MOMENTO[p.momento]}${
+                  p.diasEnAgencia !== null
+                    ? ` hace ${p.diasEnAgencia} día${p.diasEnAgencia === 1 ? '' : 's'}`
+                    : ''
+                }${tr?.fuente === 'servientrega' ? ' · según Servientrega' : ''}`
               : undefined
           }
         >
