@@ -504,6 +504,20 @@ async function executeTool(toolName, input) {
 
     case 'crear_guia_dropi': {
       const r = await crearGuiaDropiYActualizar(input);
+      // A diferencia de registrar_pedido, este caso se usa para reintentar un
+      // pedido que YA está en Sheets — un fallo acá también tiene que quedar
+      // en LOG, si no la hoja no distingue "nadie lo intentó" de "DROPI lo
+      // rechazó" (pasó real con Víctor Andrés, 2026-09-21: ciudad sin CON
+      // RECAUDO habilitado, el motivo solo vivía en el chat de Telegram).
+      if (!r.ok && input.telefono) {
+        try {
+          const loc = await sheets.actualizarGuia(input.telefono, null, null, null);
+          if (loc.fila) {
+            const motivo = String(r.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
+            await sheets.escribirLog(loc.fila, `[${new Date().toISOString().slice(0, 16)}] ${motivo}`);
+          }
+        } catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
+      }
       return r.mensaje;
     }
 
@@ -559,6 +573,12 @@ async function executeTool(toolName, input) {
         const noOrderMsg = dropiOrderId
           ? `La orden de ${nombreReal} existe en DROPI (ID: ${dropiOrderId}) pero DROPI sigue sin generar la guía. Intenta de nuevo más tarde o revisa el panel de DROPI.`
           : `No existe una orden en DROPI para ${nombreReal}. Usa "crea la guía de ${nombreReal}" para crear la orden completa.`;
+        if (telefono) {
+          try {
+            const loc = await sheets.actualizarGuia(telefono, null, null, null);
+            if (loc.fila) await sheets.escribirLog(loc.fila, `[${new Date().toISOString().slice(0, 16)}] ${noOrderMsg}`);
+          } catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
+        }
         return noOrderMsg;
       }
 
