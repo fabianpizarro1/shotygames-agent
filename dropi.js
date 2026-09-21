@@ -6,6 +6,17 @@ const BASE = 'https://api.dropi.ec/api';
 const USER_ID = 11362;
 const WAREHOUSE_ID = 338;
 
+// Shotygames despacha siempre por Servientrega. Lo que casi nadie nota: el
+// catálogo de ciudades de DROPI (GET /city) carga el MISMO cantón más de una
+// vez cuando lo sirve más de una transportadora, y cada entrada trae su
+// propio `distribution_companies.distribution_company_id` — a veces con
+// nombres distintos (JOYA DE LOS SACHAS vs LA JOYA DE LOS SACHAS). Pedirle a
+// la que no es Servientrega sale rechazado con "la ciudad no tiene habilitado
+// el método de envío", aunque el nombre calce perfecto y la tarifa exista.
+// Confirmado contra el catálogo real 2026-09-21: 8 cantones cargados dos
+// veces con id de transportadora distinto, este id (2) es el de Servientrega.
+const DISTRIBUTION_COMPANY = { id: 2, name: 'SERVIENTREGA' };
+
 // Archivo donde se persiste el token (sobrevive reinicios del contenedor)
 const TOKEN_FILE = '/tmp/.dropi_token';
 
@@ -123,10 +134,15 @@ async function getCiudades() {
   _ciudades = crudas.map((c) => {
     let tarifas = c.rate_type;
     if (!Array.isArray(tarifas)) { try { tarifas = JSON.parse(tarifas || '[]'); } catch (_) { tarifas = []; } }
+    // distribution_companies viene como objeto único en el catálogo real
+    // (nunca se vio array), pero por si acaso se cubren los dos casos.
+    const dc = c.distribution_companies;
+    const distribCompanyId = Array.isArray(dc) ? dc[0]?.distribution_company_id : dc?.distribution_company_id;
     return {
       nombre: c.name,
       provincia: c.department?.name || '',
       tarifas,
+      distribCompanyId: distribCompanyId ?? null,
       nNombre: normCiudad(c.name),
       nProvincia: normCiudad(c.department?.name)
     };
@@ -166,25 +182,37 @@ const claveFonetica = (v) => normCiudad(v)
 const soloDigitos = (v) => v.replace(/\D/g, '');
 const ordenarLetras = (v) => v.replace(/[0-9]/g, '').split('').sort().join('');
 
+// DROPI carga el mismo cantón con y sin artículo inicial cuando lo hace por
+// separado para cada transportadora (LA JOYA DE LOS SACHAS / JOYA DE LOS
+// SACHAS, EL TAMBO / TAMBO, LA ESTANCILLA / ESTANCILLA...). No es una falta
+// de ortografía — claveFonetica() no lo agarra porque sobra/falta una
+// palabra entera, no una letra.
+const quitarArticulo = (v) => v.replace(/^(LA |EL |LOS |LAS )/, '');
+
 async function variantesCiudad(ciudad, provincia, rateType) {
   try {
     const todas = await getCiudades();
     const nProv = normCiudad(provincia);
     const nCiudad = normCiudad(ciudad);
+    const nCiudadSinArt = quitarArticulo(nCiudad);
     const clave = claveFonetica(ciudad);
     const anagrama = ordenarLetras(clave);
     const digitos = soloDigitos(clave);
 
-    return todas
+    const variantes = todas
       .filter((c) => c.tarifas.includes(rateType))
       .filter((c) => !nProv || c.nProvincia === nProv)
       .filter((c) => c.nNombre !== nCiudad)
       .filter((c) => {
+        if (quitarArticulo(c.nNombre) === nCiudadSinArt) return true;
         const k = claveFonetica(c.nombre);
         if (k === clave) return true;
         return ordenarLetras(k) === anagrama && soloDigitos(k) === digitos;
-      })
-      .map((c) => ({ ciudad: c.nombre, provincia: c.provincia }));
+      });
+    // La del transportista que se está usando primero — es la que en teoría
+    // debería aceptar; las demás quedan como último recurso.
+    variantes.sort((a, b) => (b.distribCompanyId === DISTRIBUTION_COMPANY.id ? 1 : 0) - (a.distribCompanyId === DISTRIBUTION_COMPANY.id ? 1 : 0));
+    return variantes.map((c) => ({ ciudad: c.nombre, provincia: c.provincia }));
   } catch (e) {
     console.error('variantesCiudad:', e.message);
     return [];
@@ -219,6 +247,7 @@ const ordenarPorPrioridad = (lista) => [...lista].sort((a, b) => {
 async function resolverCiudad(ciudad, provincia, rateType) {
   const nCiudad = normCiudad(ciudad);
   if (!nCiudad) return null;
+  const nCiudadSinArt = quitarArticulo(nCiudad);
 
   try {
     const todas = await getCiudades();
@@ -242,7 +271,15 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     // ciudades". Ahora se devuelven TODOS ordenados por prioridad y crearOrden
     // reintenta con los siguientes si el primero no tiene ruta.
     const exactas = ordenarPorPrioridad(ambito.filter((c) => c.nNombre === nCiudad));
-    let candidatos = exactas;
+    // Mismo cantón cargado con y sin artículo inicial, normalmente porque
+    // cada entrada es de una transportadora distinta (ver DISTRIBUTION_COMPANY).
+    // Se suma a las exactas SIEMPRE, no solo cuando exactas está vacío: si
+    // "LA JOYA DE LOS SACHAS" matchea exacto pero es de otra transportadora,
+    // "JOYA DE LOS SACHAS" (la de Servientrega) tiene que seguir en carrera.
+    const sinArticulo = ordenarPorPrioridad(
+      ambito.filter((c) => c.nNombre !== nCiudad && quitarArticulo(c.nNombre) === nCiudadSinArt)
+    );
+    let candidatos = [...exactas, ...sinArticulo];
     if (!candidatos.length) {
       const parciales = ambito.filter((c) => c.nNombre.startsWith(nCiudad) || nCiudad.startsWith(c.nNombre));
       // Un parcial es otro NOMBRE (SAN MIGUEL vs SAN MIGUEL DE BOLIVAR): ahí
@@ -259,6 +296,15 @@ async function resolverCiudad(ciudad, provincia, rateType) {
       console.log(`resolverCiudad: "${ciudad}" no está en el catálogo con tarifa ${rateType}`);
       return null;
     }
+    // Entre los que quedan, la del transportista que se va a usar manda —
+    // DROPI carga el mismo cantón una vez por transportadora y solo la suya
+    // tiene ruta real, aunque el nombre y la tarifa calcen en las demás
+    // (caso real: LA JOYA DE LOS SACHAS es de otra transportadora, Servientrega
+    // es JOYA DE LOS SACHAS sin el "LA" — DROPI la rechazó con "la ciudad no
+    // tiene habilitado el método de envío" habiendo pasado todos los filtros
+    // de nombre y tarifa). Si ninguna trae el dato, no se descarta nada.
+    const delTransportista = candidatos.filter((c) => c.distribCompanyId === DISTRIBUTION_COMPANY.id);
+    if (delTransportista.length) candidatos = delTransportista;
     if (candidatos.length > 1) {
       console.log(`resolverCiudad: "${ciudad}" existe en ${candidatos.length} provincias (${candidatos.map((c) => c.provincia).join(', ')}) — se intenta en ese orden`);
     }
@@ -595,7 +641,7 @@ async function crearOrden(pedido) {
     type: 'FINAL_ORDER',
     rate_type: rateType,
     products: productos,
-    distributionCompany: { id: 2, name: 'SERVIENTREGA' },
+    distributionCompany: DISTRIBUTION_COMPANY,
     type_service: 'normal',
     zip_code: null,
     colonia: '',
@@ -634,11 +680,17 @@ async function crearOrden(pedido) {
 
   let res = await postOrden(body);
 
-  // El catálogo tiene el mismo cantón cargado con dos ortografías y solo una
-  // tiene ruta real: la otra pasa todos los filtros y muere acá, con la orden
-  // sin crear. Antes de darla por perdida se reintenta con las variantes del
-  // MISMO nombre en la misma provincia (ver variantesCiudad).
-  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado/i
+  // El catálogo tiene el mismo cantón cargado más de una vez (una entrada
+  // por transportadora, a veces con nombre distinto) y solo una tiene ruta
+  // real: la otra pasa todos los filtros —nombre, provincia, tarifa— y
+  // muere acá, con la orden sin crear. Antes de darla por perdida se
+  // reintenta con las variantes del mismo cantón (ver variantesCiudad). Red
+  // de seguridad además de resolverCiudad ya preferir la del transportista:
+  // si el catálogo no trae distribution_company_id para algún cantón nuevo,
+  // esto lo agarra igual. "no tiene habilitado el método de envío" es el
+  // rechazo real que dio DROPI con Víctor Andrés / LA JOYA DE LOS SACHAS
+  // (2026-09-21) — antes no estaba en la lista y el reintento nunca se disparaba.
+  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado|no tiene habilitado el m[eé]todo de env[ií]o/i
     .test(String(d?.message || d?.data_error || d?.error || ''));
 
   if (!traeId(res.data) && esErrorDeCiudad(res.data)) {
