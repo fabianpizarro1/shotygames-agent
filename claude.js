@@ -387,108 +387,115 @@ function normalizarPago(input) {
   };
 }
 
+// Compartida entre el bot OPS (Telegram) y cualquier otro canal (ej. Nicole en
+// WhatsApp) que necesite registrar un pedido Y crear su guía DROPI con la
+// misma lógica probada: combo parejas, normalización de pago, freno de
+// seguridad SIN RECAUDO, log de errores. Un solo lugar, no se duplica.
+async function registrarPedidoConGuia(input) {
+  // Combo Parejas: Torre Parejas + Dados + Emparejados juntos → marcar en NOTAS
+  // aunque en Sheets cada columna (PAR/DADOS/EMPA) se siga llenando por separado.
+  // Si el modelo ya venía escribiendo "COMBO PAREJAS" en notas por su cuenta,
+  // no lo duplica (se vio "COMBO PAREJAS — COMBO PAREJAS" en pedidos reales).
+  const esComboParejas = (parseInt(input.parejas) || 0) > 0
+    && (parseInt(input.dados) || 0) > 0
+    && (parseInt(input.emparejados) || 0) > 0;
+  const yaMarcado = (input.notas || '').toUpperCase().includes('COMBO PAREJAS');
+  const inputBase = esComboParejas && !yaMarcado
+    ? { ...input, notas: ['COMBO PAREJAS', input.notas].filter(Boolean).join(' — ') }
+    : input;
+
+  // ANTICIPO / SALDO / CUENTA se recalculan acá — lo que haya mandado el
+  // modelo en "saldo" se descarta. Ver normalizarPago().
+  const pago = normalizarPago(inputBase);
+  const inputConNotas = pago.input;
+  console.log('registrar_pedido pago:', JSON.stringify({
+    pvp: pago.pvp, anticipo: pago.anticipo, saldo: pago.saldo,
+    cuenta: inputConNotas.cuenta, recaudo: pago.saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO'
+  }));
+  const avisoPago = pago.avisos.length ? `\n⚠️ ${pago.avisos.join(' ')}` : '';
+
+  const appendRes = await sheets.appendPedido(inputConNotas);
+  // "PEDIDOS!A611:AH611" → 611. Sirve para dejar el motivo del fallo en la
+  // fila del pedido: el mensaje de WhatsApp lo redacta el modelo y se
+  // pierde en el chat, la celda queda.
+  const filaPedido = parseInt(String(appendRes?.updatedRange || '').match(/[A-Z]+(\d+)/)?.[1]) || null;
+
+  // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
+  // SEGUNDA llamada a crear_guia_dropi reextrayendo los mismos datos del
+  // mensaje — cuando se le olvidaba, el pedido quedaba registrado en Sheets
+  // sin guía ni orden en DROPI (bug reportado 2026-08-21: "no me genera la
+  // guía, solo me registra el pedido"). Ahora, si es SERVIENTREGA y trae
+  // producto físico, la guía se crea automáticamente acá mismo con los
+  // datos que ya se usaron para registrar — un solo lugar, un solo extract.
+  const transportadora = (input.transportadora || 'SERVIENTREGA').toUpperCase();
+  // FISICOS decide si hay algo que despachar (emparejados solo es digital y
+  // no genera guía). CAMPOS_GUIA es lo que VIAJA a DROPI, y ahí emparejados
+  // sí entra: desde 2026-09-13 es un producto propio en la guía.
+  const CAMPOS_FISICOS = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
+  const CAMPOS_GUIA = [...CAMPOS_FISICOS, 'emparejados'];
+  const tieneFisico = CAMPOS_FISICOS.some((c) => (parseInt(input[c]) || 0) > 0);
+
+  if (transportadora !== 'SERVIENTREGA' || !tieneFisico) {
+    return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.${avisoPago}`;
+  }
+  if (!input.direccion) {
+    return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.${avisoPago}`;
+  }
+
+  // Freno duro: un pedido que vale plata pero no tiene ni anticipo cobrado
+  // ni saldo por cobrar no puede existir. Si sale una guía así, se entrega
+  // sin cobrar nada. Antes de despachar eso, se para y se pregunta.
+  if (pago.pvp > 0 && pago.saldo === 0 && pago.anticipo === 0) {
+    return `✅ Pedido registrado para ${input.nombre}, pero NO creé la guía en DROPI.\n\n` +
+      `⚠️ El pedido vale $${pago.pvp.toFixed(2).replace('.', ',')} pero quedó sin anticipo cobrado y sin saldo por cobrar — así la guía saldría SIN RECAUDO y se entregaría sin cobrar.\n\n` +
+      `Decime cuál es: ¿ya pagó (a qué cuenta) o se cobra contra entrega?`;
+  }
+
+  const saldoNum = pago.saldo;
+  // Las cantidades se copian por lista, no campo por campo: cuando estaban
+  // enumeradas a mano se quedó "emparejados" afuera y las guías de Torre
+  // Parejas + Dados + Emparejados salían sin el Emparejados — el paquete se
+  // arma leyendo la guía, así que se despachaba incompleto.
+  const cantidades = Object.fromEntries(CAMPOS_GUIA.map((c) => [c, inputConNotas[c]]));
+  const guiaInput = {
+    nombre: inputConNotas.nombre,
+    telefono: inputConNotas.telefono,
+    ciudad: inputConNotas.ciudad,
+    direccion: inputConNotas.direccion,
+    ...cantidades,
+    // Números crudos, no los strings con "$" que van a Sheets.
+    saldo: pago.saldo,
+    // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
+    pvp_total: saldoNum > 0 ? undefined : pago.anticipo,
+    notas: inputConNotas.notas
+  };
+  const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
+
+  // Una guía incompleta se despacha igual: el aviso tiene que sobrevivir al
+  // chat. La celda queda; el mensaje de WhatsApp se pierde.
+  if (guiaResult.ok && guiaResult.aviso && filaPedido) {
+    const nota = String(guiaResult.aviso).replace(/\*/g, '').replace(/\n+/g, ' ').trim().slice(0, 480);
+    try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${nota}`); }
+    catch (e) { console.error('No se pudo escribir el aviso en LOG:', e.message); }
+  }
+
+  // Motivo crudo de DROPI en la columna LOG, tal cual vino.
+  if (!guiaResult.ok && filaPedido) {
+    const motivo = String(guiaResult.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
+    try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${motivo}`); }
+    catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
+  }
+
+  const recaudoStr = pago.saldo > 0
+    ? `💵 CON RECAUDO — cobrar $${pago.saldo.toFixed(2).replace('.', ',')} al entregar`
+    : `✅ SIN RECAUDO — ya está pagado (${inputConNotas.cuenta})`;
+  return `✅ Pedido registrado.\n${recaudoStr}\n${guiaResult.mensaje}${avisoPago}`;
+}
+
 async function executeTool(toolName, input) {
   switch (toolName) {
-    case 'registrar_pedido': {
-      // Combo Parejas: Torre Parejas + Dados + Emparejados juntos → marcar en NOTAS
-      // aunque en Sheets cada columna (PAR/DADOS/EMPA) se siga llenando por separado.
-      // Si el modelo ya venía escribiendo "COMBO PAREJAS" en notas por su cuenta,
-      // no lo duplica (se vio "COMBO PAREJAS — COMBO PAREJAS" en pedidos reales).
-      const esComboParejas = (parseInt(input.parejas) || 0) > 0
-        && (parseInt(input.dados) || 0) > 0
-        && (parseInt(input.emparejados) || 0) > 0;
-      const yaMarcado = (input.notas || '').toUpperCase().includes('COMBO PAREJAS');
-      const inputBase = esComboParejas && !yaMarcado
-        ? { ...input, notas: ['COMBO PAREJAS', input.notas].filter(Boolean).join(' — ') }
-        : input;
-
-      // ANTICIPO / SALDO / CUENTA se recalculan acá — lo que haya mandado el
-      // modelo en "saldo" se descarta. Ver normalizarPago().
-      const pago = normalizarPago(inputBase);
-      const inputConNotas = pago.input;
-      console.log('registrar_pedido pago:', JSON.stringify({
-        pvp: pago.pvp, anticipo: pago.anticipo, saldo: pago.saldo,
-        cuenta: inputConNotas.cuenta, recaudo: pago.saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO'
-      }));
-      const avisoPago = pago.avisos.length ? `\n⚠️ ${pago.avisos.join(' ')}` : '';
-
-      const appendRes = await sheets.appendPedido(inputConNotas);
-      // "PEDIDOS!A611:AH611" → 611. Sirve para dejar el motivo del fallo en la
-      // fila del pedido: el mensaje de WhatsApp lo redacta el modelo y se
-      // pierde en el chat, la celda queda.
-      const filaPedido = parseInt(String(appendRes?.updatedRange || '').match(/[A-Z]+(\d+)/)?.[1]) || null;
-
-      // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
-      // SEGUNDA llamada a crear_guia_dropi reextrayendo los mismos datos del
-      // mensaje — cuando se le olvidaba, el pedido quedaba registrado en Sheets
-      // sin guía ni orden en DROPI (bug reportado 2026-08-21: "no me genera la
-      // guía, solo me registra el pedido"). Ahora, si es SERVIENTREGA y trae
-      // producto físico, la guía se crea automáticamente acá mismo con los
-      // datos que ya se usaron para registrar — un solo lugar, un solo extract.
-      const transportadora = (input.transportadora || 'SERVIENTREGA').toUpperCase();
-      // FISICOS decide si hay algo que despachar (emparejados solo es digital y
-      // no genera guía). CAMPOS_GUIA es lo que VIAJA a DROPI, y ahí emparejados
-      // sí entra: desde 2026-09-13 es un producto propio en la guía.
-      const CAMPOS_FISICOS = ['normal', 'picante', 'parejas', 'enganchados', 'dados'];
-      const CAMPOS_GUIA = [...CAMPOS_FISICOS, 'emparejados'];
-      const tieneFisico = CAMPOS_FISICOS.some((c) => (parseInt(input[c]) || 0) > 0);
-
-      if (transportadora !== 'SERVIENTREGA' || !tieneFisico) {
-        return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.${avisoPago}`;
-      }
-      if (!input.direccion) {
-        return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.${avisoPago}`;
-      }
-
-      // Freno duro: un pedido que vale plata pero no tiene ni anticipo cobrado
-      // ni saldo por cobrar no puede existir. Si sale una guía así, se entrega
-      // sin cobrar nada. Antes de despachar eso, se para y se pregunta.
-      if (pago.pvp > 0 && pago.saldo === 0 && pago.anticipo === 0) {
-        return `✅ Pedido registrado para ${input.nombre}, pero NO creé la guía en DROPI.\n\n` +
-          `⚠️ El pedido vale $${pago.pvp.toFixed(2).replace('.', ',')} pero quedó sin anticipo cobrado y sin saldo por cobrar — así la guía saldría SIN RECAUDO y se entregaría sin cobrar.\n\n` +
-          `Decime cuál es: ¿ya pagó (a qué cuenta) o se cobra contra entrega?`;
-      }
-
-      const saldoNum = pago.saldo;
-      // Las cantidades se copian por lista, no campo por campo: cuando estaban
-      // enumeradas a mano se quedó "emparejados" afuera y las guías de Torre
-      // Parejas + Dados + Emparejados salían sin el Emparejados — el paquete se
-      // arma leyendo la guía, así que se despachaba incompleto.
-      const cantidades = Object.fromEntries(CAMPOS_GUIA.map((c) => [c, inputConNotas[c]]));
-      const guiaInput = {
-        nombre: inputConNotas.nombre,
-        telefono: inputConNotas.telefono,
-        ciudad: inputConNotas.ciudad,
-        direccion: inputConNotas.direccion,
-        ...cantidades,
-        // Números crudos, no los strings con "$" que van a Sheets.
-        saldo: pago.saldo,
-        // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
-        pvp_total: saldoNum > 0 ? undefined : pago.anticipo,
-        notas: inputConNotas.notas
-      };
-      const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
-
-      // Una guía incompleta se despacha igual: el aviso tiene que sobrevivir al
-      // chat. La celda queda; el mensaje de WhatsApp se pierde.
-      if (guiaResult.ok && guiaResult.aviso && filaPedido) {
-        const nota = String(guiaResult.aviso).replace(/\*/g, '').replace(/\n+/g, ' ').trim().slice(0, 480);
-        try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${nota}`); }
-        catch (e) { console.error('No se pudo escribir el aviso en LOG:', e.message); }
-      }
-
-      // Motivo crudo de DROPI en la columna LOG, tal cual vino.
-      if (!guiaResult.ok && filaPedido) {
-        const motivo = String(guiaResult.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
-        try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${motivo}`); }
-        catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
-      }
-
-      const recaudoStr = pago.saldo > 0
-        ? `💵 CON RECAUDO — cobrar $${pago.saldo.toFixed(2).replace('.', ',')} al entregar`
-        : `✅ SIN RECAUDO — ya está pagado (${inputConNotas.cuenta})`;
-      return `✅ Pedido registrado.\n${recaudoStr}\n${guiaResult.mensaje}${avisoPago}`;
-    }
+    case 'registrar_pedido':
+      return registrarPedidoConGuia(input);
 
     case 'buscar_pedido':
       const pedidos = await sheets.buscarPedido(input.nombre);
@@ -908,4 +915,4 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
   return { text, updatedHistory: messages };
 }
 
-module.exports = { chat, crearGuiaDropiYActualizar };
+module.exports = { chat, crearGuiaDropiYActualizar, registrarPedidoConGuia };

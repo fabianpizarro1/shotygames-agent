@@ -504,6 +504,110 @@ async function getDropiOrderId(nombre) {
   return { dropiOrderId: m.dropiId, telefono: m.telefono, nombre: m.nombre };
 }
 
+// Para el bot de WhatsApp de clientes (Nicole en 0993154462): un cliente solo
+// puede consultar SU PROPIO pedido, nunca por nombre libre — se busca por el
+// teléfono desde el que escribe. Devuelve los más recientes primero.
+async function buscarPedidoPorTelefono(telefono) {
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID,
+    range: 'PEDIDOS!A:AJ'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const telIdx = headers.indexOf('TELEFONO');
+  if (telIdx === -1) return [];
+
+  const telBuscado = normalizarTelefono(telefono);
+  const matches = [];
+  for (let i = rows.length - 1; i >= 1 && matches.length < 5; i--) {
+    const row = rows[i];
+    if (!row || !row[telIdx]) continue;
+    if (normalizarTelefono(row[telIdx]) !== telBuscado) continue;
+    const obj = {};
+    headers.forEach((h, idx) => { if (row[idx]) obj[h] = row[idx]; });
+    matches.push(obj);
+  }
+  return matches;
+}
+
+// Busca en "PEDIDOS LOVABLE" el pedido web más reciente de este teléfono que
+// todavía no se registró como venta real (ESTADO distinto de "COMPRADO"). Es
+// lo que le da contexto a Nicole cuando el cliente responde "CONFIRMO" al
+// mensaje que le mandó el flujo n8n PEDIDOS WEB LOVABLE — sin esto, un
+// "CONFIRMO" suelto no significa nada para el modelo.
+async function buscarPedidoWebPendiente(telefono) {
+  if (!SHEETS_ID_PEDIDOS_WEB || !telefono) return null;
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+    range: 'A:Z'
+  });
+  const rows = res.data.values || [];
+  const headers = rows[0] || [];
+  const idxPedido = headers.indexOf('ID') !== -1 ? headers.indexOf('ID') : 0;
+  const idxNombre = headers.indexOf('NOMBRE');
+  const idxTel = headers.indexOf('TELEFONO');
+  const idxCiudad = headers.indexOf('CIUDAD');
+  const idxDireccion = headers.indexOf('DIRECCION');
+  const idxMetodo = headers.indexOf('METODO PAGO');
+  const idxIngreso = headers.indexOf('INGRESO');
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxTel === -1 || idxEstado === -1) return null;
+
+  const CAMPOS = { normal: 'N', picante: 'P', parejas: 'PAR', enganchados: 'ENG', dados: 'DADOS', emparejados: 'EMPA' };
+  const telBuscado = normalizarTelefono(telefono);
+
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const row = rows[i];
+    if (!row || !row[idxTel]) continue;
+    if (normalizarTelefono(row[idxTel]) !== telBuscado) continue;
+    const estado = String(row[idxEstado] || '').trim().toUpperCase();
+    if (estado === 'COMPRADO') continue; // este ya se registró, seguir buscando uno más viejo sin comprar no tiene sentido — cortar
+
+    const cantidades = {};
+    for (const [campo, header] of Object.entries(CAMPOS)) {
+      const idx = headers.indexOf(header);
+      const val = idx !== -1 ? (parseInt(row[idx]) || 0) : 0;
+      if (val > 0) cantidades[campo] = val;
+    }
+
+    return {
+      rowNum: i + 1,
+      idPedido: row[idxPedido] || '',
+      nombre: row[idxNombre] || '',
+      ciudad: row[idxCiudad] || '',
+      direccion: row[idxDireccion] || '',
+      metodoPago: row[idxMetodo] || '',
+      ingreso: row[idxIngreso] || '',
+      estado,
+      cantidades
+    };
+  }
+  return null;
+}
+
+// Marca el pedido web como COMPRADO en "PEDIDOS LOVABLE" después de que Nicole
+// lo confirmó y lo registró en PEDIDOS — evita que el mismo pedido se ofrezca
+// de nuevo o cuente como carrito abandonado.
+async function marcarPedidoWebComprado(rowNum) {
+  if (!SHEETS_ID_PEDIDOS_WEB || !rowNum) return;
+  const sheetsApi = await getSheets();
+  const res = await sheetsApi.spreadsheets.values.get({
+    spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+    range: 'A1:Z1'
+  });
+  const headers = res.data.values?.[0] || [];
+  const idxEstado = headers.indexOf('ESTADO');
+  if (idxEstado === -1) return;
+  await sheetsApi.spreadsheets.values.update({
+    spreadsheetId: SHEETS_ID_PEDIDOS_WEB,
+    range: `${idxToCol(idxEstado)}${rowNum}`,
+    valueInputOption: 'RAW',
+    resource: { values: [['COMPRADO']] }
+  });
+}
+
 // Marca la casilla AB (índice 27) como TRUE para disparar la notificación WA automática de Sheets.
 // - Con nombre: marca solo el pedido más reciente de ese cliente.
 // - Sin nombre: marca TODOS los pedidos de hoy que tengan guía generada y la casilla aún no marcada.
@@ -1300,4 +1404,4 @@ async function enriquecerReputacionDropi({ dryRun = false } = {}) {
   return resultado;
 }
 
-module.exports = { appendPedido, buscarPedido, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, getPedidosParaNotificarGuia, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, enriquecerReputacionDropi, parseMonto, idxToCol };
+module.exports = { appendPedido, buscarPedido, buscarPedidoPorTelefono, actualizarGuia, actualizarPedido, actualizarEstadoMasivo, getDropiOrderId, getPedidosHoy, registrarMovimiento, marcarNotificacionWA, getPedidosParaNotificarGuia, obtenerGuiaPedido, reportePedidos, getGuiasParaImprimir, marcarGuiasImpresas, guardarOrdenDropi, getOrdenesEnviadas, marcarEntregado, marcarPagado, getOrdenesConDropi, escribirLog, leerStock, actualizarStock, buscarAtribucionWeb, backfillAtribucion, enriquecerReputacionDropi, buscarPedidoWebPendiente, marcarPedidoWebComprado, parseMonto, idxToCol };

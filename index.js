@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const axios = require('axios');
 const { chat } = require('./claude');
 const { chatVentas } = require('./claude-ventas');
 const { sendText, sendReaction, markAsRead, getMediaBase64 } = require('./evolution');
@@ -19,6 +20,22 @@ app.use(express.json());
 const INSTANCE_VENTAS = process.env.EVOLUTION_INSTANCE_VENTAS;
 const ADMIN_PHONES = (process.env.ADMIN_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
 const dropi = require('./dropi');
+
+// Nicole en 0993154462 (número oficial, instancia "shotygames" — la misma que
+// usan notificar-gracias.js/notificar-guia-cliente.js). No toca EVOLUTION_INSTANCE_VENTAS
+// ("pruebas"): ese número lo sigue atendiendo el bot aparte en n8n.
+const INSTANCE_SHOTYGAMES = process.env.EVOLUTION_INSTANCE_GRACIAS;
+// Mientras se prueba el bot, solo contesta a estos números (formato 593XXXXXXXXX,
+// separados por coma). El resto de mensajes se siguen viendo en el CRM como
+// hasta ahora, sin que el bot les conteste. Vacío = contesta a todo el mundo.
+const SHOTYGAMES_TEST_PHONES = (process.env.SHOTYGAMES_TEST_PHONES || '').split(',').map(p => p.trim()).filter(Boolean);
+// Copia de cada evento entrante al CRM (finanzas-app) para no perder la
+// bandeja en vivo que ya usa el equipo — ver project_finanzas_crm.
+const CRM_WEBHOOK_URL = process.env.CRM_WEBHOOK_URL || 'https://adm.shotygames.com/api/crm/webhook/evolution';
+
+function telefonoNormalizado9(tel) {
+  return String(tel || '').replace(/\D/g, '').slice(-9);
+}
 
 // ── BOTS DE TELEGRAM ──────────────────────────────────────
 const BASE_URL = process.env.TELEGRAM_WEBHOOK_URL || '';
@@ -311,6 +328,170 @@ async function procesarBatchVentas(from, items, firstMessageId) {
       from,
       'Estamos teniendo un problema técnico en este momento. Ya lo estamos revisando — te contactamos apenas se resuelva 🙏',
       INSTANCE_VENTAS
+    ).catch(() => {});
+  }
+}
+
+// ── Bot completo en 0993154462 (instancia "shotygames") ──────────────────
+// Mismo Nicole (claude-ventas.js), pero en el número real: además de vender,
+// crea guía DROPI, contesta "consultar_mi_pedido" y entiende "CONFIRMO" de
+// pedidos web (ver claude-ventas.js). El webhook de esta instancia en Evolution
+// vivía apuntando al CRM (finanzas-app) — acá se reenvía una copia de cada
+// evento para no perder esa bandeja en vivo, se haya repuntado el webhook o no.
+const pendingShotygames = new Map();
+const SHOTYGAMES_DEBOUNCE_MS = 50000;
+
+app.post('/webhook/shotygames', async (req, res) => {
+  res.sendStatus(200);
+  const body = req.body;
+
+  // Reenvío al CRM primero y sin esperar — pase lo que pase después, el
+  // equipo sigue viendo esto en vivo en finanzas-app, como hasta ahora.
+  axios.post(CRM_WEBHOOK_URL, body, { timeout: 8000 }).catch((e) => {
+    console.error('[SHOTYGAMES] no se pudo reenviar al CRM:', e.message);
+  });
+
+  try {
+    const event = (body.event || body.type || '').toLowerCase();
+    if (!event.includes('message')) return;
+
+    const data = body.data;
+    if (!data?.message) return;
+    if (data.key?.fromMe) return;
+
+    let from;
+    if (data.key?.remoteJid?.endsWith('@lid') && data.key?.remoteJidAlt) {
+      from = data.key.remoteJidAlt.replace('@s.whatsapp.net', '');
+    } else {
+      from = data.key?.remoteJid?.replace('@s.whatsapp.net', '').replace('@g.us', '');
+    }
+    if (!from) return;
+
+    // Modo prueba: solo le contesta el bot a los números en SHOTYGAMES_TEST_PHONES.
+    // A cualquier otro no le llega nada del bot — el mensaje ya se reenvió al
+    // CRM arriba, así que el equipo lo sigue atendiendo a mano, igual que hoy.
+    if (SHOTYGAMES_TEST_PHONES.length) {
+      const de9 = telefonoNormalizado9(from);
+      const esDePrueba = SHOTYGAMES_TEST_PHONES.some((p) => telefonoNormalizado9(p) === de9);
+      if (!esDePrueba) {
+        console.log(`[SHOTYGAMES] modo prueba activo — ignorando mensaje real de ${from}`);
+        return;
+      }
+    }
+
+    const messageId = data.key?.id;
+    const text = data.message?.conversation || data.message?.extendedTextMessage?.text;
+    const imageMsg = data.message?.imageMessage;
+    const audioMsg = data.message?.audioMessage || data.message?.pttMessage;
+
+    if (!text && !imageMsg && !audioMsg) return;
+
+    console.log(`[SHOTYGAMES] from=${from}${SHOTYGAMES_TEST_PHONES.length ? ' (modo prueba)' : ''}`);
+
+    await markAsRead(from, messageId, INSTANCE_SHOTYGAMES);
+
+    let imageBase64 = null;
+    let imageMime = 'image/jpeg';
+    if (imageMsg) {
+      try {
+        imageBase64 = await getMediaBase64(data, INSTANCE_SHOTYGAMES);
+        imageMime = imageMsg.mimetype || 'image/jpeg';
+      } catch (e) {
+        console.error('[SHOTYGAMES] error obteniendo imagen:', e.message);
+      }
+    }
+
+    let messageText;
+    if (audioMsg) {
+      try {
+        const audioBase64 = await getMediaBase64(data, INSTANCE_SHOTYGAMES);
+        if (audioBase64) {
+          const mime = audioMsg.mimetype || 'audio/ogg';
+          messageText = await transcribeBase64(audioBase64, mime);
+          console.log('[SHOTYGAMES] audio transcrito:', messageText);
+        }
+      } catch (e) {
+        console.error('[SHOTYGAMES] error transcribiendo audio:', e.message);
+      }
+      if (!messageText) messageText = 'Hola';
+    } else if (text) {
+      messageText = text;
+    } else if (imageMsg?.caption) {
+      messageText = imageMsg.caption;
+    } else if (imageMsg) {
+      messageText = 'Te mando una imagen.';
+    } else {
+      messageText = 'Hola';
+    }
+
+    const existing = pendingShotygames.get(from);
+    if (existing) {
+      clearTimeout(existing.timer);
+      existing.items.push({ text: messageText, imageBase64, imageMime, messageId });
+      existing.timer = setTimeout(() => {
+        pendingShotygames.delete(from);
+        procesarBatchShotygames(from, existing.items, existing.firstMessageId).catch(console.error);
+      }, SHOTYGAMES_DEBOUNCE_MS);
+    } else {
+      await sendReaction(from, messageId, '⏳', INSTANCE_SHOTYGAMES);
+      const batch = {
+        firstMessageId: messageId,
+        items: [{ text: messageText, imageBase64, imageMime, messageId }],
+        timer: null
+      };
+      batch.timer = setTimeout(() => {
+        pendingShotygames.delete(from);
+        procesarBatchShotygames(from, batch.items, batch.firstMessageId).catch(console.error);
+      }, SHOTYGAMES_DEBOUNCE_MS);
+      pendingShotygames.set(from, batch);
+    }
+
+  } catch (error) {
+    console.error('[SHOTYGAMES] error en webhook:', error.message);
+    if (error.response) {
+      console.error('[SHOTYGAMES] status:', error.response.status);
+      console.error('[SHOTYGAMES] data:', JSON.stringify(error.response.data).slice(0, 300));
+    }
+  }
+});
+
+async function procesarBatchShotygames(from, items, firstMessageId) {
+  try {
+    const combinedText = items.map(i => i.text).filter(Boolean).join('\n');
+    const imageItem = items.find(i => i.imageBase64);
+
+    console.log(`[SHOTYGAMES] procesando batch de ${items.length} mensaje(s) de ${from}`);
+
+    const history = await getHistory(from, 'shotygames');
+    const { text: reply, updatedHistory } = await chatVentas(
+      history,
+      combinedText,
+      imageItem?.imageBase64 || null,
+      imageItem?.imageMime || 'image/jpeg',
+      from,
+      INSTANCE_SHOTYGAMES
+    );
+
+    await saveHistory(from, updatedHistory, 'shotygames');
+
+    const partes = reply.split('|||').map(p => waFormat(p.trim())).filter(Boolean);
+    for (let i = 0; i < partes.length; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 800));
+      await sendText(from, partes[i], INSTANCE_SHOTYGAMES);
+    }
+
+    console.log(`[SHOTYGAMES] ${partes.length} mensaje(s) enviado(s) OK`);
+    await sendReaction(from, firstMessageId, '✅', INSTANCE_SHOTYGAMES);
+
+  } catch (error) {
+    console.error('[SHOTYGAMES] error procesando batch:', error.message);
+    if (ADMIN_PHONES.length) {
+      await sendText(ADMIN_PHONES[0], `⚠️ Error bot 0993154462: ${error.message}`, INSTANCE_SHOTYGAMES).catch(() => {});
+    }
+    await sendText(
+      from,
+      'Estamos teniendo un problema técnico en este momento. Ya lo estamos revisando — te contactamos apenas se resuelva 🙏',
+      INSTANCE_SHOTYGAMES
     ).catch(() => {});
   }
 }
