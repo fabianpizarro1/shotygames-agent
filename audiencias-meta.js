@@ -21,9 +21,16 @@
  *    esas columnas cambia entre las hojas de cada año.
  *
  * 4. **Se sube siempre con ADD y sin diffear.** Meta deduplica solo, así que
- *    re-subir a alguien que ya estaba no rompe nada. Eso permite que el cron sea
- *    idempotente: si un día falla, el día siguiente lo recupera solo con una
- *    ventana un poco más ancha.
+ *    re-subir a alguien que ya estaba no rompe nada.
+ *
+ * 5. **Solo cuenta ESTADO = PAGADO o ENTREGADO — a propósito, sin ventana de
+ *    fecha.** Mientras el pedido está ENVIADO (o PENDIENTE/NOVEDAD) el cliente
+ *    NO se excluye: sigue viendo el anuncio para mantenerlo enganchado hasta
+ *    que reciba el producto. Por eso esto escanea la hoja PEDIDOS entera cada
+ *    noche en vez de una ventana de días: un pedido casi nunca llega a
+ *    ENTREGADO dentro de los 2-3 días de su FECHA, así que filtrar por fecha
+ *    haría que el cambio de estado casi nunca se alcance a ver. Es el mismo
+ *    motivo por el que Emparejados digital (más abajo) tampoco usa ventana.
  *
  * Ver `feedback_meta_audiencia_telefonos` y `project_meta_audiencias_emparejados`
  * en la memoria para el histórico completo.
@@ -32,7 +39,7 @@
 const crypto = require('crypto');
 const https = require('https');
 const { google } = require('googleapis');
-const { aFechaLocal, hoyEC } = require('./fechas');
+const { aFechaLocal } = require('./fechas');
 
 const CUENTA = '1451115062090627'; // Cuenta Publicitaria 10 — la única ACTIVE de ShotyGames
 const API = 'v21.0';
@@ -54,6 +61,9 @@ const AUD_POR_PRODUCTO = {
   // cron — ver `project_meta_audiencias_emparejados`.
   EMPAREJADOS: '120241344269020352',
 };
+
+/** Solo estos estados cuentan como "ya lo tiene, dejá de mostrarle el anuncio". */
+const ESTADOS_QUE_EXCLUYEN = new Set(['PAGADO', 'ENTREGADO']);
 
 /**
  * Teléfono ecuatoriano → E.164, o null si no sirve para subir.
@@ -277,8 +287,12 @@ async function emparejadosDigital(token, { dryRun = false } = {}) {
 
 /**
  * @param {object} opts
- * @param {string} [opts.desde]  "YYYY-MM-DD" inclusive. Por defecto: hoy en Ecuador.
- * @param {string} [opts.hasta]  "YYYY-MM-DD" inclusive. Por defecto: hoy en Ecuador.
+ * @param {string} [opts.desde]  "YYYY-MM-DD" inclusive. Filtro EXTRA por FECHA del
+ *                                pedido, solo para pruebas puntuales a mano — el cron
+ *                                nocturno no lo manda. Sin esto se escanea la hoja
+ *                                entera, porque lo que decide si alguien entra es el
+ *                                ESTADO, no cuándo hizo el pedido.
+ * @param {string} [opts.hasta]  "YYYY-MM-DD" inclusive. Idem.
  * @param {boolean} [opts.dryRun] Si es true NO llama a Meta. Solo cuenta.
  */
 async function actualizarAudiencias({ desde, hasta, dryRun = false } = {}) {
@@ -288,10 +302,6 @@ async function actualizarAudiencias({ desde, hasta, dryRun = false } = {}) {
   const token = process.env.META_AUDIENCIAS_TOKEN || process.env.META_CAPI_TOKEN;
   if (!token) throw new Error('Falta META_AUDIENCIAS_TOKEN o META_CAPI_TOKEN');
   if (!process.env.SHEETS_ID) throw new Error('Falta SHEETS_ID');
-
-  const hoy = hoyEC();
-  const ini = desde || hoy;
-  const fin = hasta || hoy;
 
   const sheets = sheetsCliente();
   const r = await sheets.spreadsheets.values.get({
@@ -304,19 +314,27 @@ async function actualizarAudiencias({ desde, hasta, dryRun = false } = {}) {
   const iTel = H.indexOf('TELEFONO');
   const iProd = H.indexOf('PRODUCTOS');
   const iEmpa = H.indexOf('EMPA');
+  const iEst = H.indexOf('ESTADO');
   if (iFecha < 0 || iTel < 0) throw new Error('El Sheet no tiene FECHA o TELEFONO — ¿cambiaron los encabezados?');
+  if (iEst < 0) throw new Error('El Sheet no tiene ESTADO — ¿cambiaron los encabezados?');
 
   // Set por audiencia: dedupe automático dentro de la corrida.
   const porAudiencia = { CLIENTES_FISICOS: new Set() };
   for (const k of Object.keys(AUD_POR_PRODUCTO)) porAudiencia[k] = new Set();
 
-  let enVentana = 0, sinTelefono = 0, sinProducto = 0;
+  let elegibles = 0, sinTelefono = 0, sinProducto = 0;
 
   for (const fila of filas.slice(1)) {
-    if (!fila[iTel] && !fila[iFecha]) continue;
-    const fecha = aFechaLocal(fila[iFecha]);
-    if (!fecha || fecha < ini || fecha > fin) continue;
-    enVentana++;
+    const estado = String(fila[iEst] || '').trim().toUpperCase();
+    // ENVIADO, PENDIENTE, NOVEDAD, CANCELADO, DEVOLUCION o vacío: todavía no.
+    // Que siga viendo el anuncio hasta que de verdad lo reciba.
+    if (!ESTADOS_QUE_EXCLUYEN.has(estado)) continue;
+
+    if (desde || hasta) {
+      const fecha = aFechaLocal(fila[iFecha]);
+      if (!fecha || (desde && fecha < desde) || (hasta && fecha > hasta)) continue;
+    }
+    elegibles++;
 
     const tel = aE164(fila[iTel]);
     if (!tel) { sinTelefono++; continue; }
@@ -329,8 +347,8 @@ async function actualizarAudiencias({ desde, hasta, dryRun = false } = {}) {
   }
 
   const resultado = {
-    ventana: { desde: ini, hasta: fin },
-    pedidosEnVentana: enVentana,
+    filtroFecha: (desde || hasta) ? { desde: desde || null, hasta: hasta || null } : null,
+    pedidosEntregadosOPagados: elegibles,
     descartadosSinTelefonoValido: sinTelefono,
     sinCategoriaDeProducto: sinProducto,
     dryRun,
@@ -390,11 +408,13 @@ function resumen(r) {
 
   return [
     cabeza,
-    `Ventana físicos: ${r.ventana.desde}${r.ventana.hasta !== r.ventana.desde ? ' → ' + r.ventana.hasta : ''}`,
-    `Pedidos: ${r.pedidosEnVentana}${r.descartadosSinTelefonoValido ? ` (${r.descartadosSinTelefonoValido} sin teléfono válido)` : ''}`,
+    `Físicos ENTREGADO/PAGADO: ${r.pedidosEntregadosOPagados}${r.descartadosSinTelefonoValido ? ` (${r.descartadosSinTelefonoValido} sin teléfono válido)` : ''}`,
     ...(lineas.length ? lineas : ['Sin pedidos físicos nuevos.']),
     ...digital,
   ].join('\n');
 }
 
-module.exports = { actualizarAudiencias, resumen, aE164, categorizar, AUD_POR_PRODUCTO, AUD_CLIENTES_FISICOS };
+module.exports = {
+  actualizarAudiencias, resumen, aE164, categorizar,
+  AUD_POR_PRODUCTO, AUD_CLIENTES_FISICOS, ESTADOS_QUE_EXCLUYEN,
+};
