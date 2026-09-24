@@ -825,7 +825,11 @@ try {
 // ── REPUTACIÓN DROPI en PEDIDOS LOVABLE ───────────────────────
 // Rellena las columnas DROPI PEDIDOS/ENTREGADOS/DEVUELTOS de los pedidos web
 // nuevos que todavía no las tienen (idempotente — no vuelve a tocar lo ya
-// lleno). Mismo horario que la sincronización de pagos, no hace falta más.
+// lleno). Bajado de cada 2h a cada 30 min (2026-09-24, Fabián): la app de
+// Recuperación mostraba "sin reputación" en pedidos recién creados porque el
+// cron todavía no había pasado por esa fila — no es más volumen contra DROPI
+// (solo procesa filas nuevas, las mismas de siempre), solo más lecturas
+// baratas del Sheet para achicar esa espera de hasta 2h a hasta 30 min.
 try {
   const cron = require('node-cron');
   async function enriquecerDropiLovable() {
@@ -839,8 +843,8 @@ try {
       console.error('[ENRIQUECER DROPI] Error:', e.message);
     }
   }
-  cron.schedule('0 13,15,17,19,21,23,1 * * *', enriquecerDropiLovable);
-  console.log('[CRON] Reputación DROPI en PEDIDOS LOVABLE cada 2h (8am-8pm Ecuador)');
+  cron.schedule('*/30 13-23,0-1 * * *', enriquecerDropiLovable);
+  console.log('[CRON] Reputación DROPI en PEDIDOS LOVABLE cada 30 min (8am-8pm Ecuador)');
 } catch (e) {
   console.error('[CRON] Error al iniciar enriquecimiento DROPI:', e.message);
 }

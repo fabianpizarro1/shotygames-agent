@@ -156,6 +156,22 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
       `(*${usd(c.saldoConAnticipo)}*) lo podrías pagar en efectivo al momento de la entrega.`,
   },
   {
+    id: 'comprobante',
+    etiqueta: 'Falta su comprobante',
+    desc: 'Pago anticipado (transferencia/tarjeta), nunca llegó el comprobante',
+    // Mismo armado que "confirmar" (saludo, recordar el pedido, cerrar con
+    // pregunta) pero la pregunta es otra: quien eligió transferencia o tarjeta
+    // no tiene que "confirmar" que recibirá el pedido — ya pagó por adelantado,
+    // lo que falta es el comprobante para poder procesarlo y despacharlo.
+    // Pedirle que "confirme" a alguien que ya pagó no tiene sentido y suena a
+    // que no le creemos que compró.
+    texto: (c) =>
+      saludo(c) +
+      `\n\nTe enviamos el resumen de tu pedido pero todavía no hemos recibido el comprobante de tu pago:\n\n` +
+      bloquePedido(c) +
+      `Sin el comprobante no podemos procesar tu pedido para despacharlo. Si ya hiciste el pago, ¿me lo puedes enviar para avanzar con el envío?`,
+  },
+  {
     id: 'libre',
     etiqueta: 'Sin mensaje',
     desc: 'Abrir el chat en blanco',
@@ -172,7 +188,14 @@ export const PLANTILLAS_RECUPERACION: PlantillaRecuperacion[] = [
  */
 export function plantillaSugerida(c: Candidato): string | null {
   if (c.accion === 'no-escribir') return null;
-  return c.accion === 'ofrecer-anticipo' ? 'anticipo' : 'confirmar';
+  if (c.accion === 'ofrecer-anticipo') return 'anticipo';
+  // pedir-confirmacion: cuál pregunta corresponde depende de qué eligió pagar.
+  // Contraentrega necesita que confirme que va a recibirlo; transferencia y
+  // tarjeta son pago anticipado — ahí lo que falta es el comprobante, no una
+  // confirmación (Fabián, 2026-09-24).
+  const metodo = (c.metodoPago || '').toLowerCase();
+  if (metodo === 'transferencia' || metodo === 'tarjeta') return 'comprobante';
+  return 'confirmar';
 }
 
 function telefonoWA(telefono: string): string {
