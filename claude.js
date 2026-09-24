@@ -135,41 +135,43 @@ Solo hay anticipo si Fabián dice explícitamente que el dinero YA ENTRÓ y a qu
 - Estado: PENDIENTE
 - Transportadora: [TRANSPORTADORA]
 - Notas: [si hay algo adicional, sino: —]
-- Guía DROPI: [Solo si es SERVIENTREGA → "Se creará automáticamente". Si es otra → "No aplica (sin guía DROPI)"]
+- Orden DROPI: [Solo si es SERVIENTREGA y hay producto físico → "Se crea automáticamente, pendiente que Fabián genere la guía en DROPI". Si es otra o no hay físico → "No aplica"]
 
 No hagas nada hasta que Fabián confirme.
 
 ### Paso 4 — Cuando Fabián confirme
 Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 (nombre, telefono, ciudad, direccion, cantidades, **pvp_total**, anticipo, cuenta, transportadora, notas, idPedido si aplica). No mandes "saldo" — el sistema lo calcula solo.
 
-→ NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la guía en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte generaría una guía DUPLICADA con flete cobrado dos veces. crear_guia_dropi es SOLO para la sección "Crear guía en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin guía.
+→ NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la ORDEN en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte crearía una orden DUPLICADA. crear_guia_dropi es SOLO para la sección "Crear orden en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin orden en DROPI.
 
 La respuesta de registrar_pedido ya trae el resultado completo — **reenviásela a Fabián TAL CUAL, palabra por palabra**. No la resumas, no la reescribas, no la suavices.
 
-🚨 **PROHIBIDO INVENTAR QUE HAY GUÍA.** Solo existe guía si el resultado del tool trae un número de guía concreto. Si no lo trae, la guía NO existe.
+🚨 **PROHIBIDO INVENTAR QUE HAY GUÍA.** Desde 2026-09-23 el bot ya NO genera guías — solo crea la orden en DROPI. "Orden creada, pendiente de guía" es el resultado NORMAL y esperado de cada pedido nuevo, no lo ocultes ni lo suavices. Lo que sigue prohibido es inventar que YA existe un número de guía: eso solo pasa cuando Fabián la generó él mismo en DROPI y sincronizar_guia_dropi la trajo de vuelta.
 
-Nunca escribas cosas como "la guía se generará automáticamente", "se creará en los próximos momentos", "guía pendiente" ni "orden creada, falta la guía" por tu cuenta. Si el resultado dice *GUÍA NO CREADA*, tu respuesta tiene que decir GUÍA NO CREADA, con el motivo textual que venga adentro. Un pedido sin guía no se despacha — si Fabián cree que la guía está en camino cuando no lo está, el pedido se queda parado y él no se entera.
+Nunca escribas cosas como "la guía se generará automáticamente" ni "se creará en los próximos momentos" — eso ya no es cierto, la guía la genera Fabián a mano. Si el resultado dice *ORDEN NO CREADA*, tu respuesta tiene que decir ORDEN NO CREADA, con el motivo textual que venga adentro.
 
-Regla simple: **¿hay número de guía en el resultado? Sí → mostralo. No → decí que no hay guía y por qué.**
+Regla simple: **¿hay número de guía en el resultado? Sí → mostralo. No → decí que la orden quedó creada y pendiente de que Fabián genere la guía en DROPI.**
+
+### Excepción — generar la guía de una vez (generar_guia: true)
+Por defecto NUNCA mandes generar_guia en true — la transportadora la elige Fabián a mano en DROPI. La única excepción es cuando ÉL te dice explícitamente que ya sabe que va por Servientrega sin ninguna duda — el caso típico es **"retira en agencia Servientrega"** o si él mismo dice "generá la guía de una vez" / "esta sí es Servientrega, generala ya". Si no te lo dice así de claro, dejalo en false.
 
 ### Paso 5 — Si faltan datos críticos
 Solo si no podés extraer **nombre, teléfono o productos**, preguntá únicamente eso. Todo lo demás (dirección, ciudad, pago, notas) se registra con lo que haya en el mensaje y se corrige en la confirmación. No inventes datos.
 
-## Crear guía en DROPI (pedido ya existente)
-Si Fabián dice "crea la guía de [nombre]" para un pedido que ya está en Sheets:
+## Crear orden en DROPI (pedido ya existente, sin orden todavía)
+Si Fabián dice "crea la orden/guía de [nombre]" para un pedido que ya está en Sheets pero no tiene nada en DROPI:
 
-**Paso 1 — Intenta sincronizar primero:**
+**Paso 1 — Intenta sincronizar primero, por si ya existe:**
 → USA sincronizar_guia_dropi con el nombre.
-- Si el pedido ya tiene una orden en DROPI (aunque sea sin guía), el tool la intentará generar y actualizar Sheets automáticamente.
-- Si sale exitoso: responde con guía + link + envío. No hagas nada más.
+- Si ya hay una guía generada en DROPI, la trae directo. No hagas nada más.
 
 **Paso 2 — Solo si sincronizar_guia_dropi dice "No existe una orden en DROPI":**
 → Ahí sí crea la orden desde cero:
 1. Usa buscar_pedido para obtener los datos del pedido
-2. Confirma: "¿Creo guía DROPI para [NOMBRE] — [productos] — saldo $[saldo]?"
+2. Confirma: "¿Creo la orden en DROPI para [NOMBRE] — [productos] — saldo $[saldo]?"
 3. Cuando confirme, usa crear_guia_dropi
-4. La guía y el envío se actualizan automáticamente en Sheets
-5. Responde con el número de guía + link del PDF
+4. Esto SOLO crea la orden — no genera guía. Fabián la genera él mismo en DROPI eligiendo transportadora.
+5. Responde con el ID de la orden y avisá que queda pendiente que él genere la guía
 
 ## Cuando Fabián mande una foto de guía de envío
 1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
@@ -265,76 +267,102 @@ Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y m
 - **Responder preguntas** del negocio`;
 
 // Compartida entre crear_guia_dropi (pedido ya existente) y el auto-chain de
-// registrar_pedido (pedido nuevo) — así ambos caminos usan exactamente la
-// misma lógica de creación/errores en vez de mantenerla duplicada.
-async function crearGuiaDropiYActualizar(input) {
-  console.log('crear_guia_dropi input:', JSON.stringify(input));
+// registrar_pedido (pedido nuevo). Desde el 2026-09-23, por defecto ya NO
+// genera la guía: solo crea la orden en DROPI (siempre Servientrega, ver
+// dropi.js) y la deja vinculada en Sheets, para que Fabián elija transportadora
+// (Servientrega o Gintracom) él mismo — ver sincronizar_guia_dropi.
+//
+// input.generar_guia = true es la excepción: casos donde la transportadora YA
+// es segura de antemano (ej. "retira en agencia Servientrega") y no hace
+// falta que Fabián decida nada — ahí sí se genera la guía de una vez, como
+// antes. Solo se activa cuando ÉL lo dice explícitamente, nunca por defecto.
+async function crearOrdenDropiYActualizar(input) {
+  console.log('crear_orden_dropi input:', JSON.stringify(input));
 
   let orden;
   try {
-    orden = await dropi.crearOrden(input);
+    orden = await dropi.crearOrdenSinGuia(input);
   } catch (e) {
     // Que DROPI rechace la orden no puede quedar en una excepción suelta: el
     // pedido ya está en Sheets y alguien tiene que despacharlo. Se devuelve el
     // motivo textual para que Fabián lo vea y decida.
-    console.error('crear_guia_dropi: crearOrden falló:', e.message);
+    console.error('crear_orden_dropi: crearOrdenSinGuia falló:', e.message);
     return {
       ok: false,
-      mensaje: `❌ *GUÍA NO CREADA* — DROPI no aceptó la orden de ${input.nombre}.\n\n` +
+      mensaje: `❌ *ORDEN NO CREADA EN DROPI* para ${input.nombre}.\n\n` +
         `Motivo: ${e.message}\n\n` +
-        `El pedido SÍ quedó registrado en Sheets, pero NO tiene guía y NO se va a despachar solo. ` +
-        `Arreglá lo que dice el motivo y decime *"ponle la guía a ${input.nombre}"*, o creala a mano en DROPI.`
+        `El pedido SÍ quedó registrado en Sheets, pero sin orden en DROPI. ` +
+        `Arreglá lo que dice el motivo y decime *"crea la orden de ${input.nombre}"* para reintentar.`
     };
   }
 
-  const guia = orden?.sticker;
+  const orderId = orden?._orderId;
+  if (!orderId) {
+    return { ok: false, mensaje: `❌ *ORDEN NO CREADA* — DROPI no devolvió un ID de orden para ${input.nombre}.` };
+  }
 
-  if (orden?._guideError) {
-    // Guardar el order ID en Sheets aunque la guía haya fallado — permite reintentar después
-    if (input.telefono && orden._orderId) {
+  if (!input.generar_guia) {
+    if (input.telefono) {
       try {
-        await sheets.actualizarGuia(input.telefono, null, null, orden._orderId);
-        console.log(`crear_guia_dropi: DROPI order ID ${orden._orderId} guardado en Sheets para reintento`);
+        const upd = await sheets.actualizarGuia(input.telefono, null, null, orderId);
+        console.log('actualizarGuia (orden sin guía) result:', JSON.stringify(upd));
       } catch (e) {
-        console.error('Error guardando DROPI ID en Sheets:', e.message);
+        console.error('Error guardando DROPI order ID en Sheets:', e.message);
       }
+    } else {
+      console.log('ADVERTENCIA: crear_orden_dropi sin telefono — no se puede vincular en Sheets');
     }
-    return { ok: false, mensaje: `❌ *GUÍA NO CREADA* — la orden sí existe en DROPI (ID: ${orden._orderId}) pero la guía no se generó.\n\nMotivo: ${orden._guideError}\n\nEl ID quedó guardado en Sheets. Decime *"ponle la guía a ${input.nombre}"* para reintentar. Hasta que salga la guía, este pedido NO se despacha.` };
-  }
-  if (!guia) {
-    if (input.telefono && orden?._orderId) {
-      try { await sheets.actualizarGuia(input.telefono, null, null, orden._orderId); } catch (_) {}
-    }
-    return { ok: false, mensaje: `❌ *GUÍA NO CREADA* — DROPI respondió sin número de guía (orden ID: ${orden?._orderId || 'ninguno'}).\n\nDecime *"ponle la guía a ${input.nombre}"* para reintentar. Hasta que salga la guía, este pedido NO se despacha.` };
+
+    return {
+      ok: true,
+      orden,
+      mensaje: `✅ Orden creada en DROPI (ID: *${orderId}*) para ${input.nombre} — pendiente de guía.\n\n` +
+        `Entrá a DROPI, revisá el pedido y generá la guía eligiendo la transportadora (Servientrega o Gintracom). ` +
+        `Cuando esté lista, decime *"sincroniza la guía de ${input.nombre}"* para traerla al Sheet.`
+    };
   }
 
-  console.log(`Guía generada: ${guia} | shipping: ${orden._shipping} | tel: ${input.telefono}`);
+  // generarGuia = true: caso con transportadora ya segura (ej. retira en
+  // agencia Servientrega) — generar la guía de una vez, sin que Fabián tenga
+  // que entrar a DROPI a elegir nada.
+  let guia;
+  try {
+    guia = await dropi.generarGuia(orderId);
+  } catch (e) {
+    console.error('crear_orden_dropi: generarGuia falló:', e.message);
+    if (input.telefono) {
+      try { await sheets.actualizarGuia(input.telefono, null, null, orderId); } catch (_) {}
+    }
+    return {
+      ok: false,
+      mensaje: `✅ Orden creada en DROPI (ID: *${orderId}*), pero ❌ *LA GUÍA NO SE GENERÓ*.\n\n` +
+        `Motivo: ${e.message}\n\n` +
+        `El order ID quedó guardado en Sheets. Decime *"sincroniza la guía de ${input.nombre}"* para reintentar, o generala a mano en DROPI.`
+    };
+  }
 
-  // Actualizar Sheets: GUIA + ENVIO + LINK RASTREO + DROPI order ID
+  if (!guia?.guia) {
+    if (input.telefono) {
+      try { await sheets.actualizarGuia(input.telefono, null, null, orderId); } catch (_) {}
+    }
+    return {
+      ok: false,
+      mensaje: `✅ Orden creada en DROPI (ID: *${orderId}*), pero DROPI respondió sin número de guía.\n\n` +
+        `Decime *"sincroniza la guía de ${input.nombre}"* para reintentar.`
+    };
+  }
+
   if (input.telefono) {
-    const updResult = await sheets.actualizarGuia(input.telefono, guia, orden._shipping, orden._orderId);
-    console.log('actualizarGuia result:', JSON.stringify(updResult));
-  } else {
-    console.log('ADVERTENCIA: crear_guia_dropi sin telefono — no se puede actualizar Sheets');
+    try { await sheets.actualizarGuia(input.telefono, guia.guia, guia.shipping, orderId, guia.transportadora); }
+    catch (e) { console.error('Error guardando guía en Sheets:', e.message); }
   }
 
-  const pdfUrl = orden._pdfUrl || `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orden._orderId}-GUIA-${guia}.pdf`;
-  const envioStr = orden._shipping ? ` | Envío: $${parseFloat(orden._shipping).toFixed(2)}` : '';
-
-  // La guía existe, pero eso no garantiza que tenga TODO adentro. Si a DROPI le
-  // falta una línea, el paquete se arma incompleto y nadie se entera hasta que
-  // el cliente reclama — pasó con 4 pedidos de Emparejados entre el 15 y el 16
-  // de septiembre. El aviso va en el mensaje Y en la columna LOG.
-  const v = orden._verificacion;
-  let aviso = '';
-  if (v?.faltantes?.length) {
-    aviso = `\n\n❌ *LA GUÍA SALIÓ INCOMPLETA* — falta ${v.faltantes.join(', ')}.\n` +
-      `El paquete se arma leyendo la guía: agregalo a mano al armarlo o la entrega sale sin eso.`;
-  } else if (v?.error) {
-    aviso = `\n\n⚠️ No pude verificar que la guía tenga todos los productos (${v.error}). Revisala antes de armar.`;
-  }
-
-  return { ok: true, guia, orden, aviso, mensaje: `✅ Guía *${guia}*${envioStr}\n\n📄 ${pdfUrl}${aviso}` };
+  const envioStr = guia.shipping ? ` | Envío: $${parseFloat(guia.shipping).toFixed(2)}` : '';
+  return {
+    ok: true,
+    orden,
+    mensaje: `✅ Guía *${guia.guia}*${envioStr}\n\n📄 ${guia.pdfUrl}`
+  };
 }
 
 // El recaudo ya no lo decide el modelo. Antes, registrar_pedido recibía
@@ -423,10 +451,12 @@ async function registrarPedidoConGuia(input) {
   // Antes esto dependía de que el modelo, en el mismo turno, hiciera una
   // SEGUNDA llamada a crear_guia_dropi reextrayendo los mismos datos del
   // mensaje — cuando se le olvidaba, el pedido quedaba registrado en Sheets
-  // sin guía ni orden en DROPI (bug reportado 2026-08-21: "no me genera la
-  // guía, solo me registra el pedido"). Ahora, si es SERVIENTREGA y trae
-  // producto físico, la guía se crea automáticamente acá mismo con los
-  // datos que ya se usaron para registrar — un solo lugar, un solo extract.
+  // sin orden en DROPI (bug reportado 2026-08-21: "no me genera la guía,
+  // solo me registra el pedido"). Ahora, si es SERVIENTREGA y trae producto
+  // físico, la orden se crea automáticamente acá mismo con los datos que ya
+  // se usaron para registrar — un solo lugar, un solo extract. La GUÍA ya no
+  // se genera acá: desde que existe Gintracom (2026-09-23) Fabián la genera
+  // él mismo en DROPI eligiendo transportadora — ver sincronizar_guia_dropi.
   const transportadora = (input.transportadora || 'SERVIENTREGA').toUpperCase();
   // FISICOS decide si hay algo que despachar (emparejados solo es digital y
   // no genera guía). CAMPOS_GUIA es lo que VIAJA a DROPI, y ahí emparejados
@@ -439,15 +469,15 @@ async function registrarPedidoConGuia(input) {
     return `✅ Pedido registrado. Fila agregada en Google Sheets para ${input.nombre}.${avisoPago}`;
   }
   if (!input.direccion) {
-    return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la guía en DROPI. Pasame la dirección y la creo.${avisoPago}`;
+    return `✅ Pedido registrado para ${input.nombre}, pero sin dirección no pude crear la orden en DROPI. Pasame la dirección y la creo.${avisoPago}`;
   }
 
   // Freno duro: un pedido que vale plata pero no tiene ni anticipo cobrado
-  // ni saldo por cobrar no puede existir. Si sale una guía así, se entrega
-  // sin cobrar nada. Antes de despachar eso, se para y se pregunta.
+  // ni saldo por cobrar no puede existir. Si sale una orden así, se despacha
+  // sin cobrar nada. Antes de eso, se para y se pregunta.
   if (pago.pvp > 0 && pago.saldo === 0 && pago.anticipo === 0) {
-    return `✅ Pedido registrado para ${input.nombre}, pero NO creé la guía en DROPI.\n\n` +
-      `⚠️ El pedido vale $${pago.pvp.toFixed(2).replace('.', ',')} pero quedó sin anticipo cobrado y sin saldo por cobrar — así la guía saldría SIN RECAUDO y se entregaría sin cobrar.\n\n` +
+    return `✅ Pedido registrado para ${input.nombre}, pero NO creé la orden en DROPI.\n\n` +
+      `⚠️ El pedido vale $${pago.pvp.toFixed(2).replace('.', ',')} pero quedó sin anticipo cobrado y sin saldo por cobrar — así la orden saldría SIN RECAUDO y se entregaría sin cobrar.\n\n` +
       `Decime cuál es: ¿ya pagó (a qué cuenta) o se cobra contra entrega?`;
   }
 
@@ -457,7 +487,7 @@ async function registrarPedidoConGuia(input) {
   // Parejas + Dados + Emparejados salían sin el Emparejados — el paquete se
   // arma leyendo la guía, así que se despachaba incompleto.
   const cantidades = Object.fromEntries(CAMPOS_GUIA.map((c) => [c, inputConNotas[c]]));
-  const guiaInput = {
+  const ordenInput = {
     nombre: inputConNotas.nombre,
     telefono: inputConNotas.telefono,
     ciudad: inputConNotas.ciudad,
@@ -467,21 +497,16 @@ async function registrarPedidoConGuia(input) {
     saldo: pago.saldo,
     // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
     pvp_total: saldoNum > 0 ? undefined : pago.anticipo,
-    notas: inputConNotas.notas
+    notas: inputConNotas.notas,
+    // Solo true cuando Fabián lo pidió explícitamente (ver tools.js) — casos
+    // donde la transportadora ya es segura, ej. retira en agencia Servientrega.
+    generar_guia: !!input.generar_guia
   };
-  const guiaResult = await crearGuiaDropiYActualizar(guiaInput);
-
-  // Una guía incompleta se despacha igual: el aviso tiene que sobrevivir al
-  // chat. La celda queda; el mensaje de WhatsApp se pierde.
-  if (guiaResult.ok && guiaResult.aviso && filaPedido) {
-    const nota = String(guiaResult.aviso).replace(/\*/g, '').replace(/\n+/g, ' ').trim().slice(0, 480);
-    try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${nota}`); }
-    catch (e) { console.error('No se pudo escribir el aviso en LOG:', e.message); }
-  }
+  const ordenResult = await crearOrdenDropiYActualizar(ordenInput);
 
   // Motivo crudo de DROPI en la columna LOG, tal cual vino.
-  if (!guiaResult.ok && filaPedido) {
-    const motivo = String(guiaResult.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
+  if (!ordenResult.ok && filaPedido) {
+    const motivo = String(ordenResult.mensaje || '').replace(/\*/g, '').replace(/\n+/g, ' ').slice(0, 480);
     try { await sheets.escribirLog(filaPedido, `[${new Date().toISOString().slice(0, 16)}] ${motivo}`); }
     catch (e) { console.error('No se pudo escribir el motivo en LOG:', e.message); }
   }
@@ -489,7 +514,7 @@ async function registrarPedidoConGuia(input) {
   const recaudoStr = pago.saldo > 0
     ? `💵 CON RECAUDO — cobrar $${pago.saldo.toFixed(2).replace('.', ',')} al entregar`
     : `✅ SIN RECAUDO — ya está pagado (${inputConNotas.cuenta})`;
-  return `✅ Pedido registrado.\n${recaudoStr}\n${guiaResult.mensaje}${avisoPago}`;
+  return `✅ Pedido registrado.\n${recaudoStr}\n${ordenResult.mensaje}${avisoPago}`;
 }
 
 async function executeTool(toolName, input) {
@@ -510,7 +535,7 @@ async function executeTool(toolName, input) {
       return `No encontré pedido con teléfono ${input.telefono}.`;
 
     case 'crear_guia_dropi': {
-      const r = await crearGuiaDropiYActualizar(input);
+      const r = await crearOrdenDropiYActualizar(input);
       // A diferencia de registrar_pedido, este caso se usa para reintentar un
       // pedido que YA está en Sheets — un fallo acá también tiene que quedar
       // en LOG, si no la hoja no distingue "nadie lo intentó" de "DROPI lo
@@ -544,42 +569,46 @@ async function executeTool(toolName, input) {
       const { dropiOrderId, telefono, nombre: nombreReal } = sheetData;
       console.log(`sincronizar_guia: ${nombreReal} | tel:${telefono} | dropiId:${dropiOrderId}`);
 
-      let found = null;
-
-      // Paso 2a: si tenemos el order ID, buscar directamente (más confiable)
+      // Ya NO intenta generar la guía sola — Fabián la genera a mano en DROPI
+      // eligiendo transportadora (Servientrega o Gintracom). Este paso solo
+      // LEE lo que él ya dejó allá.
+      //
+      // Paso 2a: por el order ID guardado (más directo).
+      let porId = null;
       if (dropiOrderId) {
         try {
-          found = await dropi.getOrdenPorId(dropiOrderId);
-          console.log(`sincronizar_guia: obtenida por ID — guia=${found?.guia}`);
+          porId = await dropi.getOrdenPorId(dropiOrderId);
+          console.log(`sincronizar_guia: por ID ${dropiOrderId} — guia=${porId?.guia} transportadora=${porId?.transportadora}`);
         } catch (e) {
           console.error('Error obteniendo por ID:', e.message);
         }
-
-        // La orden existe en DROPI pero la guía nunca se generó → intentar generarla ahora
-        if (!found?.guia) {
-          console.log(`sincronizar_guia: sin guía, intentando generarla para orden ${dropiOrderId}...`);
-          try {
-            const generated = await dropi.generarGuia(dropiOrderId);
-            if (generated?.guia) {
-              found = generated;
-              console.log(`sincronizar_guia: guía generada en reintento — ${found.guia}`);
-            }
-          } catch (e) {
-            console.error('Error generando guía en reintento:', e.message);
-          }
-        }
       }
 
-      // Paso 2b: fallback — búsqueda por nombre/teléfono
-      if (!found || !found.guia) {
-        found = await dropi.buscarOrden(input.nombre, telefono);
-        console.log(`sincronizar_guia: búsqueda fallback — ${JSON.stringify(found)}`);
+      // Paso 2b: SIEMPRE se busca también por nombre/teléfono — si Fabián
+      // cambió la transportadora a Gintracom en DROPI y eso generó una orden
+      // NUEVA (confirmado 2026-09-23: el order ID cambia, no es la misma orden
+      // con otra guía), el ID guardado en Sheets queda viejo. La búsqueda por
+      // teléfono encuentra la orden vigente sin importar cuál ID tenía antes.
+      const porBusqueda = await dropi.buscarOrden(input.nombre, telefono).catch((e) => {
+        console.error('Error en búsqueda fallback:', e.message);
+        return null;
+      });
+
+      let found = porId;
+      let ordenCambio = false;
+      if (porBusqueda?.orderId && dropiOrderId && String(porBusqueda.orderId) !== String(dropiOrderId)) {
+        // DROPI reemplazó la orden — la búsqueda manda sobre el ID viejo.
+        found = porBusqueda;
+        ordenCambio = true;
+        console.log(`sincronizar_guia: DROPI cambió el order ID de ${dropiOrderId} a ${porBusqueda.orderId}`);
+      } else if (!found?.guia && porBusqueda?.guia) {
+        found = porBusqueda;
       }
 
       if (!found || !found.guia) {
         const noOrderMsg = dropiOrderId
-          ? `La orden de ${nombreReal} existe en DROPI (ID: ${dropiOrderId}) pero DROPI sigue sin generar la guía. Intenta de nuevo más tarde o revisa el panel de DROPI.`
-          : `No existe una orden en DROPI para ${nombreReal}. Usa "crea la guía de ${nombreReal}" para crear la orden completa.`;
+          ? `La orden de ${nombreReal} existe en DROPI (ID: ${dropiOrderId}) pero todavía no tiene guía. Entrá a DROPI, revisala y generala eligiendo la transportadora.`
+          : `No existe una orden en DROPI para ${nombreReal}. Usa "crea la orden de ${nombreReal}" para crearla.`;
         if (telefono) {
           try {
             const loc = await sheets.actualizarGuia(telefono, null, null, null);
@@ -589,14 +618,16 @@ async function executeTool(toolName, input) {
         return noOrderMsg;
       }
 
-      // Paso 3: actualizar Sheets
-      const upd = await sheets.actualizarGuia(telefono, found.guia, found.shipping, found.orderId);
+      // Paso 3: actualizar Sheets — guía, envío, transportadora y (si cambió) el nuevo order ID.
+      const upd = await sheets.actualizarGuia(telefono, found.guia, found.shipping, found.orderId, found.transportadora);
       if (!upd.updated) {
         return `Guía *${found.guia}* encontrada en DROPI (envío: $${parseFloat(found.shipping||0).toFixed(2)}) pero no pude actualizar Sheets para ${nombreReal}. Tel: ${telefono}`;
       }
       const envioStr = found.shipping ? ` | Envío: $${parseFloat(found.shipping).toFixed(2)}` : '';
+      const transStr = found.transportadora ? ` | ${found.transportadora}` : '';
       const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
-      return `✅ ${nombreReal} — Guía *${found.guia}*${envioStr}${pdfStr}`;
+      const cambioStr = ordenCambio ? `\n\n(DROPI había generado una orden nueva — ID actualizado en Sheets a ${found.orderId})` : '';
+      return `✅ ${nombreReal} — Guía *${found.guia}*${transStr}${envioStr}${pdfStr}${cambioStr}`;
     }
 
     case 'obtener_guia_pedido': {
@@ -915,4 +946,4 @@ async function chat(history, newMessage, imageBase64 = null, imageMime = 'image/
   return { text, updatedHistory: messages };
 }
 
-module.exports = { chat, crearGuiaDropiYActualizar, registrarPedidoConGuia };
+module.exports = { chat, crearOrdenDropiYActualizar, registrarPedidoConGuia };

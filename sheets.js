@@ -399,7 +399,10 @@ function idxToCol(idx) {
 
 // Actualiza la guía en el pedido MÁS RECIENTE sin guía que coincida con el teléfono
 // dropiId: si se pasa, se guarda en col AH ("Softr Record ID") para poder sincronizar después
-async function actualizarGuia(telefono, guia, envio, dropiId) {
+// transportadora: quién generó la guía (SERVIENTREGA, GINTRACOM, etc.) — desde
+// que Fabián elige la transportadora a mano en DROPI (2026-09-23) esto ya no
+// se puede asumir fijo, hay que sincronizarlo con lo que él puso allá.
+async function actualizarGuia(telefono, guia, envio, dropiId, transportadora) {
   const sheetsApi = await getSheets();
   const res = await sheetsApi.spreadsheets.values.get({
     spreadsheetId: SHEETS_ID,
@@ -411,6 +414,7 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
   const guiaIdx   = headers.indexOf('GUIA');
   const linkIdx   = headers.indexOf('LINK RASTREO');
   const envioIdx  = headers.indexOf('ENVIO');
+  const transIdx  = headers.indexOf('TRANSPORTADORA');
 
   console.log(`actualizarGuia: tel="${telefono}" guia="${guia}" envio="${envio}"`);
   console.log(`actualizarGuia: col indices — tel:${telIdx} guia:${guiaIdx} link:${linkIdx} envio:${envioIdx}`);
@@ -442,7 +446,11 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
   if (guiaIdx >= 0 && guia) {
     updates.push({ range: `PEDIDOS!${idxToCol(guiaIdx)}${rowNum}`, values: [[guia]] });
   }
-  if (linkIdx >= 0 && guia) {
+  // El link de rastreo público de Servientrega no sirve para otra
+  // transportadora — sin saber el formato de Gintracom, mejor dejarlo vacío
+  // que mandar un link que no va a funcionar.
+  const esServientrega = !transportadora || /servientrega/i.test(transportadora);
+  if (linkIdx >= 0 && guia && esServientrega) {
     const trackingUrl = `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
     updates.push({ range: `PEDIDOS!${idxToCol(linkIdx)}${rowNum}`, values: [[trackingUrl]] });
   }
@@ -451,6 +459,9 @@ async function actualizarGuia(telefono, guia, envio, dropiId) {
     if (envioNum !== '') {
       updates.push({ range: `PEDIDOS!${idxToCol(envioIdx)}${rowNum}`, values: [[envioNum]] });
     }
+  }
+  if (transIdx >= 0 && transportadora) {
+    updates.push({ range: `PEDIDOS!${idxToCol(transIdx)}${rowNum}`, values: [[transportadora.toUpperCase()]] });
   }
   // Guardar DROPI order ID en col AH (índice 33, "Softr Record ID") para poder sincronizar después
   if (dropiId) {

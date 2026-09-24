@@ -521,7 +521,12 @@ async function verificarLineas(orderId, esperados, client) {
   }
 }
 
-async function crearOrden(pedido) {
+// Crea la orden en DROPI y se detiene ahí — NO genera la guía. Desde que
+// Fabián empezó a trabajar con dos transportadoras (Servientrega y Gintracom,
+// 2026-09-23) la elige él mismo a mano en DROPI antes de generar la guía, así
+// que el bot ya no puede decidirlo solo. Ver sincronizar_guia_dropi (claude.js)
+// para traer de vuelta al Sheet lo que él generó allá.
+async function crearOrdenSinGuia(pedido) {
   const token = await getToken();
   let client = makeClient(token);   // se reemplaza si hay que reloguear a mitad
 
@@ -736,116 +741,50 @@ async function crearOrden(pedido) {
     throw new Error(`DROPI rechazó la orden: ${motivo}`);
   }
 
-  console.log(`Orden DROPI creada. ID: ${orderId} — generando guía...`);
+  console.log(`Orden DROPI creada. ID: ${orderId} — pendiente de guía (la genera Fabián a mano en DROPI).`);
 
-  // Paso 2: generar la guía (con retry automático si el token expiró)
-  let guideRes;
-  let activeClient = client; // puede ser reemplazado si hay auto-login
-  try {
-    guideRes = await activeClient.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
-  } catch (e) {
-    const status = e.response?.status;
-    const errData = JSON.stringify(e.response?.data);
-    console.error(`Error generando guía (${status}):`, errData);
-
-    if (status === 401 || status === 403) {
-      // Token expirado — intentar auto-login y reintentar UNA vez
-      console.log(`DROPI PUT 401/403 — auto-login y reintento guía...`);
-      try {
-        const newToken = await autoLogin();
-        activeClient = makeClient(newToken);
-        guideRes = await activeClient.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
-      } catch (e2) {
-        const err2 = e2.response ? `${e2.response.status}: ${JSON.stringify(e2.response.data)}` : e2.message;
-        return { ...orderData, _orderId: orderId, _guideError: `PUT ${status} + retry falló: ${err2}` };
-      }
-    } else {
-      // La orden existe pero la guía no se generó — devolver error detallado
-      return { ...orderData, _orderId: orderId, _guideError: `PUT ${status}: ${errData}` };
-    }
-  }
-
-  const guideData = guideRes.data;
-  console.log('DROPI guide response keys:', Object.keys(guideData));
-
-  // El número de guía real está en shipping_guide; el campo sticker es el nombre del PDF
-  const orderObj = guideData?.order || guideData?.objects || guideData?.data || {};
-  const sticker =
-    orderObj?.shipping_guide ||
-    guideData?.shipping_guide ||
-    orderObj?.guide_number ||
-    guideData?.guide_number ||
-    orderObj?.tracking_number ||
-    guideData?.tracking_number;
-
-  // Costo de envío que calculó DROPI
-  const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
-
-  // Sin número en la respuesta, la guía puede estar en camino: se relee.
-  if (!sticker) {
-    console.log(`crearOrden: PUT sin número de guía — reintentando lectura de la orden ${orderId}`);
-    const tardia = await esperarGuia(orderId);
-    if (tardia?.guia) {
-      return {
-        ...guideData,
-        sticker: tardia.guia,
-        _orderId: orderId,
-        _shipping: tardia.shipping || shippingAmt,
-        _pdfUrl: tardia.pdfUrl,
-        _verificacion: await verificarLineas(orderId, productosRaw, activeClient)
-      };
-    }
-  }
-
-  // URL del PDF de la guía
-  const pdfUrl = sticker
-    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
-    : null;
-
-  // Lo que DROPI guardó tiene que ser lo que se pidió — el paquete se arma
-  // leyendo la guía, no el Sheet.
-  const verificacion = await verificarLineas(orderId, productosRaw, activeClient);
-  if (verificacion.faltantes?.length) {
-    console.error(`crearOrden: ❌ la guía ${sticker} salió INCOMPLETA — falta ${verificacion.faltantes.join(', ')}`);
-  } else if (verificacion.error) {
-    console.log(`crearOrden: no se pudo verificar las líneas de la orden ${orderId}: ${verificacion.error}`);
-  }
-
-  return { ...guideData, sticker, _orderId: orderId, _shipping: shippingAmt, _pdfUrl: pdfUrl, _verificacion: verificacion };
+  return { ...orderData, _orderId: orderId };
 }
 
-// Obtiene una orden de DROPI por su ID y devuelve guía + envío
+// guia_urls3 trae la ruta real del PDF tal como DROPI la armó — ya no se puede
+// asumir "servientrega" en la URL a mano desde que existe Gintracom como
+// segunda transportadora (2026-09-23): cada una cuelga el PDF en su propia
+// carpeta. Si DROPI no la manda (guía muy vieja, o antes de este cambio), cae
+// al patrón viejo como último recurso.
+function pdfUrlDeOrden(orden, orderId, guia) {
+  if (orden?.guia_urls3) return `https://d39ru7awumhhs2.cloudfront.net/${orden.guia_urls3}`;
+  return guia
+    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
+    : null;
+}
+
+function leerOrden(data, orderId) {
+  const orden = data?.order || data?.objects || data?.data || data;
+  const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
+  const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
+  const status = orden?.status || null;
+  const transportadora = orden?.shipping_company || orden?.distribution_company?.name || null;
+  const pdfUrl = pdfUrlDeOrden(orden, orderId, guia);
+  return { guia, shipping, orderId, pdfUrl, status, transportadora };
+}
+
+// Obtiene una orden de DROPI por su ID y devuelve guía + envío + transportadora
 async function getOrdenPorId(orderId) {
   const token = await getToken();
   let client = makeClient(token);
   console.log(`DROPI getOrdenPorId: GET /orders/myorders/${orderId}`);
   try {
     const res = await client.get(`/orders/myorders/${orderId}`);
-    const data = res.data;
-    const orden = data?.order || data?.objects || data?.data || data;
-    const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
-    const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
-    const status = orden?.status || null;
-    const pdfUrl = guia
-      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
-      : null;
-    console.log(`DROPI getOrdenPorId: guia=${guia} shipping=${shipping} status=${status}`);
-    return { guia, shipping, orderId, pdfUrl, status };
+    const r = leerOrden(res.data, orderId);
+    console.log(`DROPI getOrdenPorId: guia=${r.guia} shipping=${r.shipping} status=${r.status} transportadora=${r.transportadora}`);
+    return r;
   } catch (e) {
     const httpStatus = e.response?.status;
     if (httpStatus === 401 || httpStatus === 403) {
       const newToken = await autoLogin();
       client = makeClient(newToken);
       const res = await client.get(`/orders/myorders/${orderId}`);
-      const data = res.data;
-      const orden = data?.order || data?.objects || data?.data || data;
-      const guia = orden?.shipping_guide || orden?.guide_number || orden?.tracking_number;
-      const shipping = orden?.shipping_amount || orden?.discounted_amount || 0;
-      const status = orden?.status || null;
-      const pdfUrl = guia
-        ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
-        : null;
-      return { guia, shipping, orderId, pdfUrl, status };
+      return leerOrden(res.data, orderId);
     }
     throw new Error(`DROPI getOrdenPorId ${httpStatus}: ${JSON.stringify(e.response?.data)?.slice(0, 200)}`);
   }
@@ -958,12 +897,11 @@ async function buscarOrden(query, telefono) {
   const guia = ordenFinal?.shipping_guide || ordenFinal?.guide_number || ordenFinal?.tracking_number;
   const shipping = ordenFinal?.shipping_amount || ordenFinal?.discounted_amount || 0;
   const orderId = ordenFinal?.id;
-  const pdfUrl = guia && orderId
-    ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${guia}.pdf`
-    : null;
+  const transportadora = ordenFinal?.shipping_company || ordenFinal?.distribution_company?.name || null;
+  const pdfUrl = pdfUrlDeOrden(ordenFinal, orderId, guia);
 
-  console.log(`DROPI buscarOrden resultado: guia=${guia} shipping=${shipping} orderId=${orderId}`);
-  return { guia, shipping, orderId, pdfUrl, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
+  console.log(`DROPI buscarOrden resultado: guia=${guia} shipping=${shipping} orderId=${orderId} transportadora=${transportadora}`);
+  return { guia, shipping, orderId, pdfUrl, transportadora, nombre: `${ordenFinal?.name || ''} ${ordenFinal?.surname || ''}`.trim() };
 }
 
 // Genera la guía de una orden DROPI ya existente (sin crear nueva orden).
@@ -975,25 +913,16 @@ async function generarGuia(orderId) {
 
   async function doGenerate(c) {
     const guideRes = await c.put(`/orders/myorders/${orderId}`, { status: 'GUIA_GENERADA' });
-    const guideData = guideRes.data;
-    const orderObj = guideData?.order || guideData?.objects || guideData?.data || {};
-    const sticker =
-      orderObj?.shipping_guide || guideData?.shipping_guide ||
-      orderObj?.guide_number   || guideData?.guide_number   ||
-      orderObj?.tracking_number || guideData?.tracking_number;
-    const shippingAmt = orderObj?.shipping_amount || orderObj?.discounted_amount || guideData?.shipping_amount || 0;
-    const pdfUrl = sticker
-      ? `https://d39ru7awumhhs2.cloudfront.net/ecuador/guias/servientrega/ORDEN-${orderId}-GUIA-${sticker}.pdf`
-      : null;
-    console.log(`generarGuia: guia=${sticker} shipping=${shippingAmt}`);
-    return { guia: sticker, shipping: shippingAmt, orderId, pdfUrl };
+    const r = leerOrden(guideRes.data, orderId);
+    console.log(`generarGuia: guia=${r.guia} shipping=${r.shipping} transportadora=${r.transportadora}`);
+    return r;
   }
 
   try {
     const r = await doGenerate(client);
     if (!r.guia) {
       const tardia = await esperarGuia(orderId);
-      if (tardia?.guia) return { guia: tardia.guia, shipping: tardia.shipping, orderId, pdfUrl: tardia.pdfUrl };
+      if (tardia?.guia) return tardia;
     }
     return r;
   } catch (e) {
@@ -1004,7 +933,7 @@ async function generarGuia(orderId) {
       const r = await doGenerate(client);
       if (!r.guia) {
         const tardia = await esperarGuia(orderId);
-        if (tardia?.guia) return { guia: tardia.guia, shipping: tardia.shipping, orderId, pdfUrl: tardia.pdfUrl };
+        if (tardia?.guia) return tardia;
       }
       return r;
     }
@@ -1208,4 +1137,4 @@ function pagoDeOrden(movimientos, orderId) {
   };
 }
 
-module.exports = { telNacional, telConPais, telLocal, crearOrden, resolverCiudad, getCiudades, variantesCiudad, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };
+module.exports = { telNacional, telConPais, telLocal, crearOrdenSinGuia, resolverCiudad, getCiudades, variantesCiudad, buscarOrden, getOrdenPorId, generarGuia, marcarImpresaDropi, setToken, verificarCliente, getSaldoDropi, getMovimientosWallet, pagoDeOrden, _getToken: getToken, _autoLogin: autoLogin, _makeClient: makeClient, _generateTotp: generateTotp, _PROVINCIAS: PROVINCIAS, _CIUDAD_DROPI: CIUDAD_DROPI };

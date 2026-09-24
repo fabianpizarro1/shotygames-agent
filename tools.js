@@ -1,7 +1,7 @@
 const tools = [
   {
     name: "registrar_pedido",
-    description: "Registra un nuevo pedido de Shotygames en Google Sheets. Úsalo cuando el usuario confirme un pedido con todos los datos del cliente.",
+    description: "Registra un nuevo pedido de Shotygames en Google Sheets y, si es físico por Servientrega, crea también la ORDEN en DROPI vinculada (sin guía — Fabián la genera él mismo en DROPI eligiendo transportadora). Úsalo cuando el usuario confirme un pedido con todos los datos del cliente.",
     input_schema: {
       type: "object",
       properties: {
@@ -24,7 +24,8 @@ const tools = [
         envio: { type: "string", description: "Costo del envío" },
         transportadora: { type: "string", description: "SERVIENTREGA u otra transportadora" },
         notas: { type: "string", description: "Notas adicionales del pedido" },
-        idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." }
+        idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." },
+        generar_guia: { type: "boolean", description: "Por defecto false — solo se crea la orden en DROPI, Fabián elige transportadora y genera la guía él mismo. Poné true SOLO si Fabián dice explícitamente que la generes ahora (ej: 'retira en agencia Servientrega', o cualquier caso donde él mismo indique que ya sabe que va por Servientrega). Nunca lo pongas true por tu cuenta." }
       },
       required: ["nombre", "telefono", "ciudad", "direccion", "pvp_total", "estado"]
     }
@@ -55,7 +56,7 @@ const tools = [
   },
   {
     name: "crear_guia_dropi",
-    description: "Crea una guía de envío en DROPI con los datos del pedido. Úsalo cuando Fabián pida crear la guía de un pedido.",
+    description: "Crea la ORDEN en DROPI con los datos del pedido y la deja vinculada en Sheets — NO genera la guía. Fabián entra a DROPI, revisa el pedido y genera la guía él mismo eligiendo la transportadora (Servientrega o Gintracom). Úsalo cuando Fabián pida crear el pedido/la orden en DROPI. Para traer la guía que él ya generó allá, usa sincronizar_guia_dropi.",
     input_schema: {
       type: "object",
       properties: {
@@ -72,14 +73,15 @@ const tools = [
         provincia:   { type: "string", description: "Provincia de Ecuador del destino. Deducirla del conocimiento geográfico si no se indica explícitamente." },
         saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). Vacío o 0 si pagado." },
         pvp_total:   { type: "string", description: "Precio de venta total del pedido. Requerido para SIN RECAUDO." },
-        notas:       { type: "string", description: "Notas adicionales" }
+        notas:       { type: "string", description: "Notas adicionales" },
+        generar_guia: { type: "boolean", description: "Por defecto false — solo se crea la orden en DROPI. Poné true SOLO si Fabián dice explícitamente que la generes ahora (ej: 'retira en agencia Servientrega'). Nunca lo pongas true por tu cuenta." }
       },
       required: ["nombre", "telefono", "ciudad", "direccion"]
     }
   },
   {
     name: "sincronizar_guia_dropi",
-    description: "Busca en DROPI la guía y costo de envío de un pedido existente y los actualiza en Google Sheets. Solo necesitas el nombre — el tool busca el teléfono en Sheets y la guía en DROPI automáticamente. Úsalo cuando Fabián diga 'ponle la guía al pedido de X'.",
+    description: "Busca en DROPI la guía, transportadora y costo de envío que Fabián ya generó a mano en DROPI para un pedido existente, y los trae a Google Sheets. Solo necesitas el nombre. Si Fabián cambió la transportadora en DROPI (Servientrega → Gintracom o viceversa) y eso generó una orden nueva, esto la detecta sola y actualiza el ID guardado. Úsalo cuando Fabián diga 'sincroniza/trae la guía del pedido de X'.",
     input_schema: {
       type: "object",
       properties: {

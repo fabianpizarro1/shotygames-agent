@@ -310,12 +310,12 @@ Si insiste, vende individual sin pelear.
 13. Siempre confirmar resumen antes de enviar datos de pago.
 14. Registrar el pedido en Sheets SOLO después de que el cliente confirme explícitamente.
 15. Para cooperativa (fuera de Machala): decir que lo consultas con el equipo.
-16. El resultado de \`registrar_pedido\` o \`confirmar_pedido_web\` es para tu criterio, NUNCA lo repitas literal — viene con formato interno (guía, LOG, avisos con ❌/⚠️) pensado para el equipo, no para el cliente. Resume con tu propio tono: confirmá el pedido, mencioná el método de pago y, si hay, el número de guía o el link de rastreo. Si algo falló al crear la guía, no lo digas así — dile simplemente que su pedido quedó registrado y que el equipo confirma el envío en breve.`;
+16. El resultado de \`registrar_pedido\` o \`confirmar_pedido_web\` es para tu criterio, NUNCA lo repitas literal — viene con formato interno (LOG, avisos con ❌/⚠️) pensado para el equipo, no para el cliente. Resume con tu propio tono: confirmá el pedido y mencioná el método de pago. La guía de envío la genera el equipo a mano después — NUNCA digas que ya tiene número de guía ni que "se generará automáticamente": dile que su pedido quedó registrado y en preparación, y que en breve le llega el número de guía para hacer seguimiento.`;
 
 const TOOLS_VENTAS = [
   {
     name: 'registrar_pedido',
-    description: 'Registra un pedido confirmado por el cliente: lo guarda en Google Sheets y, si es físico por Servientrega, crea la guía en DROPI automáticamente. Usar SOLO cuando el cliente haya confirmado explícitamente el pedido con todos sus datos.',
+    description: 'Registra un pedido confirmado por el cliente: lo guarda en Google Sheets y, si es físico por Servientrega, crea la ORDEN en DROPI automáticamente (sin guía — el equipo la genera a mano eligiendo transportadora). Usar SOLO cuando el cliente haya confirmado explícitamente el pedido con todos sus datos.',
     input_schema: {
       type: 'object',
       properties: {
@@ -336,7 +336,8 @@ const TOOLS_VENTAS = [
         envio: { type: 'string', description: 'Costo de envío: 0 siempre (envío gratis a todo Ecuador). Solo distinto en casos de revisión manual como Galápagos' },
         transportadora: { type: 'string', description: 'SERVIENTREGA por defecto' },
         notas: { type: 'string', description: 'Combo elegido, torres seleccionadas y cualquier nota adicional' },
-        idPedido: { type: 'string', description: 'Si el pedido viene de la web (formato PED-XXXXX), va acá. Si es un pedido tomado por chat normal, dejar vacío' }
+        idPedido: { type: 'string', description: 'Si el pedido viene de la web (formato PED-XXXXX), va acá. Si es un pedido tomado por chat normal, dejar vacío' },
+        generar_guia: { type: 'boolean', description: 'Por defecto false — solo se crea la orden en DROPI, el equipo elige transportadora y genera la guía después. Poné true SOLO si el cliente confirma que retira en agencia Servientrega (transportadora 100% segura). Nunca lo pongas true por tu cuenta.' }
       },
       required: ['nombre', 'telefono', 'ciudad', 'direccion', 'pvp_total', 'estado']
     }
