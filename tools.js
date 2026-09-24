@@ -81,13 +81,21 @@ const tools = [
   },
   {
     name: "sincronizar_guia_dropi",
-    description: "Busca en DROPI la guía, transportadora y costo de envío que Fabián ya generó a mano en DROPI para un pedido existente, y los trae a Google Sheets. Solo necesitas el nombre. Si Fabián cambió la transportadora en DROPI (Servientrega → Gintracom o viceversa) y eso generó una orden nueva, esto la detecta sola y actualiza el ID guardado. Úsalo cuando Fabián diga 'sincroniza/trae la guía del pedido de X'.",
+    description: "Busca en DROPI la guía, transportadora y costo de envío que Fabián ya generó a mano en DROPI para un pedido existente, y los trae a Google Sheets. Solo necesitas el nombre. Si Fabián cambió la transportadora en DROPI (Servientrega → Gintracom o viceversa) y eso generó una orden nueva, esto la detecta sola y actualiza el ID guardado. Úsalo cuando Fabián diga 'sincroniza/trae la guía del pedido de X' (con nombre puntual).",
     input_schema: {
       type: "object",
       properties: {
         nombre: { type: "string", description: "Nombre del cliente (o parte del nombre)" }
       },
       required: ["nombre"]
+    }
+  },
+  {
+    name: "sincronizar_guias_faltantes",
+    description: "Recorre TODOS los pedidos que tienen orden creada en DROPI pero todavía no tienen guía en Sheets, y para cada uno busca en DROPI si Fabián ya generó la guía — si sí, la trae junto con transportadora y envío. No necesita ningún nombre, revisa todos de una. Úsalo cuando Fabián diga algo como 'sincroniza las guías que faltan', 'trae las guías pendientes', 'revisa todas las guías' — sin un nombre específico.",
+    input_schema: {
+      type: "object",
+      properties: {}
     }
   },
   {

@@ -181,11 +181,18 @@ Si Fabián dice "crea la orden/guía de [nombre]" para un pedido que ya está en
 4. La herramienta actualizará la guía y cambiará el estado a ENVIADO automáticamente
 
 ## REGLA CRÍTICA — Guía de pedido existente
-Cuando Fabián diga cualquier variante de "ponle la guía a [nombre]", "sincroniza la guía de [nombre]", "saca la guía de [nombre]", "actualiza la guía de [nombre]":
+Cuando Fabián diga cualquier variante de "ponle la guía a [nombre]", "sincroniza la guía de [nombre]", "saca la guía de [nombre]", "actualiza la guía de [nombre]" **con un nombre puntual**:
 → USA INMEDIATAMENTE sincronizar_guia_dropi con solo el nombre.
 → NUNCA pidas teléfono, número de guía ni costo de envío — el tool los busca solo.
 → Si el tool devuelve una lista de candidatos (varios pedidos con ese nombre), muéstrasela a Fabián y pregunta cuál es.
 → Cuando Fabián responda con el nombre completo, llama de nuevo al tool con ese nombre exacto.
+
+## Sincronizar TODAS las guías pendientes de una
+Cuando Fabián diga "sincroniza las guías que faltan", "trae las guías pendientes", "revisa todas las guías" **sin nombre específico**:
+→ USA INMEDIATAMENTE sincronizar_guias_faltantes, sin parámetros y sin pedir ningún nombre — revisa todos los pedidos con orden en DROPI de una sola vez.
+→ NUNCA le respondas "dime los nombres" — para eso existe este tool, es justo lo que hace.
+→ Puede tardar unos segundos si hay varios pendientes (consulta DROPI uno por uno) — normal, no lo interrumpas ni lo repitas mientras corre.
+→ Reenviále a Fabián el resultado tal cual, incluyendo cuántos quedaron sin guía todavía.
 
 ## Búsqueda de nombres — cómo funciona
 Los tools buscan por nombre ignorando tildes, de forma parcial y con tolerancia a typos.
@@ -628,6 +635,60 @@ async function executeTool(toolName, input) {
       const pdfStr = found.pdfUrl ? `\n\n📄 ${found.pdfUrl}` : '';
       const cambioStr = ordenCambio ? `\n\n(DROPI había generado una orden nueva — ID actualizado en Sheets a ${found.orderId})` : '';
       return `✅ ${nombreReal} — Guía *${found.guia}*${transStr}${envioStr}${pdfStr}${cambioStr}`;
+    }
+
+    // Versión en lote de sincronizar_guia_dropi: en vez de un nombre a la vez,
+    // recorre TODOS los pedidos con orden en DROPI que todavía no tienen guía
+    // en Sheets y trae la que Fabián ya generó a mano para cada uno. Pedida el
+    // 2026-09-24 porque el bot solo sabía sincronizar de a uno.
+    case 'sincronizar_guias_faltantes': {
+      const ordenes = await sheets.getOrdenesConDropi();
+      const faltantes = ordenes.filter((o) => !o.guia);
+
+      if (!faltantes.length) {
+        return '✅ No hay pedidos con orden en DROPI pendientes de guía — todos los que tienen orden ya tienen guía en Sheets.';
+      }
+
+      const sincronizados = [];
+      const sinCambio = [];
+      const errores = [];
+
+      // Secuencial y con pausa entre cada uno — el mismo ritmo que
+      // enriquecerReputacionDropi para no pegarle 429 a DROPI (ver
+      // feedback_dropi_429_y_no_existe).
+      for (const o of faltantes) {
+        try {
+          let found = null;
+          try {
+            found = await dropi.getOrdenPorId(o.dropiId);
+          } catch (e) {
+            console.error(`sincronizar_guias_faltantes: error por ID ${o.dropiId}:`, e.message);
+          }
+          // Solo se busca por nombre/teléfono si por ID no salió guía — cubre
+          // el caso de que DROPI haya reemplazado la orden (cambio de
+          // transportadora) y el ID guardado haya quedado viejo.
+          if (!found?.guia) {
+            const porBusqueda = await dropi.buscarOrden(o.nombre, o.telefono).catch(() => null);
+            if (porBusqueda?.guia) found = porBusqueda;
+          }
+
+          if (found?.guia) {
+            await sheets.actualizarGuia(o.telefono, found.guia, found.shipping, found.orderId, found.transportadora);
+            sincronizados.push(`${o.nombre} — *${found.guia}*${found.transportadora ? ` (${found.transportadora})` : ''}`);
+          } else {
+            sinCambio.push(o.nombre);
+          }
+        } catch (e) {
+          errores.push(`${o.nombre}: ${e.message}`);
+        }
+        await new Promise((r) => setTimeout(r, 350));
+      }
+
+      let msg = `✅ Sincronizadas ${sincronizados.length} de ${faltantes.length} guías pendientes.`;
+      if (sincronizados.length) msg += `\n\n${sincronizados.join('\n')}`;
+      if (sinCambio.length) msg += `\n\n⏳ Todavía sin guía en DROPI (${sinCambio.length}): ${sinCambio.join(', ')}`;
+      if (errores.length) msg += `\n\n❌ Con error (${errores.length}): ${errores.join('; ')}`;
+      return msg;
     }
 
     case 'obtener_guia_pedido': {
