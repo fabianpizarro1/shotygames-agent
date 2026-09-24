@@ -134,6 +134,12 @@ function ultimaSenal(t: Tracking | null): string | null {
  * Servientrega suele devolver el paquete al remitente si el cliente no lo
  * retira en unos 7 días de estar en la agencia — no es una regla que
  * publiquen, es lo que Fabián observa en la operación día a día (2026-09-21).
+ *
+ * ⚠️ Es un número medido SOLO con historial de Servientrega. Con Gintracom
+ * (sumada 2026-09-24) se sigue usando el mismo umbral por ahora — mejor una
+ * alerta con un número no confirmado que ninguna alerta — pero puede estar
+ * mal para esa transportadora. Ajustar cuando haya suficientes casos reales
+ * de Gintracom en agencia para medirlo, igual que se hizo acá con Servientrega.
  */
 const DIAS_ANTES_DE_DEVOLUCION = 7;
 
@@ -199,9 +205,12 @@ function calcularAlertas(
       const faltan = DIAS_ANTES_DE_DEVOLUCION - dias;
       a.push({
         nivel: faltan <= 2 ? 'rojo' : 'ambar',
+        // "La transportadora" y no "Servientrega": el umbral se midió con
+        // Servientrega, pero decirle el nombre equivocado a un pedido de
+        // Gintracom es peor que no nombrar ninguna.
         texto:
           faltan > 0
-            ? `En agencia hace ${dias} día${dias === 1 ? '' : 's'} — Servientrega suele devolverlo a los ${DIAS_ANTES_DE_DEVOLUCION}, quedan ${faltan}`
+            ? `En agencia hace ${dias} día${dias === 1 ? '' : 's'} — la transportadora suele devolverlo a los ${DIAS_ANTES_DE_DEVOLUCION}, quedan ${faltan}`
             : `En agencia hace ${dias} días — ya pasó el plazo típico de ${DIAS_ANTES_DE_DEVOLUCION} días, puede devolverse en cualquier momento`,
       });
     } else {
