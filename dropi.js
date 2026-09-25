@@ -182,19 +182,27 @@ const claveFonetica = (v) => normCiudad(v)
 const soloDigitos = (v) => v.replace(/\D/g, '');
 const ordenarLetras = (v) => v.replace(/[0-9]/g, '').split('').sort().join('');
 
-// DROPI carga el mismo cantón con y sin artículo inicial cuando lo hace por
-// separado para cada transportadora (LA JOYA DE LOS SACHAS / JOYA DE LOS
-// SACHAS, EL TAMBO / TAMBO, LA ESTANCILLA / ESTANCILLA...). No es una falta
-// de ortografía — claveFonetica() no lo agarra porque sobra/falta una
-// palabra entera, no una letra.
+// DROPI carga el mismo cantón varias veces cuando lo hace por separado para
+// cada transportadora, y no siempre con la misma ortografía:
+//   - con/sin artículo inicial: LA JOYA DE LOS SACHAS / JOYA DE LOS SACHAS,
+//     EL TAMBO / TAMBO, LA ESTANCILLA / ESTANCILLA.
+//   - con/sin sufijo entre paréntesis: SALINAS / SALINAS (SANTA ELENA),
+//     SANTA ROSA / SANTA ROSA (EL ORO) — 17 casos así en el catálogo, más
+//     comunes que los de artículo. Ninguno es falta de ortografía —
+//     claveFonetica() no los agarra porque sobra/falta una palabra entera.
 const quitarArticulo = (v) => v.replace(/^(LA |EL |LOS |LAS )/, '');
+// normCiudad() convierte "(" y ")" en espacios sueltos — para el momento en
+// que se compara ya es tarde para reconocer el sufijo. Por eso esto se aplica
+// al nombre CRUDO (antes de normalizar) y recién ahí se normaliza el resultado.
+const quitarParentesis = (v) => String(v || '').replace(/\s*\([^)]*\)\s*$/, '');
+const limpiarNombreCiudad = (crudo) => quitarArticulo(normCiudad(quitarParentesis(crudo)));
 
 async function variantesCiudad(ciudad, provincia, rateType) {
   try {
     const todas = await getCiudades();
     const nProv = normCiudad(provincia);
     const nCiudad = normCiudad(ciudad);
-    const nCiudadSinArt = quitarArticulo(nCiudad);
+    const nCiudadLimpio = limpiarNombreCiudad(ciudad);
     const clave = claveFonetica(ciudad);
     const anagrama = ordenarLetras(clave);
     const digitos = soloDigitos(clave);
@@ -204,7 +212,7 @@ async function variantesCiudad(ciudad, provincia, rateType) {
       .filter((c) => !nProv || c.nProvincia === nProv)
       .filter((c) => c.nNombre !== nCiudad)
       .filter((c) => {
-        if (quitarArticulo(c.nNombre) === nCiudadSinArt) return true;
+        if (limpiarNombreCiudad(c.nombre) === nCiudadLimpio) return true;
         const k = claveFonetica(c.nombre);
         if (k === clave) return true;
         return ordenarLetras(k) === anagrama && soloDigitos(k) === digitos;
@@ -247,7 +255,7 @@ const ordenarPorPrioridad = (lista) => [...lista].sort((a, b) => {
 async function resolverCiudad(ciudad, provincia, rateType) {
   const nCiudad = normCiudad(ciudad);
   if (!nCiudad) return null;
-  const nCiudadSinArt = quitarArticulo(nCiudad);
+  const nCiudadLimpio = limpiarNombreCiudad(ciudad);
 
   try {
     const todas = await getCiudades();
@@ -271,15 +279,16 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     // ciudades". Ahora se devuelven TODOS ordenados por prioridad y crearOrden
     // reintenta con los siguientes si el primero no tiene ruta.
     const exactas = ordenarPorPrioridad(ambito.filter((c) => c.nNombre === nCiudad));
-    // Mismo cantón cargado con y sin artículo inicial, normalmente porque
-    // cada entrada es de una transportadora distinta (ver DISTRIBUTION_COMPANY).
-    // Se suma a las exactas SIEMPRE, no solo cuando exactas está vacío: si
-    // "LA JOYA DE LOS SACHAS" matchea exacto pero es de otra transportadora,
-    // "JOYA DE LOS SACHAS" (la de Servientrega) tiene que seguir en carrera.
-    const sinArticulo = ordenarPorPrioridad(
-      ambito.filter((c) => c.nNombre !== nCiudad && quitarArticulo(c.nNombre) === nCiudadSinArt)
+    // Mismo cantón cargado con otra ortografía (artículo inicial o sufijo
+    // entre paréntesis), normalmente porque cada entrada es de una
+    // transportadora distinta (ver DISTRIBUTION_COMPANY). Se suma a las
+    // exactas SIEMPRE, no solo cuando exactas está vacío: si "SALINAS"
+    // matchea exacto pero es de otra transportadora, "SALINAS (SANTA
+    // ELENA)" (la de Servientrega) tiene que seguir en carrera.
+    const variantesMismoNombre = ordenarPorPrioridad(
+      ambito.filter((c) => c.nNombre !== nCiudad && limpiarNombreCiudad(c.nombre) === nCiudadLimpio)
     );
-    let candidatos = [...exactas, ...sinArticulo];
+    let candidatos = [...exactas, ...variantesMismoNombre];
     if (!candidatos.length) {
       const parciales = ambito.filter((c) => c.nNombre.startsWith(nCiudad) || nCiudad.startsWith(c.nNombre));
       // Un parcial es otro NOMBRE (SAN MIGUEL vs SAN MIGUEL DE BOLIVAR): ahí
