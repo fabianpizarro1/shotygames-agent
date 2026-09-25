@@ -297,8 +297,9 @@ porPedidoGenerado = (0.70 × margenEntregado) − (0.30 × flete)
 
 Ese número es el **CPA de equilibrio**. Y hay un paso más que se olvidó una vez:
 
-> **Dividir por 1.2.** El gasto en Meta lleva ~20% de comisión bancaria, así que el CPA que
-> muestra el administrador tiene que ser un 20% menor que el de equilibrio.
+> **Dividir por 1.03.** El gasto en Meta lleva una comisión del 3% (desde el 2026-09-25, antes
+> 20%/1.2 — ver `decisions/log.md`), así que el CPA que muestra el administrador tiene que ser
+> un 3% menor que el de equilibrio.
 
 Para ganar plata, apuntar a **la mitad** del CPA de equilibrio.
 

@@ -173,7 +173,7 @@ async function main() {
         ['', '', '', '', '', '', '', '', '', '', ''],
         [
           '=IF($D$2="SEMANA","SEMANA (lun-dom)",IF($D$2="MES","MES","FECHA"))',
-          'GASTO', 'GASTO REAL (+20%)', 'VENTAS REALES',
+          'GASTO', 'GASTO REAL (+3%)', 'VENTAS REALES',
           'ENTREGADOS', 'DEVUELTOS', '% DEVOLUCIONES', 'CPA REAL', 'ROAS REAL',
           'UTILIDAD SI SE ENTREGA TODO', 'UTILIDAD AJUSTADA (%DEV)'
         ],

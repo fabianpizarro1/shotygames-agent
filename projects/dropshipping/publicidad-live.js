@@ -19,8 +19,10 @@
  *   pedido, así que repartir el CPA entre campañas sería inventado.
  * - "VENTAS REALES" = pedidos del día excluyendo CANCELADO y
  *   PENDIENTE_CONFIRMACION, por FECHA de creación (que es lo que produjo el ads).
- * - GASTO REAL = gasto de Meta × 1.2 (comisión del banco). CPA y ROAS se
- *   calculan siempre contra el gasto REAL, nunca contra el crudo.
+ * - GASTO REAL = gasto de Meta × comisión. Desde el 2026-09-25 la comisión es
+ *   3% (antes 20% — ver decisions/log.md); los días anteriores a esa fecha
+ *   siguen con el 20% real que se pagó entonces (`comisionMeta(fecha)`). CPA y
+ *   ROAS se calculan siempre contra el gasto REAL, nunca contra el crudo.
  * - El join pedido→producto es por ID DROPI, no por el texto de PRODUCTO: el
  *   mismo id sale escrito distinto según cómo se registró el pedido
  *   ("Olla Freidora con Canasta" vs "Mini Olla Freidora con Canasta Acero
@@ -54,7 +56,9 @@ const { DEFAULTS } = require('./calculadora.js');
 const SHEET_ID = process.env.SHEETS_ID_DROPSHIPPING;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
 const GRAPH_VERSION = 'v20.0';
-const COMISION_BANCARIA = 1.2;
+// Ver nota de arriba: 20% hasta el día anterior al cambio, 3% desde entonces.
+const CAMBIO_COMISION = '2026-09-25';
+const comisionMeta = (fecha) => (fecha >= CAMBIO_COMISION ? 1.03 : 1.2);
 const DIAS = 30;
 
 function getAuth() {
@@ -221,7 +225,7 @@ function calcularFilas({ gastoPorCampaña, pedidosPorClave, desde }) {
         p.tienda.toUpperCase(),
         p.producto,
         usd(gasto),
-        usd(gasto * COMISION_BANCARIA),
+        usd(gasto * comisionMeta(fecha)),
         ventas,
         usd(ingreso),
         entregados,

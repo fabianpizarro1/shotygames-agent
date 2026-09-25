@@ -27,7 +27,12 @@ const { CUENTAS_ADS, ESTADOS, COSTO_CAJA, COLUMNAS_CANTIDAD } = require('./confi
 const SHEET_ID = process.env.SHEETS_ID;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
 const GRAPH_VERSION = 'v20.0';
-const COMISION_BANCARIA = 1.2;
+// Desde el 2026-09-25 el cobro adicional sobre el gasto de Meta bajó de 20% a
+// una comisión fija de 3% (decisión de Fabián, ver decisions/log.md). Los días
+// ANTERIORES a esa fecha se recalculan en cada corrida (la ventana arranca en
+// enero) y tienen que seguir con el 20% real que se pagó entonces.
+const CAMBIO_COMISION = '2026-09-25';
+const comisionMeta = (fecha) => (fecha >= CAMBIO_COMISION ? 1.03 : 1.2);
 /**
  * La ventana arranca el 1 de ENERO del año en curso, no N días atrás.
  *
@@ -172,7 +177,7 @@ function calcularFilas({ gastoPorFecha, pedidosPorFecha, desde }) {
 
     filas.push([
       fecha,
-      usd(gasto), usd(gasto * COMISION_BANCARIA),
+      usd(gasto), usd(gasto * comisionMeta(fecha)),
       todas.ventas, usd(todas.ingreso), todas.entregados, todas.devueltos,
       usd(todas.margenEntregados), usd(todas.perdidaDevueltos), usd(todas.margenPendientes), usd(todas.fletePendientes),
       meta.ventas, usd(meta.ingreso), meta.entregados, meta.devueltos,

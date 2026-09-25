@@ -136,7 +136,7 @@ async function main() {
         `=SUM($J$6:$J$${FILAS})`, `=SUM($K$6:$K$${FILAS})`],
       ['', '', '', '', '', '', '', '', '', '', ''],
       [`=IF($D$2="SEMANA"${SEP}"SEMANA (lun-dom)"${SEP}IF($D$2="MES"${SEP}"MES"${SEP}"FECHA"))`,
-        'GASTO', 'GASTO REAL (+20%)', 'VENTAS REALES', 'ENTREGADOS', 'DEVUELTOS',
+        'GASTO', 'GASTO REAL (+3%)', 'VENTAS REALES', 'ENTREGADOS', 'DEVUELTOS',
         '% DEVOLUCIONES', 'CPA REAL', 'ROAS REAL', 'UTILIDAD SI SE ENTREGA TODO', 'UTILIDAD AJUSTADA (%DEV)'],
       // El QUERY deja en X:AP -> X=periodo, Y=gasto, Z=gastoReal,
       // bloque TODAS  : AA=ventas AB=ingreso AC=entreg AD=devue AE=margenEnt AF=perdDev AG=margenPend AH=fletePend

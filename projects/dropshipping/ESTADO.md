@@ -60,13 +60,24 @@ perdidaDevuelto   = flete
 porPedidoGenerado = (entrega × margenEntregado) − ((1 − entrega) × perdidaDevuelto)
 ```
 
-Ese último número es el CPA de equilibrio. **Y hay un paso más: dividirlo por 1.2**, porque el
-gasto en Meta lleva ~20% de comisión bancaria. Así que el CPA que muestra el administrador tiene
-que ser un 20% menor. Para ganar plata, apuntar a la **mitad** del de equilibrio.
+Ese último número es el CPA de equilibrio. **Y hay un paso más: dividirlo por 1.03** (antes 1.2),
+porque el gasto en Meta lleva una comisión adicional — **3% desde el 2026-09-25** (antes 20%, ver
+`decisions/log.md`). Así que el CPA que muestra el administrador tiene que ser un 3% menor. Para
+ganar plata, apuntar a la **mitad** del de equilibrio.
 
 **La variable de riesgo ahora es la tasa de entrega.** Para 1 frasco de drenaje a $28:
 80% → CPA máx $11.32 · 70% → $9.11 · 60% → $6.90 · 50% → $4.69. Por debajo del 60% casi
 ningún anuncio sirve. Se sabrá cuando se entreguen los primeros pedidos reales.
+_(Esta lista es "por pedido generado", ANTES de la comisión de Meta — no cambia con el punto de abajo.)_
+
+### Comisión de Meta bajó de 20% a 3% (2026-09-25)
+
+Decisión de Fabián, ver `decisions/log.md`. Todo CPA máximo de este documento (tablas de
+abajo) ya está recalculado con **÷1.03**. Los scripts (`publicidad-live.js` de este proyecto y
+de `publicidad-shotygames/`) son sensibles a la fecha: días hasta el 2026-09-24 se recalculan
+con el 20% real que se pagó entonces, desde el 2026-09-25 en adelante con 3% — no hay que
+volver a tocarlos si algún día cambia de nuevo, solo agregar otro corte de fecha. Mismo cambio
+aplicado en `finanzas-app` (`FACTOR_COMISION_META`, adm.shotygames.com).
 
 ---
 
@@ -91,11 +102,12 @@ Ver `project_avanora_productos` en la memoria para el detalle. Orden de testeo a
 
 | Combo | Precio | Por pedido generado | CPA máximo |
 |---|---|---|---|
-| 1 frasco | $28.00 | $9.11 | **$7.59** |
-| 2 frascos | $35.00 | $9.86 | **$8.22** |
-| 3 frascos | $50.00 | $16.25 | **$13.54** |
+| 1 frasco | $28.00 | $9.11 | **$8.84** |
+| 2 frascos | $35.00 | $9.86 | **$9.57** |
+| 3 frascos | $50.00 | $16.25 | **$15.78** |
 
-_(CPA máximo = por pedido generado ÷ 1.2, por la comisión bancaria del gasto en Meta)_
+_(CPA máximo = por pedido generado ÷ 1.03, por la comisión del gasto en Meta — 3% desde el
+2026-09-25, antes 20%/1.2)_
 
 Precio tachado $39.99. El rango real del mercado ecuatoriano era $23–$28 el frasco suelto.
 
@@ -138,11 +150,12 @@ magnesio glicinato 200 mg + zinc 10 mg + vitamina D3 1.000 UI.
 
 | Combo | Precio | Por pedido generado | CPA máximo |
 |---|---|---|---|
-| 1 frasco | $29.99 | $11.13 | **$9.28** |
-| 2 frascos | $37.99 | $13.23 | **$11.03** |
-| 3 frascos | $49.99 | $18.13 | **$15.11** |
+| 1 frasco | $29.99 | $11.13 | **$10.81** |
+| 2 frascos | $37.99 | $13.23 | **$12.84** |
+| 3 frascos | $49.99 | $18.13 | **$17.60** |
 
-_(CPA máximo = por pedido generado ÷ 1.2, por la comisión bancaria del gasto en Meta)_
+_(CPA máximo = por pedido generado ÷ 1.03, por la comisión del gasto en Meta — 3% desde el
+2026-09-25, antes 20%/1.2)_
 
 El tachado de $49.99 es **real**: es lo que cuesta un frasco en peachperfect.com.
 
@@ -490,7 +503,7 @@ también en n8n.
 **Cómo está armada la hoja PUBLICIDAD** (rediseñada 2026-08-31 a pedido de Fabián: la primera
 versión, por campaña y con 16 columnas, era confusa):
 
-- **9 columnas:** FECHA · GASTO · GASTO REAL (+20%) · VENTAS REALES · ENTREGADOS · DEVUELTOS ·
+- **9 columnas:** FECHA · GASTO · GASTO REAL (+3% desde el 2026-09-25, antes +20%) · VENTAS REALES · ENTREGADOS · DEVUELTOS ·
   % DEVOLUCIONES · CPA REAL · ROAS REAL.
 - **Qué cuenta como DEVUELTO.** DROPI **sí** marca devoluciones, con el texto que use cada
   transportadora (`DEVUELTO`, `DEVOLUCION`, `DEVUELTO AL REMITENTE`, `RETORNADO`…). Al 2026-08-31
