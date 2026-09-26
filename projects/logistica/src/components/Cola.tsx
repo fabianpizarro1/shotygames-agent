@@ -26,15 +26,17 @@ interface Respuesta {
 
 // Se filtra por FASE, no por el literal del estado: "GUIA_GENERADA" de
 // dropshipping y "ENVIADO" de ShotyGames son la misma cosa para quien mira.
-// `agencia` no es una fase: es un corte transversal — un paquete parado en
-// agencia puede estar en cualquier estado del Sheet.
-type FiltroFase = 'TODAS' | Fase | 'agencia';
+// `agencia` y `devolucion` no son fases: son cortes transversales — un
+// paquete parado en agencia, o uno que ya arrancó la vuelta, puede estar en
+// cualquier estado del Sheet.
+type FiltroFase = 'TODAS' | Fase | 'agencia' | 'devolucion';
 type FiltroTienda = 'todas' | Tienda;
 
 const FASES_FILTRO: { clave: FiltroFase; texto: string }[] = [
   { clave: 'TODAS', texto: 'Todos' },
   { clave: 'novedad', texto: 'Novedades' },
   { clave: 'agencia', texto: 'En agencia' },
+  { clave: 'devolucion', texto: 'En devolución' },
   { clave: 'en-camino', texto: 'En camino' },
   { clave: 'por-despachar', texto: 'Sin despachar' },
 ];
@@ -53,26 +55,37 @@ const sinTildes = (s: string) =>
  * ¿Este pedido entra en ese filtro?
  *
  * Los filtros mezclan DOS ejes a propósito: las fases salen del estado del
- * Sheet y "En agencia" sale de dónde está el paquete de verdad. Cuando los dos
- * hablan del mismo pedido, manda el físico: un paquete parado en la agencia
- * sigue diciendo ENVIADO en el Sheet, pero NO está en camino — está esperando
- * que el cliente lo vaya a retirar, que es otro trabajo. Sin esta excepción,
- * 15 de los 33 "En camino" eran paquetes estacionados (medido 2026-09-04) y
+ * Sheet y "En agencia"/"En devolución" salen de dónde está el paquete de
+ * verdad (`p.momento`, calculado del tracking). Cuando los dos hablan del
+ * mismo pedido, manda el físico: un paquete parado en la agencia sigue
+ * diciendo ENVIADO en el Sheet, pero NO está en camino — está esperando que
+ * el cliente lo vaya a retirar, que es otro trabajo. Sin esta excepción, 15
+ * de los 33 "En camino" eran paquetes estacionados (medido 2026-09-04) y
  * Fabián los revisaba dos veces.
+ *
+ * Lo mismo pasa con la devolución (2026-09-26): `momento` marca
+ * `en-devolucion` en cuanto Servientrega registra la vuelta, aunque el Sheet
+ * todavía diga "en camino" porque nadie lo actualizó a mano. Sin sacarlo de
+ * "En camino", Fabián revisaba de nuevo un pedido que ya no tiene nada que
+ * cobrar — ver `diasEnAgencia`/`momentoDelPaquete` en `momento.ts`: el estado
+ * es "pegajoso", una vez que arrancó la vuelta no se vuelve atrás solo.
  *
  * La NOVEDAD manda sobre todo lo demás (2026-09-15): un pedido con novedad
  * sale SOLO en "Novedades". Antes un paquete con novedad parado en agencia
  * salía también en "En agencia" y Fabián lo trabajaba dos veces. Las fases ya
- * son excluyentes entre sí; el único cruce era el corte físico de agencia.
+ * son excluyentes entre sí; el único cruce era el corte físico de agencia (y
+ * ahora también el de devolución).
  */
 const pasaFiltro = (p: Pedido, f: FiltroFase) =>
   f === 'TODAS'
     ? true
     : f === 'agencia'
       ? p.enAgencia && p.fase !== 'novedad'
-      : f === 'en-camino'
-        ? p.fase === 'en-camino' && !p.enAgencia
-        : p.fase === f;
+      : f === 'devolucion'
+        ? p.momento === 'en-devolucion' && p.fase !== 'novedad'
+        : f === 'en-camino'
+          ? p.fase === 'en-camino' && !p.enAgencia && p.momento !== 'en-devolucion'
+          : p.fase === f;
 
 const TIENDAS_FILTRO: FiltroTienda[] = ['todas', 'truquito', 'avanora', 'shotygames'];
 
