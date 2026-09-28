@@ -232,6 +232,22 @@ const tools = [
       },
       required: ["juego", "cantidad"]
     }
+  },
+  {
+    name: "cambiar_canal_wa",
+    description: "Cambia el número de WhatsApp que se le asigna a los PEDIDOS NUEVOS de Shotygames (gracias, guía enviada, avisos de logística). No afecta a los pedidos que ya existen — esos se quedan con el número que ya tenían. Úsalo cuando Fabián diga 'cambia el canal/número activo a X', 'usa el número nuevo para los pedidos que vengan', etc.",
+    input_schema: {
+      type: "object",
+      properties: {
+        canal: { type: "string", description: "\"shotygames\" (el número real, 0993154462) o \"shotygames2\" (el segundo número/canal)" }
+      },
+      required: ["canal"]
+    }
+  },
+  {
+    name: "consultar_canal_wa",
+    description: "Dice cuál es el número de WhatsApp activo ahora mismo para pedidos nuevos de Shotygames. Úsalo cuando Fabián pregunte 'qué canal está activo' o similar.",
+    input_schema: { type: "object", properties: {} }
   }
 ];
 

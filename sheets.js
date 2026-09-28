@@ -369,6 +369,21 @@ async function appendPedido(pedido) {
     console.error('appendPedido: fallo al guardar atribución Meta/TikTok:', e.message);
   }
 
+  // Canal de WhatsApp (col AY) — se decide UNA VEZ acá y queda pegado a este
+  // pedido para siempre, sin importar que el canal activo cambie después.
+  // Ver canal-wa.js.
+  try {
+    const canalWa = require('./canal-wa').getCanalActivo();
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEETS_ID,
+      range: `PEDIDOS!AY${nextRow}`,
+      valueInputOption: 'RAW',
+      resource: { values: [[canalWa]] }
+    });
+  } catch (e) {
+    console.error('appendPedido: fallo al guardar CANAL WA:', e.message);
+  }
+
   return result.data.updates;
 }
 
@@ -711,7 +726,10 @@ async function marcarNotificacionWA(nombre) {
 // los datos (incluido LOG) para que quien llama decida enviar o no.
 async function getPedidosParaNotificarGuia(nombre) {
   const sheetsApi = await getSheets();
-  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  // OJO: la hoja ya pasa de 50 columnas (CANAL WA quedó en AY) — un rango
+  // corto hace que un campo real "desaparezca" en vez de leerse vacío. Ver
+  // feedback_rango_corto_sheets.
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:BZ' });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
 
@@ -727,6 +745,7 @@ async function getPedidosParaNotificarGuia(nombre) {
   const linkIdx    = headers.indexOf('LINK RASTREO');
   const dirIdx     = headers.indexOf('DIRECCION');
   const dropiIdx   = 33; // columna AH, guardado como "DROPI:XXXXX"
+  const canalIdx   = headers.indexOf('CANAL WA'); // qué número de WhatsApp le toca — ver canal-wa.js
 
   const toCandidato = (i) => {
     const dropiCell = String(rows[i][dropiIdx] || '');
@@ -739,6 +758,7 @@ async function getPedidosParaNotificarGuia(nombre) {
       log: rows[i][logIdx] || '',
       linkRastreo: linkIdx >= 0 ? (rows[i][linkIdx] || '') : '',
       direccion: dirIdx >= 0 ? (rows[i][dirIdx] || '') : '',
+      canalWa: canalIdx >= 0 ? (rows[i][canalIdx] || '') : '',
       dropiId: dropiCell.startsWith('DROPI:') ? dropiCell.replace('DROPI:', '') : null
     };
   };
@@ -1197,7 +1217,10 @@ async function escribirLog(fila, texto) {
 // la entrega, así que un pedido ya entregado sigue siendo candidato a pago.
 async function getOrdenesConDropi() {
   const sheetsApi = await getSheets();
-  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:AJ' });
+  // Rango ampliado a BZ (antes AJ) — CANAL WA quedó en AY. Ver
+  // feedback_rango_corto_sheets: un rango corto hace que un campo real
+  // "desaparezca" en vez de leerse vacío.
+  const res = await sheetsApi.spreadsheets.values.get({ spreadsheetId: SHEETS_ID, range: 'PEDIDOS!A:BZ' });
   const rows = res.data.values || [];
   const headers = rows[0] || [];
 
@@ -1208,6 +1231,7 @@ async function getOrdenesConDropi() {
   const idxSaldo  = headers.indexOf('SALDO');
   const idxLog    = headers.indexOf('LOG');
   const idxDropiId = 33; // columna AH, guardado como "DROPI:XXXXX"
+  const idxCanal  = headers.indexOf('CANAL WA'); // qué número de WhatsApp le toca — ver canal-wa.js
 
   // El Sheet tiene ESTADO cargado con formatos mixtos de distintas épocas
   // ("PAGADO", "Pagado", etc.) — comparar sin normalizar dejó pasar filas ya
@@ -1233,6 +1257,7 @@ async function getOrdenesConDropi() {
       // (transferencia, Payphone) antes de despachar, no contra entrega.
       saldo: parseMonto(row[idxSaldo]),
       log: row[idxLog] || '',
+      canalWa: idxCanal >= 0 ? (row[idxCanal] || '') : '',
       dropiId
     });
   }

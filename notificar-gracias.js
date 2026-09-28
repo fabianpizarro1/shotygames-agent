@@ -12,8 +12,7 @@
 
 const { sendText } = require('./evolution');
 const sheets = require('./sheets');
-
-const INSTANCE = process.env.EVOLUTION_INSTANCE_GRACIAS;
+const { instanciaDe } = require('./canal-wa');
 
 function toE164Ec(raw) {
   const n = String(raw || '').replace(/\D/g, '');
@@ -51,17 +50,21 @@ function nowStr() {
  * "agradecimiento enviado" o "gracias ok"). Silencioso si ya se envió — no
  * es un error, es el caso normal cuando el pedido ya venía de Pagado antes.
  */
-async function notificarGracias({ fila, nombre, telefono, log }) {
+async function notificarGracias({ fila, nombre, telefono, log, canalWa }) {
   const logLower = String(log || '').toLowerCase();
   if (logLower.includes('agradecimiento enviado') || logLower.includes('gracias ok')) {
     return { enviado: false, motivo: 'ya enviado antes' };
   }
 
-  if (!INSTANCE) throw new Error('EVOLUTION_INSTANCE_GRACIAS no configurado en .env');
+  // El canal queda pegado al pedido desde que se registró (columna CANAL WA)
+  // — así el cliente siempre recibe mensajes del mismo número, sin importar
+  // que el canal ACTIVO para pedidos nuevos haya cambiado después. Ver canal-wa.js.
+  const instance = instanciaDe(canalWa);
+  if (!instance) throw new Error(`Instancia de Evolution no configurada para canal "${canalWa || '(vacío)'}"`);
   const phone = toE164Ec(telefono);
   if (!phone) throw new Error(`teléfono inválido (${telefono})`);
 
-  await sendText(phone, buildGraciasMessage(nombre), INSTANCE);
+  await sendText(phone, buildGraciasMessage(nombre), instance);
   await sheets.escribirLog(fila, `Agradecimiento enviado | ${nowStr()}`);
   return { enviado: true };
 }

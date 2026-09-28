@@ -15,8 +15,7 @@
 const { sendText, sendDocument } = require('./evolution');
 const { downloadPdf } = require('./pdf');
 const sheets = require('./sheets');
-
-const INSTANCE = process.env.EVOLUTION_INSTANCE_GRACIAS;
+const { instanciaDe } = require('./canal-wa');
 
 function firstName(nombre) {
   const first = (String(nombre || '').trim().split(' ')[0]) || 'Cliente';
@@ -114,7 +113,7 @@ function nowStr() {
  * el CRM. No lanza para "ya enviado" ni "transportadora sin guía" — esos
  * son casos normales, no errores.
  */
-async function notificarGuia({ fila, nombre, telefono, guia, transportadora, dropiId, log, linkRastreo, direccion }) {
+async function notificarGuia({ fila, nombre, telefono, guia, transportadora, dropiId, log, linkRastreo, direccion, canalWa }) {
   const logLower = String(log || '').toLowerCase();
   if (logLower.includes('guía enviada') || logLower.includes('guia enviada')) {
     return { enviado: false, motivo: 'ya enviado antes' };
@@ -127,17 +126,20 @@ async function notificarGuia({ fila, nombre, telefono, guia, transportadora, dro
     return { enviado: false, motivo: 'sin número de guía' };
   }
 
-  if (!INSTANCE) throw new Error('EVOLUTION_INSTANCE_GRACIAS no configurado en .env');
+  // Mismo canal que ya le tocó a este pedido al registrarse (columna CANAL
+  // WA) — no el canal activo actual. Ver canal-wa.js.
+  const instance = instanciaDe(canalWa);
+  if (!instance) throw new Error(`Instancia de Evolution no configurada para canal "${canalWa || '(vacío)'}"`);
   const phone = toE164Ec(telefono);
   if (!phone) throw new Error(`teléfono inválido (${telefono})`);
 
-  await sendText(phone, buildGuiaMessage(nombre, transportadora, guia, linkRastreo || '', direccion || ''), INSTANCE);
+  await sendText(phone, buildGuiaMessage(nombre, transportadora, guia, linkRastreo || '', direccion || ''), instance);
 
   let pdfEnviado = false;
   if (dropiId) {
     try {
       const buf = await downloadPdf(guiaPdfUrl(dropiId, guia));
-      await sendDocument(phone, buf, `guia-${guia}.pdf`, '', INSTANCE);
+      await sendDocument(phone, buf, `guia-${guia}.pdf`, '', instance);
       pdfEnviado = true;
     } catch (e) {
       console.error(`notificar-guia-cliente: error mandando PDF fila ${fila}:`, e.message);

@@ -120,6 +120,21 @@ app.post('/webhook', async (req, res) => {
       return;
     }
 
+    // Comando especial para cambiar el canal de WhatsApp activo (a qué número
+    // se le pegan los pedidos NUEVOS) sin esperar un redeploy — ver canal-wa.js.
+    if (text && text.toUpperCase().startsWith('CANAL ACTIVO:')) {
+      const canalWaMod = require('./canal-wa');
+      const valor = text.slice('CANAL ACTIVO:'.length).trim();
+      await markAsRead(from, messageId);
+      try {
+        const nuevo = canalWaMod.setCanalActivo(valor);
+        await sendText(from, `✅ Canal activo actualizado a "${nuevo}". Los pedidos nuevos de ahora en adelante usan ese número — los que ya existían no cambian.`);
+      } catch (e) {
+        await sendText(from, `❌ ${e.message}`);
+      }
+      return;
+    }
+
     await markAsRead(from, messageId);
     await sendReaction(from, messageId, '⏳');
 

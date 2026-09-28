@@ -104,7 +104,7 @@ async function executeTool(name, input) {
       async function marcarPagadoYAgradecer(orden) {
         await sheets.marcarPagado(orden.fila);
         try {
-          const r = await notificarGracias({ fila: orden.fila, nombre: orden.nombre, telefono: orden.telefono, log: orden.log });
+          const r = await notificarGracias({ fila: orden.fila, nombre: orden.nombre, telefono: orden.telefono, log: orden.log, canalWa: orden.canalWa });
           return r.enviado ? '📲 gracias enviado' : null;
         } catch (e) {
           console.error(`sincronizar_pagos: error mandando gracias fila ${orden.fila}:`, e.message);

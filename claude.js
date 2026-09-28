@@ -938,6 +938,21 @@ async function executeTool(toolName, input) {
       return `✅ Stock actualizado: ${r.juego} → ${r.cantidad} unidades`;
     }
 
+    case 'cambiar_canal_wa': {
+      const canalMod = require('./canal-wa');
+      try {
+        const nuevo = canalMod.setCanalActivo(input.canal);
+        return `✅ Canal activo cambiado a "${nuevo}". Los pedidos nuevos de ahora en adelante usan ese número — los que ya existían se quedan con el que ya tenían.`;
+      } catch (e) {
+        return `❌ ${e.message}`;
+      }
+    }
+
+    case 'consultar_canal_wa': {
+      const canalMod = require('./canal-wa');
+      return `El canal activo ahora mismo es "${canalMod.getCanalActivo()}".`;
+    }
+
     default:
       return 'Herramienta no reconocida.';
   }
