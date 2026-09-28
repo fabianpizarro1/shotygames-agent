@@ -15,12 +15,21 @@ import { toE164Ec, credencialesDe } from './whatsapp-shotygames';
 
 const EVO_BASE = process.env.EVOLUTION_API_URL ?? '';
 
+export type TipoMensaje = 'imagen' | 'audio' | 'video' | 'documento' | 'sticker' | 'ubicacion';
+
 export interface MensajeChat {
   id: string;
   direccion: 'in' | 'out';
+  /** Texto del mensaje, o el caption si es un medio con pie de foto. Vacío si el medio no tiene caption. */
   texto: string;
   /** ISO. */
   fecha: string;
+  /** Si es un medio (imagen/audio/video/documento/sticker), el archivo se pide aparte con obtenerMedia(). */
+  tipo?: TipoMensaje;
+  /** Solo para 'documento': el nombre real del archivo. */
+  nombreArchivo?: string;
+  /** Solo para 'ubicacion'. */
+  ubicacion?: { lat: number; lng: number };
 }
 
 async function evolutionFetch<T>(path: string, body: unknown, apiKey: string): Promise<T> {
@@ -46,7 +55,8 @@ function listar(raw: any): any[] {
   return raw?.messages?.records ?? raw?.records ?? [];
 }
 
-/** El mismo orden de fallback que usa finanzas-app para no mostrar "(sin texto)". */
+/** El mismo orden de fallback que usa finanzas-app. Para un medio sin caption
+ * devuelve '' — el frontend ya sabe mostrar el ícono correcto por `tipo`. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function textoDeMensaje(item: any): string {
   const msg = item?.message ?? item?.lastMessage ?? {};
@@ -61,13 +71,46 @@ function textoDeMensaje(item: any): string {
     msg.buttonsResponseMessage?.selectedDisplayText ||
     msg.listResponseMessage?.title;
   if (texto) return texto;
-
-  if (msg.imageMessage) return '📷 Imagen';
-  if (msg.audioMessage || msg.pttMessage) return '🎤 Audio';
-  if (msg.documentMessage) return '📄 Documento';
-  if (msg.stickerMessage) return 'Sticker';
-  if (msg.locationMessage) return '📍 Ubicación';
+  if (msg.imageMessage || msg.audioMessage || msg.pttMessage || msg.videoMessage || msg.documentMessage || msg.stickerMessage || msg.locationMessage) {
+    return '';
+  }
   return '(sin texto)';
+}
+
+/** Qué tipo de medio es un mensaje, y los datos propios de ese tipo (nombre de
+ * archivo, coordenadas). `undefined` si es un mensaje de puro texto. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function tipoDeMensaje(item: any): Pick<MensajeChat, 'tipo' | 'nombreArchivo' | 'ubicacion'> {
+  const msg = item?.message ?? {};
+  if (msg.imageMessage) return { tipo: 'imagen' };
+  if (msg.audioMessage || msg.pttMessage) return { tipo: 'audio' };
+  if (msg.videoMessage) return { tipo: 'video' };
+  if (msg.documentMessage) {
+    return { tipo: 'documento', nombreArchivo: msg.documentMessage.fileName || msg.documentMessage.title || 'documento' };
+  }
+  if (msg.stickerMessage) return { tipo: 'sticker' };
+  if (msg.locationMessage) {
+    const lat = msg.locationMessage.degreesLatitude;
+    const lng = msg.locationMessage.degreesLongitude;
+    if (typeof lat === 'number' && typeof lng === 'number') return { tipo: 'ubicacion', ubicacion: { lat, lng } };
+  }
+  return {};
+}
+
+/** Mimetype real del medio, tal como lo mandó WhatsApp — lo necesita el
+ * navegador para poder mostrar la imagen/audio/video. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mimetypeDeMensaje(item: any): string {
+  const msg = item?.message ?? {};
+  return (
+    msg.imageMessage?.mimetype ||
+    msg.audioMessage?.mimetype ||
+    msg.pttMessage?.mimetype ||
+    msg.videoMessage?.mimetype ||
+    msg.documentMessage?.mimetype ||
+    msg.stickerMessage?.mimetype ||
+    'application/octet-stream'
+  );
 }
 
 /**
@@ -131,9 +174,42 @@ export async function obtenerHilo(telefono: string, canalWa?: string | null): Pr
         direccion: item?.key?.fromMe ? 'out' : 'in',
         texto: textoDeMensaje(item),
         fecha: new Date(millis || Date.now()).toISOString(),
+        ...tipoDeMensaje(item),
       };
     })
     .filter((m): m is MensajeChat => m !== null)
     .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
     .slice(-60);
+}
+
+/**
+ * Trae el archivo real (imagen/audio/video/documento/sticker) de un mensaje
+ * puntual, en base64 — Evolution no lo manda en `findMessages`, hay que
+ * pedirlo aparte por `getBase64FromMediaMessage`. Se busca el mensaje de
+ * nuevo por su id porque ese endpoint necesita el objeto completo
+ * `{key, message}`, no solo el id.
+ */
+export async function obtenerMedia(
+  canalWa: string | null | undefined,
+  messageId: string
+): Promise<{ base64: string; mimetype: string } | null> {
+  const { instance, key } = credencialesDe(canalWa);
+
+  const data = await evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
+    where: { key: { id: messageId } },
+    page: 1,
+    offset: 5,
+  }, key);
+
+  const item = listar(data)[0];
+  if (!item) return null;
+
+  const respuesta = await evolutionFetch<{ base64?: string; mimetype?: string }>(
+    `/chat/getBase64FromMediaMessage/${encodeURIComponent(instance)}`,
+    { message: item },
+    key
+  );
+  if (!respuesta?.base64) return null;
+
+  return { base64: respuesta.base64, mimetype: respuesta.mimetype || mimetypeDeMensaje(item) };
 }

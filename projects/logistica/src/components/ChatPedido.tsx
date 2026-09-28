@@ -17,6 +17,9 @@ interface MensajeChat {
   direccion: 'in' | 'out';
   texto: string;
   fecha: string;
+  tipo?: 'imagen' | 'audio' | 'video' | 'documento' | 'sticker' | 'ubicacion';
+  nombreArchivo?: string;
+  ubicacion?: { lat: number; lng: number };
 }
 
 const INTERVALO_MS = 8000;
@@ -115,6 +118,12 @@ export function ChatPedido({
     el.style.height = `${Math.min(el.scrollHeight, ALTO_MAXIMO_CUADRO)}px`;
   }, [texto]);
 
+  /** URL del archivo real de un mensaje de medio — ver /api/chat/media. */
+  function mediaUrl(id: string): string {
+    const qs = new URLSearchParams({ id, ...(canalWa ? { canalWa } : {}) });
+    return `/api/chat/media?${qs.toString()}`;
+  }
+
   async function cargar() {
     try {
       const qs = new URLSearchParams({ telefono, ...(canalWa ? { canalWa } : {}) });
@@ -211,7 +220,51 @@ export function ChatPedido({
                   : 'bg-[var(--color-superficie-alta)] text-[var(--color-texto)]'
               }`}
             >
-              <p className="prosa whitespace-pre-wrap break-words">{m.texto}</p>
+              {m.tipo === 'imagen' && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={mediaUrl(m.id)}
+                  alt="Imagen"
+                  loading="lazy"
+                  className="pulsable max-h-64 max-w-full cursor-pointer rounded-lg"
+                  onClick={() => window.open(mediaUrl(m.id), '_blank')}
+                />
+              )}
+              {m.tipo === 'sticker' && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={mediaUrl(m.id)} alt="Sticker" loading="lazy" className="size-24 object-contain" />
+              )}
+              {m.tipo === 'video' && (
+                <video controls preload="metadata" className="max-h-64 max-w-full rounded-lg" src={mediaUrl(m.id)} />
+              )}
+              {m.tipo === 'audio' && <audio controls preload="none" className="max-w-full" src={mediaUrl(m.id)} />}
+              {m.tipo === 'documento' && (
+                <a
+                  href={mediaUrl(m.id)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pulsable flex items-center gap-1.5 underline"
+                >
+                  📄 {m.nombreArchivo || 'Documento'}
+                </a>
+              )}
+              {m.tipo === 'ubicacion' && m.ubicacion && (
+                <a
+                  href={`https://www.google.com/maps?q=${m.ubicacion.lat},${m.ubicacion.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="pulsable underline"
+                >
+                  📍 Ver ubicación
+                </a>
+              )}
+              {m.texto && (
+                <p
+                  className={`prosa whitespace-pre-wrap break-words ${m.tipo ? 'mt-1' : ''}`}
+                >
+                  {m.texto}
+                </p>
+              )}
               <p className="mt-0.5 text-right text-[10px] text-[var(--color-texto-tenue)]">
                 {fechaCorta(m.fecha)}
               </p>
