@@ -71,36 +71,57 @@ function textoDeMensaje(item: any): string {
 }
 
 /**
- * Pide el hilo con un cliente. Dos consultas, mismo patrón que finanzas-app:
- * `remoteJidAlt` trae lo entrante de contactos direccionados por @lid,
- * `remoteJid` trae lo saliente (remoteJidAlt viene vacío en esos).
+ * Todas las instancias que pueden tener parte de la conversación de un
+ * cliente de ShotyGames — no solo la que dice CANAL WA. El número público de
+ * la tienda sigue siendo uno solo (0993154462): un cliente le puede escribir
+ * a "shotygames" mientras Fabián le contesta a mano desde "shotygames2"
+ * (personal), o al revés. Leer solo la instancia del canal mostraba un hilo
+ * viejo/incompleto — bug real, 2026-09-28.
+ */
+function todasLasInstancias(): { instance: string; key: string }[] {
+  const vistas = new Set<string>();
+  const salida: { instance: string; key: string }[] = [];
+  for (const c of [credencialesDe('shotygames'), credencialesDe('shotygames2')]) {
+    if (c.instance && c.key && !vistas.has(c.instance)) {
+      vistas.add(c.instance);
+      salida.push(c);
+    }
+  }
+  return salida;
+}
+
+/**
+ * Pide el hilo con un cliente. Por cada instancia: `remoteJidAlt` trae lo
+ * entrante de contactos direccionados por @lid, `remoteJid` trae lo saliente
+ * (remoteJidAlt viene vacío en esos) — mismo patrón que finanzas-app.
  */
 export async function obtenerHilo(telefono: string, canalWa?: string | null): Promise<MensajeChat[]> {
   const phone = toE164Ec(telefono);
   if (!phone) throw new Error(`Teléfono inválido (${telefono})`);
   const jid = `${phone}@s.whatsapp.net`;
 
-  // Mismo canal por el que se le manda a este pedido (columna CANAL WA) — si
-  // se lee de la instancia equivocada, el hilo sale vacío o es el de otra
-  // conversación (otro número puede tener el mismo cliente hablándole por
-  // otro motivo). Ver credencialesDe() en whatsapp-shotygames.ts.
-  const { instance, key } = credencialesDe(canalWa);
+  // canalWa ya no filtra la consulta — solo decide dónde SE MANDA un mensaje
+  // nuevo. Para LEER el hilo se consultan todas las instancias configuradas,
+  // porque la conversación real puede tener mensajes en más de una.
+  const instancias = todasLasInstancias();
 
-  const [porAlt, porJid] = await Promise.all([
-    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
-      where: { key: { remoteJidAlt: jid } },
-      page: 1,
-      offset: 50,
-    }, key),
-    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
-      where: { key: { remoteJid: jid } },
-      page: 1,
-      offset: 30,
-    }, key),
-  ]);
+  const resultados = await Promise.all(
+    instancias.flatMap(({ instance, key }) => [
+      evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
+        where: { key: { remoteJidAlt: jid } },
+        page: 1,
+        offset: 50,
+      }, key),
+      evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
+        where: { key: { remoteJid: jid } },
+        page: 1,
+        offset: 30,
+      }, key),
+    ])
+  );
 
   const vistos = new Set<string>();
-  const items = [...listar(porAlt), ...listar(porJid)].filter((m) => {
+  const items = resultados.flatMap(listar).filter((m) => {
     const id = m?.key?.id;
     if (!id || vistos.has(id)) return false;
     vistos.add(id);
