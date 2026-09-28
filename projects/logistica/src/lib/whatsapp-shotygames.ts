@@ -147,6 +147,14 @@ export async function dispararPorEstado(opciones: {
   const estado = String(estadoNuevo || '').toUpperCase().trim();
   if (estado !== 'ENTREGADO' && estado !== 'PAGADO') return null;
 
+  // Pausado a pedido de Fabián el 2026-09-28 mientras se estabiliza lo del
+  // baneo de WhatsApp — un mensaje automático menos por pedido. Poner
+  // GRACIAS_PAUSADO en false para reactivarlo.
+  const GRACIAS_PAUSADO = true;
+  if (GRACIAS_PAUSADO) {
+    return { detalle: 'Agradecimiento pausado temporalmente', enviado: false };
+  }
+
   try {
     // Candado contra duplicados: el mismo que usa finanzas-app.
     const log = String(logActual || '').toLowerCase();
