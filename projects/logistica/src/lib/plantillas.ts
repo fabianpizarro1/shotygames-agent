@@ -213,12 +213,11 @@ export const PLANTILLAS: Plantilla[] = [
     desc: 'Que esté atento y con el efectivo',
     texto: (p) =>
       saludo(p) +
-      `🚚 Buenas noticias: *${transportadora(p)}* nos indicó que tu pedido *ya salió a despacho el día de hoy*.\n\n` +
+      `🚚 *${transportadora(p)}* nos indicó que tu pedido *ya salió a despacho el día de hoy*.\n\n` +
       `Los repartidores se van a comunicar contigo para coordinar la entrega, así que por favor:\n\n` +
       `• 📞 *Mantente atento al celular*, te van a llamar o escribir\n` +
       `• 💵 Ten listo el valor del pago en efectivo: *${usd(p.aCobrar)}*\n` +
-      (p.direccion ? `• 🏠 Entrega en: *${p.direccion}*\n` : '') +
-      `\n¡Que lo disfrutes! 🎉`,
+      (p.direccion ? `• 🏠 Entrega en: *${p.direccion}*\n` : ''),
   },
   {
     id: 'contacto',
