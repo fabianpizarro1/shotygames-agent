@@ -630,6 +630,29 @@ app.post('/admin/token', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
 });
 
+// Cambia/consulta el canal de WhatsApp activo para pedidos NUEVOS de
+// Shotygames (ver canal-wa.js) — vía HTTP, más directo que el comando de
+// texto por WhatsApp/Telegram cuando hay que confirmarlo al toque.
+app.get('/admin/canal-wa', (req, res) => {
+  const adminKey = process.env.ADMIN_KEY || '';
+  const providedKey = req.headers['x-admin-key'] || '';
+  if (!adminKey || providedKey !== adminKey) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+  const canalMod = require('./canal-wa');
+  const { canal } = req.query;
+  if (!canal) {
+    return res.json({ canalActivo: canalMod.getCanalActivo() });
+  }
+  try {
+    const nuevo = canalMod.setCanalActivo(canal);
+    console.log(`Canal WA activo cambiado a "${nuevo}" via /admin/canal-wa`);
+    res.json({ ok: true, canalActivo: nuevo });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // Endpoints de retorno de PayPhone (requeridos por su API)
 app.get('/payphone/response', (req, res) => res.send('Pago procesado. Puedes cerrar esta ventana.'));
 app.get('/payphone/cancel', (req, res) => res.send('Pago cancelado. Puedes cerrar esta ventana.'));
