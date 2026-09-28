@@ -1,7 +1,9 @@
 'use client';
 
-// Hilo de WhatsApp del cliente, dentro del pedido. Solo ShotyGames: es el
-// único número (`shotygames`) conectado a Evolution — ver whatsapp-chat.ts.
+// Hilo de WhatsApp del cliente, dentro del pedido. Solo ShotyGames tiene
+// número(s) conectado(s) a Evolution — desde 2026-09-27 puede ser
+// "shotygames" o "shotygames2" según la columna CANAL WA del pedido (prop
+// canalWa) — ver whatsapp-chat.ts / whatsapp-shotygames.ts.
 //
 // Sin webhook ni tiempo real "de verdad": relee cada 8s mientras el panel
 // está abierto. A propósito — ver el comentario en whatsapp-chat.ts sobre por
@@ -43,6 +45,10 @@ export interface PlantillaChat {
 interface Props {
   telefono: string;
   nombre: string;
+  /** Qué número de WhatsApp le toca a este pedido (columna CANAL WA) — decide
+   * de qué instancia se lee y por cuál se manda. Vacío = instancia por
+   * defecto ("shotygames"). Ver whatsapp-shotygames.ts. */
+  canalWa?: string;
   /** Columna propia de escritorio: llena el alto del contenedor en vez del
    * widget compacto de altura fija que se usa adentro del panel del pedido. */
   llenarAltura?: boolean;
@@ -63,6 +69,7 @@ interface Props {
 export function ChatPedido({
   telefono,
   nombre,
+  canalWa,
   llenarAltura,
   plantillas,
   sugeridaId,
@@ -110,7 +117,8 @@ export function ChatPedido({
 
   async function cargar() {
     try {
-      const r = await fetch(`/api/chat?telefono=${encodeURIComponent(telefono)}`);
+      const qs = new URLSearchParams({ telefono, ...(canalWa ? { canalWa } : {}) });
+      const r = await fetch(`/api/chat?${qs.toString()}`);
       const data = await r.json();
       if (!data.ok) throw new Error(data.error || 'Error leyendo el chat');
       setMensajes(data.mensajes);
@@ -152,7 +160,7 @@ export function ChatPedido({
       const r = await fetch('/api/chat/enviar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telefono, texto: limpio }),
+        body: JSON.stringify({ telefono, texto: limpio, canalWa }),
       });
       const data = await r.json();
       if (!data.ok) throw new Error(data.error || 'Error enviando el WhatsApp');

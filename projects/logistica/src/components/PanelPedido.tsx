@@ -251,7 +251,7 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
         {p.negocio === 'shotygames' && p.telefono && (
           <div className="xl:hidden">
             <Seccion titulo="WhatsApp">
-              <ChatPedido telefono={p.telefono} nombre={p.nombre} />
+              <ChatPedido telefono={p.telefono} nombre={p.nombre} canalWa={p.canalWa} />
             </Seccion>
           </div>
         )}

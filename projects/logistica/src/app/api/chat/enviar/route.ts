@@ -11,10 +11,11 @@ export const dynamic = 'force-dynamic';
 interface Cuerpo {
   telefono?: string;
   texto?: string;
+  canalWa?: string;
 }
 
 export async function POST(req: NextRequest) {
-  const { telefono, texto } = (await req.json().catch(() => ({}))) as Cuerpo;
+  const { telefono, texto, canalWa } = (await req.json().catch(() => ({}))) as Cuerpo;
 
   if (!telefono) {
     return NextResponse.json({ ok: false, error: 'Falta el teléfono' }, { status: 400 });
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await enviarWhatsApp(telefono, limpio);
+    await enviarWhatsApp(telefono, limpio, canalWa);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('POST /api/chat/enviar', e);

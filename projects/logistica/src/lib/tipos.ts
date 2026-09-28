@@ -118,6 +118,15 @@ export interface Base {
    * app y `finanzas-app`, para que las dos no le escriban dos veces al cliente.
    */
   log: string;
+  /**
+   * Qué número de WhatsApp le toca a este pedido — "shotygames" o
+   * "shotygames2". Solo ShotyGames la tiene (columna CANAL WA, agregada
+   * 2026-09-27 en KEPLER); en dropshipping va vacía. Decide por dónde manda
+   * y de dónde LEE el chat (`whatsapp-shotygames.ts` / `whatsapp-chat.ts`) —
+   * sin esto, el chat de un pedido de "shotygames2" mostraría el hilo del
+   * número equivocado.
+   */
+  canalWa: string;
 }
 
 export interface Pedido extends Base {

@@ -21,6 +21,21 @@ const EVO_BASE = process.env.EVOLUTION_API_URL ?? '';
 const EVO_INSTANCE = process.env.EVOLUTION_INSTANCE_ID ?? '';
 const EVO_KEY = process.env.EVOLUTION_API_KEY ?? '';
 
+// Segundo canal de WhatsApp para ShotyGames (2026-09-27) — cuál le toca a
+// cada pedido lo dice su columna CANAL WA, no algo fijo acá. "shotygames2"
+// apunta a la instancia "personal" de Evolution. Mismo criterio que
+// KEPLER/canal-wa.js y finanzas-app/lib/whatsapp.ts — no reinventar el mapeo
+// en un tercer lugar.
+export function credencialesDe(canalWa?: string | null): { instance: string; key: string } {
+  if (canalWa === 'shotygames2') {
+    return {
+      instance: process.env.EVOLUTION_INSTANCE_PERSONAL ?? '',
+      key: process.env.EVOLUTION_API_KEY_PERSONAL ?? '',
+    };
+  }
+  return { instance: EVO_INSTANCE, key: EVO_KEY };
+}
+
 /**
  * Interruptor de seguridad para probar sin escribirle a nadie. Se usó para
  * verificar el flujo entero en local; en Vercel NO está puesta, así que en
@@ -75,24 +90,25 @@ function ahora(): string {
  * Manda un WhatsApp por Evolution API. Exportado porque lo usa también el cron
  * de avisos — el mismo número y el mismo camino que el agradecimiento.
  */
-export async function enviarWhatsApp(telefono: string, text: string): Promise<void> {
+export async function enviarWhatsApp(telefono: string, text: string, canalWa?: string | null): Promise<void> {
   const phone = toE164Ec(telefono);
   if (!phone) throw new Error(`Teléfono inválido (${telefono})`);
-  return enviar(phone, text);
+  return enviar(phone, text, canalWa);
 }
 
-async function enviar(phone: string, text: string): Promise<void> {
+async function enviar(phone: string, text: string, canalWa?: string | null): Promise<void> {
   if (SIMULAR) {
-    console.log(`[WHATSAPP SIMULADO] → ${phone}\n${text}`);
+    console.log(`[WHATSAPP SIMULADO] (${canalWa || 'shotygames'}) → ${phone}\n${text}`);
     return;
   }
-  if (!EVO_BASE || !EVO_INSTANCE || !EVO_KEY) {
-    throw new Error('Faltan EVOLUTION_API_URL / EVOLUTION_INSTANCE_ID / EVOLUTION_API_KEY');
+  const { instance, key } = credencialesDe(canalWa);
+  if (!EVO_BASE || !instance || !key) {
+    throw new Error(`Faltan credenciales de Evolution para canal "${canalWa || 'shotygames'}"`);
   }
-  const url = `${EVO_BASE.replace(/\/+$/, '')}/message/sendText/${encodeURIComponent(EVO_INSTANCE)}`;
+  const url = `${EVO_BASE.replace(/\/+$/, '')}/message/sendText/${encodeURIComponent(instance)}`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: EVO_KEY },
+    headers: { 'Content-Type': 'application/json', apikey: key },
     body: JSON.stringify({ number: phone, text }),
     signal: AbortSignal.timeout(20_000),
   });
@@ -123,8 +139,10 @@ export async function dispararPorEstado(opciones: {
   /** Columna LOG (AC) y su índice 0-based, tal como se leyeron del Sheet. */
   logActual: string;
   colLog: number;
+  /** Columna CANAL WA del pedido — qué número le toca. Ver credencialesDe(). */
+  canalWa?: string | null;
 }): Promise<ResultadoDisparador | null> {
-  const { fila, estadoNuevo, nombre, telefono, logActual, colLog } = opciones;
+  const { fila, estadoNuevo, nombre, telefono, logActual, colLog, canalWa } = opciones;
 
   const estado = String(estadoNuevo || '').toUpperCase().trim();
   if (estado !== 'ENTREGADO' && estado !== 'PAGADO') return null;
@@ -142,7 +160,7 @@ export async function dispararPorEstado(opciones: {
       return { detalle: `No se pudo enviar: teléfono inválido (${telefono})`, enviado: false };
     }
 
-    await enviar(phone, mensajeGracias(nombre));
+    await enviar(phone, mensajeGracias(nombre), canalWa);
 
     const nuevoLog = `Agradecimiento enviado | ${ahora()}`;
     await escribirLog(fila, colLog, nuevoLog);

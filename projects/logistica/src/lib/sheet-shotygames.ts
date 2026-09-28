@@ -47,6 +47,7 @@ const TITULOS: Record<string, string> = {
   NOTA_LOGISTICA: 'nota logistica',
   LOG: 'log',
   LOG_WA: 'log wa',
+  CANAL_WA: 'canal wa',
 };
 
 const OBLIGATORIAS = ['NOMBRE', 'TELEFONO', 'ESTADO'];
@@ -211,6 +212,7 @@ export function aBase(f: FilaShoty, C: Columnas): Base {
     notas: txt('NOTA_LOGISTICA'),
     logWa: txt('LOG_WA'),
     log: txt('LOG'),
+    canalWa: txt('CANAL_WA'),
   };
 }
 
@@ -224,7 +226,7 @@ export interface ResultadoEscritura {
   /** Mensaje de error si no se pudo escribir; null si salió bien. */
   error: string | null;
   /** El pedido tal como estaba ANTES, para los disparadores. */
-  antes?: { nombre: string; telefono: string; log: string; colLog: number };
+  antes?: { nombre: string; telefono: string; log: string; colLog: number; canalWa: string };
 }
 
 export async function actualizarFila(
@@ -273,6 +275,7 @@ export async function actualizarFila(
       telefono: String(datos[C.TELEFONO] ?? ''),
       log: C.LOG !== undefined ? String(datos[C.LOG] ?? '') : '',
       colLog: C.LOG ?? -1,
+      canalWa: C.CANAL_WA !== undefined ? String(datos[C.CANAL_WA] ?? '') : '',
     },
   };
 }

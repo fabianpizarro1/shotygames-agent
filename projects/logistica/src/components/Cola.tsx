@@ -542,6 +542,7 @@ export function Cola() {
                     key={idDe(seleccionado)}
                     telefono={seleccionado.telefono}
                     nombre={seleccionado.nombre}
+                    canalWa={seleccionado.canalWa}
                     llenarAltura
                     plantillas={PLANTILLAS.filter((pl) => pl.id !== 'libre').map((pl) => ({
                       id: pl.id,

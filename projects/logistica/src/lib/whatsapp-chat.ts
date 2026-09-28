@@ -11,11 +11,9 @@
 // solo una consulta que se repite mientras el panel está abierto.
 // ============================================================
 
-import { toE164Ec } from './whatsapp-shotygames';
+import { toE164Ec, credencialesDe } from './whatsapp-shotygames';
 
 const EVO_BASE = process.env.EVOLUTION_API_URL ?? '';
-const EVO_INSTANCE = process.env.EVOLUTION_INSTANCE_ID ?? '';
-const EVO_KEY = process.env.EVOLUTION_API_KEY ?? '';
 
 export interface MensajeChat {
   id: string;
@@ -25,13 +23,13 @@ export interface MensajeChat {
   fecha: string;
 }
 
-async function evolutionFetch<T>(path: string, body: unknown): Promise<T> {
-  if (!EVO_BASE || !EVO_INSTANCE || !EVO_KEY) {
-    throw new Error('Faltan EVOLUTION_API_URL / EVOLUTION_INSTANCE_ID / EVOLUTION_API_KEY');
+async function evolutionFetch<T>(path: string, body: unknown, apiKey: string): Promise<T> {
+  if (!EVO_BASE || !apiKey) {
+    throw new Error('Faltan EVOLUTION_API_URL / credenciales de la instancia');
   }
   const res = await fetch(`${EVO_BASE.replace(/\/+$/, '')}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: EVO_KEY },
+    headers: { 'Content-Type': 'application/json', apikey: apiKey },
     body: JSON.stringify(body),
     cache: 'no-store',
     signal: AbortSignal.timeout(15_000),
@@ -77,22 +75,28 @@ function textoDeMensaje(item: any): string {
  * `remoteJidAlt` trae lo entrante de contactos direccionados por @lid,
  * `remoteJid` trae lo saliente (remoteJidAlt viene vacío en esos).
  */
-export async function obtenerHilo(telefono: string): Promise<MensajeChat[]> {
+export async function obtenerHilo(telefono: string, canalWa?: string | null): Promise<MensajeChat[]> {
   const phone = toE164Ec(telefono);
   if (!phone) throw new Error(`Teléfono inválido (${telefono})`);
   const jid = `${phone}@s.whatsapp.net`;
 
+  // Mismo canal por el que se le manda a este pedido (columna CANAL WA) — si
+  // se lee de la instancia equivocada, el hilo sale vacío o es el de otra
+  // conversación (otro número puede tener el mismo cliente hablándole por
+  // otro motivo). Ver credencialesDe() en whatsapp-shotygames.ts.
+  const { instance, key } = credencialesDe(canalWa);
+
   const [porAlt, porJid] = await Promise.all([
-    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(EVO_INSTANCE)}`, {
+    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
       where: { key: { remoteJidAlt: jid } },
       page: 1,
       offset: 50,
-    }),
-    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(EVO_INSTANCE)}`, {
+    }, key),
+    evolutionFetch<unknown>(`/chat/findMessages/${encodeURIComponent(instance)}`, {
       where: { key: { remoteJid: jid } },
       page: 1,
       offset: 30,
-    }),
+    }, key),
   ]);
 
   const vistos = new Set<string>();

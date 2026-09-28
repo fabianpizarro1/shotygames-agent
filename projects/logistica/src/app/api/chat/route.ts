@@ -9,13 +9,15 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   // `new URL(req.url)` en vez de `req.nextUrl`: Turbopack tiene un bug con
   // NextURL (ver proxy.ts).
-  const telefono = new URL(req.url).searchParams.get('telefono') ?? '';
+  const url = new URL(req.url);
+  const telefono = url.searchParams.get('telefono') ?? '';
+  const canalWa = url.searchParams.get('canalWa') ?? '';
   if (!telefono) {
     return NextResponse.json({ ok: false, error: 'Falta el teléfono' }, { status: 400 });
   }
 
   try {
-    const mensajes = await obtenerHilo(telefono);
+    const mensajes = await obtenerHilo(telefono, canalWa);
     return NextResponse.json({ ok: true, mensajes });
   } catch (e) {
     console.error('GET /api/chat', e);

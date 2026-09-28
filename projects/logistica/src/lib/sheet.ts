@@ -283,5 +283,8 @@ export function aBase(f: FilaCruda, C: Columnas, fleteDropi = 0): Base {
     // encabezado — no se hace sin preguntarle a Fabián.
     logWa: '',
     log: '',
+    // Solo ShotyGames tiene esta columna (CANAL WA) — en dropshipping siempre
+    // se manda por la instancia por defecto.
+    canalWa: '',
   };
 }

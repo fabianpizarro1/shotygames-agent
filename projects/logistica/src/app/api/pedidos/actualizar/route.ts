@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
         telefono: antes.telefono,
         logActual: antes.log,
         colLog: antes.colLog,
+        canalWa: antes.canalWa,
       });
     }
 
