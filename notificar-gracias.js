@@ -50,7 +50,14 @@ function nowStr() {
  * "agradecimiento enviado" o "gracias ok"). Silencioso si ya se envió — no
  * es un error, es el caso normal cuando el pedido ya venía de Pagado antes.
  */
+// Pausado a pedido de Fabián el 2026-09-28 mientras se estabiliza lo del
+// baneo de WhatsApp — un mensaje automático menos por pedido. Sacar este
+// `return` para reactivarlo (no se tocó nada más de la función).
+const PAUSADO = true;
+
 async function notificarGracias({ fila, nombre, telefono, log, canalWa }) {
+  if (PAUSADO) return { enviado: false, motivo: 'agradecimiento pausado temporalmente' };
+
   const logLower = String(log || '').toLowerCase();
   if (logLower.includes('agradecimiento enviado') || logLower.includes('gracias ok')) {
     return { enviado: false, motivo: 'ya enviado antes' };
