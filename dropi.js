@@ -73,6 +73,7 @@ const PROVINCIAS = {
   'PORTOVIEJO': 'Manabí', 'MANTA': 'Manabí', 'CHONE': 'Manabí', 'BAHIA DE CARAQUEZ': 'Manabí', 'PEDERNALES': 'Manabí', 'EL CARMEN': 'Manabí', 'JIPIJAPA': 'Manabí', 'MONTECRISTI': 'Manabí',
   'BABAHOYO': 'Los Ríos', 'QUEVEDO': 'Los Ríos', 'VINCES': 'Los Ríos', 'VENTANAS': 'Los Ríos', 'RICAURTE': 'Los Ríos', 'PUEBLO VIEJO': 'Los Ríos', 'URDANETA': 'Los Ríos', 'BABA': 'Los Ríos', 'MOCACHE': 'Los Ríos', 'MONTALVO': 'Los Ríos', 'PALENQUE': 'Los Ríos',
   'AMBATO': 'Tungurahua', 'BANOS': 'Tungurahua', 'PELILEO': 'Tungurahua',
+  'BAÑOS': 'Tungurahua', 'BAÑOS DE AGUA SANTA': 'Tungurahua', 'BANOS DE AGUA SANTA': 'Tungurahua',
   'RIOBAMBA': 'Chimborazo', 'ALAUSÍ': 'Chimborazo',
   'IBARRA': 'Imbabura', 'OTAVALO': 'Imbabura', 'COTACACHI': 'Imbabura', 'ANTONIO ANTE': 'Imbabura',
   'LOJA': 'Loja', 'CATAMAYO': 'Loja',
@@ -97,6 +98,12 @@ const PROVINCIAS = {
 const CIUDAD_DROPI = {
   'SALINAS':               'SALINAS (SANTA ELENA)',  // evitar la SALINAS de Guayas
   'CAMILO PONCE ENRIQUEZ': 'PONCE ENRIQUEZ',          // en DROPI funciona sin "Camilo"
+  // El catálogo trae "BAÑOS DE AGUA SANTA" (transportadora 1) y "BANOS"
+  // (Servientrega). El nombre largo gana por coincidencia exacta y DROPI
+  // rechaza con "El departamento no existe o está deshabilitado" — caso real
+  // ANDRE VIEIRA, 2026-09-28.
+  'BAÑOS DE AGUA SANTA':   'BANOS',
+  'BANOS DE AGUA SANTA':   'BANOS',
   // Agrega más abajo cuando encuentres casos nuevos:
   // 'NOMBRE_QUE_LLEGA': 'NOMBRE_EN_DROPI',
 };
@@ -312,6 +319,11 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     // es JOYA DE LOS SACHAS sin el "LA" — DROPI la rechazó con "la ciudad no
     // tiene habilitado el método de envío" habiendo pasado todos los filtros
     // de nombre y tarifa). Si ninguna trae el dato, no se descarta nada.
+    // Entre los que quedan, la del transportista que se va a usar primero.
+    // OJO: es una preferencia, NO un filtro del catálogo — GUAYAQUIL, QUITO y
+    // MACHALA están cargadas con transportadora 1 y Servientrega las entrega
+    // igual. Filtrar el universo por transportadora rompe las ciudades
+    // principales (probado el 2026-09-28).
     const delTransportista = candidatos.filter((c) => c.distribCompanyId === DISTRIBUTION_COMPANY.id);
     if (delTransportista.length) candidatos = delTransportista;
     if (candidatos.length > 1) {
@@ -559,7 +571,10 @@ async function crearOrdenSinGuia(pedido) {
   const saldo = aNumero(pedido.saldo);
   const rateType = saldo > 0 ? 'CON RECAUDO' : 'SIN RECAUDO';
 
-  const resuelta = await resolverCiudad(pedido.ciudad, state, rateType);
+  // Se resuelve sobre el nombre YA traducido: si el mapa de arriba dice que
+  // DROPI conoce este cantón con otro nombre, buscar el original en el
+  // catálogo lo pisa de vuelta con la entrada equivocada.
+  const resuelta = await resolverCiudad(cityForDropi, state, rateType);
   // Mismas ciudades homónimas en otra provincia, por si la primera no tiene ruta.
   const otrasProvincias = resuelta?.alternativas || [];
   if (resuelta) {
@@ -704,7 +719,10 @@ async function crearOrdenSinGuia(pedido) {
   // esto lo agarra igual. "no tiene habilitado el método de envío" es el
   // rechazo real que dio DROPI con Víctor Andrés / LA JOYA DE LOS SACHAS
   // (2026-09-21) — antes no estaba en la lista y el reintento nunca se disparaba.
-  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado|no tiene habilitado el m[eé]todo de env[ií]o/i
+  // "El departamento no existe o está deshabilitado por los momentos" es el
+  // mismo problema de ciudad con otro texto: sin esto la orden de ANDRE VIEIRA
+  // ni siquiera llegó a reintentarse con las variantes.
+  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado|no tiene habilitado el m[eé]todo de env[ií]o|departamento no existe|deshabilitad/i
     .test(String(d?.message || d?.data_error || d?.error || ''));
 
   if (!traeId(res.data) && esErrorDeCiudad(res.data)) {
