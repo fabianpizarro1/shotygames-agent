@@ -142,18 +142,13 @@ No hagas nada hasta que Fabián confirme.
 ### Paso 4 — Cuando Fabián confirme
 Llama SOLO a registrar_pedido, con TODOS los campos que extrajiste en el Paso 1 (nombre, telefono, ciudad, direccion, cantidades, **pvp_total**, anticipo, cuenta, transportadora, notas, idPedido si aplica). No mandes "saldo" — el sistema lo calcula solo.
 
-→ NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la ORDEN en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte crearía una orden DUPLICADA. crear_guia_dropi es SOLO para la sección "Crear orden en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin orden en DROPI.
+→ NUNCA llames a crear_guia_dropi después de registrar_pedido para un pedido nuevo. Si transportadora es SERVIENTREGA (o no se especificó ninguna) y hay al menos un producto físico, registrar_pedido YA crea la orden y la guía en DROPI automáticamente por dentro — llamar crear_guia_dropi aparte crearía una orden DUPLICADA. crear_guia_dropi es SOLO para la sección "Crear orden en DROPI (pedido ya existente)" de abajo, cuando el pedido ya está en Sheets de antes sin orden en DROPI.
 
 La respuesta de registrar_pedido ya trae el resultado completo — **reenviásela a Fabián TAL CUAL, palabra por palabra**. No la resumas, no la reescribas, no la suavices.
 
-🚨 **PROHIBIDO INVENTAR QUE HAY GUÍA.** Desde 2026-09-23 el bot ya NO genera guías — solo crea la orden en DROPI. "Orden creada, pendiente de guía" es el resultado NORMAL y esperado de cada pedido nuevo, no lo ocultes ni lo suavices. Lo que sigue prohibido es inventar que YA existe un número de guía: eso solo pasa cuando Fabián la generó él mismo en DROPI y sincronizar_guia_dropi la trajo de vuelta.
+🚨 **PROHIBIDO INVENTAR QUE HAY GUÍA.** La guía se genera automáticamente junto con la orden — pero DROPI puede rechazar la orden, o crearla y no devolver número de guía. Un fallo real tiene que decir que no hay guía, con el motivo textual que venga adentro — nunca inventar que la habrá "en los próximos momentos" ni parafrasear un rechazo como si fuera un éxito parcial.
 
-Nunca escribas cosas como "la guía se generará automáticamente" ni "se creará en los próximos momentos" — eso ya no es cierto, la guía la genera Fabián a mano. Si el resultado dice *ORDEN NO CREADA*, tu respuesta tiene que decir ORDEN NO CREADA, con el motivo textual que venga adentro.
-
-Regla simple: **¿hay número de guía en el resultado? Sí → mostralo. No → decí que la orden quedó creada y pendiente de que Fabián genere la guía en DROPI.**
-
-### Excepción — generar la guía de una vez (generar_guia: true)
-Por defecto NUNCA mandes generar_guia en true — la transportadora la elige Fabián a mano en DROPI. La única excepción es cuando ÉL te dice explícitamente que ya sabe que va por Servientrega sin ninguna duda — el caso típico es **"retira en agencia Servientrega"** o si él mismo dice "generá la guía de una vez" / "esta sí es Servientrega, generala ya". Si no te lo dice así de claro, dejalo en false.
+Regla simple: **¿hay número de guía en el resultado? Sí → mostralo. No → decí exactamente lo que pasó (orden no creada, o creada sin guía) y qué decir para reintentar.**
 
 ### Paso 5 — Si faltan datos críticos
 Solo si no podés extraer **nombre, teléfono o productos**, preguntá únicamente eso. Todo lo demás (dirección, ciudad, pago, notas) se registra con lo que haya en el mensaje y se corrige en la confirmación. No inventes datos.
@@ -166,12 +161,13 @@ Si Fabián dice "crea la orden/guía de [nombre]" para un pedido que ya está en
 - Si ya hay una guía generada en DROPI, la trae directo. No hagas nada más.
 
 **Paso 2 — Solo si sincronizar_guia_dropi dice "No existe una orden en DROPI":**
-→ Ahí sí crea la orden desde cero:
+→ Ahí sí crea la orden desde cero. Este paso 1 no es opcional: crear sin
+chequear primero puede duplicar una orden que ya existe en DROPI sin estar
+vinculada en Sheets (pasó real 2026-09-29, Yuleisy Pico y Anderson Palacios).
 1. Usa buscar_pedido para obtener los datos del pedido
 2. Confirma: "¿Creo la orden en DROPI para [NOMBRE] — [productos] — saldo $[saldo]?"
-3. Cuando confirme, usa crear_guia_dropi
-4. Esto SOLO crea la orden — no genera guía. Fabián la genera él mismo en DROPI eligiendo transportadora.
-5. Responde con el ID de la orden y avisá que queda pendiente que él genere la guía
+3. Cuando confirme, usa crear_guia_dropi — crea la orden Y genera la guía por Servientrega en el mismo paso
+4. Reenviále el resultado tal cual (trae el número de guía si DROPI lo devolvió)
 
 ## Cuando Fabián mande una foto de guía de envío
 1. Lee la imagen y extrae: número de guía, nombre del cliente y/o teléfono
@@ -274,15 +270,17 @@ Al responder PRODUCTOS_PENDIENTES, lista solo los productos con cantidad > 0 y m
 - **Responder preguntas** del negocio`;
 
 // Compartida entre crear_guia_dropi (pedido ya existente) y el auto-chain de
-// registrar_pedido (pedido nuevo). Desde el 2026-09-23, por defecto ya NO
-// genera la guía: solo crea la orden en DROPI (siempre Servientrega, ver
-// dropi.js) y la deja vinculada en Sheets, para que Fabián elija transportadora
-// (Servientrega o Gintracom) él mismo — ver sincronizar_guia_dropi.
+// registrar_pedido (pedido nuevo). Crea la orden en DROPI (siempre
+// Servientrega, ver dropi.js) y genera la guía de una — sin paso manual.
 //
-// input.generar_guia = true es la excepción: casos donde la transportadora YA
-// es segura de antemano (ej. "retira en agencia Servientrega") y no hace
-// falta que Fabián decida nada — ahí sí se genera la guía de una vez, como
-// antes. Solo se activa cuando ÉL lo dice explícitamente, nunca por defecto.
+// Hubo una versión (2026-09-23 a 2026-09-29) que dejaba la orden creada sin
+// guía para que Fabián eligiera transportadora a mano en DROPI. Revertida:
+// el paso manual generó confusión real — al preguntar "y Fabián no la
+// generó, ¿qué hago?" se terminó creando una orden DUPLICADA en DROPI para
+// un pedido que ya tenía una PENDIENTE sin guía (Yuleisy Pico / Anderson
+// Palacios, 2026-09-29), porque nada obligaba a chequear DROPI antes de
+// crear una orden nueva. Fabián pidió volver a que SIEMPRE se genere la
+// guía por Servientrega en el mismo paso.
 async function crearOrdenDropiYActualizar(input) {
   console.log('crear_orden_dropi input:', JSON.stringify(input));
 
@@ -308,30 +306,6 @@ async function crearOrdenDropiYActualizar(input) {
     return { ok: false, mensaje: `❌ *ORDEN NO CREADA* — DROPI no devolvió un ID de orden para ${input.nombre}.` };
   }
 
-  if (!input.generar_guia) {
-    if (input.telefono) {
-      try {
-        const upd = await sheets.actualizarGuia(input.telefono, null, null, orderId);
-        console.log('actualizarGuia (orden sin guía) result:', JSON.stringify(upd));
-      } catch (e) {
-        console.error('Error guardando DROPI order ID en Sheets:', e.message);
-      }
-    } else {
-      console.log('ADVERTENCIA: crear_orden_dropi sin telefono — no se puede vincular en Sheets');
-    }
-
-    return {
-      ok: true,
-      orden,
-      mensaje: `✅ Orden creada en DROPI (ID: *${orderId}*) para ${input.nombre} — pendiente de guía.\n\n` +
-        `Entrá a DROPI, revisá el pedido y generá la guía eligiendo la transportadora (Servientrega o Gintracom). ` +
-        `Cuando esté lista, decime *"sincroniza la guía de ${input.nombre}"* para traerla al Sheet.`
-    };
-  }
-
-  // generarGuia = true: caso con transportadora ya segura (ej. retira en
-  // agencia Servientrega) — generar la guía de una vez, sin que Fabián tenga
-  // que entrar a DROPI a elegir nada.
   let guia;
   try {
     guia = await dropi.generarGuia(orderId);
@@ -504,10 +478,7 @@ async function registrarPedidoConGuia(input) {
     saldo: pago.saldo,
     // SIN RECAUDO (saldo 0, ya pagado) → el total pagado es el anticipo.
     pvp_total: saldoNum > 0 ? undefined : pago.anticipo,
-    notas: inputConNotas.notas,
-    // Solo true cuando Fabián lo pidió explícitamente (ver tools.js) — casos
-    // donde la transportadora ya es segura, ej. retira en agencia Servientrega.
-    generar_guia: !!input.generar_guia
+    notas: inputConNotas.notas
   };
   const ordenResult = await crearOrdenDropiYActualizar(ordenInput);
 

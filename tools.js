@@ -1,7 +1,7 @@
 const tools = [
   {
     name: "registrar_pedido",
-    description: "Registra un nuevo pedido de Shotygames en Google Sheets y, si es físico por Servientrega, crea también la ORDEN en DROPI vinculada (sin guía — Fabián la genera él mismo en DROPI eligiendo transportadora). Úsalo cuando el usuario confirme un pedido con todos los datos del cliente.",
+    description: "Registra un nuevo pedido de Shotygames en Google Sheets y, si es físico por Servientrega, crea también la orden y la GUÍA en DROPI automáticamente. Úsalo cuando el usuario confirme un pedido con todos los datos del cliente.",
     input_schema: {
       type: "object",
       properties: {
@@ -24,8 +24,7 @@ const tools = [
         envio: { type: "string", description: "Costo del envío" },
         transportadora: { type: "string", description: "SERVIENTREGA u otra transportadora" },
         notas: { type: "string", description: "Notas adicionales del pedido" },
-        idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." },
-        generar_guia: { type: "boolean", description: "Por defecto false — solo se crea la orden en DROPI, Fabián elige transportadora y genera la guía él mismo. Poné true SOLO si Fabián dice explícitamente que la generes ahora (ej: 'retira en agencia Servientrega', o cualquier caso donde él mismo indique que ya sabe que va por Servientrega). Nunca lo pongas true por tu cuenta." }
+        idPedido: { type: "string", description: "Código del pedido si Fabián lo menciona, formato PED-XXXXX (lo manda cuando el pedido vino de la web, va en el resumen que él le pasó al cliente junto con las cuentas de pago). Si no lo dice, dejar vacío — el sistema igual intenta matchear la atribución de Meta por teléfono." }
       },
       required: ["nombre", "telefono", "ciudad", "direccion", "pvp_total", "estado"]
     }
@@ -56,7 +55,7 @@ const tools = [
   },
   {
     name: "crear_guia_dropi",
-    description: "Crea la ORDEN en DROPI con los datos del pedido y la deja vinculada en Sheets — NO genera la guía. Fabián entra a DROPI, revisa el pedido y genera la guía él mismo eligiendo la transportadora (Servientrega o Gintracom). Úsalo cuando Fabián pida crear el pedido/la orden en DROPI. Para traer la guía que él ya generó allá, usa sincronizar_guia_dropi.",
+    description: "Crea la orden en DROPI con los datos del pedido y genera la guía por Servientrega en el mismo paso, dejándola vinculada en Sheets. Úsalo cuando Fabián pida crear el pedido/la orden/la guía en DROPI para un pedido que ya está en Sheets. Antes de usarlo, intentá sincronizar_guia_dropi primero por si ya existe una orden — crear sin chequear puede duplicarla.",
     input_schema: {
       type: "object",
       properties: {
@@ -73,8 +72,7 @@ const tools = [
         provincia:   { type: "string", description: "Provincia de Ecuador del destino. Deducirla del conocimiento geográfico si no se indica explícitamente." },
         saldo:       { type: "string", description: "Monto pendiente a cobrar (CON RECAUDO). Vacío o 0 si pagado." },
         pvp_total:   { type: "string", description: "Precio de venta total del pedido. Requerido para SIN RECAUDO." },
-        notas:       { type: "string", description: "Notas adicionales" },
-        generar_guia: { type: "boolean", description: "Por defecto false — solo se crea la orden en DROPI. Poné true SOLO si Fabián dice explícitamente que la generes ahora (ej: 'retira en agencia Servientrega'). Nunca lo pongas true por tu cuenta." }
+        notas:       { type: "string", description: "Notas adicionales" }
       },
       required: ["nombre", "telefono", "ciudad", "direccion"]
     }
