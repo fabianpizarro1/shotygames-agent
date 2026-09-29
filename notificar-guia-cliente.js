@@ -48,7 +48,13 @@ function toE164Ec(raw) {
  * LINK RASTREO queda solo como fallback para lo que no se puede reconstruir:
  * otra transportadora, o un link cargado a mano.
  */
+// Pausado a pedido de Fabián el 2026-09-28 — por ahora el mensaje de guía
+// enviada no lleva link de rastreo. Poner en false cuando avise reponerlo
+// (mismo patrón que GRACIAS_PAUSADO en whatsapp-shotygames.ts).
+const LINK_RASTREO_PAUSADO = true;
+
 function trackingUrl(transportadora, guia, linkRastreo) {
+  if (LINK_RASTREO_PAUSADO) return '';
   const t = String(transportadora || '').toLowerCase();
   if (guia && t.includes('servientrega')) {
     return `https://www.servientrega.com.ec/Tracking/Index/?guia=${guia}`;
