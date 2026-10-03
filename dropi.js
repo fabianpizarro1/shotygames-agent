@@ -4,7 +4,14 @@ const crypto = require('crypto');
 
 const BASE = 'https://api.dropi.ec/api';
 const USER_ID = 11362;
-const WAREHOUSE_ID = 338;
+// Bodega 339 "ShotyGames Matriz - Machala". Era la 338 ("Bodega Actual")
+// hasta el 2026-10-02, cuando DADOS (139461) dejó de estar cargado ahí: DROPI
+// exige que TODOS los productos de una orden salgan de la misma bodega y
+// rechazaba con "El producto (139461) DADOS se encuentra en una bodega
+// distinta al anterior" (caso real STEVEN ALVEAR, PED-13743). La 339 es la
+// única que tiene los 6 productos con stock; las dos están en Machala, así
+// que el cambio es administrativo, no físico.
+const WAREHOUSE_ID = 339;
 
 // Shotygames despacha siempre por Servientrega. Lo que casi nadie nota: el
 // catálogo de ciudades de DROPI (GET /city) carga el MISMO cantón más de una
