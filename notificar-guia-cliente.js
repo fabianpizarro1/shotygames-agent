@@ -51,7 +51,7 @@ function toE164Ec(raw) {
 // Pausado a pedido de Fabián el 2026-09-28 — por ahora el mensaje de guía
 // enviada no lleva link de rastreo. Poner en false cuando avise reponerlo
 // (mismo patrón que GRACIAS_PAUSADO en whatsapp-shotygames.ts).
-const LINK_RASTREO_PAUSADO = true;
+const LINK_RASTREO_PAUSADO = false;
 
 function trackingUrl(transportadora, guia, linkRastreo) {
   if (LINK_RASTREO_PAUSADO) return '';
