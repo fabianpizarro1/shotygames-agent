@@ -1,0 +1,259 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   SISTEMA VISUAL — Progreso
+   Oscuro por defecto: es la paleta de "modo juego" (XP, niveles, rachas se
+   leen mejor sobre fondo oscuro, como cualquier HUD). Quien prefiera claro
+   (de día, al sol) lo elige con el interruptor del header y queda guardado
+   en localStorage para la próxima vez — mismo mecanismo que el resto de las
+   apps de este repo.
+   ============================================================ */
+
+@theme {
+  --color-fondo: #faf9fc;
+  --color-superficie: #ffffff;
+  --color-superficie-alta: #f1eef8;
+  --color-borde: #e3ddf0;
+  --color-borde-fuerte: #cbc0e6;
+
+  --color-texto: #1c1530;
+  --color-texto-suave: #564d72;
+  --color-texto-tenue: #837aa0;
+
+  --color-acento: #7c3aed;
+  --color-acento-tenue: #ede4fd;
+  --color-verde: #17914f;
+  --color-verde-tenue: #dbf3e4;
+  --color-ambar: #9c6600;
+  --color-ambar-tenue: #f9ecce;
+  --color-rojo: #c22f35;
+  --color-rojo-tenue: #fbdfe0;
+
+  --radius-tarjeta: 18px;
+}
+
+html[data-theme='oscuro'] {
+  color-scheme: dark;
+  --color-fondo: #0f0b1a;
+  --color-superficie: #181228;
+  --color-superficie-alta: #211a35;
+  --color-borde: #2c2344;
+  --color-borde-fuerte: #3d3159;
+
+  --color-texto: #f1edfb;
+  --color-texto-suave: #b3a8d1;
+  --color-texto-tenue: #8074a3;
+
+  --color-acento: #a78bfa;
+  --color-acento-tenue: #2a2050;
+  --color-verde: #34d17e;
+  --color-verde-tenue: #123023;
+  --color-ambar: #f2b544;
+  --color-ambar-tenue: #33260c;
+  --color-rojo: #f2555a;
+  --color-rojo-tenue: #341417;
+}
+
+/* ── Comportamiento de app instalada ────────────────────────────────────── */
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  background: var(--color-fondo);
+  height: 100%;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'],
+a.pulsable,
+nav,
+header {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+p,
+.prosa {
+  font-variant-numeric: normal;
+}
+
+::selection {
+  background: var(--color-acento);
+  color: #08110c;
+}
+
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-borde-fuerte) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-borde-fuerte);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pad-arriba {
+  padding-top: env(safe-area-inset-top);
+}
+.pad-abajo {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pad-lados {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* ── Movimiento ───────────────────────────────────────────────────────────
+   Todo entra con ease-out y bajo 300ms. Solo transform y opacity. */
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes brillar {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-acento) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-acento) 0%, transparent);
+  }
+}
+
+.animar-aparecer {
+  animation: aparecer 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Un bloque recién marcado cumplido brilla una vez — el único "feedback de
+   videojuego" que se permite el MVP, sin sonidos ni confetti. */
+.animar-logro {
+  animation: brillar 700ms ease-out 1;
+}
+
+.pulsable {
+  transition:
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 140ms ease-out,
+    border-color 140ms ease-out;
+}
+.pulsable:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pulsable:hover {
+    background-color: var(--color-superficie-alta);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .pulsable:active {
+    transform: none;
+  }
+}
+
+/* ── Piezas reutilizables ─────────────────────────────────────────────────── */
+
+@utility tarjeta {
+  border-radius: var(--radius-tarjeta);
+  border: 1px solid var(--color-borde);
+  background: var(--color-superficie);
+}
+
+@utility titulo-seccion {
+  margin-bottom: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-tenue);
+}
+
+@utility campo {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-borde);
+  background: var(--color-fondo);
+  padding: 0.6rem 0.75rem;
+  outline: none;
+  &:focus {
+    border-color: var(--color-acento);
+  }
+}
+
+@utility boton {
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-borde);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  &:disabled {
+    opacity: 0.45;
+  }
+}
+
+@utility boton-primario {
+  border-radius: 0.75rem;
+  background: var(--color-acento);
+  color: #fff;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  &:disabled {
+    opacity: 0.45;
+  }
+}
+
+@keyframes subir {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.animar-subir {
+  animation: subir 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
