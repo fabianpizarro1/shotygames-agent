@@ -32,6 +32,8 @@ import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 // por slot — hero, problema, solución, 3 pasos, antes/después y fotos de la
 // caja llegando. A diferencia de Torre Parejas V2, acá las imágenes NO traen
 // el copy quemado: el texto va en HTML, sacado de la landing v1 que ya vende.
+// Las fotos de la caja llegando (tpk2-08 a 12) tenían su sección "Así te
+// llega"; se sacó porque repetía las mismas escenas que las fotos de las reseñas.
 import imgHeroBeneficios from "@/assets/tpk2-01-hero-beneficios.webp";
 import imgHeroJugando from "@/assets/tpk2-02-hero-jugando.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
@@ -41,11 +43,6 @@ import imgPaso2 from "@/assets/tpk2-05-paso2-leer.webp";
 import imgPaso3 from "@/assets/tpk2-05-paso3-cumplir.webp";
 import imgSinTorre from "@/assets/tpk2-06-sin-torre.webp";
 import imgConTorre from "@/assets/tpk2-07-con-torre.webp";
-import imgLlegaMano from "@/assets/tpk2-08-llega-mano.webp";
-import imgLlegaCocina from "@/assets/tpk2-09-llega-cocina.webp";
-import imgLlegaSobre from "@/assets/tpk2-10-llega-sobre.webp";
-import imgLlegaCuarto from "@/assets/tpk2-11-llega-cuarto.webp";
-import imgLlegaSofa from "@/assets/tpk2-12-llega-sofa.webp";
 import imgResena1 from "@/assets/tpk2-resena-1.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
 import imgResena3 from "@/assets/tpk2-resena-3.webp";
@@ -79,16 +76,6 @@ const RETOS_REALES = [
   { src: torrePicante8, badge: "Reto real 🔥", alt: "Di tu fantasía sexual" },
   { src: torrePicante9, badge: "Reto real 🌶️", alt: "¿Tendrías algo con alguien de los presentes?" },
   { src: torrePicante10, badge: "Reto real 😈", alt: "Dale una nalgada a alguien del sexo opuesto" },
-];
-
-/** Las fotos de la caja llegando. Van como "así te llega", sin nombre ni
- *  testimonio pegado: no son fotos de un cliente puntual. */
-const ASI_LLEGA = [
-  { src: imgLlegaSobre, alt: "La Torre de Shots Picante saliendo del sobre de envío" },
-  { src: imgLlegaCuarto, alt: "La caja de la Torre de Shots Picante en las manos" },
-  { src: imgLlegaSofa, alt: "La caja recién llegada, junto al sobre de envío abierto" },
-  { src: imgLlegaMano, alt: "La caja de la Torre de Shots Picante sostenida en una mano" },
-  { src: imgLlegaCocina, alt: "La caja de la Torre de Shots Picante sobre la mesa de la cocina" },
 ];
 
 /** Reseñas de clientes de la Torre Picante, pasadas por Fabián el 2026-10-07.
@@ -609,44 +596,6 @@ const TorrePicanteV2Landing = () => {
                 </div>
               </div>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- ASI TE LLEGA ----------
-          Tira con scroll horizontal en móvil (sin huérfanas de un grid de 5)
-          y 5 columnas en escritorio. */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center max-w-xl mx-auto mb-6 md:mb-8">
-              <h2 className="text-2xl md:text-4xl font-bold leading-tight mb-3">
-                Así te llega a tu casa
-              </h2>
-              <p className="text-sm md:text-lg text-muted-foreground">
-                📦 Sellada en un sobre de envío, sin nada por fuera que diga qué hay adentro.
-                La abres, la armas y arranca la previa.
-              </p>
-            </div>
-            <div className="-mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 md:mx-0 md:px-0 md:grid md:grid-cols-5 md:overflow-visible">
-              {ASI_LLEGA.map((foto, i) => (
-                <div
-                  key={i}
-                  className="snap-center shrink-0 w-[68%] sm:w-[40%] md:w-auto aspect-[4/5] rounded-2xl overflow-hidden shadow-lg bg-muted"
-                >
-                  <img
-                    src={foto.src}
-                    alt={foto.alt}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-2 md:hidden">
-              👉 Desliza para ver más
-            </p>
           </div>
         </div>
       </section>
