@@ -81,7 +81,7 @@ const pages = [
   {
     route: "/landing/torre-picante-v2",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
-    hero: "src/assets/tpk2-01-hero-beneficios.webp",
+    hero: "src/assets/tpk2-00-hero-oferta.webp",
     title: "Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador",
     description:
       "51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",

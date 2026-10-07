@@ -34,8 +34,7 @@ import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 // el copy quemado: el texto va en HTML, sacado de la landing v1 que ya vende.
 // Las fotos de la caja llegando (tpk2-08 a 12) tenían su sección "Así te
 // llega"; se sacó porque repetía las mismas escenas que las fotos de las reseñas.
-import imgHeroBeneficios from "@/assets/tpk2-01-hero-beneficios.webp";
-import imgHeroJugando from "@/assets/tpk2-02-hero-jugando.webp";
+import imgHeroOferta from "@/assets/tpk2-00-hero-oferta.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
 import imgSolucion from "@/assets/tpk2-04-solucion.webp";
 import imgPaso1 from "@/assets/tpk2-05-paso1-sacar.webp";
@@ -47,13 +46,6 @@ import imgResena1 from "@/assets/tpk2-resena-1.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
 import imgResena3 from "@/assets/tpk2-resena-3.webp";
 import imgResena4 from "@/assets/tpk2-resena-4.webp";
-
-/** Hero en carrusel: la caja con sus 4 beneficios y alguien jugando. La
- *  primera es el LCP — `CarouselImage` ya le pone prioridad al índice 0. */
-const HERO = [
-  { src: imgHeroBeneficios, alt: "Torre de Shots Picante: risas aseguradas, conecta personas, versatilidad total y adrenalina extra" },
-  { src: imgHeroJugando, alt: "Chica sacando un bloque de la Torre de Shots Picante, con la caja al lado" },
-];
 
 /** La imagen original de "cómo funciona" venía con los cuadros fuera de orden:
  *  en el primero ya tenía el bloque leído arriba de la torre y recién en el
@@ -114,9 +106,7 @@ const TorrePicanteV2Landing = () => {
     return () => ro.disconnect();
   }, []);
 
-  // Un api por carrusel: cada uno baja solo la foto que está a la vista.
-  const [apiHero, setApiHero] = useState<CarouselApi>();
-  const slideHero = useSlideActual(apiHero);
+  // El carrusel de retos baja solo la foto que está a la vista.
   const [apiRetos, setApiRetos] = useState<CarouselApi>();
   const slideRetos = useSlideActual(apiRetos);
 
@@ -147,7 +137,7 @@ const TorrePicanteV2Landing = () => {
   const CLAIMS = [
     { Icono: Banknote, titulo: "Pagas al recibir", pie: "En efectivo, en tu puerta" },
     { Icono: Truck, titulo: "Envío gratis", pie: "A todo Ecuador" },
-    { Icono: Gift, titulo: "Guía de regalo", pie: "20 juegos" },
+    { Icono: Gift, titulo: "Ebook de regalo", pie: "25 juegos" },
   ];
 
   /** Mismo criterio que Torre Parejas V2:
@@ -250,61 +240,38 @@ const TorrePicanteV2Landing = () => {
         className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-3 md:py-3.5 px-4 text-center font-semibold shadow-lg"
       >
         <p className="text-[13px] md:text-base leading-snug">
-          💵 Pagas al recibir · 🎁 Guía GRATIS hoy, cierra en{" "}
+          💵 Pagas al recibir · 🎁 Ebook GRATIS hoy, cierra en{" "}
           <strong className="tabular-nums">{regalo.restante}</strong>
         </p>
       </div>
       <div style={{ height: altoBarra }} aria-hidden />
 
-      {/* ---------- HERO: promesa, no nombre de producto ---------- */}
-      <section className="pt-6 md:pt-10 bg-gradient-to-br from-background to-muted/30">
+      {/* ---------- HERO ----------
+          Póster completo: titular, precio, envío, contraentrega y regalo van
+          dibujados en la imagen, así que acá no se repiten en HTML. Va a sangre
+          en móvil, como las piezas de Torre Parejas V2. */}
+      <section className="bg-gradient-to-br from-background to-muted/30">
+        <h1 className="sr-only">
+          Torre de Shots Picante: sube la temperatura de la noche. Hoy $29.99 con envío gratis y pago contraentrega.
+        </h1>
+        <div className="mx-auto max-w-xl">
+          <img
+            src={imgHeroOferta}
+            alt="Sube la temperatura de la noche. Torre de Shots Picante hoy a $29.99, envío gratis, pago contraentrega y ebook de 25 juegos para fiestas de regalo."
+            width={941}
+            height={1672}
+            loading="eager"
+            // Es el LCP. En minúscula porque React 18 no reconoce `fetchPriority`.
+            {...{ fetchpriority: "high" }}
+            decoding="sync"
+            className="w-full h-auto"
+          />
+        </div>
+
         <div className="container mx-auto px-4">
           <div className="max-w-xl mx-auto">
-            <div className="text-center mb-5 md:mb-6">
-              <h1 className="text-[27px] leading-[1.15] md:text-5xl font-bold mb-3">
-                La previa siempre termina igual:{" "}
-                <span className="bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] bg-clip-text text-transparent">
-                  música y hablar
-                </span>
-              </h1>
-              <p className="text-base md:text-xl text-muted-foreground">
-                51 retos atrevidos que suben el nivel del grupo en minutos.
-                Sin salir de casa, sin planear nada.
-              </p>
-            </div>
-
-            <Carousel opts={{ align: "center", loop: true }} setApi={setApiHero} className="w-full">
-              <CarouselContent>
-                {HERO.map((img, index) => (
-                  <CarouselItem key={index}>
-                    <div className="relative aspect-[1080/1221] rounded-2xl overflow-hidden bg-muted shadow-2xl">
-                      <CarouselImage
-                        src={img.src}
-                        alt={img.alt}
-                        index={index}
-                        current={slideHero}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              {/* En móvil las flechas tapaban los íconos de la imagen 01: ahí
-                  se desliza con el dedo y los puntos avisan que hay otra. */}
-              <CarouselPrevious className="hidden md:flex md:left-4" />
-              <CarouselNext className="hidden md:flex md:right-4" />
-            </Carousel>
-            <div className="flex justify-center gap-2 mt-3" aria-hidden>
-              {HERO.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-2 rounded-full transition-all ${i === slideHero ? "w-6 bg-[#ff3d00]" : "w-2 bg-[#ff3d00]/30"}`}
-                />
-              ))}
-            </div>
-
             {/* Prueba social temprana: valida antes de pedir nada */}
-            <div className="flex flex-col items-center gap-1.5 mt-4">
+            <div className="flex flex-col items-center gap-1.5 mt-5">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-5 h-5 fill-[#ff3d00] text-[#ff3d00]" />
@@ -586,7 +553,7 @@ const TorrePicanteV2Landing = () => {
                   <Gift className="w-6 h-6 text-[#ff3d00] flex-shrink-0 mt-0.5 animate-pulse" />
                   <div>
                     <div className="font-bold text-base md:text-lg">
-                      Guía Digital de 20 Juegos para Fiestas
+                      Ebook de 25 Juegos para Fiestas
                       <Badge className="ml-2 bg-[#ff3d00] text-white align-middle">DE REGALO</Badge>
                     </div>
                     <p className="text-sm md:text-base text-muted-foreground">
@@ -704,7 +671,7 @@ const TorrePicanteV2Landing = () => {
                 <div className="flex items-center justify-between gap-3 text-base md:text-lg">
                   <span className="flex items-center gap-2">
                     <Gift className="w-5 h-5 flex-shrink-0 text-yellow-300" />
-                    Guía de 20 Juegos para Fiestas
+                    Ebook de 25 Juegos para Fiestas
                   </span>
                   <span className="font-bold text-yellow-300 whitespace-nowrap">
                     <span className="text-white/60 line-through mr-2 font-normal">$4.90</span>GRATIS
@@ -729,8 +696,8 @@ const TorrePicanteV2Landing = () => {
 
               <div className="bg-yellow-300/15 border border-yellow-300/40 rounded-xl p-4 md:p-5 space-y-3">
                 <p className="text-sm md:text-base text-yellow-100">
-                  🎁 <strong className="text-yellow-300">La Guía de 20 Juegos va incluida en los pedidos de hoy.</strong>{" "}
-                  Viene dentro de la caja, en una tarjeta con código QR para descargarla.
+                  🎁 <strong className="text-yellow-300">El Ebook de 25 Juegos va incluido en los pedidos de hoy.</strong>{" "}
+                  Viene dentro de la caja, en una tarjeta con código QR para descargarlo.
                 </p>
                 <div className="border-t border-yellow-300/30 pt-3">
                   <p className="text-xs md:text-sm text-yellow-100/80 uppercase tracking-wider mb-1">
@@ -829,7 +796,7 @@ const TorrePicanteV2Landing = () => {
               pagas cuando la tengas en la mano.
             </p>
             <p className="text-base md:text-lg font-semibold text-yellow-300">
-              🎁 Si pides hoy, la Guía de 20 Juegos va incluida —{" "}
+              🎁 Si pides hoy, el Ebook de 25 Juegos va incluido —{" "}
               <span className="tabular-nums">quedan {regalo.restante}</span>
             </p>
 
@@ -843,7 +810,7 @@ const TorrePicanteV2Landing = () => {
             </Button>
 
             <p className="text-xs md:text-sm text-white/80">
-              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Guía de 20 juegos
+              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Ebook de 25 juegos
             </p>
           </div>
         </div>
@@ -853,7 +820,7 @@ const TorrePicanteV2Landing = () => {
       <div className="fixed bottom-0 left-0 right-0 md:hidden z-50">
         <div className="bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] px-3 pb-3 pt-2 shadow-2xl">
           <p className="text-center text-[11px] font-semibold text-white/95 mb-1.5">
-            🎁 Guía de 20 Juegos gratis · cierra en{" "}
+            🎁 Ebook de 25 Juegos gratis · cierra en{" "}
             <span className="tabular-nums font-bold">{regalo.restante}</span>
           </p>
           <Button onClick={handleBuyClick} size="lg" className="w-full bg-white text-[#ff3d00] hover:bg-white/90 font-bold text-base py-6 rounded-xl shadow-xl">

@@ -134,7 +134,8 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
   // y vive únicamente acá — las landings no lo mencionan.
   const REGALO_DIGITAL: Record<string, string> = {
     torreNormal: 'la guía de 20 juegos para fiestas',
-    torrePicante: 'la guía de 20 juegos para fiestas',
+    // La Picante pasó a regalar el ebook de 25 (2026-10-07), igual que ya decía el bot de ventas.
+    torrePicante: 'el ebook de 25 juegos para fiestas',
     torreParejas: 'la guía de 30 posiciones',
     enganchados: 'la guía de 20 juegos para fiestas',
     partyshots: 'la guía de 20 juegos para fiestas',
@@ -216,6 +217,9 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
   const getGiftText = () => {
     if (productId === 'torreParejas' || productId === 'emparejados' || productId === 'dadosDigitales') {
       return "Guía Digital de 30 Posiciones";
+    }
+    if (productId === 'torrePicante') {
+      return "Ebook de 25 Juegos para Fiestas";
     }
     return "Guía Digital de 20 Juegos para Fiestas";
   };
