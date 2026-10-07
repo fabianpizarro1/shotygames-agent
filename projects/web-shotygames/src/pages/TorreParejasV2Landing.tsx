@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
@@ -91,10 +91,6 @@ const TorreParejasV2Landing = () => {
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
   const regalo = useRegaloDeHoy();
 
-  // La barra es `fixed`, así que hace falta un espaciador que empuje el
-  // contenido. Estaba clavado en h-14 y la barra medía 32px: quedaba una
-  // franja blanca de 24px. Medirla en vivo lo deja pegado siempre, y aguanta
-  // que el texto pase a dos líneas en pantallas angostas sin tapar el hero.
   // La barra fija de compra en móvil arranca oculta: al tope de la página el
   // CTA completo ya está en pantalla y los dos botones chocaban. Aparece
   // deslizándose apenas ese CTA sale de vista, que es cuando hace falta.
@@ -102,17 +98,6 @@ const TorreParejasV2Landing = () => {
   // El intento con IntersectionObserver y con listener de scroll no llegó a
   // disparar; queda para revisar con la página estable.
 
-  const barraRef = useRef<HTMLDivElement>(null);
-  const [altoBarra, setAltoBarra] = useState(0);
-  useEffect(() => {
-    const el = barraRef.current;
-    if (!el) return;
-    const medir = () => setAltoBarra(el.getBoundingClientRect().height);
-    medir();
-    const ro = new ResizeObserver(medir);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
   // Para saber qué foto está a la vista y no bajar las otras 10.
   const [api, setApi] = useState<CarouselApi>();
   const slideActual = useSlideActual(api);
@@ -266,16 +251,15 @@ const TorreParejasV2Landing = () => {
       />
 
       {/* Barra fija: mata las 2 objeciones mas grandes en el primer segundo */}
-      <div
-        ref={barraRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#e91e63] to-[#f50057] text-white py-3 md:py-3.5 px-4 text-center font-semibold shadow-lg"
-      >
+      {/* `sticky` y no `fixed` + espaciador medido en JS: así ocupa su lugar
+          desde el primer pintado y el hero no salta al medirla ni al cargar
+          las fuentes (mismo arreglo que la Picante v2, 2026-10-07). */}
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#e91e63] to-[#f50057] text-white py-3 md:py-3.5 px-4 text-center font-semibold shadow-lg">
         <p className="text-[13px] md:text-base leading-snug">
           💵 Pagas al recibir · 🎁 Guía GRATIS hoy, cierra en{" "}
           <strong className="tabular-nums">{regalo.restante}</strong>
         </p>
       </div>
-      <div style={{ height: altoBarra }} aria-hidden />
 
       {/* ---------- EMBUDO EN IMÁGENES ----------
           Las piezas van a sangre y pegadas entre sí: es una secuencia, no una

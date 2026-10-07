@@ -51,8 +51,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
-        <Route path="/landing/torre-picante" element={<TorrePicanteLanding />} />
-          <Route path="/landing/torre-picante-v2" element={<TorrePicanteV2Landing />} />
+        {/* Desde 2026-10-07 la v2 (póster nuevo) es la principal: los anuncios
+            caen en /landing/torre-picante. La anterior queda en -v2. */}
+        <Route path="/landing/torre-picante" element={<TorrePicanteV2Landing />} />
+          <Route path="/landing/torre-picante-v2" element={<TorrePicanteLanding />} />
           {/* Intercambiadas el 2026-09-02: la variante de creativos pasa a ser la
               principal (es la ruta a la que apuntan los anuncios) y la original
               queda como la B. Los nombres de archivo NO se renombraron a

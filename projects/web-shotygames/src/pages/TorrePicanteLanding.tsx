@@ -110,7 +110,7 @@ const TorrePicanteLanding = () => {
       <Seo
         title="Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador"
         description="51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador."
-        canonical="https://www.shotygames.com/landing/torre-picante"
+        canonical="https://www.shotygames.com/landing/torre-picante-v2"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
       />
