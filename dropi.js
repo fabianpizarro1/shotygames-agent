@@ -85,6 +85,11 @@ const PROVINCIAS = {
   'IBARRA': 'Imbabura', 'OTAVALO': 'Imbabura', 'COTACACHI': 'Imbabura', 'ANTONIO ANTE': 'Imbabura',
   'LOJA': 'Loja', 'CATAMAYO': 'Loja',
   'ESMERALDAS': 'Esmeraldas', 'ATACAMES': 'Esmeraldas',
+  // El cantón pasó de Esmeraldas a Santo Domingo en 2007, pero SERVIENTREGA
+  // lo sigue teniendo en ESMERALDAS (dicho por Fabián, 2026-10-06). El
+  // catálogo de DROPI trae las dos entradas y la de Santo Domingo es la que
+  // DROPI rechaza con "no tiene habilitado el método de envío".
+  'LA CONCORDIA': 'Esmeraldas',
   'SANTO DOMINGO': 'Santo Domingo de los Tsáchilas',
   'SALINAS': 'Santa Elena', 'LA LIBERTAD': 'Santa Elena', 'SANTA ELENA': 'Santa Elena',
   'GUARANDA': 'Bolívar',
@@ -277,7 +282,20 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     const universo = conTarifa.length ? conTarifa : todas;
 
     const nProv = normCiudad(provincia);
-    const deLaProvincia = nProv ? universo.filter((c) => c.nProvincia === nProv) : [];
+    // Dentro de una provincia que SÍ conocemos, el rate_type del catálogo no
+    // puede descartar candidatas: no es confiable en ninguna de las dos
+    // direcciones. "LA CONCORDIA"/ESMERALDAS —la entrada que Servientrega usa
+    // de verdad— viene con `rate_type: []` y quedaba invisible, mientras la de
+    // SANTO DOMINGO declara ambas tarifas y DROPI la rechaza. Lo mismo al
+    // revés: AMBATO y LA CONCORDIA declaran SIN RECAUDO y DROPI lo niega.
+    // Se buscan todas las de la provincia y la tarifa solo ORDENA: primero las
+    // que la declaran. Sin provincia conocida no se cambia nada.
+    const deLaProvincia = nProv
+      ? [
+          ...todas.filter((c) => c.nProvincia === nProv && c.tarifas.includes(rateType)),
+          ...todas.filter((c) => c.nProvincia === nProv && !c.tarifas.includes(rateType))
+        ]
+      : [];
 
     // Si se sabe la provincia y el catálogo la conoce, la búsqueda NO sale de
     // ahí. Hay una SAN MIGUEL en Cañar y una SAN MIGUEL DE BOLIVAR en Bolívar:
