@@ -86,6 +86,7 @@ const pages = [
     // grande y el <img> eligiera la de 640, el celular bajaría las dos.
     heroSrcset: [
       ["src/assets/tpk2-00-hero-oferta-640.webp", "640w"],
+      ["src/assets/tpk2-00-hero-oferta-760.webp", "760w"],
       ["src/assets/tpk2-00-hero-oferta.webp", "941w"],
     ],
     heroSizes: "(max-width: 576px) 100vw, 576px",

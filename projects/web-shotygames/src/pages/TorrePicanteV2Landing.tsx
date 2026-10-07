@@ -35,6 +35,7 @@ import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 // llega"; se sacó porque repetía las mismas escenas que las fotos de las reseñas.
 import imgHeroOferta from "@/assets/tpk2-00-hero-oferta.webp";
 import imgHeroOferta640 from "@/assets/tpk2-00-hero-oferta-640.webp";
+import imgHeroOferta760 from "@/assets/tpk2-00-hero-oferta-760.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
 import imgProblema640 from "@/assets/tpk2-03-problema-640.webp";
 import imgSolucion from "@/assets/tpk2-04-solucion.webp";
@@ -247,13 +248,13 @@ const TorrePicanteV2Landing = () => {
           Torre de Shots Picante: sube la temperatura de la noche. Hoy $29.99 con envío gratis y pago contraentrega.
         </h1>
         <div className="mx-auto max-w-xl">
-          {/* srcSet: un celular de gama baja (360 px, densidad 1.5-2) baja la de
-              640 (106 KB) en vez de la de 941 (169 KB). Los de pantalla densa
-              siguen bajando la grande: el póster tiene texto y se vería borroso.
-              El preload del prerender usa el mismo srcset/sizes. */}
+          {/* srcSet: gama baja (360 px, densidad 1.5) baja la de 640 (106 KB); el
+              Android promedio (~400 px, densidad 1.75-2) la de 760 (108 KB); las
+              pantallas densas, la de 941 (169 KB), porque el póster tiene texto y
+              se vería borroso. El preload del prerender usa el mismo srcset/sizes. */}
           <img
             src={imgHeroOferta}
-            srcSet={`${imgHeroOferta640} 640w, ${imgHeroOferta} 941w`}
+            srcSet={`${imgHeroOferta640} 640w, ${imgHeroOferta760} 760w, ${imgHeroOferta} 941w`}
             sizes="(max-width: 576px) 100vw, 576px"
             alt="Sube la temperatura de la noche. Torre de Shots Picante hoy a $29.99, envío gratis, pago contraentrega y ebook de 25 juegos para fiestas de regalo."
             width={941}
