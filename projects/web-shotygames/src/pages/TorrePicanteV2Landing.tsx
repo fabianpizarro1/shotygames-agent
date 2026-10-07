@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Seo from "@/components/Seo";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,21 @@ import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 // Las fotos de la caja llegando (tpk2-08 a 12) tenían su sección "Así te
 // llega"; se sacó porque repetía las mismas escenas que las fotos de las reseñas.
 import imgHeroOferta from "@/assets/tpk2-00-hero-oferta.webp";
+import imgHeroOferta640 from "@/assets/tpk2-00-hero-oferta-640.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
+import imgProblema640 from "@/assets/tpk2-03-problema-640.webp";
 import imgSolucion from "@/assets/tpk2-04-solucion.webp";
+import imgSolucion640 from "@/assets/tpk2-04-solucion-640.webp";
 import imgPaso1 from "@/assets/tpk2-05-paso1-sacar.webp";
 import imgPaso2 from "@/assets/tpk2-05-paso2-leer.webp";
 import imgPaso3 from "@/assets/tpk2-05-paso3-cumplir.webp";
+import imgPaso1640 from "@/assets/tpk2-05-paso1-sacar-640.webp";
+import imgPaso2640 from "@/assets/tpk2-05-paso2-leer-640.webp";
+import imgPaso3640 from "@/assets/tpk2-05-paso3-cumplir-640.webp";
 import imgSinTorre from "@/assets/tpk2-06-sin-torre.webp";
 import imgConTorre from "@/assets/tpk2-07-con-torre.webp";
+import imgSinTorre360 from "@/assets/tpk2-06-sin-torre-360.webp";
+import imgConTorre360 from "@/assets/tpk2-07-con-torre-360.webp";
 import imgResena1 from "@/assets/tpk2-resena-1.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
 import imgResena3 from "@/assets/tpk2-resena-3.webp";
@@ -50,9 +58,9 @@ import imgResena4 from "@/assets/tpk2-resena-4.webp";
  *  en el primero ya tenía el bloque leído arriba de la torre y recién en el
  *  segundo lo sacaba. Se cortó en 3 y se reordenó al orden real del juego. */
 const PASOS = [
-  { src: imgPaso1, w: 1024, h: 504, t: "Saca un bloque", d: "Con cuidado: el que tumba la torre paga la penitencia final 💥", alt: "Sacando el bloque 'Beso de 3' de la torre" },
-  { src: imgPaso2, w: 1024, h: 506, t: "Lee el reto en voz alta", d: "Y pon el bloque arriba de la torre, para que siga creciendo.", alt: "Leyendo el bloque 'Finge un orgasmo' antes de ponerlo arriba de la torre" },
-  { src: imgPaso3, w: 1024, h: 515, t: "Lo cumples o tomas 3 shots 🍸", d: "Lo que no quieras hacer, no lo haces. Pero se paga.", alt: "Jugador celebrando con un shot al lado de la torre" },
+  { src: imgPaso1, src640: imgPaso1640, w: 1024, h: 504, t: "Saca un bloque", d: "Con cuidado: el que tumba la torre paga la penitencia final 💥", alt: "Sacando el bloque 'Beso de 3' de la torre" },
+  { src: imgPaso2, src640: imgPaso2640, w: 1024, h: 506, t: "Lee el reto en voz alta", d: "Y pon el bloque arriba de la torre, para que siga creciendo.", alt: "Leyendo el bloque 'Finge un orgasmo' antes de ponerlo arriba de la torre" },
+  { src: imgPaso3, src640: imgPaso3640, w: 1024, h: 515, t: "Lo cumples o tomas 3 shots 🍸", d: "Lo que no quieras hacer, no lo haces. Pero se paga.", alt: "Jugador celebrando con un shot al lado de la torre" },
 ];
 
 /** Fotos reales de los bloques, las mismas de la v1. */
@@ -90,20 +98,6 @@ const TorrePicanteV2Landing = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
   const regalo = useRegaloDeHoy();
-
-  // La barra de arriba es `fixed`: el espaciador se mide en vivo para que no
-  // quede franja blanca ni tape el hero si el texto pasa a dos líneas.
-  const barraRef = useRef<HTMLDivElement>(null);
-  const [altoBarra, setAltoBarra] = useState(0);
-  useEffect(() => {
-    const el = barraRef.current;
-    if (!el) return;
-    const medir = () => setAltoBarra(el.getBoundingClientRect().height);
-    medir();
-    const ro = new ResizeObserver(medir);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // El carrusel de retos baja solo la foto que está a la vista.
   const [apiRetos, setApiRetos] = useState<CarouselApi>();
@@ -233,17 +227,16 @@ const TorrePicanteV2Landing = () => {
         type="product"
       />
 
-      {/* Barra fija: mata las 2 objeciones más grandes en el primer segundo */}
-      <div
-        ref={barraRef}
-        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-3 md:py-3.5 px-4 text-center font-semibold shadow-lg"
-      >
+      {/* Barra pegada arriba: mata las 2 objeciones más grandes en el primer segundo.
+          `sticky` y no `fixed`: ocupa su lugar desde el primer pintado. Con
+          `fixed` + un espaciador medido en JS, todo el hero saltaba hacia abajo
+          al medirla y otra vez al cargar las fuentes (CLS 0.13 en Lighthouse). */}
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] text-white py-3 md:py-3.5 px-4 text-center font-semibold shadow-lg">
         <p className="text-[13px] md:text-base leading-snug">
           💵 Pagas al recibir · 🎁 Ebook GRATIS hoy, cierra en{" "}
           <strong className="tabular-nums">{regalo.restante}</strong>
         </p>
       </div>
-      <div style={{ height: altoBarra }} aria-hidden />
 
       {/* ---------- HERO ----------
           Póster completo: titular, precio, envío, contraentrega y regalo van
@@ -254,8 +247,14 @@ const TorrePicanteV2Landing = () => {
           Torre de Shots Picante: sube la temperatura de la noche. Hoy $29.99 con envío gratis y pago contraentrega.
         </h1>
         <div className="mx-auto max-w-xl">
+          {/* srcSet: un celular de gama baja (360 px, densidad 1.5-2) baja la de
+              640 (106 KB) en vez de la de 941 (169 KB). Los de pantalla densa
+              siguen bajando la grande: el póster tiene texto y se vería borroso.
+              El preload del prerender usa el mismo srcset/sizes. */}
           <img
             src={imgHeroOferta}
+            srcSet={`${imgHeroOferta640} 640w, ${imgHeroOferta} 941w`}
+            sizes="(max-width: 576px) 100vw, 576px"
             alt="Sube la temperatura de la noche. Torre de Shots Picante hoy a $29.99, envío gratis, pago contraentrega y ebook de 25 juegos para fiestas de regalo."
             width={941}
             height={1672}
@@ -293,6 +292,8 @@ const TorrePicanteV2Landing = () => {
             <div className="rounded-2xl overflow-hidden shadow-xl">
               <img
                 src={imgProblema}
+                srcSet={`${imgProblema640} 640w, ${imgProblema} 1080w`}
+                sizes="(min-width: 768px) 364px, calc(100vw - 32px)"
                 alt="Un invitado aburrido en una previa que no arranca"
                 width={1080}
                 height={1080}
@@ -338,6 +339,8 @@ const TorrePicanteV2Landing = () => {
                 <div className="relative rounded-2xl overflow-hidden shadow-xl">
                   <img
                     src={imgSinTorre}
+                    srcSet={`${imgSinTorre360} 360w, ${imgSinTorre} 680w`}
+                    sizes="(min-width: 768px) 374px, calc(50vw - 22px)"
                     alt="Tres amigos aburridos en la mesa, sin la torre"
                     width={680}
                     height={768}
@@ -354,6 +357,8 @@ const TorrePicanteV2Landing = () => {
                 <div className="relative rounded-2xl overflow-hidden shadow-xl ring-4 ring-[#ff3d00]/60">
                   <img
                     src={imgConTorre}
+                    srcSet={`${imgConTorre360} 360w, ${imgConTorre} 680w`}
+                    sizes="(min-width: 768px) 374px, calc(50vw - 22px)"
                     alt="Los mismos amigos riéndose mientras juegan la Torre de Shots Picante"
                     width={680}
                     height={768}
@@ -388,6 +393,8 @@ const TorrePicanteV2Landing = () => {
               <div className="order-1 md:order-2 rounded-2xl overflow-hidden shadow-2xl max-w-md mx-auto w-full">
                 <img
                   src={imgSolucion}
+                  srcSet={`${imgSolucion640} 640w, ${imgSolucion} 1080w`}
+                  sizes="(min-width: 480px) 448px, calc(100vw - 32px)"
                   alt="Torre de Shots Picante: diversión en grupo, súper picante, ideal para fiestas, regalo original"
                   width={1080}
                   height={1440}
@@ -452,6 +459,8 @@ const TorrePicanteV2Landing = () => {
                 <li key={i} className="rounded-2xl overflow-hidden shadow-xl border-2 border-[#ff3d00]/15 bg-card">
                   <img
                     src={paso.src}
+                    srcSet={`${paso.src640} 640w, ${paso.src} 1024w`}
+                    sizes="(min-width: 704px) 668px, calc(100vw - 36px)"
                     alt={paso.alt}
                     width={paso.w}
                     height={paso.h}

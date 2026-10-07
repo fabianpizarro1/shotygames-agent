@@ -82,6 +82,13 @@ const pages = [
     route: "/landing/torre-picante-v2",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
     hero: "src/assets/tpk2-00-hero-oferta.webp",
+    // Mismo srcset/sizes que el <img> del hero: si el preload pidiera solo la
+    // grande y el <img> eligiera la de 640, el celular bajaría las dos.
+    heroSrcset: [
+      ["src/assets/tpk2-00-hero-oferta-640.webp", "640w"],
+      ["src/assets/tpk2-00-hero-oferta.webp", "941w"],
+    ],
+    heroSizes: "(max-width: 576px) 100vw, 576px",
     title: "Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador",
     description:
       "51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador.",
@@ -324,8 +331,16 @@ for (const page of pages) {
   if (page.hero) {
     const heroEntry = manifest[page.hero];
     if (heroEntry) {
+      const srcset = (page.heroSrcset ?? [])
+        .map(([src, w]) => (manifest[src] ? `/${manifest[src].file} ${w}` : null))
+        .filter(Boolean)
+        .join(", ");
+      const responsive =
+        srcset && page.heroSizes
+          ? ` imagesrcset="${escapeAttr(srcset)}" imagesizes="${escapeAttr(page.heroSizes)}"`
+          : "";
       preloads.push(
-        `<link rel="preload" as="image" fetchpriority="high" href="/${heroEntry.file}">`,
+        `<link rel="preload" as="image" fetchpriority="high" href="/${heroEntry.file}"${responsive}>`,
       );
     } else {
       console.warn(`[prerender-seo] hero fuera del manifest: ${page.hero} (${page.route})`);
