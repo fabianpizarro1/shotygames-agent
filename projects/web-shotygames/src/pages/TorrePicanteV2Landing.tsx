@@ -10,6 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
 import { CarouselImage } from "@/components/CarouselImage";
+import { TikTokCarrusel, type VideoTikTok } from "@/components/TikTokCarrusel";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { useRegaloDeHoy } from "@/hooks/useRegaloDeHoy";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
@@ -86,6 +87,11 @@ const ASI_LLEGA = [
   { src: imgLlegaMano, alt: "La caja de la Torre de Shots Picante sostenida en una mano" },
   { src: imgLlegaCocina, alt: "La caja de la Torre de Shots Picante sobre la mesa de la cocina" },
 ];
+
+/** Videos de TikTok para la tira horizontal. Las portadas se bajan con
+ *  `node scripts/tiktok-portadas.mjs <links>` y se importan de src/assets/tiktok.
+ *  Mientras esté vacío, la sección no se pinta. */
+const TIKTOKS: VideoTikTok[] = [];
 
 const TorrePicanteV2Landing = () => {
   const productName = "Torre de Shots Picante";
@@ -631,6 +637,28 @@ const TorrePicanteV2Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* ---------- VIDEOS DE TIKTOK ---------- */}
+      {TIKTOKS.length > 0 && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center max-w-xl mx-auto mb-6 md:mb-8">
+                <p className="text-xs md:text-sm font-bold tracking-[0.2em] text-[#ff3d00] uppercase mb-2">
+                  Videos de TikTok
+                </p>
+                <h2 className="text-2xl md:text-4xl font-bold leading-tight">
+                  Míralo en acción
+                </h2>
+              </div>
+              <TikTokCarrusel videos={TIKTOKS} />
+              <p className="text-center text-xs text-muted-foreground mt-2 md:hidden">
+                👉 Desliza y toca para reproducir
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ---------- PRUEBA SOCIAL ---------- */}
       <Testimonials />
