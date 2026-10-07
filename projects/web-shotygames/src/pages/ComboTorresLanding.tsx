@@ -54,7 +54,7 @@ const ComboTorresLanding = () => {
     "Torre Parejas",
     "🎁 Shot Bidu de regalo",
     "🎁 Guía digital de 30 posiciones sexuales",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
   ];
 
   const productImages = [

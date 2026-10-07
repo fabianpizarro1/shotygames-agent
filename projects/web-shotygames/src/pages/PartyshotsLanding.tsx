@@ -453,7 +453,7 @@ const PartyshotsLanding = () => {
             
             <div className="space-y-3 md:space-y-4 text-base md:text-2xl font-semibold bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl border-2 border-black/30">
               <p className="text-2xl md:text-3xl">Por tu compra HOY te llevas GRATIS la</p>
-              <p className="text-2xl md:text-4xl font-bold text-white">Guía Digital de 20 Juegos para Fiestas 🎉</p>
+              <p className="text-2xl md:text-4xl font-bold text-white">Guía Digital de 25 Juegos para Fiestas 🎉</p>
               <p className="text-base md:text-lg text-black/90">Un bonus exclusivo con ideas nuevas, divertidas y locas para seguir la noche con tu grupo.</p>
               <div className="h-1 w-24 md:w-32 mx-auto bg-black/50 rounded"></div>
               <p className="text-lg md:text-xl"></p>

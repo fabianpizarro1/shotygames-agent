@@ -33,7 +33,7 @@ const productsData: Record<string, any> = {
       "51 bloques con retos",
       "1 vaso tequilero",
       "Instrucciones del juego",
-      "🎁 Guía digital de 20 juegos para fiestas"
+      "🎁 Guía digital de 25 juegos para fiestas"
     ]
   },
   "torre-picante": {
@@ -54,7 +54,7 @@ const productsData: Record<string, any> = {
       "51 bloques con retos picantes",
       "1 vaso tequilero",
       "Instrucciones del juego",
-      "🎁 Guía digital de 20 juegos para fiestas"
+      "🎁 Guía digital de 25 juegos para fiestas"
     ]
   },
   "torre-parejas": {
@@ -98,7 +98,7 @@ const productsData: Record<string, any> = {
       "1 vaso tequilero",
       "1 dado",
       "Instrucciones del juego",
-      "🎁 Guía digital de 20 juegos para fiestas"
+      "🎁 Guía digital de 25 juegos para fiestas"
     ]
   },
   "cartas-partyshots": {
@@ -120,7 +120,7 @@ const productsData: Record<string, any> = {
       "1 dado",
       "1 vaso tequilero",
       "Instrucciones del juego",
-      "🎁 Guía digital de 20 juegos para fiestas"
+      "🎁 Guía digital de 25 juegos para fiestas"
     ]
   }
 };

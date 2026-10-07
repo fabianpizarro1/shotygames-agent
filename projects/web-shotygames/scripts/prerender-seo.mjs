@@ -229,9 +229,9 @@ const pages = [
     route: "/landing/25-juegos-fiestas",
     chunk: "src/pages/Ebook25JuegosLanding.tsx",
     hero: "src/assets/ebook-25-juegos-portada.webp",
-    title: "Guía Digital de 20 Juegos para Fiestas | ShotyGames",
+    title: "Guía Digital de 25 Juegos para Fiestas | ShotyGames",
     description:
-      "Guía práctica en PDF con 20 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90",
+      "Guía práctica en PDF con 25 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90",
     image: fallbackImage,
     type: "product",
   },

@@ -52,7 +52,7 @@ const ComboLaPreviaLanding = () => {
     "2 Torres de Shots a elección (Normal, Picante o Parejas)",
     "Enganchados - Juego de cartas para fiestas",
     "🎁 Guía digital de 30 posiciones sexuales",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
     "🎁 Shot BIDU de regalo",
   ];
 
@@ -287,7 +287,7 @@ const ComboLaPreviaLanding = () => {
               <Card className="p-6">
                 <h3 className="text-xl font-bold mb-4 text-purple-600">📖 2 Guías Digitales</h3>
                 <p className="text-muted-foreground">
-                  Guía de 30 posiciones sexuales + Guía de 20 juegos para fiestas. Contenido digital exclusivo para tus reuniones.
+                  Guía de 30 posiciones sexuales + Guía de 25 juegos para fiestas. Contenido digital exclusivo para tus reuniones.
                 </p>
               </Card>
 

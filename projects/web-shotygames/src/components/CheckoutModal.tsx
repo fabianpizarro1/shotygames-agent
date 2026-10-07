@@ -133,12 +133,12 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
   // WhatsApp apenas confirma. Ese contraste es el argumento del pago anticipado
   // y vive únicamente acá — las landings no lo mencionan.
   const REGALO_DIGITAL: Record<string, string> = {
-    torreNormal: 'la guía de 20 juegos para fiestas',
+    torreNormal: 'la guía de 25 juegos para fiestas',
     // La Picante pasó a regalar el ebook de 25 (2026-10-07), igual que ya decía el bot de ventas.
     torrePicante: 'el ebook de 25 juegos para fiestas',
     torreParejas: 'la guía de 30 posiciones',
-    enganchados: 'la guía de 20 juegos para fiestas',
-    partyshots: 'la guía de 20 juegos para fiestas',
+    enganchados: 'la guía de 25 juegos para fiestas',
+    partyshots: 'la guía de 25 juegos para fiestas',
     torres: 'las 2 guías digitales',
     chuchaqui: 'las 2 guías digitales',
     previa: 'las 2 guías digitales',
@@ -221,7 +221,7 @@ export const CheckoutModal = ({ open, onOpenChange, productName, productPrice, p
     if (productId === 'torrePicante') {
       return "Ebook de 25 Juegos para Fiestas";
     }
-    return "Guía Digital de 20 Juegos para Fiestas";
+    return "Guía Digital de 25 Juegos para Fiestas";
   };
 
   const calculateTotal = () => {

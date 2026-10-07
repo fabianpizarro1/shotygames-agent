@@ -12,7 +12,7 @@ import { trackViewContent } from "@/lib/pixels";
 const PRECIO = 4.90;
 const PRECIO_ANTERIOR = 12.99;
 const PRODUCT_ID = "ebook-25-juegos-fiestas";
-const PRODUCT_NAME = "Guía Digital de 20 Juegos para Fiestas";
+const PRODUCT_NAME = "Guía Digital de 25 Juegos para Fiestas";
 
 const Ebook25JuegosLanding = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -41,8 +41,8 @@ const Ebook25JuegosLanding = () => {
   return (
     <>
       <Seo
-        title="Guía Digital de 20 Juegos para Fiestas | ShotyGames"
-        description="Guía práctica en PDF con 20 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90"
+        title="Guía Digital de 25 Juegos para Fiestas | ShotyGames"
+        description="Guía práctica en PDF con 25 juegos para animar reuniones, cenas y previas. Descarga inmediata por solo $4.90"
         canonical="https://www.shotygames.com/landing/25-juegos-fiestas"
         type="product"
       />

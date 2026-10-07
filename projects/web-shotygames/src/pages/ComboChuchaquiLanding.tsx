@@ -56,7 +56,7 @@ const ComboChuchaquiLanding = () => {
     "Enganchados",
     "🎁 Botella de regalo",
     "🎁 Guía digital de 30 posiciones sexuales",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
   ];
 
   const productImages = [
@@ -296,7 +296,7 @@ const ComboChuchaquiLanding = () => {
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="text-4xl mb-2">📚</div>
                     <p className="font-bold text-lg">2 Guías Digitales</p>
-                    <p className="text-sm text-muted-foreground">30 posiciones + 20 juegos para fiestas</p>
+                    <p className="text-sm text-muted-foreground">30 posiciones + 25 juegos para fiestas</p>
                   </div>
                   <div className="p-4 rounded-lg bg-muted/50">
                     <div className="text-4xl mb-2">🚚</div>

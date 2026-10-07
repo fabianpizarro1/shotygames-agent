@@ -50,7 +50,7 @@ const PromoHoyLanding = () => {
   const comboIncludes = [
     "2 Torres de Shots a elección (Normal, Picante o Parejas)",
     "🎁 Guía digital de 30 posiciones sexuales",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
     "🎁 Shot BIDU de regalo",
   ];
 

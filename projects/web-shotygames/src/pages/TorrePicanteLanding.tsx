@@ -14,7 +14,6 @@ import torrePicante1 from "@/assets/torre-picante-1.webp";
 import torreNormalImg from "@/assets/torre-normal-brillo.webp";
 import torreParejasImg from "@/assets/torre-parejas.jpg";
 import dadosDelPlacerImg from "@/assets/dados-del-placer.webp";
-import emparejadosPortada from "@/assets/emparejados-portada.jpg";
 import torrePicante2 from "@/assets/torre-picante-2.webp";
 import torrePicante3 from "@/assets/torre-picante-3.webp";
 import torrePicante4 from "@/assets/torre-picante-4.webp";
@@ -29,7 +28,6 @@ import torrePicanteLifeGrupo from "@/assets/torre-picante-life-grupo.webp";
 import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
-import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
@@ -190,7 +188,7 @@ const TorrePicanteLanding = () => {
               <div className="inline-flex items-center gap-2 bg-[#ff3d00]/10 border-2 border-[#ff3d00]/30 rounded-full px-4 py-2 mb-1">
                 <Gift className="w-4 h-4 md:w-5 md:h-5 text-[#ff3d00] flex-shrink-0" />
                 <p className="text-xs md:text-base font-semibold text-left">
-                  Pedido de hoy: llevas la <strong>Guía de 20 Juegos para Fiestas</strong> de regalo
+                  Pedido de hoy: llevas la <strong>Guía de 25 Juegos para Fiestas</strong> de regalo
                 </p>
               </div>
 
@@ -340,7 +338,7 @@ const TorrePicanteLanding = () => {
                   <Gift className="w-6 h-6 text-[#ff3d00] flex-shrink-0 mt-0.5 animate-pulse" />
                   <div>
                     <p className="font-bold text-base md:text-lg">
-                      Guía Digital de 20 Juegos para Fiestas
+                      Guía Digital de 25 Juegos para Fiestas
                       <Badge className="ml-2 bg-[#ff3d00] text-white align-middle">DE REGALO</Badge>
                     </p>
                     <p className="text-sm md:text-base text-muted-foreground">
@@ -420,7 +418,7 @@ const TorrePicanteLanding = () => {
                 <div className="flex items-center justify-between gap-3 text-base md:text-lg">
                   <span className="flex items-center gap-2">
                     <Gift className="w-5 h-5 flex-shrink-0 text-yellow-300" />
-                    Guía de 20 Juegos para Fiestas
+                    Guía de 25 Juegos para Fiestas
                   </span>
                   <span className="font-bold text-yellow-300 whitespace-nowrap">
                     <span className="text-white/60 line-through mr-2 font-normal">$4.90</span>GRATIS
@@ -445,7 +443,7 @@ const TorrePicanteLanding = () => {
 
               <div className="bg-yellow-300/15 border border-yellow-300/40 rounded-xl p-3 md:p-4">
                 <p className="text-sm md:text-base text-yellow-100">
-                  🎁 <strong className="text-yellow-300">La Guía de 20 Juegos va incluida en los pedidos de hoy.</strong>{" "}
+                  🎁 <strong className="text-yellow-300">La Guía de 25 Juegos va incluida en los pedidos de hoy.</strong>{" "}
                   Viene dentro de la caja, en una tarjeta con código QR para descargarla.
                 </p>
               </div>
@@ -537,7 +535,7 @@ const TorrePicanteLanding = () => {
               pagas cuando la tengas en la mano.
             </p>
             <p className="text-base md:text-lg font-semibold text-yellow-300">
-              🎁 Y si pides hoy, la Guía de 20 Juegos va incluida
+              🎁 Y si pides hoy, la Guía de 25 Juegos va incluida
             </p>
 
             <Button
@@ -550,7 +548,7 @@ const TorrePicanteLanding = () => {
             </Button>
 
             <p className="text-xs md:text-sm text-white/80">
-              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Guía de 20 juegos
+              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Guía de 25 juegos
             </p>
           </div>
         </div>
@@ -577,7 +575,6 @@ const TorrePicanteLanding = () => {
           { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImgThumb },
           { id: 'torreParejas', name: 'Torre de Shots Parejas', price: 10, image: torreParejasImgThumb },
           { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImgThumb },
-          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortadaThumb },
         ]}
       />
     </div>

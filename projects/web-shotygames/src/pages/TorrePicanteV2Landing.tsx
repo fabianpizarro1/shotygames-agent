@@ -26,7 +26,6 @@ import torrePicante10 from "@/assets/torre-picante-10.webp";
 import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
-import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 
 // Set de octubre 2026 (zip "Torre de Shots Picante"): 12 imágenes pensadas
 // por slot — hero, problema, solución, 3 pasos, antes/después y fotos de la
@@ -841,7 +840,6 @@ const TorrePicanteV2Landing = () => {
           { id: 'torreNormal', name: 'Torre La Previa (para grupos)', price: 10, image: torreNormalImgThumb },
           { id: 'torreParejas', name: 'Torre de Shots Parejas', price: 10, image: torreParejasImgThumb },
           { id: 'dadosPlacer', name: 'Dados del Placer', price: 5, image: dadosDelPlacerImgThumb },
-          { id: 'emparejados', name: 'Emparejados (juego digital)', price: 2.90, image: emparejadosPortadaThumb },
         ]}
       />
     </div>

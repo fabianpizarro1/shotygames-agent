@@ -109,7 +109,7 @@ const PLANES: Plan[] = [
       "La torre que elijas",
       "51 bloques con retos",
       "1 vaso tequilero",
-      "Guía digital: 20 juegos para fiestas",
+      "Guía digital: 25 juegos para fiestas",
     ],
     cta: "ELEGIR MI TORRE",
   },
@@ -127,7 +127,7 @@ const PLANES: Plan[] = [
     incluye: [
       "2 torres a elección (puedes repetir)",
       "2 vasos tequileros",
-      "Guía digital: 20 juegos para fiestas",
+      "Guía digital: 25 juegos para fiestas",
       "Guía digital: 30 posiciones",
       "1 Shot Bidu de regalo",
     ],
@@ -150,14 +150,14 @@ const PLANES: Plan[] = [
       "Torre de Shots Picante",
       "Torre de Shots Parejas",
       "3 vasos tequileros",
-      "Guía digital: 20 juegos para fiestas",
+      "Guía digital: 25 juegos para fiestas",
       "Guía digital: 30 posiciones",
       "1 Shot Bidu",
     ],
     incluye: [
       "La Previa + Picante + Parejas",
       "3 vasos tequileros",
-      "Guía digital: 20 juegos para fiestas",
+      "Guía digital: 25 juegos para fiestas",
       "Guía digital: 30 posiciones",
       "1 Shot Bidu de regalo",
       "Lista para cualquier plan: amigos, previa o pareja",
@@ -367,7 +367,7 @@ const TorreCard = ({ torre }: { torre: (typeof TORRES)[number] }) => (
 
       <div className="mt-auto pt-4 border-t">
         <p className="text-xs text-muted-foreground">
-          Incluye 51 bloques · 1 vaso tequilero · instrucciones · guía digital de 20 juegos
+          Incluye 51 bloques · 1 vaso tequilero · instrucciones · guía digital de 25 juegos
         </p>
       </div>
     </div>
@@ -836,7 +836,7 @@ const TresTorresLanding = () => {
 
               <Card className="p-5 text-center border-2">
                 <div className="text-4xl mb-3">📱</div>
-                <h3 className="font-bold mb-1">Guía: 20 juegos</h3>
+                <h3 className="font-bold mb-1">Guía: 25 juegos</h3>
                 <p className="text-sm text-muted-foreground">Para cuando la torre se acabó y la noche no</p>
                 <Badge variant="secondary" className="mt-3">Siempre</Badge>
               </Card>

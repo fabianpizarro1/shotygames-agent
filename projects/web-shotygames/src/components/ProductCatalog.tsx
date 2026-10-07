@@ -24,7 +24,7 @@ const physicalProducts = [{
     "1 vaso tequilero",
     "Instrucciones del juego",
     "🚚 Envío incluido",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
   ]
 }, {
   id: "torre-picante",
@@ -38,7 +38,7 @@ const physicalProducts = [{
     "1 vaso tequilero",
     "Instrucciones del juego",
     "🚚 Envío incluido",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
   ]
 }, {
   id: "torre-parejas",
@@ -67,7 +67,7 @@ const physicalProducts = [{
     "1 dado",
     "Instrucciones del juego",
     "🚚 Envío incluido",
-    "🎁 Guía digital de 20 juegos para fiestas",
+    "🎁 Guía digital de 25 juegos para fiestas",
   ]
 }];
 
@@ -136,8 +136,9 @@ const ProductCatalog = () => {
       { id: 'emparejados', name: 'Emparejados (Juego Digital)', price: 2.90, image: emparejadosPortada }
     ];
     
-    // Filtrar el producto principal y retornar los otros
-    return allProducts.filter(p => p.id !== mappedId) as Array<{
+    // Filtrar el producto principal y retornar los otros. A la Picante no se le
+    // ofrece Emparejados (pedido de Fabián, 2026-10-07).
+    return allProducts.filter(p => p.id !== mappedId && !(mappedId === 'torrePicante' && p.id === 'emparejados')) as Array<{
       id: 'torreNormal' | 'torrePicante' | 'torreParejas' | 'enganchados' | 'emparejados' | 'dadosPlacer';
       name: string;
       price: number;

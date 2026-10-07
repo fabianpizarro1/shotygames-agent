@@ -435,7 +435,7 @@ const EnganchadosLanding = () => {
             
             <div className="space-y-3 md:space-y-4 text-base md:text-2xl font-semibold bg-black/20 backdrop-blur-sm p-6 md:p-8 rounded-2xl border-2 border-white/30">
               <p className="text-2xl md:text-3xl">Por tu compra HOY te llevas GRATIS la</p>
-              <p className="text-2xl md:text-4xl font-bold text-yellow-300">Guía Digital de 20 Juegos para Fiestas 🎉</p>
+              <p className="text-2xl md:text-4xl font-bold text-yellow-300">Guía Digital de 25 Juegos para Fiestas 🎉</p>
               <p className="text-base md:text-lg text-white/90">Una guía exclusiva con más ideas y juegos para que nunca falte la diversión en tus reuniones.</p>
               <div className="h-1 w-24 md:w-32 mx-auto bg-white/50 rounded"></div>
               <p className="text-lg md:text-xl"></p>
