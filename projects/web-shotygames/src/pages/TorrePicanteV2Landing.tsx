@@ -8,7 +8,6 @@ import { ShoppingCart, Star, Gift, Truck, Clock, Heart, Zap, CheckCircle2, Bankn
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
-import Testimonials from "@/components/Testimonials";
 import { CarouselImage } from "@/components/CarouselImage";
 import { TikTokCarrusel, type VideoTikTok } from "@/components/TikTokCarrusel";
 import { useSlideActual } from "@/hooks/useSlideActual";
@@ -47,6 +46,10 @@ import imgLlegaCocina from "@/assets/tpk2-09-llega-cocina.webp";
 import imgLlegaSobre from "@/assets/tpk2-10-llega-sobre.webp";
 import imgLlegaCuarto from "@/assets/tpk2-11-llega-cuarto.webp";
 import imgLlegaSofa from "@/assets/tpk2-12-llega-sofa.webp";
+import imgResena1 from "@/assets/tpk2-resena-1.webp";
+import imgResena2 from "@/assets/tpk2-resena-2.webp";
+import imgResena3 from "@/assets/tpk2-resena-3.webp";
+import imgResena4 from "@/assets/tpk2-resena-4.webp";
 
 /** Hero en carrusel: la caja con sus 4 beneficios y alguien jugando. La
  *  primera es el LCP — `CarouselImage` ya le pone prioridad al índice 0. */
@@ -86,6 +89,16 @@ const ASI_LLEGA = [
   { src: imgLlegaSofa, alt: "La caja recién llegada, junto al sobre de envío abierto" },
   { src: imgLlegaMano, alt: "La caja de la Torre de Shots Picante sostenida en una mano" },
   { src: imgLlegaCocina, alt: "La caja de la Torre de Shots Picante sobre la mesa de la cocina" },
+];
+
+/** Reseñas de clientes de la Torre Picante, pasadas por Fabián el 2026-10-07.
+ *  En esta landing reemplazan al carrusel de capturas de WhatsApp
+ *  (`Testimonials`), que sigue en las demás. */
+const RESENAS = [
+  { foto: imgResena1, nombre: "Daniela M.", ciudad: "Guayaquil", texto: "Me llegó súper rápido y la caja vino en buen estado. Lo usamos el fin de semana con amigos y terminamos riéndonos demasiado 😂 Los retos sí están picantes, recomendado." },
+  { foto: imgResena2, nombre: "Kevin R.", ciudad: "Quito", texto: "Pensé que iba a ser más tranquilo pero sí se pone bueno jajaja. La calidad de los bloques está mejor de lo que esperaba y llegó todo completo. Buen juego para una reunión." },
+  { foto: imgResena3, nombre: "Sofía P.", ciudad: "Cuenca", texto: "Lo compré para una noche con amigos y nos encantó. Hay retos que dan mucha risa y otros que sí te hacen pensarlo dos veces 😅 Llegó bien empacado y sin problemas." },
+  { foto: imgResena4, nombre: "Mateo C.", ciudad: "Machala", texto: "Llegó tal cual se ve en las fotos. Ya lo estrenamos y estuvo buenísimo, especialmente cuando ya llevábamos unas rondas 😂 Sí lo volvería a comprar para regalar." },
 ];
 
 /** Videos de TikTok para la tira horizontal. Las portadas se bajan con
@@ -660,8 +673,61 @@ const TorrePicanteV2Landing = () => {
         </section>
       )}
 
-      {/* ---------- PRUEBA SOCIAL ---------- */}
-      <Testimonials />
+      {/* ---------- PRUEBA SOCIAL ----------
+          Tira horizontal en móvil (una reseña y media a la vista), 4 columnas
+          en escritorio. */}
+      <section className="py-12 md:py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center max-w-xl mx-auto mb-6 md:mb-10">
+              <div className="flex items-center justify-center gap-1 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-6 h-6 md:w-7 md:h-7 fill-[#ff3d00] text-[#ff3d00]" />
+                ))}
+              </div>
+              <h2 className="text-2xl md:text-4xl font-bold leading-tight mb-2">
+                Lo que dicen los que ya la tienen
+              </h2>
+              <p className="text-sm md:text-lg text-muted-foreground">
+                +3.500 clientes en Ecuador
+              </p>
+            </div>
+
+            <div className="-mx-4 px-4 flex gap-3 md:gap-5 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 md:overflow-visible">
+              {RESENAS.map((r) => (
+                <article
+                  key={r.nombre}
+                  className="snap-center shrink-0 w-[80%] sm:w-[46%] md:w-auto flex flex-col rounded-2xl overflow-hidden bg-card border shadow-lg"
+                >
+                  <img
+                    src={r.foto}
+                    alt={`Torre de Shots Picante recibida por ${r.nombre} en ${r.ciudad}`}
+                    width={720}
+                    height={960}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full aspect-[3/4] object-cover"
+                  />
+                  <div className="flex flex-1 flex-col gap-2 p-4 md:p-5">
+                    <div className="flex items-center gap-0.5" aria-label="5 de 5 estrellas">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-[#ff3d00] text-[#ff3d00]" />
+                      ))}
+                    </div>
+                    <p className="flex-1 text-sm md:text-base leading-relaxed">“{r.texto}”</p>
+                    <p className="text-sm font-bold">
+                      {r.nombre} <span className="font-normal text-muted-foreground">— {r.ciudad}</span>
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-2 md:hidden">
+              👉 Desliza para ver más reseñas
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* ---------- LA OFERTA: recién acá aparece el desglose ---------- */}
       <section className="py-12 md:py-16 relative overflow-hidden">
