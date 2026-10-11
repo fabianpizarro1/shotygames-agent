@@ -9,12 +9,16 @@ import { diaSemana } from './fecha';
 
 export type ClaseBloque = 'personal' | 'profundo' | 'operativo' | 'revision' | 'descanso';
 
+/** Bloques donde el chat puede agendar tareas. El resto de la rutina no se toca. */
+export type TipoHueco = 'PROFUNDO_1' | 'PROFUNDO_2' | 'OPERATIVO' | 'PERSONAL' | 'CANDYSHOTS';
+
 export interface BloqueAgenda {
   inicio: string; // 'HH:MM'
   fin: string;
   titulo: string;
   clase: ClaseBloque;
   noHacer?: string;
+  agendable?: TipoHueco;
 }
 
 export interface DiaAgenda {
@@ -43,11 +47,11 @@ function diaLaboral(profundo1: string, profundo2: string, mision: string, record
         clase: 'revision',
         noHacer: 'Revisar, no optimizar. 25 min y cierras Meta.',
       },
-      { inicio: '10:10', fin: '12:30', titulo: `Profundo #1 — ${profundo1}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO },
+      { inicio: '10:10', fin: '12:30', titulo: `Profundo #1 — ${profundo1}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_1' },
       { inicio: '12:30', fin: '12:50', titulo: 'Logística: guías + novedades (3 tiendas)', clase: 'operativo' },
       { inicio: '12:50', fin: '14:00', titulo: 'Almuerzo + descanso', clase: 'descanso' },
-      { inicio: '14:00', fin: '16:30', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO },
-      { inicio: '16:30', fin: '17:15', titulo: 'Producción / sistemas / secundarias', clase: 'operativo' },
+      { inicio: '14:00', fin: '16:30', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_2' },
+      { inicio: '16:30', fin: '17:15', titulo: 'Producción / sistemas / secundarias', clase: 'operativo', agendable: 'OPERATIVO' },
       { inicio: '17:15', fin: '17:35', titulo: 'Última revisión: logística, Meta, urgentes', clase: 'revision' },
       {
         inicio: '17:35',
@@ -55,6 +59,7 @@ function diaLaboral(profundo1: string, profundo2: string, mision: string, record
         titulo: 'Vida personal — familia, pareja, amigos',
         clase: 'descanso',
         noHacer: 'Ocio sin culpa. No compenses trabajando de noche.',
+        agendable: 'PERSONAL',
       },
       { inicio: '21:30', fin: '22:00', titulo: 'Inglés', clase: 'personal' },
       { inicio: '22:00', fin: '22:20', titulo: 'Cerrar día + Top 3 de mañana', clase: 'revision' },
@@ -83,6 +88,7 @@ function diaCandy(mision: string, extra: BloqueAgenda | null, recordatorio?: str
       titulo: 'CandyShots — observar cuellos de botella, tiempos, preguntas; grabar contenido',
       clase: 'operativo',
       noHacer: 'No trabajar como empleado del local: anotar qué se puede delegar.',
+      agendable: 'CANDYSHOTS',
     },
     { inicio: '22:00', fin: '22:20', titulo: 'Cerrar día', clase: 'revision' },
     { inicio: '23:30', fin: '23:59', titulo: 'Dormir', clase: 'descanso' }
@@ -145,4 +151,11 @@ export function bloqueActual(
   if (idx >= 0) return { actual: agenda.bloques[idx], siguiente: agenda.bloques[idx + 1] ?? null };
   const siguiente = agenda.bloques.find((b) => b.inicio > hora) ?? null;
   return { actual: null, siguiente };
+}
+
+/** Los bloques del día donde se pueden agendar tareas, con su propósito. */
+export function huecosDeTrabajo(fecha: string): { tipo: TipoHueco; inicio: string; fin: string; para: string }[] {
+  return agendaDe(fecha)
+    .bloques.filter((b): b is BloqueAgenda & { agendable: TipoHueco } => !!b.agendable)
+    .map((b) => ({ tipo: b.agendable, inicio: b.inicio, fin: b.fin, para: b.titulo }));
 }

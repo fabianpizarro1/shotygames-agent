@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import TextoIA from './TextoIA';
 
@@ -12,6 +13,11 @@ interface Mensaje {
   /** Lo mandó por audio. */
   voz?: boolean;
 }
+
+// El servidor manda "Revisando tu calendario…" y similares entre dos U+001E
+// dentro del mismo texto: se separan acá y nunca quedan en el mensaje.
+const SEP = '\u001e';
+const ESTADOS = new RegExp(`${SEP}([^${SEP}]*)${SEP}`, 'g');
 
 const RAPIDAS = ['¿Qué debería hacer ahora?', '¿Cómo voy esta semana?', 'Estoy saturado, ¿qué hago?', '¿Qué puedo dejar de hacer yo?'];
 const CLAVE_VOZ = 'progreso-voz';
@@ -79,6 +85,7 @@ const PARAR = 'M7 7h10v10H7z';
 // lo trae la foto del momento en cada pregunta, el historial no necesita servidor.
 export default function ChatIA({ fecha }: { fecha: string }) {
   const clave = `progreso-chat-${fecha}`;
+  const router = useRouter();
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -90,6 +97,7 @@ export default function ChatIA({ fecha }: { fecha: string }) {
   const [sonando, setSonando] = useState<number | null>(null);
   const [cargandoVoz, setCargandoVoz] = useState<number | null>(null);
   const [aviso, setAviso] = useState('');
+  const [estado, setEstado] = useState('');
   const fin = useRef<HTMLDivElement>(null);
   const inputFoto = useRef<HTMLInputElement>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -186,10 +194,16 @@ export default function ChatIA({ fecha }: { fecha: string }) {
       if (!r.ok || !r.body) throw new Error(r.status === 401 ? 'Sesión vencida, vuelve a entrar.' : `Error ${r.status}`);
       const lector = r.body.getReader();
       const dec = new TextDecoder();
+      let crudo = '';
       for (;;) {
         const { done, value } = await lector.read();
         if (done) break;
-        acumulado += dec.decode(value, { stream: true });
+        crudo += dec.decode(value, { stream: true });
+        // El estado vale hasta que vuelve a llegar texto de la IA.
+        const ultimo = [...crudo.matchAll(ESTADOS)].at(-1);
+        if (ultimo) setEstado(crudo.slice(ultimo.index + ultimo[0].length).trim() ? '' : ultimo[1]);
+        // Un estado a medio llegar (sin su cierre) tampoco se muestra.
+        acumulado = crudo.replace(ESTADOS, '').split(SEP)[0];
         setMensajes([...historial, { role: 'assistant', content: acumulado }]);
       }
     } catch (e) {
@@ -197,7 +211,11 @@ export default function ChatIA({ fecha }: { fecha: string }) {
       setMensajes([...historial, { role: 'assistant', content: `⚠️ ${e instanceof Error ? e.message : 'Error'}` }]);
     } finally {
       setEnviando(false);
+      setEstado('');
     }
+    // El chat puede haber creado o completado tareas: el resto de la app se
+    // refresca para no mostrar datos viejos (Hoy, Tareas, XP del encabezado).
+    router.refresh();
     if (conVoz && acumulado.trim() && !acumulado.includes('⚠️')) escuchar(indice, acumulado);
   }
 
@@ -285,7 +303,7 @@ export default function ChatIA({ fecha }: { fecha: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-[var(--color-texto-suave)]">
-          {mensajes.length ? '' : 'Conoce tu agenda, tus proyectos, tus tareas y cómo vas en la semana. Háblale, mándale fotos o escríbele.'}
+          {mensajes.length ? '' : 'Conoce tu agenda, tus proyectos y cómo vas en la semana. Cuéntale lo que tienes que hacer y te lo agenda. Háblale, mándale fotos o escríbele.'}
         </p>
         <button
           onClick={alternarVoz}
@@ -316,7 +334,13 @@ export default function ChatIA({ fecha }: { fecha: string }) {
             </div>
           ) : (
             <div key={i} className="tarjeta mr-4 px-3.5 py-2.5">
-              {m.content ? <TextoIA texto={m.content} /> : <p className="text-sm text-[var(--color-texto-tenue)]">Pensando…</p>}
+              {m.content && <TextoIA texto={m.content} />}
+              {enviando && i === mensajes.length - 1 && (!m.content || estado) && (
+                <p className={`flex items-center gap-2 text-sm text-[var(--color-texto-tenue)] ${m.content ? 'mt-2' : ''}`}>
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-acento)]" />
+                  {estado || 'Pensando…'}
+                </p>
+              )}
               {m.content && !(enviando && i === mensajes.length - 1) && !m.content.startsWith('⚠️') && (
                 <button
                   onClick={() => (sonando === i ? pararVoz() : escuchar(i, m.content))}

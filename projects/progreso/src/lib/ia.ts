@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import { CONTEXTO_FABIAN } from './contexto-fabian';
+import { ESCRIBEN, ESTADO_HERRAMIENTA, HERRAMIENTAS, INSTRUCCIONES_CHAT, ejecutar } from './herramientas-chat';
 import { agendaDe, bloqueActual } from './agenda';
 import { fechaLarga, hoyEC, horaEC, lunesDe, sumarDias, diasEntre } from './fecha';
 import {
@@ -147,18 +148,96 @@ function revisarRechazo(stop: string | null) {
   if (stop === 'refusal') throw new Error('La IA no respondió esta consulta. Reformúlala.');
 }
 
-// ── Chat (streaming) ────────────────────────────────────────────────────────
+// ── Chat (streaming, con herramientas) ─────────────────────────────────────
 
-export function streamChat(d: Datos, mensajes: Anthropic.Beta.BetaMessageParam[]) {
-  return ia().beta.messages.stream({
-    model: MODELO,
-    max_tokens: 8000,
-    betas: BETAS,
-    fallbacks: 'default',
-    output_config: { effort: 'medium' },
-    system: sistema(d),
-    messages: mensajes,
-  });
+const MAX_VUELTAS = 10;
+
+export interface ResultadoChat {
+  stop: string | null;
+  /** Corrió alguna herramienta que escribe: las pantallas tienen datos nuevos. */
+  escribio: boolean;
+}
+
+/**
+ * Loop de herramientas con streaming: cada vuelta emite su texto apenas
+ * llega; si la IA pide herramientas, se ejecutan y sigue. Dentro del turno la
+ * conversación solo crece (el razonamiento vuelve tal cual).
+ */
+export async function chat(
+  d: Datos,
+  mensajes: Anthropic.Beta.BetaMessageParam[],
+  alTexto: (t: string) => void,
+  alEstado: (estado: string) => void,
+  senal?: AbortSignal
+): Promise<ResultadoChat> {
+  const system: Anthropic.Beta.BetaTextBlockParam[] = [
+    { type: 'text', text: CONTEXTO_FABIAN },
+    { type: 'text', text: INSTRUCCIONES_CHAT, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: fotoDelMomento(d) },
+  ];
+  const conversacion = [...mensajes];
+  let escribio = false;
+  let emitido = '';
+  let reintentosJson = 0;
+
+  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+    const stream = ia().beta.messages.stream(
+      {
+        model: MODELO,
+        max_tokens: 16000,
+        betas: BETAS,
+        fallbacks: 'default',
+        output_config: { effort: 'medium' },
+        system,
+        tools: HERRAMIENTAS,
+        messages: conversacion,
+      },
+      { signal: senal }
+    );
+    let separar = emitido.length > 0 && !emitido.endsWith('\n');
+    stream.on('text', (delta) => {
+      // Entre vueltas el texto de una y otra no se pega en la misma línea.
+      const t = separar ? `\n\n${delta}` : delta;
+      separar = false;
+      emitido += t;
+      alTexto(t);
+    });
+
+    // Avisar apenas la IA empieza a pedir una herramienta: armar la entrada
+    // de un plan semanal toma más que ejecutarlo.
+    stream.on('streamEvent', (ev) => {
+      if (ev.type === 'content_block_start' && ev.content_block.type === 'tool_use') {
+        alEstado(ESTADO_HERRAMIENTA[ev.content_block.name] ?? 'Trabajando…');
+      }
+    });
+
+    let msg: Anthropic.Beta.BetaMessage;
+    try {
+      msg = await stream.finalMessage();
+      reintentosJson = 0;
+    } catch (e) {
+      // Con eager_input_streaming una entrada ilegible rechaza acá: se
+      // reintenta esa vuelta. Los errores de la API suben tal cual.
+      if (e instanceof Anthropic.APIError || senal?.aborted || reintentosJson++ >= 2) throw e;
+      continue;
+    }
+
+    if (msg.stop_reason === 'refusal') return { stop: 'refusal', escribio };
+    const usos = msg.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === 'tool_use');
+    if (msg.stop_reason !== 'tool_use' || !usos.length) return { stop: msg.stop_reason, escribio };
+
+    conversacion.push({ role: 'assistant', content: msg.content });
+    const resultados: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+    for (const u of usos) {
+      alEstado(ESTADO_HERRAMIENTA[u.name] ?? 'Trabajando…');
+      const r = await ejecutar(u.name, u.input);
+      if (!r.error && ESCRIBEN.has(u.name)) escribio = true;
+      resultados.push({ type: 'tool_result', tool_use_id: u.id, content: r.contenido, ...(r.error && { is_error: true }) });
+    }
+    conversacion.push({ role: 'user', content: resultados });
+  }
+  alTexto('\n\n(Me quedé sin pasos. Revisa la app o pídemelo más corto.)');
+  return { stop: 'max_vueltas', escribio };
 }
 
 // ── Llamadas estructuradas ──────────────────────────────────────────────────

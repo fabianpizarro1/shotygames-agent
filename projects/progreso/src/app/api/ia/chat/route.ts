@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { leerTodo } from '@/lib/datos';
-import { streamChat } from '@/lib/ia';
+import { chat } from '@/lib/ia';
 
-export const maxDuration = 120;
+// Planificar una semana son varias vueltas de herramientas (~40-60 s).
+export const maxDuration = 300;
 
 interface MensajeChat {
   role: 'user' | 'assistant';
@@ -17,6 +18,8 @@ interface Cuerpo {
   /** El mensaje llegó por voz y la respuesta se va a escuchar. */
   voz?: boolean;
 }
+
+const SEP = '\u001e';
 
 const IMAGEN = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/;
 
@@ -46,34 +49,37 @@ export async function POST(req: NextRequest) {
   const conversacion: Anthropic.Beta.BetaMessageParam[] = [...mensajes.slice(0, -1), { role: 'user', content: contenido }];
 
   const datos = await leerTodo();
-  const stream = streamChat(datos, conversacion);
   const encoder = new TextEncoder();
+  const corte = new AbortController();
 
   return new Response(
     new ReadableStream({
       async start(controller) {
-        stream.on('text', (delta) => controller.enqueue(encoder.encode(delta)));
+        const emitir = (t: string) => controller.enqueue(encoder.encode(t));
+        // El estado viaja dentro del mismo stream de texto, entre dos
+        // separadores (U+001E) que el cliente quita antes de mostrar.
+        const estado = (t: string) => emitir(`${SEP}${t}${SEP}`);
         try {
-          const final = await stream.finalMessage();
-          if (final.stop_reason === 'refusal') {
-            controller.enqueue(encoder.encode('\n\n(La IA no respondió esto. Reformúlalo.)'));
-          } else if (final.stop_reason === 'max_tokens') {
-            controller.enqueue(encoder.encode('\n\n(…respuesta cortada por largo)'));
-          }
+          const r = await chat(datos, conversacion, emitir, estado, corte.signal);
+          if (r.stop === 'refusal') emitir('\n\n(La IA no respondió esto. Reformúlalo.)');
+          else if (r.stop === 'max_tokens') emitir('\n\n(…respuesta cortada por largo)');
         } catch (e) {
+          if (corte.signal.aborted) return;
           const msg =
             e instanceof Anthropic.RateLimitError
               ? 'Límite de uso de la IA, espera un minuto.'
               : e instanceof Anthropic.APIError
                 ? `Error de la IA (${e.status}).`
                 : 'Se cortó la conexión con la IA.';
-          controller.enqueue(encoder.encode(`\n\n⚠️ ${msg}`));
+          emitir(`\n\n⚠️ ${msg}`);
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {}
         }
       },
       cancel() {
-        stream.abort();
+        corte.abort();
       },
     }),
     { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } }

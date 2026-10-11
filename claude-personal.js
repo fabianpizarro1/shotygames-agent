@@ -13,7 +13,8 @@ const OPCIONES_REQUEST = { headers: { 'anthropic-beta': 'server-side-fallback-20
 const MAX_VUELTAS = 12;
 const APP = 'https://progreso-eight.vercel.app';
 const CALENDARIO_TAREAS = 'Tareas';
-const NEGOCIOS = ['DEUDAS', 'SHOTYGAMES', 'ECOMMERCE', 'CANDYSHOTS', 'CONTENIDO', 'PERSONAL'];
+// Los mismos ids que usa la app Progreso (projects/progreso/src/lib/tipos.ts).
+const NEGOCIOS = ['SALIR_DE_DEUDAS', 'SHOTYGAMES', 'DROPSHIPPING', 'CANDYSHOTS', 'CONTENIDO', 'PERSONAL'];
 
 // Fijo y cacheado. Lo que cambia por mensaje (fecha, hora, memoria) va en el
 // segundo bloque del system, después del breakpoint.
