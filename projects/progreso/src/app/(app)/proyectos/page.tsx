@@ -3,8 +3,11 @@ import { diasEntre, hoyEC } from '@/lib/fecha';
 import { MAX_PROYECTOS_ACTIVOS, type Proyecto } from '@/lib/tipos';
 import TarjetaProyecto from '@/components/TarjetaProyecto';
 import NuevoProyecto from '@/components/NuevoProyecto';
+import AgendarProximas from '@/components/AgendarProximas';
 
 export const dynamic = 'force-dynamic';
+// Organizar un proyecto (IA + crear tareas + agendar) tarda ~1 min.
+export const maxDuration = 300;
 
 export default async function ProyectosPage() {
   const datos = await cargarTodo();
@@ -31,6 +34,7 @@ export default async function ProyectosPage() {
         <p className="mb-3 text-xs text-[var(--color-texto-tenue)]">
           Un producto activo por negocio. Para activar otro, termina o pausa el actual.
         </p>
+        <AgendarProximas />
         <ul className="flex flex-col gap-3">{activos.map(tarjeta)}</ul>
       </section>
 

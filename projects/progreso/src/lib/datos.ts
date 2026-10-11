@@ -288,6 +288,56 @@ export async function crearTarea(t: NuevaTarea): Promise<string> {
   return id;
 }
 
+/**
+ * Varias tareas en DOS escrituras (una a TAREAS, otra a TAREAS_META). Un plan
+ * de proyecto son 30-60 tareas y de a una se pasa del límite de Google
+ * (60 escrituras por minuto).
+ */
+export async function crearTareas(lista: NuevaTarea[]): Promise<string[]> {
+  if (!lista.length) return [];
+  const base = Date.now();
+  const ids = lista.map((_, i) => String(base + i));
+  const creada = ahoraEC();
+  const sheets = getSheets();
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: rango('TAREAS'),
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: lista.map((t, i) => [
+        ids[i],
+        t.tarea.trim().toUpperCase(),
+        'PENDIENTE',
+        (t.prioridad ?? 'MEDIA').toUpperCase(),
+        t.fecha_limite ?? '',
+        (t.negocio ?? '').toUpperCase(),
+        t.notas ?? '',
+      ]),
+    },
+  });
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: rango('TAREAS_META'),
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: lista.map((t, i) =>
+        filaDesde('TAREAS_META', {
+          ID: ids[i],
+          PROYECTO_ID: t.proyectoId,
+          TIPO: t.tipo,
+          DECISION: t.decision,
+          DURACION_MIN: t.duracionMin != null ? String(t.duracionMin) : '',
+          RESPONSABLE: t.responsable,
+          CREADA_EN: creada,
+        })
+      ),
+    },
+  });
+  return ids;
+}
+
 const COL_TAREAS: Record<string, string> = {
   estado: 'ESTADO',
   prioridad: 'PRIORIDAD',

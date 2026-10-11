@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { tokenSesion } from '@/lib/auth';
 import * as db from '@/lib/datos';
 import * as ia from '@/lib/ia';
+import * as organizador from '@/lib/organizador';
 import { hoyEC, lunesDe, sumarDias, ahoraEC } from '@/lib/fecha';
 import { agendaDe } from '@/lib/agenda';
 import { productoActivo } from '@/lib/calculos';
@@ -215,10 +216,22 @@ export async function crearProyecto(p: {
   clase: Proyecto['clase'];
   objetivo: string;
   etapas: string[];
+  fechaObjetivo?: string;
+  /** Activarlo ya y que la IA lo organice hasta la fecha límite. */
+  empezar?: boolean;
 }) {
   return envolver(async () => {
     const datos = await db.leerTodo();
     const id = `P${Date.now()}`;
+    let estado: Proyecto['estado'] = 'EN_COLA';
+    if (p.empezar) {
+      // Mismas reglas que al activar desde la tarjeta: si no se puede, se dice antes de crear nada.
+      const activos = datos.proyectos.filter((x) => x.estado === 'ACTIVO');
+      if (activos.length >= MAX_PROYECTOS_ACTIVOS) throw new Error(`Ya tienes ${activos.length} proyectos activos. Termina o pausa uno, o créalo en la cola.`);
+      const enCurso = activos.find((x) => x.clase === 'PRODUCTO' && x.negocio === p.negocio);
+      if (p.clase === 'PRODUCTO' && enCurso) throw new Error(`"${enCurso.nombre}" sigue activo. Los productos van de a uno: termínalo, páusalo o crea este en la cola.`);
+      estado = 'ACTIVO';
+    }
     await db.guardarProyecto({
       id,
       nombre: p.nombre.trim(),
@@ -226,12 +239,24 @@ export async function crearProyecto(p: {
       clase: p.clase,
       objetivo: p.objetivo,
       prioridad: 'MEDIA',
-      estado: 'EN_COLA',
+      estado,
+      fechaObjetivo: p.fechaObjetivo ?? '',
       orden: Math.max(0, ...datos.proyectos.map((x) => x.orden)) + 1,
       etapas: p.etapas.filter(Boolean).map((nombre) => ({ nombre, pct: 0 })),
     });
-    return id;
+    const plan = p.empezar && p.fechaObjetivo ? await organizador.organizarProyecto(id, p.fechaObjetivo) : null;
+    return { id, plan };
   });
+}
+
+/** La IA parte el proyecto en tareas hasta la fecha límite y agenda las próximas 2 semanas. */
+export async function organizarProyecto(proyectoId: string, fechaLimite: string) {
+  return envolver(() => organizador.organizarProyecto(proyectoId, fechaLimite));
+}
+
+/** Agenda lo que vence en las próximas 2 semanas (lo mismo que corre solo los domingos). */
+export async function agendarProximas() {
+  return envolver(() => organizador.agendarProximas());
 }
 
 const PASOS = [0, 25, 50, 75, 100];

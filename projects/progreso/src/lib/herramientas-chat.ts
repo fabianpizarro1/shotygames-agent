@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { crearEvento, eliminarEvento, eventosEntre } from './calendario';
 import { actualizarTarea, completarTarea, leerTodo } from './datos';
 import { hoyEC, sumarDias } from './fecha';
+import { organizarProyecto } from './organizador';
 import { huecosLibres, planificar } from './planificador';
 import { DECISIONES, NEGOCIOS, TIPOS_TAREA } from './tipos';
 
@@ -58,6 +59,7 @@ const ESQUEMAS = {
     todo_el_dia: z.boolean().optional(),
   }),
   eliminar_evento: z.object({ event_id: z.string(), calendario: z.string().describe('El que devolvió listar_eventos') }),
+  organizar_proyecto: z.object({ proyecto_id: z.string(), fecha_limite: fecha }),
 };
 
 type NombreHerramienta = keyof typeof ESQUEMAS;
@@ -73,6 +75,8 @@ const DESCRIPCIONES: Record<NombreHerramienta, string> = {
   listar_eventos: 'Eventos de Google Calendar entre dos fechas, con id y calendario (necesarios para borrar).',
   crear_evento: 'Evento suelto con hora fija (cita, reunión, pago). Para tareas usar planificar.',
   eliminar_evento: 'Borra un evento de Google Calendar.',
+  organizar_proyecto:
+    'Parte un proyecto ACTIVO en todas sus tareas hasta la fecha límite (sin repetir las que ya tiene), pone fecha a cada etapa y agenda las próximas 2 semanas. Tarda ~2 min.',
 };
 
 function esquemaJson(s: z.ZodType): Anthropic.Beta.BetaTool['input_schema'] {
@@ -100,10 +104,11 @@ export const ESTADO_HERRAMIENTA: Record<string, string> = {
   listar_eventos: 'Mirando tu calendario…',
   crear_evento: 'Agendando…',
   eliminar_evento: 'Borrando el evento…',
+  organizar_proyecto: 'Organizando el proyecto (≈2 min)…',
 };
 
 /** Herramientas que escriben: si alguna corrió, las pantallas tienen que refrescarse. */
-export const ESCRIBEN = new Set<string>(['planificar', 'completar_tarea', 'actualizar_tarea', 'crear_evento', 'eliminar_evento']);
+export const ESCRIBEN = new Set<string>(['organizar_proyecto', 'planificar', 'completar_tarea', 'actualizar_tarea', 'crear_evento', 'eliminar_evento']);
 
 // Solo en local (.env.development.local): todo se valida y se lee de verdad,
 // pero nada se escribe en el Sheet ni en el calendario.
@@ -116,7 +121,7 @@ export async function ejecutar(nombre: string, entrada: unknown): Promise<{ cont
   if (!r.success) {
     return { contenido: JSON.stringify({ INVALID_INPUT: z.prettifyError(r.error), recibido: entrada }), error: true };
   }
-  if (SIMULAR && ESCRIBEN.has(nombre) && nombre !== 'planificar') {
+  if (SIMULAR && ESCRIBEN.has(nombre) && nombre !== 'planificar' && nombre !== 'organizar_proyecto') {
     return { contenido: `(simulado, no se escribió) ${nombre} ${JSON.stringify(r.data)}` };
   }
   try {
@@ -155,12 +160,16 @@ async function correr(nombre: NombreHerramienta, x: Record<string, unknown>): Pr
       const i = x as z.infer<typeof ESQUEMAS.listar_eventos>;
       const desde = i.desde ?? hoyEC();
       const eventos = await eventosEntre(desde, i.hasta ?? sumarDias(desde, 7));
-      return eventos.length ? JSON.stringify(eventos) : 'No hay eventos en ese rango.';
+      return eventos.length ? JSON.stringify(eventos.map(({ descripcion, ...e }) => ({ ...e, tarea: /Tarea (\d+)/.exec(descripcion)?.[1] }))) : 'No hay eventos en ese rango.';
     }
     case 'crear_evento': {
       const i = x as z.infer<typeof ESQUEMAS.crear_evento>;
       const id = await crearEvento({ titulo: i.titulo, fecha: i.fecha, hora: i.hora, duracionMin: i.duracion_min, todoElDia: i.todo_el_dia });
       return `Evento creado (id ${id}).`;
+    }
+    case 'organizar_proyecto': {
+      const i = x as z.infer<typeof ESQUEMAS.organizar_proyecto>;
+      return JSON.stringify(await organizarProyecto(i.proyecto_id, i.fecha_limite));
     }
     case 'eliminar_evento': {
       const i = x as z.infer<typeof ESQUEMAS.eliminar_evento>;
@@ -182,5 +191,7 @@ SOLO actúas cuando Fabián lo pide o te manda cosas por hacer ("esta semana ten
 5. Si algo no debería hacerlo él, créalo con decision DELEGAR y la nota "Delegar a …", sin ocupar su tiempo profundo.
 6. Llama planificar UNA sola vez con todo. Si devuelve errores no se creó nada: corrige y vuelve a mandar la lista completa.
 7. Responde corto: el plan por día ("Lun 12 · 10:10-11:30 Cotizar imprentas"), lo que quedó sin agenda y por qué, y al final en negrita lo primero que hace.
+
+Si crea o menciona un proyecto con fecha límite ("tengo que lanzar X para el 30 de noviembre"), usa organizar_proyecto (el proyecto tiene que estar ACTIVO; si no lo está, díselo). Esa herramienta ya crea las tareas y agenda las 2 primeras semanas: no repitas con planificar.
 
 Para mover algo: listar_eventos, eliminar_evento y planificar con tarea_existente_id y el horario nuevo. Una cita con hora fija (médico, reunión, pago) va con crear_evento. Si está saturado, quitas carga: no agregas tareas en ese momento.`;

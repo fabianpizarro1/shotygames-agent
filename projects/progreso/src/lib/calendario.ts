@@ -23,6 +23,7 @@ export interface Evento {
   calendario: string;
   todoElDia: boolean;
   libre: boolean;
+  descripcion: string;
 }
 
 let calendarios: { id: string; nombre: string }[] | null = null;
@@ -67,6 +68,7 @@ export async function eventosEntre(desde: string, hasta: string): Promise<Evento
         calendario: r.value.nombre,
         todoElDia: !e.start?.dateTime,
         libre: e.transparency === 'transparent',
+        descripcion: e.description ?? '',
       });
     }
   }

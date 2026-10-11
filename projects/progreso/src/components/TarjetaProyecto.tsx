@@ -1,8 +1,11 @@
 'use client';
 
-import { avanzarEtapa, guardarProyecto } from '@/app/acciones';
+import { useState } from 'react';
+import { avanzarEtapa, guardarProyecto, organizarProyecto } from '@/app/acciones';
 import { useAccion } from '@/hooks/useAccion';
 import { labelNegocio, progresoProyecto, type EstadoProyecto, type Proyecto } from '@/lib/tipos';
+import type { ResultadoOrganizar } from '@/lib/organizador';
+import ResultadoPlan, { fechaCorta } from './ResultadoPlan';
 
 export default function TarjetaProyecto({
   p,
@@ -14,6 +17,9 @@ export default function TarjetaProyecto({
   diasSinAvance: number | null;
 }) {
   const { pendiente, error, correr } = useAccion();
+  const [organizando, setOrganizando] = useState(false);
+  const [fecha, setFecha] = useState(p.fechaObjetivo);
+  const [plan, setPlan] = useState<ResultadoOrganizar | null>(null);
   const pct = progresoProyecto(p);
   const estado = (e: EstadoProyecto) => correr(() => guardarProyecto({ id: p.id, estado: e }));
   const activo = p.estado === 'ACTIVO';
@@ -26,6 +32,7 @@ export default function TarjetaProyecto({
           <p className="text-xs text-[var(--color-texto-tenue)]">
             {labelNegocio(p.negocio)} · {p.clase === 'PRODUCTO' ? 'Producto' : 'Sistema'}
             {pendientes > 0 && ` · ${pendientes} tareas`}
+            {p.fechaObjetivo && <span className="font-semibold text-[var(--color-texto-suave)]"> · límite {fechaCorta(p.fechaObjetivo)}</span>}
             {activo && diasSinAvance !== null && diasSinAvance >= 3 && (
               <span className="font-semibold text-[var(--color-rojo)]"> · {diasSinAvance} d sin avanzar</span>
             )}
@@ -63,6 +70,7 @@ export default function TarjetaProyecto({
                     {e.pct === 100 ? '✓ ' : ''}
                     {e.nombre}
                     {e.pct > 0 && e.pct < 100 ? ` ${e.pct}%` : ''}
+                    {e.fecha && e.pct < 100 && <span className="text-[var(--color-texto-tenue)]"> · {fechaCorta(e.fecha)}</span>}
                   </span>
                 </button>
               </li>
@@ -83,7 +91,44 @@ export default function TarjetaProyecto({
         </>
       )}
 
+      {activo && organizando && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            correr(
+              () => organizarProyecto(p.id, fecha),
+              (r) => {
+                setPlan(r);
+                setOrganizando(false);
+              }
+            );
+          }}
+          className="mt-3 flex flex-col gap-2 rounded-xl bg-[var(--color-superficie-alta)] p-3"
+        >
+          <p className="text-xs text-[var(--color-texto-suave)]">
+            La IA parte lo que falta en tareas hasta la fecha límite{pendientes > 0 ? ' (sin repetir las que ya tiene)' : ''} y agenda las próximas 2
+            semanas en tu calendario. Lo demás se agenda solo cada domingo.
+          </p>
+          <div className="flex gap-2">
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required className="campo flex-1" />
+            <button type="submit" disabled={pendiente || !fecha} className="pulsable boton-primario">
+              {pendiente ? 'Organizando… (≈2 min)' : 'Organizar'}
+            </button>
+          </div>
+        </form>
+      )}
+      {plan && (
+        <div className="mt-3">
+          <ResultadoPlan r={plan} />
+        </div>
+      )}
+
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        {activo && !organizando && (
+          <button onClick={() => setOrganizando(true)} disabled={pendiente} className="pulsable boton-primario py-1.5 text-xs">
+            {pendientes > 0 ? 'Reorganizar con IA' : 'Organizar con IA'}
+          </button>
+        )}
         {p.estado !== 'ACTIVO' && p.estado !== 'TERMINADO' && (
           <button onClick={() => estado('ACTIVO')} disabled={pendiente} className="pulsable boton py-1.5 text-xs">
             Activar

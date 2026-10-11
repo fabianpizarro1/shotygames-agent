@@ -74,6 +74,8 @@ export type ClaseProyecto = 'PRODUCTO' | 'SISTEMA';
 export interface Etapa {
   nombre: string;
   pct: number;
+  /** Hito: fecha en que la etapa debería estar lista (la pone el organizador). */
+  fecha?: string;
 }
 
 export interface Proyecto {

@@ -14,21 +14,21 @@ const CALENDARIO_TAREAS = 'Tareas';
 const APP = 'https://progreso-eight.vercel.app';
 const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
-const aMin = (hhmm: string) => {
+export const aMin = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return h * 60 + m;
 };
-const aHora = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+export const aHora = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 const etiqueta = (fecha: string) => `${DIAS[diaSemana(fecha)]} ${Number(fecha.slice(8))}`;
 
-interface Ocupado {
+export interface Ocupado {
   inicio: number;
   fin: number;
   titulo: string;
 }
 
 /** Lo que ocupa cada día del rango, en minutos desde la medianoche de Ecuador. */
-async function ocupadosPorDia(desde: string, hasta: string): Promise<Record<string, Ocupado[]>> {
+export async function ocupadosPorDia(desde: string, hasta: string): Promise<Record<string, Ocupado[]>> {
   const eventos = await eventosEntre(desde, hasta);
   const porDia: Record<string, Ocupado[]> = {};
   for (let f = desde; f <= hasta; f = sumarDias(f, 1)) porDia[f] = [];
@@ -46,7 +46,7 @@ async function ocupadosPorDia(desde: string, hasta: string): Promise<Record<stri
   return porDia;
 }
 
-function tramosLibres(fecha: string, ocupados: Ocupado[]) {
+export function tramosLibres(fecha: string, ocupados: Ocupado[]) {
   return huecosDeTrabajo(fecha).map((h) => {
     let tramos: [number, number][] = [[aMin(h.inicio), aMin(h.fin)]];
     for (const o of ocupados) {

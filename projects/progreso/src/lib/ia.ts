@@ -362,3 +362,56 @@ export async function redactarRevisionSemanal(d: Datos): Promise<string> {
   revisarRechazo(r.stop_reason);
   return r.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('\n').trim();
 }
+
+// ── Plan de proyecto ────────────────────────────────────────────────────────
+
+export const EsquemaPlan = z.object({
+  resumen: z.string().describe('2-3 líneas: cómo se reparte el trabajo hasta la fecha límite'),
+  advertencia: z
+    .string()
+    .describe('Si la fecha es irreal para su capacidad, o algo depende de terceros (proveedor, Marcelo, imprenta): dilo claro. Vacío si no hay.'),
+  hitos: z
+    .array(z.object({ etapa: z.string().describe('Nombre EXACTO de una etapa del proyecto'), fecha: z.string().describe('YYYY-MM-DD') }))
+    .describe('Una fecha por etapa pendiente, en orden, la última en o antes de la fecha límite'),
+  tareas: z
+    .array(
+      z.object({
+        tarea: z.string().describe('Acción concreta: verbo + resultado, que se pueda empezar sin pensar'),
+        etapa: z.string().describe('Nombre exacto de la etapa a la que pertenece'),
+        tipo: z.enum(['ESTRATEGICO', 'CREATIVO', 'OPERATIVO', 'ADMINISTRATIVO']),
+        duracion_min: z.number().int().min(15).max(150).describe('Realista. Una tarea de más de 150 min se parte en dos'),
+        fecha_objetivo: z.string().describe('YYYY-MM-DD: el día en que debería estar hecha'),
+        decision: z.enum(['HACER_YO', 'AUTOMATIZAR', 'DELEGAR', 'TERCERIZAR']),
+        responsable: z.string().describe('Fabián, Nerea, Marcelo, proveedor… o vacío'),
+        notas: z.string().describe('Contexto útil para hacerla, o vacío'),
+      })
+    )
+    .describe('Todas las tareas que faltan hasta terminar el proyecto, en orden de ejecución'),
+});
+
+export function planDeProyecto(
+  d: Datos,
+  p: { nombre: string; objetivo: string; negocio: string; clase: string; etapas: { nombre: string; pct: number }[] },
+  fechaLimite: string,
+  existentes: { tarea: string; fecha_limite: string }[]
+) {
+  const hoy = hoyEC();
+  const semanas = Math.max(1, Math.round(diasEntre(hoy, fechaLimite) / 7));
+  return estructurado(
+    d,
+    EsquemaPlan,
+    `Organiza el proyecto "${p.nombre}" (${labelNegocio(p.negocio)}, ${p.clase === 'PRODUCTO' ? 'producto' : 'sistema'}) desde hoy ${hoy} hasta la fecha límite ${fechaLimite} (~${semanas} semanas).
+Objetivo: ${p.objetivo || '(sin objetivo escrito: dedúcelo del nombre)'}
+Etapas y avance: ${p.etapas.map((e) => `${e.nombre} ${e.pct}%`).join(', ')}
+${existentes.length ? `Tareas que YA existen para este proyecto (NO las repitas): ${existentes.map((t) => `"${t.tarea}"${t.fecha_limite ? ` (${t.fecha_limite})` : ''}`).join('; ')}` : 'No tiene tareas todavía.'}
+
+Reglas:
+- Parte cada etapa pendiente en tareas concretas, en orden real de dependencias (no se diseña el empaque antes de saber el tamaño del producto).
+- Capacidad REAL: este proyecto usa sobre todo su día de tema (producto activo ShotyGames = martes, Product Lab = miércoles, sistemas/delegación = jueves, ads/contenido = viernes), 2 bloques profundos de ~2 h 20 min. No asumas que tiene toda la semana para esto: tiene otros proyectos y la operación. Como máximo ~5 horas por semana para este proyecto, salvo que la fecha obligue (y entonces lo adviertes).
+- fecha_objetivo entre ${sumarDias(hoy, 1)} y ${fechaLimite}, repartidas por semanas, no todas al final.
+- Lo que puede hacer otra persona (Nerea, Marcelo, un proveedor, una imprenta) se marca DELEGAR o TERCERIZAR con su responsable: a Fabián le queda solo coordinarlo.
+- Tareas de 15 a 150 minutos. Nada de "ver lo de X" ni "avanzar con X".
+- Las esperas de terceros (cotización, muestra, producción) son tiempo de calendario: el hito siguiente no puede caer antes de que razonablemente llegue.
+- Si la fecha es imposible con esta capacidad, igual entregas el plan y lo dices en advertencia.`
+  );
+}
