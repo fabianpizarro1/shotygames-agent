@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { cargarTodo } from '@/lib/datos';
+import { cargarTodo, usoIaDelMes } from '@/lib/datos';
 import { hoyEC, lunesDe } from '@/lib/fecha';
 import { cumplimientoSemana, productoActivo, tareasPendientesOrdenadas, ultimaMetrica } from '@/lib/calculos';
 import { labelNegocio, progresoProyecto } from '@/lib/tipos';
@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function CeoPage() {
   const datos = await cargarTodo();
   const hoy = hoyEC();
+  const usoIa = await usoIaDelMes(hoy.slice(0, 7)).catch(() => null);
   const semana = cumplimientoSemana(datos, hoy);
   const m = (c: string) => ultimaMetrica(datos, c);
   const producto = productoActivo(datos);
@@ -30,6 +31,25 @@ export default async function CeoPage() {
         <h2 className="titulo-seccion">Dinero y ventas</h2>
         <DineroNegocio negocio={datos.negocio} mes={hoy} />
       </section>
+
+      {usoIa && (
+        <details className="tarjeta px-4 py-3 text-sm">
+          <summary className="cursor-pointer">
+            IA este mes: <strong>${usoIa.total.toFixed(2)}</strong>
+            <span className="text-xs text-[var(--color-texto-tenue)]"> · {usoIa.llamadas} llamadas a Claude (sin la voz de OpenAI)</span>
+          </summary>
+          <ul className="mt-2 flex flex-col gap-1 text-xs text-[var(--color-texto-suave)]">
+            {Object.entries(usoIa.porRuta)
+              .sort((a, b) => b[1] - a[1])
+              .map(([ruta, costo]) => (
+                <li key={ruta} className="flex justify-between">
+                  <span>{ruta}</span>
+                  <span>${costo.toFixed(2)}</span>
+                </li>
+              ))}
+          </ul>
+        </details>
+      )}
 
       <section>
         <h2 className="titulo-seccion">Cuello de botella de la semana</h2>

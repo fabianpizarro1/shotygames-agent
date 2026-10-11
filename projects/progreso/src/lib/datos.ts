@@ -44,6 +44,8 @@ export const ESQUEMA = {
     'RESUMEN_IA', 'CERRADA_EN',
   ],
   METRICAS: ['FECHA', 'CLAVE', 'VALOR', 'NOTA'],
+  // No entra en leerTodo (crece una fila por llamada): se lee aparte para CEO.
+  USO_IA: ['FECHA', 'ORIGEN', 'RUTA', 'MODELO', 'INPUT', 'CACHE_ESCRITURA', 'CACHE_LECTURA', 'OUTPUT', 'COSTO_USD'],
 } as const;
 
 type Pestana = keyof typeof ESQUEMA;
@@ -528,4 +530,27 @@ export async function guardarSemana(semana: string, s: Partial<Omit<Semana, 'sem
 
 export async function registrarMetrica(clave: string, valor: number, nota = ''): Promise<void> {
   await agregarFila('METRICAS', [hoyEC(), clave, String(valor), nota]);
+}
+
+// ── Uso de la IA ────────────────────────────────────────────────────────────
+
+export async function anotarUsoIa(fila: string[]): Promise<void> {
+  await agregarFila('USO_IA', fila);
+}
+
+/** Costo de IA del mes ('YYYY-MM') por ruta. */
+export async function usoIaDelMes(mes: string): Promise<{ total: number; llamadas: number; porRuta: Record<string, number> }> {
+  const filas = (await leer('USO_IA')).slice(1);
+  const porRuta: Record<string, number> = {};
+  let total = 0;
+  let llamadas = 0;
+  for (const f of filas) {
+    if (!f[0]?.startsWith(mes)) continue;
+    const costo = Number(f[8]) || 0;
+    const ruta = `${f[1] || 'app'} · ${f[2] || '?'}`;
+    porRuta[ruta] = (porRuta[ruta] ?? 0) + costo;
+    total += costo;
+    llamadas += 1;
+  }
+  return { total, llamadas, porRuta };
 }

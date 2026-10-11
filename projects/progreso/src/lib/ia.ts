@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import { CONTEXTO_FABIAN } from './contexto-fabian';
+import { registrarUso, sumarUso, type UsoApi } from './uso';
 import { ESCRIBEN, ESTADO_HERRAMIENTA, HERRAMIENTAS, INSTRUCCIONES_CHAT, ejecutar } from './herramientas-chat';
 import { agendaDe, bloqueActual } from './agenda';
 import { fechaLarga, hoyEC, horaEC, lunesDe, sumarDias, diasEntre } from './fecha';
@@ -32,10 +33,8 @@ function ia(): Anthropic {
 
 export function fotoDelMomento(d: Datos): string {
   const hoy = hoyEC();
-  const hora = horaEC();
   const producto = productoActivo(d);
   const agenda = agendaDe(hoy, producto?.nombre);
-  const { actual, siguiente } = bloqueActual(agenda, hora);
   const dia = d.dias.find((x) => x.fecha === hoy);
   const tareas = tareasPendientesOrdenadas(d, hoy);
   const porId = new Map(d.tareas.map((t) => [t.id, t]));
@@ -43,13 +42,12 @@ export function fotoDelMomento(d: Datos): string {
   const hechosHoy = new Set(d.rutina.filter((r) => r.fecha === hoy && r.cumplido).map((r) => r.bloque));
   const hace7 = sumarDias(hoy, -7);
 
+  // La hora y el bloque actual NO van acá: cambian cada minuto y romperían
+  // la caché de todo este bloque (ver horaDelMomento).
   const l: string[] = [];
-  l.push(`# FOTO DEL MOMENTO (datos reales del Sheet, generada ahora)`);
-  l.push(`Hoy: ${fechaLarga(hoy)} ${hoy}, ${hora} hora de Ecuador.`);
+  l.push(`# FOTO DEL MOMENTO (datos reales del Sheet)`);
+  l.push(`Hoy: ${fechaLarga(hoy)} ${hoy}.`);
   l.push(`Misión del día: ${dia?.mision || agenda.mision}`);
-  l.push(`Bloque actual: ${actual ? `${actual.inicio}-${actual.fin} ${actual.titulo} [${actual.clase}]` : 'fuera de agenda'}`);
-  if (actual?.noHacer) l.push(`Regla del bloque: ${actual.noHacer}`);
-  if (siguiente) l.push(`Siguiente: ${siguiente.inicio} ${siguiente.titulo}`);
   if (agenda.recordatorio) l.push(`Recordatorio del día: ${agenda.recordatorio}`);
 
   l.push(`\n## Top 3 de hoy`);
@@ -105,7 +103,7 @@ export function fotoDelMomento(d: Datos): string {
 
   const n = d.negocio;
   const v = (c: { pedidos: number; ingreso: number; utilidad: number }) => `${c.pedidos} pedidos, $${c.ingreso} ingreso, $${c.utilidad} utilidad`;
-  l.push(`\n## Dinero y ventas (leído de los Sheets de negocio${n ? `, a las ${n.leidoEn.slice(11, 16)} UTC` : ''}; si dice "sin dato", no inventes)`);
+  l.push(`\n## Dinero y ventas (leído de los Sheets de negocio; si dice "sin dato", no inventes)`);
   if (n?.deuda) {
     l.push(`- Deuda pendiente: $${n.deuda.pendiente} en ${n.deuda.cantidad} deudas (última anotada ${n.deuda.ultimaRegistrada}; si debe algo que no está ahí, no lo ves)`);
     for (const x of n.deuda.items) l.push(`  - ${x.acreedor || x.negocio}: $${x.pendiente}${x.vence ? ` vence ${x.vence}` : ''}`);
@@ -160,10 +158,29 @@ export function fotoDelMomento(d: Datos): string {
   return l.join('\n');
 }
 
-function sistema(d: Datos): Anthropic.Beta.BetaTextBlockParam[] {
+/** Lo único que cambia minuto a minuto: va en un bloque aparte, al final. */
+export function horaDelMomento(d: Datos): string {
+  const hoy = hoyEC();
+  const hora = horaEC();
+  const agenda = agendaDe(hoy, productoActivo(d)?.nombre);
+  const { actual, siguiente } = bloqueActual(agenda, hora);
+  const l = [`# AHORA: ${hora} hora de Ecuador`];
+  l.push(`Bloque actual: ${actual ? `${actual.inicio}-${actual.fin} ${actual.titulo} [${actual.clase}]` : 'fuera de agenda'}`);
+  if (actual?.noHacer) l.push(`Regla del bloque: ${actual.noHacer}`);
+  if (siguiente) l.push(`Siguiente: ${siguiente.inicio} ${siguiente.titulo}`);
+  return l.join('\n');
+}
+
+// Orden pensado para la caché (prefix match): lo fijo primero, la foto (que
+// cambia solo cuando cambian los datos) después con su propio breakpoint, y
+// la hora al final, sin caché. Así dos mensajes seguidos releen contexto y
+// foto a 0,05x en vez de pagarlos completos.
+function sistema(d: Datos, instrucciones?: string): Anthropic.Beta.BetaTextBlockParam[] {
   return [
-    { type: 'text', text: CONTEXTO_FABIAN, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: fotoDelMomento(d) },
+    { type: 'text', text: CONTEXTO_FABIAN, ...(!instrucciones && { cache_control: { type: 'ephemeral' as const } }) },
+    ...(instrucciones ? [{ type: 'text' as const, text: instrucciones, cache_control: { type: 'ephemeral' as const } }] : []),
+    { type: 'text', text: fotoDelMomento(d), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: horaDelMomento(d) },
   ];
 }
 
@@ -193,12 +210,9 @@ export async function chat(
   alEstado: (estado: string) => void,
   senal?: AbortSignal
 ): Promise<ResultadoChat> {
-  const system: Anthropic.Beta.BetaTextBlockParam[] = [
-    { type: 'text', text: CONTEXTO_FABIAN },
-    { type: 'text', text: INSTRUCCIONES_CHAT, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: fotoDelMomento(d) },
-  ];
+  const system = sistema(d, INSTRUCCIONES_CHAT);
   const conversacion = [...mensajes];
+  let uso: UsoApi | null = null;
   let escribio = false;
   let emitido = '';
   let reintentosJson = 0;
@@ -214,6 +228,9 @@ export async function chat(
         system,
         tools: HERRAMIENTAS,
         messages: conversacion,
+        // Caché automática al final de la conversación: en el loop de
+        // herramientas cada vuelta relee lo anterior a 0,05x.
+        cache_control: { type: 'ephemeral' },
       },
       { signal: senal }
     );
@@ -245,9 +262,16 @@ export async function chat(
       continue;
     }
 
-    if (msg.stop_reason === 'refusal') return { stop: 'refusal', escribio };
+    uso = sumarUso(uso, msg.usage);
+    if (msg.stop_reason === 'refusal') {
+      registrarUso('chat', MODELO, uso);
+      return { stop: 'refusal', escribio };
+    }
     const usos = msg.content.filter((b): b is Anthropic.Beta.BetaToolUseBlock => b.type === 'tool_use');
-    if (msg.stop_reason !== 'tool_use' || !usos.length) return { stop: msg.stop_reason, escribio };
+    if (msg.stop_reason !== 'tool_use' || !usos.length) {
+      registrarUso('chat', MODELO, uso);
+      return { stop: msg.stop_reason, escribio };
+    }
 
     conversacion.push({ role: 'assistant', content: msg.content });
     const resultados: Anthropic.Beta.BetaToolResultBlockParam[] = [];
@@ -259,6 +283,7 @@ export async function chat(
     }
     conversacion.push({ role: 'user', content: resultados });
   }
+  registrarUso('chat', MODELO, uso);
   alTexto('\n\n(Me quedé sin pasos. Revisa la app o pídemelo más corto.)');
   return { stop: 'max_vueltas', escribio };
 }
@@ -269,7 +294,8 @@ async function estructurado<T extends z.ZodType>(
   d: Datos,
   esquema: T,
   instruccion: string,
-  esfuerzo: 'low' | 'medium' = 'medium'
+  esfuerzo: 'low' | 'medium' = 'medium',
+  ruta = 'estructurado'
 ): Promise<z.infer<T>> {
   const r = await ia().beta.messages.parse({
     model: MODELO,
@@ -280,6 +306,7 @@ async function estructurado<T extends z.ZodType>(
     system: sistema(d),
     messages: [{ role: 'user', content: instruccion }],
   });
+  registrarUso(ruta, MODELO, r.usage);
   revisarRechazo(r.stop_reason);
   if (!r.parsed_output) throw new Error('La IA devolvió una respuesta que no se pudo leer. Intenta de nuevo.');
   return r.parsed_output as z.infer<T>;
@@ -305,7 +332,8 @@ export function clasificarInbox(d: Datos, texto: string) {
     d,
     EsquemaInbox,
     `Clasifica esta captura rápida del inbox de Fabián. Si es algo a hacer → clase TAREA. Si es una idea (anuncio, producto, contenido) → la clase IDEA_* correspondiente aunque empiece con verbo. "Probar producto X" en ecommerce es una IDEA_PRODUCTO para el Product Lab, salvo que diga una fecha. fecha_limite va VACÍA salvo que el texto mencione explícitamente un momento ("hoy", "mañana", "el lunes", una fecha); tu opinión de cuándo hacerlo va en el comentario, no en la fecha (hoy es ${hoyEC()}). Sé honesto con "decision": si una tarea operativa la puede hacer otra persona, márcala DELEGAR o TERCERIZAR.\n\nCaptura: """${texto}"""`,
-    'low'
+    'low',
+    'inbox'
   );
 }
 
@@ -318,7 +346,9 @@ export function sugerirTop3(d: Datos, paraFecha: string) {
   return estructurado(
     d,
     EsquemaTop3,
-    `Elige el Top 3 para ${fechaLarga(paraFecha)} (${paraFecha}). Máximo 3 resultados importantes, usando SOLO ids de la lista de tareas pendientes. Ten en cuenta la misión de ese día de la semana, el producto activo, las deudas, el dinero y lo que desbloquea. Si hay menos de 3 tareas que valgan la pena, devuelve menos.`
+    `Elige el Top 3 para ${fechaLarga(paraFecha)} (${paraFecha}). Máximo 3 resultados importantes, usando SOLO ids de la lista de tareas pendientes. Ten en cuenta la misión de ese día de la semana, el producto activo, las deudas, el dinero y lo que desbloquea. Si hay menos de 3 tareas que valgan la pena, devuelve menos.`,
+    'medium',
+    'top3'
   );
 }
 
@@ -341,7 +371,9 @@ export function proponerCierre(
   return estructurado(
     d,
     EsquemaCierre,
-    `Fabián está cerrando el día. Sus respuestas:\n- ¿Qué terminaste?: ${r.terminado || '-'}\n- ¿Qué quedó pendiente?: ${r.pendiente || '-'}\n- ¿Qué aprendiste?: ${r.aprendido || '-'}\n- ¿Qué problema apareció?: ${r.problema || '-'}\n- ¿Algo importante para mañana?: ${r.manana || '-'}\n\nPropón: el Top 3 de mañana (${fechaLarga(manana)}, ${manana}) con ids reales, qué pendientes reprogramar (fechas desde ${manana}) y qué etapas de proyecto avanzaron (solo con evidencia; usa el nombre exacto de la etapa). Nada se aplica sin su aprobación.`
+    `Fabián está cerrando el día. Sus respuestas:\n- ¿Qué terminaste?: ${r.terminado || '-'}\n- ¿Qué quedó pendiente?: ${r.pendiente || '-'}\n- ¿Qué aprendiste?: ${r.aprendido || '-'}\n- ¿Qué problema apareció?: ${r.problema || '-'}\n- ¿Algo importante para mañana?: ${r.manana || '-'}\n\nPropón: el Top 3 de mañana (${fechaLarga(manana)}, ${manana}) con ids reales, qué pendientes reprogramar (fechas desde ${manana}) y qué etapas de proyecto avanzaron (solo con evidencia; usa el nombre exacto de la etapa). Nada se aplica sin su aprobación.`,
+    'medium',
+    'cierre'
   );
 }
 
@@ -361,6 +393,7 @@ export async function redactarRevisionSemanal(d: Datos): Promise<string> {
       },
     ],
   });
+  registrarUso('revision-semanal', MODELO, r.usage);
   revisarRechazo(r.stop_reason);
   return r.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('\n').trim();
 }
@@ -414,6 +447,8 @@ Reglas:
 - Lo que puede hacer otra persona (Nerea, Marcelo, un proveedor, una imprenta) se marca DELEGAR o TERCERIZAR con su responsable: a Fabián le queda solo coordinarlo.
 - Tareas de 15 a 150 minutos. Nada de "ver lo de X" ni "avanzar con X".
 - Las esperas de terceros (cotización, muestra, producción) son tiempo de calendario: el hito siguiente no puede caer antes de que razonablemente llegue.
-- Si la fecha es imposible con esta capacidad, igual entregas el plan y lo dices en advertencia.`
+- Si la fecha es imposible con esta capacidad, igual entregas el plan y lo dices en advertencia.`,
+    'medium',
+    'plan-proyecto'
   );
 }

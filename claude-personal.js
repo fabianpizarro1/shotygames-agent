@@ -494,27 +494,48 @@ function soloTexto(history) {
   return out;
 }
 
-async function contextoDelMomento() {
+async function memoriaDeFabian() {
+  try {
+    const notas = await sheetsPersonal.leerMemoria();
+    if (notas.length) return `# Lo que recuerdas de Fabián\n${notas.map(n => `[${n.categoria}] ${n.nota}`).join('\n')}`;
+  } catch (e) {
+    console.error('[PERSONAL] Error cargando memoria:', e.message);
+  }
+  return '';
+}
+
+// La hora cambia cada minuto: va sola y al final, para no romper la caché de
+// lo de arriba (prompt + memoria).
+function ahora() {
   const hoy = hoyEC();
   const proximos = Array.from({ length: 14 }, (_, i) => {
     const f = sumarDias(hoy, i);
     return `${etiquetaDia(f)} = ${f}`;
   }).join(', ');
-  let memoria = '';
-  try {
-    const notas = await sheetsPersonal.leerMemoria();
-    if (notas.length) memoria = `\n\n# Lo que recuerdas de Fabián\n${notas.map(n => `[${n.categoria}] ${n.nota}`).join('\n')}`;
-  } catch (e) {
-    console.error('[PERSONAL] Error cargando memoria:', e.message);
-  }
-  return `# Ahora\nHoy es ${etiquetaDia(hoy)} (${hoy}), son las ${horaActualEC()} en Ecuador.\nPróximos días: ${proximos}.${memoria}`;
+  return `# Ahora\nHoy es ${etiquetaDia(hoy)} (${hoy}), son las ${horaActualEC()} en Ecuador.\nPróximos días: ${proximos}.`;
+}
+
+// Precios por millón de tokens (platform.claude.com/docs/en/about-claude/pricing,
+// 2026-10-11). Misma tabla que projects/progreso/src/lib/uso.ts.
+const PRECIO = { input: 4, escritura5m: 5, lectura: 0.2, output: 20 };
+
+function anotarUso(uso) {
+  const costo = (uso.input_tokens * PRECIO.input + uso.cache_creation_input_tokens * PRECIO.escritura5m +
+    uso.cache_read_input_tokens * PRECIO.lectura + uso.output_tokens * PRECIO.output) / 1e6;
+  const ahoraEC = new Date(Date.now() - 5 * 3600e3).toISOString().replace('Z', '-05:00');
+  sheetsPersonal.anotarUsoIa([ahoraEC, 'telegram', 'chat', MODELO, uso.input_tokens, uso.cache_creation_input_tokens,
+    uso.cache_read_input_tokens, uso.output_tokens, costo.toFixed(5)].map(String))
+    .catch(e => console.error('[PERSONAL] uso-ia:', e.message));
 }
 
 async function chatPersonal(history, newMessage) {
+  const memoria = await memoriaDeFabian();
   const system = [
     { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: await contextoDelMomento() }
+    ...(memoria ? [{ type: 'text', text: memoria, cache_control: { type: 'ephemeral' } }] : []),
+    { type: 'text', text: ahora() }
   ];
+  const uso = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
   const previos = soloTexto(history);
   const messages = soloTexto([...previos, { role: 'user', content: newMessage }]);
 
@@ -527,8 +548,11 @@ async function chatPersonal(history, newMessage) {
       tools: TOOLS,
       messages,
       fallbacks: 'default',
-      output_config: { effort: 'medium' }
+      output_config: { effort: 'medium' },
+      // Caché automática al final: cada vuelta del loop relee lo anterior a 0,05x.
+      cache_control: { type: 'ephemeral' }
     }, OPCIONES_REQUEST);
+    for (const k of Object.keys(uso)) uso[k] += response.usage?.[k] || 0;
 
     if (response.stop_reason === 'refusal') {
       text = '⚠️ No pude procesar ese mensaje. Escríbelo de otra forma.';
@@ -555,6 +579,7 @@ async function chatPersonal(history, newMessage) {
     messages.push({ role: 'user', content: results });
   }
 
+  anotarUso(uso);
   if (!text.trim()) text = '⚠️ No terminé de procesar eso (demasiados pasos). Revisa la app o pídemelo más corto.';
   return { text, updatedHistory: [...messages.filter(m => typeof m.content === 'string'), { role: 'assistant', content: text }] };
 }

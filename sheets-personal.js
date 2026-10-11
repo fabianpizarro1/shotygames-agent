@@ -115,4 +115,15 @@ async function leerMemoria() {
   return rows.map(r => ({ fecha: r[0], categoria: r[1], nota: r[2] }));
 }
 
-module.exports = { crearTarea, listarTareas, completarTarea, actualizarTarea, guardarMemoria, leerMemoria };
+// ── Uso de la IA (misma pestaña que la app Progreso) ─────
+
+async function anotarUsoIa(fila) {
+  await getSheets().spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: 'USO_IA!A:I',
+    valueInputOption: 'RAW',
+    requestBody: { values: [fila] }
+  });
+}
+
+module.exports = { crearTarea, listarTareas, completarTarea, actualizarTarea, guardarMemoria, leerMemoria, anotarUsoIa };

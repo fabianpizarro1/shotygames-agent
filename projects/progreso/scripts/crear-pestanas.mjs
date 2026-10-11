@@ -14,6 +14,8 @@ const ESQUEMA = {
   INBOX: ['ID', 'TEXTO', 'CREADO', 'ESTADO', 'CLASE', 'NEGOCIO', 'TAREA_ID'],
   SEMANAS: ['SEMANA', 'FUNCIONO', 'NO_FUNCIONO', 'DEJAR', 'DELEGAR', 'AUTOMATIZAR', 'CUELLO_BOTELLA', 'PRIORIDADES', 'RESUMEN_IA', 'CERRADA_EN'],
   METRICAS: ['FECHA', 'CLAVE', 'VALOR', 'NOTA'],
+  // Una fila por llamada a Claude (app y bot de Telegram): para saber el costo real.
+  USO_IA: ['FECHA', 'ORIGEN', 'RUTA', 'MODELO', 'INPUT', 'CACHE_ESCRITURA', 'CACHE_LECTURA', 'OUTPUT', 'COSTO_USD'],
 };
 
 const PRODUCTO = ['Idea', 'Investigación', 'Mecánica', 'Contenido', 'Diseño', 'Costos', 'Proveedor', 'Prototipo', 'Pruebas', 'Packaging', 'Producción', 'Oferta', 'Landing', 'Ads', 'Lanzamiento'];
