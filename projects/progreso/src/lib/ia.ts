@@ -119,9 +119,12 @@ export function fotoDelMomento(d: Datos): string {
   if (n?.dropGenerados && n.dropCobrados) {
     l.push(`- Drop (contra entrega) — generados semana: ${n.dropGenerados.semana.pedidos}, mes: ${n.dropGenerados.mes.pedidos} · cobrados semana: ${v(n.dropCobrados.semana)}, mes: ${v(n.dropCobrados.mes)}`);
   }
-  l.push(`- Utilidad COBRADA del mes (solo lo entregado/pagado, antes de ads y gastos fijos): ${n?.utilidadCobradaMes ?? 'sin dato'} — meta $5.000 de utilidad REAL. Nunca presentes lo vendido como si fuera plata: es contra entrega.`);
+  l.push(`- Utilidad COBRADA del mes (solo lo entregado/pagado): ${n?.utilidadCobradaMes ?? 'sin dato'}. Nunca presentes lo vendido como si fuera plata: es contra entrega.`);
+  if (n?.publicidadMes) l.push(`- Publicidad gastada en el mes: $${n.publicidadMes.total} (ShotyGames $${n.publicidadMes.shotygames}, drop $${n.publicidadMes.drop}, digitales $${n.publicidadMes.digitales})`);
+  if (n?.gastosMes) l.push(`- Gastos del mes restados: $${n.gastosMes.restados} (${n.gastosMes.categorias.map((c) => `${c.categoria} $${c.monto}`).join(', ')}). No se restan: ${n.gastosMes.excluidos.map((e) => `${e.motivo} $${e.monto}`).join('; ') || 'nada'}`);
+  l.push(`- UTILIDAD REAL del mes = cobrada − publicidad − gastos: ${n?.utilidadRealMes ?? 'sin dato'} — META $5.000. Ojo: la publicidad se paga al día y el contra entrega se cobra después; considera la utilidad en la calle.`);
+  if (n?.enCalle) l.push(`- Utilidad en la calle (si se entregan los ${n.enCalle.pedidos}): $${n.enCalle.utilidad}, suele volver ~10%`);
   for (const [clave, label] of [
-    ['UTILIDAD_MES', 'Utilidad REAL del mes (a mano)'],
     ['HORAS_OPERATIVAS', 'Horas operativas semana (a mano)'],
     ['HORAS_ESTRATEGICAS', 'Horas estratégicas semana (a mano)'],
   ]) {

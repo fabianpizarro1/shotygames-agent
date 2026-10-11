@@ -1,6 +1,6 @@
 import { cargarTodo } from '@/lib/datos';
 import { hoyEC, lunesDe, sumarDias } from '@/lib/fecha';
-import { cumplimientoSemana, ultimaMetrica } from '@/lib/calculos';
+import { cumplimientoSemana } from '@/lib/calculos';
 import { labelNegocio, progresoProyecto } from '@/lib/tipos';
 import BarrasCumplimiento from '@/components/BarrasCumplimiento';
 import RevisionSemanal from '@/components/RevisionSemanal';
@@ -22,7 +22,6 @@ export default async function SemanaPage() {
   const semana = datos.semanas.find((s) => s.semana === lunes) ?? {
     semana: lunes, funciono: '', noFunciono: '', dejar: '', delegar: '', automatizar: '', cuelloBotella: '', prioridades: '', resumenIa: '', cerradaEn: '',
   };
-  const utilidad = ultimaMetrica(datos, 'UTILIDAD_MES');
   const n = datos.negocio;
 
   return (
@@ -65,8 +64,14 @@ export default async function SemanaPage() {
           </strong>
         </p>
         <p>
-          Utilidad cobrada del mes: <strong>{n?.utilidadCobradaMes != null ? `$${n.utilidadCobradaMes.toLocaleString('es-EC')}` : 'sin dato'}</strong> de $5.000
-          {utilidad.actual !== null && ` (real, a mano: $${utilidad.actual.toLocaleString('es-EC')})`}
+          Utilidad REAL del mes: <strong>{n?.utilidadRealMes != null ? `$${n.utilidadRealMes.toLocaleString('es-EC')}` : 'sin dato'}</strong> de $5.000
+          {n?.utilidadCobradaMes != null && n.publicidadMes && n.gastosMes && (
+            <span className="text-xs text-[var(--color-texto-tenue)]">
+              {' '}
+              (cobrado ${n.utilidadCobradaMes.toLocaleString('es-EC')} − ads ${n.publicidadMes.total.toLocaleString('es-EC')} − gastos $
+              {n.gastosMes.restados.toLocaleString('es-EC')})
+            </span>
+          )}
         </p>
         <p>
           Deuda pendiente: <strong>{n?.deuda ? `$${n.deuda.pendiente.toLocaleString('es-EC')}` : 'sin dato'}</strong> · Caja:{' '}

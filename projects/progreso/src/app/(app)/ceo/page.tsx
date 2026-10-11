@@ -29,9 +29,6 @@ export default async function CeoPage() {
       <section>
         <h2 className="titulo-seccion">Dinero y ventas</h2>
         <DineroNegocio negocio={datos.negocio} mes={hoy} />
-        <div className="mt-3">
-          <MetricaEditable clave="UTILIDAD_MES" label="Utilidad REAL del mes (después de ads y gastos fijos)" prefijo="$" meta={5000} {...val(m('UTILIDAD_MES'))} />
-        </div>
       </section>
 
       <section>
