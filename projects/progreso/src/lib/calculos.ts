@@ -206,15 +206,19 @@ export function alertas(datos: Datos, hoy = hoyEC()): Alerta[] {
   const diasSinAds = ultimoAd ? diasEntre(ultimoAd, hoy) : diasDeUso;
   if (diasSinAds >= 6) out.push({ nivel: 'ambar', texto: `Llevas ${diasSinAds} días sin crear ads nuevos.` });
 
-  // Deuda
-  const mes = hoy.slice(0, 7);
-  const deudas = datos.metricas.filter((m) => m.clave === 'DEUDA_TOTAL').sort((a, b) => a.fecha.localeCompare(b.fecha));
-  const deudaEsteMes = deudas.filter((m) => m.fecha.startsWith(mes)).at(-1);
-  const deudaAntes = deudas.filter((m) => m.fecha < `${mes}-01`).at(-1);
-  if (!deudaEsteMes) {
-    out.push({ nivel: 'ambar', texto: 'No registraste la deuda total este mes (CEO → Dinero).' });
-  } else if (deudaAntes && deudaEsteMes.valor >= deudaAntes.valor && Number(hoy.slice(8)) >= 20) {
-    out.push({ nivel: 'rojo', texto: `La deuda no bajó este mes ($${deudaEsteMes.valor.toLocaleString('es-EC')}).` });
+  // Deuda: se lee sola de contabilidad. Lo que vence en 7 días se avisa.
+  if (!datos.negocio?.deuda) {
+    out.push({ nivel: 'ambar', texto: 'No pude leer las deudas del Sheet de contabilidad.' });
+  } else {
+    for (const d of datos.negocio.deuda.items) {
+      if (!d.vence) continue;
+      const faltan = diasEntre(hoy, d.vence);
+      if (faltan < 0) {
+        out.push({ nivel: 'rojo', texto: `Deuda vencida hace ${-faltan} días: ${d.acreedor || d.negocio} $${d.pendiente.toLocaleString('es-EC')}.` });
+      } else if (faltan <= 7) {
+        out.push({ nivel: 'ambar', texto: `En ${faltan} días vence ${d.acreedor || d.negocio}: $${d.pendiente.toLocaleString('es-EC')}.` });
+      }
+    }
   }
 
   // Lo que dijo que iba a soltar y sigue con él

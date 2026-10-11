@@ -6,6 +6,7 @@ import { labelNegocio, progresoProyecto } from '@/lib/tipos';
 import MetricaEditable from '@/components/MetricaEditable';
 import CuelloBotella from '@/components/CuelloBotella';
 import BarrasCumplimiento from '@/components/BarrasCumplimiento';
+import DineroNegocio from '@/components/DineroNegocio';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,14 +27,11 @@ export default async function CeoPage() {
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <h2 className="titulo-seccion">Dinero</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <MetricaEditable clave="UTILIDAD_MES" label="Utilidad del mes" prefijo="$" meta={5000} {...val(m('UTILIDAD_MES'))} />
-          <MetricaEditable clave="DEUDA_TOTAL" label="Deuda total" prefijo="$" bajarEsBueno {...val(m('DEUDA_TOTAL'))} />
+        <h2 className="titulo-seccion">Dinero y ventas</h2>
+        <DineroNegocio negocio={datos.negocio} mes={hoy} />
+        <div className="mt-3">
+          <MetricaEditable clave="UTILIDAD_MES" label="Utilidad REAL del mes (después de ads y gastos fijos)" prefijo="$" meta={5000} {...val(m('UTILIDAD_MES'))} />
         </div>
-        <p className="mt-2 text-xs text-[var(--color-texto-tenue)]">
-          Manual en V1: utilidad real (no facturación) y deuda del Sheet de contabilidad. En V2 se leen solas.
-        </p>
       </section>
 
       <section>

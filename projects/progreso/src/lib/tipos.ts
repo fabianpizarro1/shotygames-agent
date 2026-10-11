@@ -1,3 +1,5 @@
+import type { Negocio } from './negocio';
+
 // Tipos y constantes puras — sin googleapis, importable desde 'use client'.
 
 // ── Negocios ────────────────────────────────────────────────────────────────
@@ -208,6 +210,8 @@ export interface Metrica {
 }
 
 export interface Datos {
+  /** Dinero y ventas de los Sheets de negocio (solo lectura, caché 5 min). null si no se pudo leer. */
+  negocio: Negocio | null;
   tareas: Tarea[];
   proyectos: Proyecto[];
   rutina: RegistroRutina[];

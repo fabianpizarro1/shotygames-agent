@@ -23,7 +23,7 @@ export default async function SemanaPage() {
     semana: lunes, funciono: '', noFunciono: '', dejar: '', delegar: '', automatizar: '', cuelloBotella: '', prioridades: '', resumenIa: '', cerradaEn: '',
   };
   const utilidad = ultimaMetrica(datos, 'UTILIDAD_MES');
-  const deuda = ultimaMetrica(datos, 'DEUDA_TOTAL');
+  const n = datos.negocio;
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,11 +51,22 @@ export default async function SemanaPage() {
 
       <section className="tarjeta flex flex-col gap-1 p-4 text-sm">
         <p>
-          Utilidad: <strong>{utilidad.actual === null ? 'sin dato' : `$${utilidad.actual.toLocaleString('es-EC')}`}</strong> de $5.000
+          Ventas ShotyGames esta semana:{' '}
+          <strong>{n?.fisicos ? `${n.fisicos.semana.pedidos} pedidos · $${n.fisicos.semana.ingreso.toLocaleString('es-EC')}` : 'sin dato'}</strong>
         </p>
         <p>
-          Deuda: <strong>{deuda.actual === null ? 'sin dato' : `$${deuda.actual.toLocaleString('es-EC')}`}</strong>
-          {deuda.anterior !== null && deuda.actual !== null && ` (antes $${deuda.anterior.toLocaleString('es-EC')})`}
+          Drop esta semana:{' '}
+          <strong>
+            {n?.dropGenerados && n.dropCobrados ? `${n.dropGenerados.semana.pedidos} generados · ${n.dropCobrados.semana.pedidos} cobrados` : 'sin dato'}
+          </strong>
+        </p>
+        <p>
+          Utilidad de pedidos del mes: <strong>{n?.utilidadPedidosMes != null ? `$${n.utilidadPedidosMes.toLocaleString('es-EC')}` : 'sin dato'}</strong> de $5.000
+          {utilidad.actual !== null && ` (real, a mano: $${utilidad.actual.toLocaleString('es-EC')})`}
+        </p>
+        <p>
+          Deuda pendiente: <strong>{n?.deuda ? `$${n.deuda.pendiente.toLocaleString('es-EC')}` : 'sin dato'}</strong> · Caja:{' '}
+          <strong>{n?.caja ? `$${n.caja.total.toLocaleString('es-EC')}` : 'sin dato'}</strong>
         </p>
         {porNegocio.length > 0 && (
           <p className="text-[var(--color-texto-suave)]">

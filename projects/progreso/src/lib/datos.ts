@@ -2,6 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { getSheets, SHEET_ID } from './sheets-cliente';
 import { ahoraEC, hoyEC } from './fecha';
+import { leerNegocio } from './negocio';
 import type {
   ClaseInbox,
   Contador,
@@ -74,10 +75,14 @@ const ORDEN_LECTURA: Pestana[] = [
 
 // Sin caché: lo usan las server actions, que leen DESPUÉS de escribir.
 export async function leerTodo(): Promise<Datos> {
-  const res = await getSheets().spreadsheets.values.batchGet({
-    spreadsheetId: SHEET_ID,
-    ranges: ORDEN_LECTURA.map(rango),
-  });
+  const [res, negocio] = await Promise.all([
+    getSheets().spreadsheets.values.batchGet({
+      spreadsheetId: SHEET_ID,
+      ranges: ORDEN_LECTURA.map(rango),
+    }),
+    // Los Sheets de negocio fallan por separado: la app personal sigue andando.
+    leerNegocio().catch(() => null),
+  ]);
   const tablas = Object.fromEntries(
     ORDEN_LECTURA.map((p, i) => [p, ((res.data.valueRanges?.[i]?.values ?? []) as Fila[]).slice(1).filter((r) => r[0])])
   ) as Record<Pestana, Fila[]>;
@@ -176,7 +181,7 @@ export async function leerTodo(): Promise<Datos> {
     nota: r[3] || '',
   }));
 
-  return { tareas, proyectos, rutina, contadores, dias, inbox, semanas, metricas };
+  return { negocio, tareas, proyectos, rutina, contadores, dias, inbox, semanas, metricas };
 }
 
 // Con caché por request: layout + página comparten una sola lectura. NO usar

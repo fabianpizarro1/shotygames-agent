@@ -101,16 +101,29 @@ export function fotoDelMomento(d: Datos): string {
     for (const i of ideas.slice(-8)) l.push(`- [${i.clase}] ${i.texto}`);
   }
 
-  l.push(`\n## Métricas (registradas a mano; si dice "sin dato", no inventes)`);
+  const n = d.negocio;
+  const v = (c: { pedidos: number; ingreso: number; utilidad: number }) => `${c.pedidos} pedidos, $${c.ingreso} ingreso, $${c.utilidad} utilidad`;
+  l.push(`\n## Dinero y ventas (leído de los Sheets de negocio${n ? `, a las ${n.leidoEn.slice(11, 16)} UTC` : ''}; si dice "sin dato", no inventes)`);
+  if (n?.deuda) {
+    l.push(`- Deuda pendiente: $${n.deuda.pendiente} en ${n.deuda.cantidad} deudas (última anotada ${n.deuda.ultimaRegistrada}; si debe algo que no está ahí, no lo ves)`);
+    for (const x of n.deuda.items) l.push(`  - ${x.acreedor || x.negocio}: $${x.pendiente}${x.vence ? ` vence ${x.vence}` : ''}`);
+  } else l.push('- Deuda: sin dato');
+  l.push(n?.caja ? `- Caja real: $${n.caja.total} (${n.caja.cuentas.map((c) => `${c.cuenta} $${c.saldo} al ${c.fecha}`).join(', ')})` : '- Caja: sin dato');
+  if (n?.fisicos) l.push(`- ShotyGames físicos — hoy: ${v(n.fisicos.hoy)} · semana: ${v(n.fisicos.semana)} · mes: ${v(n.fisicos.mes)}`);
+  if (n?.digitales) l.push(`- Digitales pagados — semana: ${v(n.digitales.semana)} · mes: ${v(n.digitales.mes)}`);
+  if (n?.dropGenerados && n.dropCobrados) {
+    l.push(`- Drop (contra entrega) — generados semana: ${n.dropGenerados.semana.pedidos}, mes: ${n.dropGenerados.mes.pedidos} · cobrados semana: ${v(n.dropCobrados.semana)}, mes: ${v(n.dropCobrados.mes)}`);
+  }
+  l.push(`- Utilidad de pedidos del mes (antes de ads y gastos fijos): ${n?.utilidadPedidosMes ?? 'sin dato'} — meta $5.000 de utilidad REAL`);
   for (const [clave, label] of [
-    ['UTILIDAD_MES', 'Utilidad del mes (meta $5.000)'],
-    ['DEUDA_TOTAL', 'Deuda total'],
-    ['HORAS_OPERATIVAS', 'Horas operativas semana'],
-    ['HORAS_ESTRATEGICAS', 'Horas estratégicas semana'],
+    ['UTILIDAD_MES', 'Utilidad REAL del mes (a mano)'],
+    ['HORAS_OPERATIVAS', 'Horas operativas semana (a mano)'],
+    ['HORAS_ESTRATEGICAS', 'Horas estratégicas semana (a mano)'],
   ]) {
     const m = ultimaMetrica(d, clave);
     l.push(`- ${label}: ${m.actual === null ? 'sin dato' : `${m.actual} (al ${m.fecha}${m.anterior !== null ? `, antes ${m.anterior}` : ''})`}`);
   }
+  if (n?.errores.length) l.push(`- No se pudo leer: ${n.errores.join(' · ')}`);
 
   const al = alertas(d, hoy);
   if (al.length) {
