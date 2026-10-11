@@ -15,23 +15,19 @@ function getCalendarClient() {
   return google.calendar({ version: 'v3', auth: getAuth() });
 }
 
-async function listarEventos(dias = 7) {
+async function eventosEntre(timeMin, timeMax, maxResults) {
   const cal = getCalendarClient();
-  const now = new Date();
-  const hasta = new Date();
-  hasta.setDate(hasta.getDate() + dias);
-
   const listRes = await cal.calendarList.list();
   const calendarios = listRes.data.items || [];
 
   const resultados = await Promise.allSettled(
     calendarios.map(c => cal.events.list({
       calendarId: c.id,
-      timeMin: now.toISOString(),
-      timeMax: hasta.toISOString(),
+      timeMin,
+      timeMax,
       singleEvents: true,
       orderBy: 'startTime',
-      maxResults: 20,
+      maxResults,
       timeZone: 'America/Guayaquil'
     }).then(r => ({ items: r.data.items || [], calNombre: c.summary })))
   );
@@ -47,7 +43,10 @@ async function listarEventos(dias = 7) {
         fin: e.end?.dateTime || e.end?.date,
         descripcion: e.description || '',
         calendario: r.value.calNombre,
-        allDay: !e.start?.dateTime
+        allDay: !e.start?.dateTime,
+        // "Disponible" en Google Calendar: los bloques de la rutina donde el
+        // bot PERSONAL sí agenda tareas (ver scripts/rutina-calendario-2026-10.js).
+        libre: e.transparency === 'transparent'
       });
     }
   }
@@ -56,8 +55,30 @@ async function listarEventos(dias = 7) {
   return eventos;
 }
 
-async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion = '', todo_el_dia = false }) {
+async function listarEventos(dias = 7) {
+  const hasta = new Date();
+  hasta.setDate(hasta.getDate() + dias);
+  return eventosEntre(new Date().toISOString(), hasta.toISOString(), 20);
+}
+
+// Días completos en hora de Ecuador, `desde` y `hasta` inclusive (YYYY-MM-DD).
+async function listarEventosRango(desde, hasta) {
+  return eventosEntre(`${desde}T00:00:00-05:00`, `${hasta}T23:59:59-05:00`, 250);
+}
+
+// Id de un calendario por su nombre visible (ej. "Tareas"); null si no existe.
+const idsPorNombre = {};
+async function calendarioPorNombre(nombre) {
+  if (!(nombre in idsPorNombre)) {
+    const lista = (await getCalendarClient().calendarList.list()).data.items || [];
+    idsPorNombre[nombre] = lista.find(c => c.summary === nombre)?.id || null;
+  }
+  return idsPorNombre[nombre];
+}
+
+async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion = '', todo_el_dia = false, calendario = null }) {
   const cal = getCalendarClient();
+  const calendarId = (calendario && await calendarioPorNombre(calendario)) || 'primary';
   let start, end;
   if (todo_el_dia) {
     start = { date: fecha };
@@ -69,16 +90,17 @@ async function crearEvento({ titulo, fecha, hora, duracion_min = 60, descripcion
     end = { dateTime: endDt.toISOString(), timeZone: 'America/Guayaquil' };
   }
   const res = await cal.events.insert({
-    calendarId: 'primary',
+    calendarId,
     requestBody: { summary: titulo, description: descripcion, start, end }
   });
   return { id: res.data.id, titulo: res.data.summary, inicio: res.data.start?.dateTime || res.data.start?.date };
 }
 
-async function eliminarEvento(eventId) {
+async function eliminarEvento(eventId, calendario = null) {
   const cal = getCalendarClient();
-  await cal.events.delete({ calendarId: 'primary', eventId });
+  const calendarId = (calendario && await calendarioPorNombre(calendario)) || 'primary';
+  await cal.events.delete({ calendarId, eventId });
   return true;
 }
 
-module.exports = { listarEventos, crearEvento, eliminarEvento };
+module.exports = { listarEventos, listarEventosRango, crearEvento, eliminarEvento };

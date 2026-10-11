@@ -1,0 +1,200 @@
+[
+  {
+    "calendario": "Comidas",
+    "calendarId": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+    "eventId": "0a3aca1698dd47c8906071af59dfeb9c",
+    "titulo": "Almuerzo",
+    "recurrence": [
+      "RRULE:FREQ=DAILY"
+    ]
+  },
+  {
+    "calendario": "Comidas",
+    "calendarId": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+    "eventId": "8649382d3c174771b89af537a65b6c10",
+    "titulo": "Desayuno",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=TU,MO,WE,TH,FR,SA,SU"
+    ]
+  },
+  {
+    "calendario": "Comidas",
+    "calendarId": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+    "eventId": "81da47bc89c646db8c985d856b215857",
+    "titulo": "Pre-entreno",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,SA"
+    ]
+  },
+  {
+    "calendario": "Comidas",
+    "calendarId": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+    "eventId": "a7afe0cae7b84768ae5dca2c3eb146cc",
+    "titulo": "Cena",
+    "recurrence": [
+      "RRULE:FREQ=DAILY;WKST=MO;INTERVAL=1"
+    ]
+  },
+  {
+    "calendario": "Ejercicio",
+    "calendarId": "12b25a2b8e504671b1e05c6fd97e8b917d7df7ba1e8291df002ef9e9a2fca78b@group.calendar.google.com",
+    "eventId": "bde5b4e223dc4a149a083902e752047d",
+    "titulo": "Running DOM",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;BYDAY=SU"
+    ]
+  },
+  {
+    "calendario": "Ejercicio",
+    "calendarId": "12b25a2b8e504671b1e05c6fd97e8b917d7df7ba1e8291df002ef9e9a2fca78b@group.calendar.google.com",
+    "eventId": "440fbc051159427d93a8c9cde8a399e9",
+    "titulo": "Gimnasio",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE,TH,FR,SA,TU"
+    ]
+  },
+  {
+    "calendario": "Ejercicio",
+    "calendarId": "12b25a2b8e504671b1e05c6fd97e8b917d7df7ba1e8291df002ef9e9a2fca78b@group.calendar.google.com",
+    "eventId": "f877d5bd8f224e13b57236839caf6db1",
+    "titulo": "Running",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=FR"
+    ]
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "eventId": "852fb4af1111454baef3d147c21355f1",
+    "titulo": "Despertarme e Iniciar día",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,SA"
+    ]
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "eventId": "85bdfa621eaf4d1faa25147a62e1cfe6",
+    "titulo": "Rutina Fin de Dia",
+    "recurrence": [
+      "RRULE:FREQ=DAILY;WKST=MO;INTERVAL=1"
+    ]
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "eventId": "b1682b4ba3564186bffba68001a2c297",
+    "titulo": "Revisión Campañas Publicitarias, Ventas y Planificación del siguiente dia",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR"
+    ]
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "eventId": "7f5180fdcbf944fdad7238b70de370f7",
+    "titulo": "Planificación Semana Siguiente",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;BYDAY=SU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "6079c25852bd49e9af8fe61853101adc",
+    "titulo": "TALLER - Cortar 35 tablas",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "201ca6a015cb4e1c918f8aefed6b10c6",
+    "titulo": "TALLER - Lijar y Cortar 105 tiras + Limpieza Patio",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "77983bb73e37477990a07a3b77738f24",
+    "titulo": "TALLER - Poner 12 tablas",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "4d9b29f036af44489dd4d3a5fc7a9c26",
+    "titulo": "Sellar 24 juegos",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "38ea1c23c2bc410f80c7b8d3e9b6210f",
+    "titulo": "TALLER - Fabricar Dados (5 palos)",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "88ef65333b5c4347abf8b9b9b370a7a5",
+    "titulo": "TALLER - Fabricar 3 Enganchados",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "b5dce6303cd24fc9b3f46b5888f50649",
+    "titulo": "TALLER - Poner 12 tablas y Limpiar Taller",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "f4d03ee965e54cdba80fb3907d58a1c0",
+    "titulo": "Preparar paquetes y hacer envios",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "aeee981d4e9a4c2c9c4633bb0e4c4893",
+    "titulo": "Trabajar en Nuevos Productos y Proyectos",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TH"
+    ]
+  },
+  {
+    "calendario": "Trabajo ShotyGames",
+    "calendarId": "6d2a45aa17f39a2db2723b1ba3effe03711a7d5ccf148dd5c23d5fcf1512b8b0@group.calendar.google.com",
+    "eventId": "3d0787e3ce8c41d6a364c33caff41879",
+    "titulo": "Sellar Dados y sus Cajas",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=TU"
+    ]
+  },
+  {
+    "calendario": "Tareas CandyShots",
+    "calendarId": "c_2158385ad70f844e76020fba473acb721d9b0b135009a71ed90feebd897a3425@group.calendar.google.com",
+    "eventId": "02a2546523924b58abd7e1e79dd24d27",
+    "titulo": "CandyShots",
+    "recurrence": [
+      "RRULE:FREQ=WEEKLY;WKST=MO;INTERVAL=1;BYDAY=WE,TH,MO"
+    ]
+  }
+]

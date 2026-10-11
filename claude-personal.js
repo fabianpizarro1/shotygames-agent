@@ -1,81 +1,124 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const calendar = require('./calendar');
 const sheetsPersonal = require('./sheets-personal');
+const { hoyEC } = require('./fechas');
+const { huecosDeTrabajo, tramosLibres, aMin, aHora } = require('./rutina');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `Eres el Chief of Staff personal de Fabián Alexander Pizarro Montenegro, emprendedor de Machala, Ecuador.
+const MODELO = 'claude-opus-5-5';
+// El SDK del servidor (0.30) no conoce `fallbacks` ni el beta: el body viaja
+// tal cual y el header va por las opciones del request.
+const OPCIONES_REQUEST = { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } };
+const MAX_VUELTAS = 12;
+const APP = 'https://progreso-eight.vercel.app';
+const CALENDARIO_TAREAS = 'Tareas';
+const NEGOCIOS = ['DEUDAS', 'SHOTYGAMES', 'ECOMMERCE', 'CANDYSHOTS', 'CONTENIDO', 'PERSONAL'];
 
-## Quién es Fabián
-- Dueño de Shotygames (juegos de mesa para fiestas, venta online a todo Ecuador)
-- Abriendo CandyShots (local de granizados y comida en Machala)
-- Socia: Nerea Pizarro (hermana, también en Shotygames)
-- Prioridad #1: salir de deudas antes de julio 2026
+// Fijo y cacheado. Lo que cambia por mensaje (fecha, hora, memoria) va en el
+// segundo bloque del system, después del breakpoint.
+const SYSTEM_PROMPT = `Eres el Chief of Staff personal de Fabián Pizarro y le hablas por Telegram. Tu trabajo es que sepa qué hacer y lo haga, con su semana en Google Calendar y sus tareas en la app Progreso (${APP}), que lee el mismo Sheet que tú.
 
-## Sus metas actuales
-1. Pagar todas las deudas antes del 31 de julio 2026
-2. Abrir CandyShots lo antes posible
-3. Lanzar contenido orgánico en Instagram y TikTok (3x/semana)
-4. Sistematizar Shotygames para no ser el cuello de botella
-5. Construir rutinas diarias: ejercicio, alimentación, orden personal
+# Quién es Fabián
+- 30 años, emprendedor en Machala, Ecuador. Español de Ecuador, tuteo, directo, como un amigo de confianza. Nada de lenguaje corporativo, halagos ni relleno. Tough love: motivas con realidad y consecuencias.
+- Tiene muchas ideas; su problema es la consistencia, priorizar y la procrastinación.
+- Quiere ser dueño y estratega de empresas que funcionen sin él. NO quiere producción manual, empacar, logística manual ni apagar incendios.
 
-## Tu rol como Chief of Staff
-- Gestionar su tiempo y calendario como si fuera tuyo — protegerlo de compromisos innecesarios
-- Cuando te cuenten un proyecto, descomponerlo en tareas accionables y distribuirlas en el calendario sin que lo pidan
-- Identificar horas libres y sugerir cómo usarlas según prioridades reales
-- Llevar registro de compromisos, seguimientos y pendientes
-- Guardar en memoria patrones, preferencias, logros y decisiones importantes
-- Conectar cada tarea con una de sus metas — si no conecta, cuestionarlo
+# Prioridades
+1. SALIR DE DEUDAS (prioridad #1).
+2. $5.000/mes de UTILIDAD REAL al 31-dic-2026.
+Negocios en orden: SHOTYGAMES (torres de shots y juegos; producción con Marcelo, armado y empaque con Nerea; productos nuevos uno a la vez: Cartas Parejas → Cartas Grupos → 3er juego → tipo Monopoly → Parchís → Chupiolimpiadas), ECOMMERCE / dropshipping (Truquito y Avanora, 1 producto nuevo por día preparado por lotes el miércoles), CANDYSHOTS (local de granizados, sábado y domingo 10-22; meta: SOP y contratar, no que Fabián trabaje más).
 
-## Cómo responder
-- Directo, sin relleno ni halagos
-- Tono: amigo de confianza con autoridad — no solo ejecutas, opinas
-- Tough love: si está procrastinando, decírselo sin rodeos
-- Visual: bullets y tablas, no párrafos largos
-- Si te comparte un proyecto o lista de cosas, organízalas inmediatamente en tareas + calendario
-- Cuando veas que algo bloquea sus metas, señálalo aunque no te lo pregunten
+# Rutina (fija, ya está en su calendario)
+Lun-vie: 07:00 levantarse sin redes y Biblia · 07:45 desayuno · 08:15 gym · 09:45 revisión rápida · 10:10-12:30 PROFUNDO #1 · 12:30 logística · 12:50 almuerzo · 14:00-16:30 PROFUNDO #2 · 16:30-17:15 operativo · 17:15 última revisión · 17:35-21:30 vida personal · 21:30 inglés · 22:00 cerrar el día · 23:30 dormir.
+Tema de cada día: LUN CEO y ads ShotyGames · MAR producto activo ShotyGames · MIÉ Product Lab y campañas · JUE sistemas, delegación y CandyShots · VIE ads, contenido, finanzas y stock para el finde · SÁB y DOM CandyShots 10-22 (el domingo, revisión semanal 08:30).
+Las tareas SOLO se agendan dentro de los huecos de trabajo: PROFUNDO_1, PROFUNDO_2, OPERATIVO, PERSONAL y, el fin de semana, CANDYSHOTS. Lo demás de la rutina no se toca.
 
-## Memoria y contexto
-Tienes notas de conversaciones anteriores inyectadas en este prompt al inicio de cada sesión.
-Cuando aprendas algo nuevo e importante sobre Fabián, guárdalo con guardar_memoria.`;
+# Cuando te manda lo que tiene que hacer (un día, una semana, una lista, un audio)
+1. Llama huecos_libres para los días que cubre y listar_tareas con estado PENDIENTE (para no duplicar: si ya existe, usa su id en tarea_existente_id).
+2. Convierte el texto en tareas concretas: verbo + resultado, una acción que se pueda empezar ya ("Mandar a 3 imprentas el pedido de cotización", no "ver lo de las cartas"). Si algo es vago, créalo con la interpretación más razonable y menciónalo; no hagas 10 preguntas.
+3. Asígnale a cada tarea un hueco: lo estratégico y creativo va al PROFUNDO del día cuyo tema le corresponde; compras, Nerea, trámites y producción van a OPERATIVO; lo personal va a PERSONAL; lo de CandyShots puede ir al finde. Si el texto dice un día u hora, respétalo si cabe en un hueco.
+4. Duraciones realistas, nunca menos de 15 min. Máximo 3 resultados importantes por día; deja aire en los bloques. Si no cabe todo, NO lo metas a la fuerza ni fuera de los huecos: créala sin agenda (tarea suelta) y dile qué quedó afuera y qué propones posponer o delegar.
+5. Cuestiona lo que no aporta o no debería hacer él ("¿esto realmente necesita hacerlo Fabián?"): si es delegable, créala con la nota "Delegar a ..." y sin ocupar su tiempo profundo.
+6. Llama planificar UNA sola vez con todo. Si devuelve errores, no se creó nada: corrige los horarios y vuelve a mandar la lista completa.
+7. Responde corto: el plan agrupado por día ("Lun 12 · 10:10-11:30 Cotizar imprentas"), lo que quedó sin agenda y por qué, y al final una línea en negrita con lo primero que hace.
+
+# Otras reglas
+- Para mover o borrar algo: listar_eventos_calendar, eliminar_evento_calendar con su calendario y, si es una tarea, planificar con tarea_existente_id y el horario nuevo.
+- Una cita con hora fija (médico, reunión, pago) va con crear_evento_calendar, no con planificar.
+- Si dice que está saturado, QUITAS carga: eliges 1-3 cosas y dices qué se pospone. Nunca agregas tareas en ese momento.
+- Si quiere abrir un proyecto nuevo sin terminar el activo, se lo adviertes.
+- No inventas datos. Respuestas escaneables, sin párrafos largos ni emojis en cada línea.
+- Cuando aprendas algo importante y duradero de Fabián, guárdalo con guardar_memoria.`;
 
 const TOOLS = [
   {
+    name: 'huecos_libres',
+    description: 'Huecos de trabajo de cada día del rango (según su rutina) con los tramos que siguen libres en el calendario. Usar siempre antes de planificar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        desde: { type: 'string', description: 'YYYY-MM-DD' },
+        hasta: { type: 'string', description: 'YYYY-MM-DD, máximo 14 días después de desde' }
+      },
+      required: ['desde', 'hasta']
+    }
+  },
+  {
+    name: 'planificar',
+    description: 'Crea varias tareas en Progreso y, a las que tienen agenda, su evento en Google Calendar. Valida que cada evento caiga dentro de un hueco de trabajo libre: si alguno no cabe, NO crea nada y devuelve los errores con los tramos libres.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tarea: { type: 'string', description: 'Acción concreta: verbo + resultado' },
+              negocio: { type: 'string', enum: NEGOCIOS },
+              prioridad: { type: 'string', enum: ['ALTA', 'MEDIA', 'BAJA'] },
+              fecha_limite: { type: 'string', description: 'YYYY-MM-DD. Si tiene agenda y no se da, se usa el día agendado' },
+              notas: { type: 'string' },
+              tarea_existente_id: { type: 'string', description: 'Si la tarea ya existe en listar_tareas, su id: no se crea otra, solo se agenda' },
+              agenda: {
+                type: 'object',
+                properties: {
+                  fecha: { type: 'string', description: 'YYYY-MM-DD' },
+                  hora: { type: 'string', description: 'HH:MM (24h)' },
+                  duracion_min: { type: 'number' }
+                },
+                required: ['fecha', 'hora', 'duracion_min']
+              }
+            },
+            required: ['tarea', 'negocio', 'prioridad']
+          }
+        }
+      },
+      required: ['items']
+    }
+  },
+  {
     name: 'listar_tareas',
-    description: 'Lista las tareas de Fabián. Puede filtrar por estado (PENDIENTE/HECHO) o proyecto.',
+    description: 'Lista las tareas de Fabián. Puede filtrar por estado (PENDIENTE/HECHO) o negocio.',
     input_schema: {
       type: 'object',
       properties: {
         estado: { type: 'string', enum: ['PENDIENTE', 'HECHO'] },
-        proyecto: { type: 'string', description: 'Filtrar por proyecto (CANDYSHOTS, SHOTYGAMES, PERSONAL, etc.)' }
+        proyecto: { type: 'string', description: 'Negocio: ' + NEGOCIOS.join(', ') }
       }
     }
   },
   {
-    name: 'crear_tarea',
-    description: 'Crea una nueva tarea en la lista de Fabián',
-    input_schema: {
-      type: 'object',
-      properties: {
-        tarea: { type: 'string' },
-        prioridad: { type: 'string', enum: ['ALTA', 'MEDIA', 'BAJA'] },
-        fecha_limite: { type: 'string', description: 'Fecha límite en formato YYYY-MM-DD' },
-        proyecto: { type: 'string' },
-        notas: { type: 'string' }
-      },
-      required: ['tarea']
-    }
-  },
-  {
     name: 'actualizar_tarea',
-    description: 'Actualiza campos de una tarea existente (prioridad, fecha límite, proyecto, notas, estado)',
+    description: 'Actualiza campos de una tarea existente (prioridad, fecha límite, negocio, notas, estado)',
     input_schema: {
       type: 'object',
       properties: {
         id_o_texto: { type: 'string', description: 'ID de la tarea o parte del texto' },
         prioridad: { type: 'string', enum: ['ALTA', 'MEDIA', 'BAJA'] },
-        fecha_limite: { type: 'string', description: 'Nueva fecha límite YYYY-MM-DD' },
-        proyecto: { type: 'string' },
+        fecha_limite: { type: 'string', description: 'YYYY-MM-DD' },
+        proyecto: { type: 'string', description: 'Negocio' },
         notas: { type: 'string' },
         estado: { type: 'string', enum: ['PENDIENTE', 'HECHO'] }
       },
@@ -87,44 +130,31 @@ const TOOLS = [
     description: 'Marca una tarea como completada',
     input_schema: {
       type: 'object',
-      properties: {
-        id_o_texto: { type: 'string' }
-      },
+      properties: { id_o_texto: { type: 'string' } },
       required: ['id_o_texto']
     }
   },
   {
     name: 'listar_eventos_calendar',
-    description: 'Lista los próximos eventos de Google Calendar de Fabián',
+    description: 'Eventos de Google Calendar entre dos fechas (incluye id y calendario, necesarios para borrar).',
     input_schema: {
       type: 'object',
       properties: {
-        dias: { type: 'number', description: 'Cuántos días hacia adelante (default: 7)' }
-      }
-    }
-  },
-  {
-    name: 'listar_horas_libres',
-    description: 'Muestra los bloques de tiempo libre en un día, considerando eventos del calendario. Usar antes de agendar algo para saber cuándo hay espacio.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        fecha: { type: 'string', description: 'Fecha en formato YYYY-MM-DD. Si no se especifica, usa hoy.' },
-        hora_inicio: { type: 'string', description: 'Inicio del día laboral en HH:MM (default: 08:00)' },
-        hora_fin: { type: 'string', description: 'Fin del día laboral en HH:MM (default: 21:00)' }
+        desde: { type: 'string', description: 'YYYY-MM-DD (default: hoy)' },
+        hasta: { type: 'string', description: 'YYYY-MM-DD (default: desde + 7 días)' }
       }
     }
   },
   {
     name: 'crear_evento_calendar',
-    description: 'Crea un evento en el Google Calendar de Fabián',
+    description: 'Crea un evento suelto con hora fija (cita, reunión, pago). Para tareas usar planificar.',
     input_schema: {
       type: 'object',
       properties: {
         titulo: { type: 'string' },
-        fecha: { type: 'string', description: 'Fecha en formato YYYY-MM-DD' },
-        hora: { type: 'string', description: 'Hora en formato HH:MM (24h)' },
-        duracion_min: { type: 'number', description: 'Duración en minutos (default: 60)' },
+        fecha: { type: 'string', description: 'YYYY-MM-DD' },
+        hora: { type: 'string', description: 'HH:MM (24h)' },
+        duracion_min: { type: 'number', description: 'Default 60' },
         descripcion: { type: 'string' },
         todo_el_dia: { type: 'boolean' }
       },
@@ -132,38 +162,15 @@ const TOOLS = [
     }
   },
   {
-    name: 'crear_multiples_eventos',
-    description: 'Crea varios eventos de calendario de una sola vez. Usar cuando se organice un proyecto o plan semanal completo.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        eventos: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              titulo: { type: 'string' },
-              fecha: { type: 'string', description: 'YYYY-MM-DD' },
-              hora: { type: 'string', description: 'HH:MM (24h)' },
-              duracion_min: { type: 'number' },
-              descripcion: { type: 'string' }
-            },
-            required: ['titulo', 'fecha']
-          }
-        }
-      },
-      required: ['eventos']
-    }
-  },
-  {
     name: 'eliminar_evento_calendar',
-    description: 'Elimina un evento del Google Calendar por ID',
+    description: 'Elimina un evento de Google Calendar. Pasar el calendario que devolvió listar_eventos_calendar.',
     input_schema: {
       type: 'object',
       properties: {
-        event_id: { type: 'string' }
+        event_id: { type: 'string' },
+        calendario: { type: 'string' }
       },
-      required: ['event_id']
+      required: ['event_id', 'calendario']
     }
   },
   {
@@ -177,82 +184,168 @@ const TOOLS = [
       },
       required: ['categoria', 'nota']
     }
-  },
-  {
-    name: 'leer_memoria',
-    description: 'Lee las notas guardadas sobre Fabián (también se cargan automáticamente al inicio de la sesión)',
-    input_schema: { type: 'object', properties: {} }
   }
 ];
 
-async function calcularHorasLibres(fecha, horaInicio, horaFin) {
-  const fechaStr = fecha || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
-  const hI = horaInicio || '08:00';
-  const hF = horaFin || '21:00';
+// ── Fechas ───────────────────────────────────────────────
 
-  const todos = await calendar.listarEventos(2);
-  const eventosDelDia = todos.filter(ev => {
-    if (ev.allDay) return false;
-    const d = new Date(ev.inicio);
-    return d.toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' }) === fechaStr;
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const esFecha = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const esHora = (s) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s || '');
+
+function sumarDias(fecha, n) {
+  const d = new Date(`${fecha}T12:00:00-05:00`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function etiquetaDia(fecha) {
+  const d = new Date(`${fecha}T12:00:00-05:00`);
+  return `${DIAS[d.getUTCDay()]} ${d.getUTCDate()}`;
+}
+
+function horaActualEC() {
+  return new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Guayaquil', hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Calendario: lo que ocupa cada día ────────────────────
+
+/** Eventos del rango agrupados por día, en minutos desde la medianoche de Ecuador. */
+async function ocupadosPorDia(desde, hasta) {
+  const eventos = await calendar.listarEventosRango(desde, hasta);
+  const porDia = {};
+  for (let f = desde; f <= hasta; f = sumarDias(f, 1)) porDia[f] = [];
+  for (const ev of eventos) {
+    // Los bloques "disponible" son los contenedores de la rutina donde se agenda.
+    if (ev.allDay || ev.libre) continue;
+    const ini = new Date(ev.inicio).getTime();
+    const fin = new Date(ev.fin).getTime();
+    for (const f of Object.keys(porDia)) {
+      const cero = new Date(`${f}T00:00:00-05:00`).getTime();
+      const a = Math.max(0, (ini - cero) / 60000);
+      const b = Math.min(1440, (fin - cero) / 60000);
+      if (b > a) porDia[f].push({ inicio: a, fin: b, titulo: ev.titulo });
+    }
+  }
+  return porDia;
+}
+
+async function huecosLibres(desde, hasta) {
+  if (!esFecha(desde) || !esFecha(hasta) || hasta < desde) return 'Fechas inválidas: usar YYYY-MM-DD y hasta >= desde.';
+  if (hasta > sumarDias(desde, 14)) hasta = sumarDias(desde, 14);
+  const porDia = await ocupadosPorDia(desde, hasta);
+  return JSON.stringify(Object.entries(porDia).map(([fecha, ocupados]) => ({
+    fecha,
+    dia: etiquetaDia(fecha),
+    huecos: tramosLibres(fecha, ocupados).map(({ tipo, inicio, fin, para, libre }) => ({ tipo, horario: `${inicio}-${fin}`, para, libre })),
+    ya_agendado: ocupados
+      .filter(o => huecosDeTrabajo(fecha).some(h => o.inicio < aMin(h.fin) && o.fin > aMin(h.inicio)))
+      .map(o => `${aHora(o.inicio)}-${aHora(o.fin)} ${o.titulo}`)
+  })));
+}
+
+// ── planificar: valida todo y recién después crea ────────
+
+async function planificar(items) {
+  if (!Array.isArray(items) || !items.length) return 'No llegaron tareas.';
+
+  const hoy = hoyEC();
+  const ahora = aMin(horaActualEC());
+  const pendientes = await sheetsPersonal.listarTareas('PENDIENTE');
+  const porId = new Map(pendientes.map(t => [t.id, t]));
+  const porTexto = new Map(pendientes.map(t => [t.tarea.trim().toUpperCase(), t]));
+
+  const fechas = items.filter(i => i.agenda && esFecha(i.agenda.fecha)).map(i => i.agenda.fecha).sort();
+  const porDia = fechas.length ? await ocupadosPorDia(fechas[0], fechas[fechas.length - 1]) : {};
+
+  const errores = [];
+  items.forEach((it, n) => {
+    const quien = `#${n + 1} "${it.tarea}"`;
+    if (!NEGOCIOS.includes(it.negocio)) errores.push(`${quien}: negocio inválido`);
+    if (it.tarea_existente_id && !porId.has(it.tarea_existente_id)) errores.push(`${quien}: no hay tarea PENDIENTE con id ${it.tarea_existente_id}`);
+    if (!it.tarea_existente_id && porTexto.has(it.tarea.trim().toUpperCase())) {
+      errores.push(`${quien}: ya existe pendiente (id ${porTexto.get(it.tarea.trim().toUpperCase()).id}); usar tarea_existente_id`);
+    }
+    if (it.fecha_limite && !esFecha(it.fecha_limite)) errores.push(`${quien}: fecha_limite inválida`);
+    if (!it.agenda) return;
+
+    const { fecha, hora, duracion_min: dur } = it.agenda;
+    if (!esFecha(fecha) || !esHora(hora) || !(dur >= 15 && dur <= 300)) {
+      errores.push(`${quien}: agenda inválida (fecha YYYY-MM-DD, hora HH:MM, duración 15-300 min)`);
+      return;
+    }
+    const ini = aMin(hora);
+    const fin = ini + dur;
+    if (fecha < hoy || (fecha === hoy && ini < ahora)) {
+      errores.push(`${quien}: ${fecha} ${hora} ya pasó`);
+      return;
+    }
+    const ocupados = porDia[fecha];
+    const libres = () => tramosLibres(fecha, ocupados).map(h => `${h.tipo} ${h.libre.join(', ') || 'lleno'}`).join(' · ');
+    const hueco = huecosDeTrabajo(fecha).find(h => ini >= aMin(h.inicio) && fin <= aMin(h.fin));
+    if (!hueco) {
+      errores.push(`${quien}: ${etiquetaDia(fecha)} ${hora}-${aHora(fin)} cae fuera de los huecos de trabajo. Libre ese día: ${libres()}`);
+      return;
+    }
+    const choque = ocupados.find(o => ini < o.fin && fin > o.inicio);
+    if (choque) {
+      errores.push(`${quien}: ${etiquetaDia(fecha)} ${hora}-${aHora(fin)} choca con "${choque.titulo}". Libre ese día: ${libres()}`);
+      return;
+    }
+    // Los siguientes items de esta misma lista ya no pueden usar este tramo.
+    ocupados.push({ inicio: ini, fin, titulo: it.tarea });
   });
 
-  const [hIh, hIm] = hI.split(':').map(Number);
-  const [hFh, hFm] = hF.split(':').map(Number);
-  const diaBase = new Date(`${fechaStr}T00:00:00-05:00`);
+  if (errores.length) {
+    return JSON.stringify({ ok: false, nota: 'No se creó NADA. Corrige y vuelve a mandar la lista completa.', errores });
+  }
 
-  const diaInicio = new Date(diaBase);
-  diaInicio.setHours(hIh, hIm, 0, 0);
-  const diaFin = new Date(diaBase);
-  diaFin.setHours(hFh, hFm, 0, 0);
-
-  const ocupados = eventosDelDia.map(ev => ({
-    start: new Date(ev.inicio),
-    end: new Date(ev.fin),
-    titulo: ev.titulo
-  })).sort((a, b) => a.start - b.start);
-
-  const libres = [];
-  let cursor = new Date(diaInicio);
-
-  for (const ev of ocupados) {
-    if (ev.start > cursor) {
-      const diffMin = (ev.start - cursor) / 60000;
-      if (diffMin >= 30) {
-        libres.push({
-          desde: cursor.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
-          hasta: ev.start.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
-          duracion_min: Math.round(diffMin)
-        });
+  const creadas = [];
+  for (const it of items) {
+    try {
+      let id = it.tarea_existente_id;
+      const fechaLimite = it.fecha_limite || it.agenda?.fecha || '';
+      if (id) {
+        if (fechaLimite) await sheetsPersonal.actualizarTarea(id, { fecha_limite: fechaLimite });
+      } else {
+        ({ id } = await sheetsPersonal.crearTarea({
+          tarea: it.tarea, prioridad: it.prioridad, fecha_limite: fechaLimite, proyecto: it.negocio, notas: it.notas || ''
+        }));
       }
+      let evento = null;
+      if (it.agenda) {
+        const { fecha, hora, duracion_min } = it.agenda;
+        await calendar.crearEvento({
+          titulo: it.tarea,
+          fecha,
+          hora,
+          duracion_min,
+          descripcion: [`Tarea ${id} · ${it.negocio} · ${APP}`, it.notas].filter(Boolean).join('\n'),
+          calendario: CALENDARIO_TAREAS
+        });
+        evento = `${etiquetaDia(fecha)} ${hora}-${aHora(aMin(hora) + duracion_min)}`;
+      }
+      creadas.push({ tarea: it.tarea, id, existente: !!it.tarea_existente_id, evento });
+    } catch (e) {
+      // Lo anterior ya quedó creado: decirlo, no repetir la lista entera.
+      return JSON.stringify({ ok: false, nota: `❌ Falló en "${it.tarea}": ${e.message}. Las anteriores SÍ se crearon; no las repitas.`, creadas });
     }
-    if (ev.end > cursor) cursor = new Date(ev.end);
   }
-
-  if (cursor < diaFin) {
-    const diffMin = (diaFin - cursor) / 60000;
-    if (diffMin >= 30) {
-      libres.push({
-        desde: cursor.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
-        hasta: diaFin.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
-        duracion_min: Math.round(diffMin)
-      });
-    }
-  }
-
-  return { fecha: fechaStr, eventos_del_dia: ocupados.length, horas_libres: libres };
+  return JSON.stringify({ ok: true, creadas });
 }
+
+// ── Herramientas ─────────────────────────────────────────
 
 async function executeTool(name, input) {
   switch (name) {
+    case 'huecos_libres':
+      return huecosLibres(input.desde, input.hasta);
+    case 'planificar':
+      return planificar(input.items);
     case 'listar_tareas': {
       const tareas = await sheetsPersonal.listarTareas(input.estado, input.proyecto);
       if (!tareas.length) return 'No hay tareas que coincidan.';
-      return JSON.stringify(tareas);
-    }
-    case 'crear_tarea': {
-      const t = await sheetsPersonal.crearTarea(input);
-      return `Tarea creada: "${t.tarea}"`;
+      return JSON.stringify(tareas.map(({ _row, ...t }) => t));
     }
     case 'actualizar_tarea': {
       const { id_o_texto, ...campos } = input;
@@ -266,92 +359,113 @@ async function executeTool(name, input) {
       return `Completada: "${t.tarea}"`;
     }
     case 'listar_eventos_calendar': {
-      const eventos = await calendar.listarEventos(input.dias || 7);
-      if (!eventos.length) return 'No hay eventos próximos.';
-      return JSON.stringify(eventos);
-    }
-    case 'listar_horas_libres': {
-      const result = await calcularHorasLibres(input.fecha, input.hora_inicio, input.hora_fin);
-      return JSON.stringify(result);
+      const desde = esFecha(input.desde) ? input.desde : hoyEC();
+      const hasta = esFecha(input.hasta) ? input.hasta : sumarDias(desde, 7);
+      const eventos = await calendar.listarEventosRango(desde, hasta);
+      if (!eventos.length) return 'No hay eventos en ese rango.';
+      return JSON.stringify(eventos.map(({ descripcion, ...e }) => e));
     }
     case 'crear_evento_calendar': {
       const ev = await calendar.crearEvento(input);
       return `Evento creado: "${ev.titulo}" — ${ev.inicio}`;
     }
-    case 'crear_multiples_eventos': {
-      const resultados = [];
-      for (const ev of input.eventos) {
-        const created = await calendar.crearEvento(ev);
-        resultados.push(`"${created.titulo}" — ${created.inicio}`);
-      }
-      return `${resultados.length} eventos creados:\n${resultados.join('\n')}`;
-    }
     case 'eliminar_evento_calendar': {
-      await calendar.eliminarEvento(input.event_id);
+      await calendar.eliminarEvento(input.event_id, input.calendario);
       return 'Evento eliminado.';
     }
     case 'guardar_memoria': {
       await sheetsPersonal.guardarMemoria(input);
       return 'Guardado en memoria.';
     }
-    case 'leer_memoria': {
-      const notas = await sheetsPersonal.leerMemoria();
-      if (!notas.length) return 'Sin notas guardadas aún.';
-      return JSON.stringify(notas);
-    }
     default:
       return 'Herramienta no reconocida.';
   }
 }
 
-async function chatPersonal(history, newMessage) {
-  let systemFinal = SYSTEM_PROMPT;
+// ── Conversación ─────────────────────────────────────────
 
-  // Al inicio de sesión, inyectar memoria en el system prompt automáticamente
-  if (history.length === 0) {
-    try {
-      const notas = await sheetsPersonal.leerMemoria();
-      if (notas.length > 0) {
-        const memoriaTexto = notas.map(n => `[${n.categoria}] ${n.nota}`).join('\n');
-        systemFinal = SYSTEM_PROMPT + `\n\n## Lo que recuerdas de conversaciones anteriores\n${memoriaTexto}`;
-      }
-    } catch (e) {
-      console.error('[PERSONAL] Error cargando memoria:', e.message);
-    }
+// Lo que se guarda entre mensajes es solo texto. history.js recorta el
+// principio cuando pasa de 20 mensajes y eso, con bloques de razonamiento de
+// Opus adentro, sería editar la historia; y los resultados de herramientas
+// viejos solo inflan el contexto (las tareas y eventos se releen frescos).
+function soloTexto(history) {
+  const out = [];
+  for (const m of history) {
+    const texto = typeof m.content === 'string'
+      ? m.content
+      : (m.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
+    if (!texto.trim()) continue;
+    const prev = out[out.length - 1];
+    if (prev && prev.role === m.role) prev.content += `\n\n${texto}`;
+    else out.push({ role: m.role, content: texto });
   }
+  while (out.length && out[0].role !== 'user') out.shift();
+  return out;
+}
 
-  const messages = [...history, { role: 'user', content: newMessage }];
-  let response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    system: systemFinal,
-    tools: TOOLS,
-    messages
-  });
+async function contextoDelMomento() {
+  const hoy = hoyEC();
+  const proximos = Array.from({ length: 14 }, (_, i) => {
+    const f = sumarDias(hoy, i);
+    return `${etiquetaDia(f)} = ${f}`;
+  }).join(', ');
+  let memoria = '';
+  try {
+    const notas = await sheetsPersonal.leerMemoria();
+    if (notas.length) memoria = `\n\n# Lo que recuerdas de Fabián\n${notas.map(n => `[${n.categoria}] ${n.nota}`).join('\n')}`;
+  } catch (e) {
+    console.error('[PERSONAL] Error cargando memoria:', e.message);
+  }
+  return `# Ahora\nHoy es ${etiquetaDia(hoy)} (${hoy}), son las ${horaActualEC()} en Ecuador.\nPróximos días: ${proximos}.${memoria}`;
+}
 
-  while (response.stop_reason === 'tool_use') {
-    const assistantMsg = { role: 'assistant', content: response.content };
+async function chatPersonal(history, newMessage) {
+  const system = [
+    { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: await contextoDelMomento() }
+  ];
+  const previos = soloTexto(history);
+  const messages = soloTexto([...previos, { role: 'user', content: newMessage }]);
+
+  let text = '';
+  for (let vuelta = 0; vuelta < MAX_VUELTAS; vuelta++) {
+    const response = await client.messages.create({
+      model: MODELO,
+      max_tokens: 16000,
+      system,
+      tools: TOOLS,
+      messages,
+      fallbacks: 'default',
+      output_config: { effort: 'medium' }
+    }, OPCIONES_REQUEST);
+
+    if (response.stop_reason === 'refusal') {
+      text = '⚠️ No pude procesar ese mensaje. Escríbelo de otra forma.';
+      break;
+    }
+    text = response.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    if (response.stop_reason !== 'tool_use') break;
+
+    // Dentro del turno la conversación solo crece: el bloque completo
+    // (razonamiento incluido) vuelve tal cual.
+    messages.push({ role: 'assistant', content: response.content });
     const results = [];
     for (const block of response.content) {
-      if (block.type === 'tool_use') {
-        const result = await executeTool(block.name, block.input);
-        results.push({ type: 'tool_result', tool_use_id: block.id, content: result });
+      if (block.type !== 'tool_use') continue;
+      let result;
+      try {
+        result = await executeTool(block.name, block.input);
+      } catch (e) {
+        console.error(`[PERSONAL] ${block.name}:`, e.message);
+        result = `❌ Error en ${block.name}: ${e.message}`;
       }
+      results.push({ type: 'tool_result', tool_use_id: block.id, content: result });
     }
-    messages.push(assistantMsg);
     messages.push({ role: 'user', content: results });
-    response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system: systemFinal,
-      tools: TOOLS,
-      messages
-    });
   }
 
-  const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('');
-  messages.push({ role: 'assistant', content: response.content });
-  return { text, updatedHistory: messages };
+  if (!text.trim()) text = '⚠️ No terminé de procesar eso (demasiados pasos). Revisa la app o pídemelo más corto.';
+  return { text, updatedHistory: [...messages.filter(m => typeof m.content === 'string'), { role: 'assistant', content: text }] };
 }
 
 module.exports = { chatPersonal };

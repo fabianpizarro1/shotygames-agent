@@ -1,7 +1,9 @@
 // La semana tipo de Fabián (brief de octubre 2026). Puro, sin Sheets: se
 // importa también desde componentes cliente.
 //
-// Si cambia la rutina, se cambia ACÁ y en context/rutina.md — en ningún otro lado.
+// Si cambia la rutina, se cambia ACÁ, en context/rutina.md y en rutina.js de la
+// raíz de KEPLER (huecos donde el bot de Telegram agenda) — y el Google Calendar
+// con scripts/rutina-calendario-2026-10.js como modelo.
 
 import { diaSemana } from './fecha';
 

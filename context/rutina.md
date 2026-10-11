@@ -6,7 +6,7 @@ _Basado en ciencia de productividad y salud (Sebastián Castro, médico). Aplica
 
 ## El día ideal de Fabián (lunes a viernes) — vigente desde 2026-10-04
 
-_La versión anterior (despertar 06:00, profundo 10-13h, operativo 14-19:30h) está en `archives/rutina-2026-06/`. Esta la definió Fabián en octubre y es la que usa la app Progreso (`projects/progreso/src/lib/agenda.ts` — si cambia una, cambiar la otra)._
+_La versión anterior (despertar 06:00, profundo 10-13h, operativo 14-19:30h) está en `archives/rutina-2026-06/`. Esta la definió Fabián en octubre y es la que usa la app Progreso (`projects/progreso/src/lib/agenda.ts`) y el bot de Telegram (`rutina.js`), y está cargada como eventos repetidos en el calendario "Rutina" de Google Calendar desde el 12-oct. Si cambia una, cambiar todas._
 
 ```
 07:00–07:15   Agua, aseo — SIN redes

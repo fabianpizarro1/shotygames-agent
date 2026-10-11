@@ -19,7 +19,7 @@ Estos archivos NO se cargan automáticamente — leerlos con la herramienta Read
 | `context/team.md` | La tarea involucra a Nerea, al papá de Fabián, o roles/responsabilidades |
 | `context/current-priorities.md` | Se está priorizando trabajo o decidiendo en qué enfocarse |
 | `context/goals.md` | Se revisan o actualizan metas trimestrales |
-| `context/rutina.md` | Se planifica calendario/agenda, o se evalúa cuándo hacer algo (bloques 10-13h vs 14-19:30h) |
+| `context/rutina.md` | Se planifica calendario/agenda, o se evalúa cuándo hacer algo (profundo 10:10-12:30 y 14:00-16:30, tema por día) |
 
 Lo mínimo que siempre aplica ya está arriba: prioridad #1 y cómo tratarlo. El resto es carga selectiva.
 

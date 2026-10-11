@@ -9,12 +9,29 @@ function tgApi(token, method) {
   return `https://api.telegram.org/bot${token}/${method}`;
 }
 
+// Telegram rechaza mensajes de más de 4096 caracteres (un plan semanal los
+// pasa): se parte en trozos por salto de línea.
+function trozos(text, max = 3800) {
+  const partes = [];
+  let resto = text;
+  while (resto.length > max) {
+    let corte = resto.lastIndexOf('\n', max);
+    if (corte < max / 2) corte = max;
+    partes.push(resto.slice(0, corte));
+    resto = resto.slice(corte).replace(/^\n+/, '');
+  }
+  if (resto) partes.push(resto);
+  return partes;
+}
+
 async function sendMessage(token, chatId, text) {
-  const formatted = text.replace(/\*\*(.+?)\*\*/gs, '*$1*');
-  try {
-    await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text: formatted, parse_mode: 'Markdown' });
-  } catch (e) {
-    await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text });
+  for (const parte of trozos(text)) {
+    const formatted = parte.replace(/\*\*(.+?)\*\*/gs, '*$1*');
+    try {
+      await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text: formatted, parse_mode: 'Markdown' });
+    } catch (e) {
+      await axios.post(tgApi(token, 'sendMessage'), { chat_id: chatId, text: parte });
+    }
   }
 }
 
