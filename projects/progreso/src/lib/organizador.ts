@@ -22,13 +22,15 @@ const SIMULAR = process.env.CHAT_SIMULADO === '1';
 /** Días de la semana (0 = dom) en que conviene trabajar cada proyecto: el tema del día. */
 function diasDeTema(p: Pick<Proyecto, 'negocio' | 'clase'> | undefined): number[] {
   if (!p) return [];
-  if (p.clase === 'SISTEMA') return [4];
-  if (p.negocio === 'SHOTYGAMES') return [2];
+  // El negocio manda sobre la clase: Product Lab es SISTEMA pero su día es el miércoles,
+  // Contenido el viernes, Deudas lunes/viernes. Solo los sistemas de ShotyGames van al
+  // jueves de "sistemas + delegación".
   if (p.negocio === 'DROPSHIPPING') return [3];
   if (p.negocio === 'CANDYSHOTS') return [4, 6, 0];
   if (p.negocio === 'CONTENIDO') return [5];
   if (p.negocio === 'SALIR_DE_DEUDAS') return [1, 5];
-  return [];
+  if (p.negocio === 'SHOTYGAMES') return p.clase === 'SISTEMA' ? [4] : [2];
+  return p.clase === 'SISTEMA' ? [4] : [];
 }
 
 function huecosPara(t: Pick<Tarea, 'tipo' | 'negocio'>): TipoHueco[] {
