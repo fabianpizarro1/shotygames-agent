@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { avanzarEtapa, guardarProyecto, organizarProyecto } from '@/app/acciones';
 import { useAccion } from '@/hooks/useAccion';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import { labelNegocio, progresoProyecto, type EstadoProyecto, type Proyecto } from '@/lib/tipos';
 import type { ResultadoOrganizar } from '@/lib/organizador';
 import ResultadoPlan, { fechaCorta } from './ResultadoPlan';
@@ -124,7 +125,7 @@ export default function TarjetaProyecto({
       )}
 
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
-        {activo && !organizando && (
+        {IA_ACTIVA && activo && !organizando && (
           <button onClick={() => setOrganizando(true)} disabled={pendiente} className="pulsable boton-primario py-1.5 text-xs">
             {pendientes > 0 ? 'Reorganizar con IA' : 'Organizar con IA'}
           </button>

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import { CONTEXTO_FABIAN } from './contexto-fabian';
+import { IA_ACTIVA, MENSAJE_IA_APAGADA } from './ia-activa';
 import { registrarUso, sumarUso, type UsoApi } from './uso';
 import { ESCRIBEN, ESTADO_HERRAMIENTA, HERRAMIENTAS, INSTRUCCIONES_CHAT, ejecutar } from './herramientas-chat';
 import { agendaDe, bloqueActual } from './agenda';
@@ -25,6 +26,7 @@ const BETAS = ['server-side-fallback-2026-07-01'];
 
 let cliente: Anthropic | null = null;
 function ia(): Anthropic {
+  if (!IA_ACTIVA) throw new Error(MENSAJE_IA_APAGADA);
   cliente ??= new Anthropic();
   return cliente;
 }

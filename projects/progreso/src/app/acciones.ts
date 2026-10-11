@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { tokenSesion } from '@/lib/auth';
 import * as db from '@/lib/datos';
 import * as ia from '@/lib/ia';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import * as organizador from '@/lib/organizador';
 import * as proyectos from '@/lib/proyectos';
 import { hoyEC, lunesDe, sumarDias, ahoraEC } from '@/lib/fecha';
@@ -116,6 +117,13 @@ export async function capturar(texto: string) {
   return envolver(async () => {
     const limpio = texto.trim();
     if (!limpio) throw new Error('Vacío');
+    if (!IA_ACTIVA) {
+      // Sin IA: queda como tarea (se ve en Tareas) y el inbox la marca NUEVO
+      // para clasificarla (negocio, proyecto, fecha) en la sesión con Claude.
+      const tareaId = await db.crearTarea({ tarea: limpio, prioridad: 'MEDIA' });
+      await db.crearInbox({ texto: limpio, estado: 'NUEVO', clase: '', negocio: '', tareaId });
+      return { clase: 'TAREA' as const, titulo: limpio, comentario: 'Guardada como tarea. Le ponemos negocio, proyecto y fecha en tu próxima sesión.', tareaId };
+    }
     const datos = await db.leerTodo();
     let c: Awaited<ReturnType<typeof ia.clasificarInbox>>;
     try {

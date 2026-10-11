@@ -4,6 +4,8 @@ import 'server-only';
 // Claude no recibe ni genera audio; lo que entra y sale de Claude sigue
 // siendo texto. Se usa fetch directo: son dos endpoints y no justifican un SDK.
 
+import { IA_ACTIVA, MENSAJE_IA_APAGADA } from './ia-activa';
+
 const API = 'https://api.openai.com/v1/audio';
 const VOZ = 'ash';
 const INSTRUCCIONES_VOZ =
@@ -12,6 +14,7 @@ const INSTRUCCIONES_VOZ =
 const MAX_CARACTERES = 4096;
 
 function clave(): string {
+  if (!IA_ACTIVA) throw new Error(MENSAJE_IA_APAGADA);
   const k = process.env.OPENAI_API_KEY?.trim();
   if (!k) throw new Error('Falta OPENAI_API_KEY en el servidor');
   return k;

@@ -348,6 +348,11 @@ async function leerNegocioSinCache(hoy: string): Promise<Negocio> {
 // lambda tiene el suyo). 5 minutos: son 5 Sheets y algunos tienen miles de filas.
 const leerCacheado = unstable_cache(leerNegocioSinCache, ['negocio-v4'], { revalidate: 300, tags: ['negocio'] });
 
+/** Sin caché de Next: para scripts fuera de la app (scripts/progreso.mjs). */
+export function leerNegocioDirecto(): Promise<Negocio> {
+  return leerNegocioSinCache(hoyEC());
+}
+
 export async function leerNegocio(): Promise<Negocio> {
   // La fecha va en la llave: a medianoche "hoy" cambia aunque la caché siga viva.
   return leerCacheado(hoyEC());

@@ -49,6 +49,7 @@ Los workstreams viven en `projects/`. Cada uno tiene su README con estado y fech
 - `projects/abrir-candyshots/` — local casi listo
 - `projects/contenido-organico/` — Instagram y TikTok
 - `projects/nuevos-productos-shotygames/` — expansión de catálogo
+- `projects/progreso/` — **app de Fabián (tareas, proyectos, rutina, CEO) — https://progreso-eight.vercel.app.** Desde 2026-10-11 la IA de la app está APAGADA: Fabián planifica, agenda y organiza proyectos **en estas sesiones**. Para leer y escribir sus tareas, proyectos y calendario usar `node --env-file=.env.local scripts/progreso.mjs <comando>` desde `projects/progreso` (`resumen`, `tareas`, `huecos`, `planificar`, `crear-tareas`, `completar`, `proyecto`, `agendar-proximas`; `--simular` no escribe). Misma validación de huecos que la app — no escribir al Sheet/Calendar a mano.
 
 ---
 

@@ -1,3 +1,4 @@
+import { IA_ACTIVA, MENSAJE_IA_APAGADA } from '@/lib/ia-activa';
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { leerTodo } from '@/lib/datos';
@@ -27,6 +28,7 @@ const NOTA_VOZ =
   '\n\n(Fabián mandó esto por audio y va a ESCUCHAR tu respuesta: máximo 80 palabras, frases cortas como si hablaras, sin tablas, listas ni markdown. Termina con la acción concreta.)';
 
 export async function POST(req: NextRequest) {
+  if (!IA_ACTIVA) return new Response(MENSAJE_IA_APAGADA, { status: 403 });
   const body = (await req.json().catch(() => null)) as Cuerpo | null;
   const mensajes = (body?.mensajes ?? [])
     .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())

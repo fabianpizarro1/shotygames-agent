@@ -1,3 +1,4 @@
+import { IA_ACTIVA, MENSAJE_IA_APAGADA } from '@/lib/ia-activa';
 import { NextRequest, NextResponse } from 'next/server';
 import { transcribir } from '@/lib/voz';
 
@@ -8,6 +9,7 @@ const MAX_BYTES = 4 * 1024 * 1024;
 const EXTENSIONES = [['webm', 'webm'], ['ogg', 'ogg'], ['mpeg', 'mp3'], ['mp3', 'mp3'], ['wav', 'wav'], ['m4a', 'm4a']] as const;
 
 export async function POST(req: NextRequest) {
+  if (!IA_ACTIVA) return new Response(MENSAJE_IA_APAGADA, { status: 403 });
   const form = await req.formData().catch(() => null);
   const audio = form?.get('audio');
   if (!(audio instanceof Blob) || !audio.size) {

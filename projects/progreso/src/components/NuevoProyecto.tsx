@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { crearProyecto } from '@/app/acciones';
 import { useAccion } from '@/hooks/useAccion';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import { NEGOCIOS, type ClaseProyecto } from '@/lib/tipos';
 import type { ResultadoOrganizar } from '@/lib/organizador';
 import ResultadoPlan from './ResultadoPlan';
@@ -35,7 +36,7 @@ export default function NuevoProyecto({ activos }: { activos: number }) {
       </div>
     );
   }
-  const organizar = !!fecha && empezar;
+  const organizar = IA_ACTIVA && !!fecha && empezar;
 
   return (
     <form
@@ -50,7 +51,7 @@ export default function NuevoProyecto({ activos }: { activos: number }) {
               objetivo,
               etapas: etapas.split(',').map((s) => s.trim()),
               fechaObjetivo: fecha,
-              empezar: organizar,
+              empezar: !!fecha && empezar,
             }),
           (r) => {
             setPlan(r.plan);
@@ -100,7 +101,9 @@ export default function NuevoProyecto({ activos }: { activos: number }) {
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" checked={empezar} onChange={(e) => setEmpezar(e.target.checked)} className="mt-1" />
           <span>
-            Empezar ya y que la IA lo organice: tareas hasta la fecha límite y las próximas 2 semanas en tu calendario.
+            {IA_ACTIVA
+              ? 'Empezar ya y que la IA lo organice: tareas hasta la fecha límite y las próximas 2 semanas en tu calendario.'
+              : 'Empezar ya (activarlo). Las tareas las organizamos en tu sesión con Claude.'}
             <span className="block text-xs text-[var(--color-texto-tenue)]">Sin marcar, entra a la cola y lo organizas al activarlo.</span>
           </span>
         </label>

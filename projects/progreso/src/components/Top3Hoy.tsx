@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { completarTarea, fijarTop3, sugerirTop3 } from '@/app/acciones';
 import { useAccion } from '@/hooks/useAccion';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import type { ItemTop3 } from '@/lib/tipos';
 import TextoIA from './TextoIA';
 
@@ -34,10 +35,12 @@ export default function Top3Hoy({ fecha, items }: { fecha: string; items: ItemTo
               Sin Top 3 para hoy. Máximo 3 resultados — no 18 prioridades.
             </p>
             <div className="flex gap-2">
-              <button onClick={sugerir} disabled={pendiente} className="pulsable boton-primario flex-1">
-                {pendiente ? 'Pensando…' : 'Sugerir con IA'}
-              </button>
-              <Link href="/tareas" className="pulsable boton flex-1 text-center">
+              {IA_ACTIVA && (
+                <button onClick={sugerir} disabled={pendiente} className="pulsable boton-primario flex-1">
+                  {pendiente ? 'Pensando…' : 'Sugerir con IA'}
+                </button>
+              )}
+              <Link href="/tareas" className={`pulsable flex-1 text-center ${IA_ACTIVA ? 'boton' : 'boton-primario'}`}>
                 Elegir ⭐ en Tareas
               </Link>
             </div>

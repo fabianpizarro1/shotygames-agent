@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 
 const TABS = [
   { href: '/', label: 'Hoy' },
   { href: '/tareas', label: 'Tareas' },
   { href: '/proyectos', label: 'Proyectos' },
-  { href: '/ia', label: 'IA' },
+  ...(IA_ACTIVA ? [{ href: '/ia', label: 'IA' }] : []),
   { href: '/ceo', label: 'CEO' },
 ];
 

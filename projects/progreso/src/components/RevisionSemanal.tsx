@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { guardarSemana, redactarSemana } from '@/app/acciones';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import { useAccion } from '@/hooks/useAccion';
 import type { Semana } from '@/lib/tipos';
 import TextoIA from './TextoIA';
@@ -34,16 +35,19 @@ export default function RevisionSemanal({ semana }: { semana: Semana }) {
 
   return (
     <div className="flex flex-col gap-5">
+      {(IA_ACTIVA || resumen) && (
       <section>
         <div className="flex items-baseline justify-between">
           <h2 className="titulo-seccion">Resumen de la IA</h2>
-          <button
-            onClick={() => correr(() => redactarSemana(), setResumen)}
-            disabled={pendiente}
-            className="text-xs font-semibold text-[var(--color-acento)]"
-          >
-            {pendiente ? 'Escribiendo…' : resumen ? 'Regenerar' : 'Generar'}
-          </button>
+          {IA_ACTIVA && (
+            <button
+              onClick={() => correr(() => redactarSemana(), setResumen)}
+              disabled={pendiente}
+              className="text-xs font-semibold text-[var(--color-acento)]"
+            >
+              {pendiente ? 'Escribiendo…' : resumen ? 'Regenerar' : 'Generar'}
+            </button>
+          )}
         </div>
         <div className="tarjeta p-4">
           {resumen ? (
@@ -53,6 +57,7 @@ export default function RevisionSemanal({ semana }: { semana: Semana }) {
           )}
         </div>
       </section>
+      )}
 
       <section className="flex flex-col gap-3">
         {PREGUNTAS.map((p) => (

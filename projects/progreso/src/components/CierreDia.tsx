@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { aplicarCierre, cerrarSinIA, proponerCierre, type RespuestasCierre } from '@/app/acciones';
 import { useAccion } from '@/hooks/useAccion';
+import { IA_ACTIVA } from '@/lib/ia-activa';
 import TextoIA from './TextoIA';
 
 type Propuesta = Extract<Awaited<ReturnType<typeof proponerCierre>>, { ok: true }>['data'];
@@ -154,20 +155,32 @@ export default function CierreDia({ inicial, completadasHoy, yaCerrado }: {
           />
         </label>
       ))}
-      <button
-        onClick={() => correr(() => proponerCierre(r), setPropuesta)}
-        disabled={pendiente}
-        className="pulsable boton-primario py-3.5 text-base"
-      >
-        {pendiente ? 'La IA está armando mañana…' : 'Cerrar y proponer mañana'}
-      </button>
-      <button
-        onClick={() => correr(() => cerrarSinIA(r), () => setListo(true))}
-        disabled={pendiente}
-        className="text-sm text-[var(--color-texto-tenue)] underline"
-      >
-        Cerrar sin IA
-      </button>
+      {IA_ACTIVA ? (
+        <>
+          <button
+            onClick={() => correr(() => proponerCierre(r), setPropuesta)}
+            disabled={pendiente}
+            className="pulsable boton-primario py-3.5 text-base"
+          >
+            {pendiente ? 'La IA está armando mañana…' : 'Cerrar y proponer mañana'}
+          </button>
+          <button
+            onClick={() => correr(() => cerrarSinIA(r), () => setListo(true))}
+            disabled={pendiente}
+            className="text-sm text-[var(--color-texto-tenue)] underline"
+          >
+            Cerrar sin IA
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={() => correr(() => cerrarSinIA(r), () => setListo(true))}
+          disabled={pendiente}
+          className="pulsable boton-primario py-3.5 text-base"
+        >
+          {pendiente ? 'Guardando…' : 'Cerrar el día'}
+        </button>
+      )}
       {error && <p className="text-sm text-[var(--color-rojo)]">{error}</p>}
     </div>
   );
