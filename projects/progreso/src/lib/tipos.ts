@@ -117,7 +117,8 @@ export const HABITOS: Habito[] = [
   { id: 'GYM', label: 'Gym', metaSemanal: 5 },
   { id: 'PROFUNDO_1', label: 'Profundo #1', metaSemanal: 5, soloLaborales: true },
   { id: 'PROFUNDO_2', label: 'Profundo #2', metaSemanal: 5, soloLaborales: true },
-  { id: 'INGLES', label: 'Inglés', metaSemanal: 5 },
+  // Inglés en pausa desde 2026-10-11: no cuenta para el 80% semanal. Para volver, restaurar:
+  // { id: 'INGLES', label: 'Inglés', metaSemanal: 5 },
   { id: 'DORMIR', label: 'Dormí 7-8 h', metaSemanal: 7 },
 ];
 

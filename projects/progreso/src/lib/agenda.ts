@@ -3,7 +3,7 @@
 //
 // Si cambia la rutina, se cambia ACÁ, en context/rutina.md y en rutina.js de la
 // raíz de KEPLER (huecos donde el bot de Telegram agenda) — y el Google Calendar
-// con scripts/rutina-calendario-2026-10.js como modelo.
+// con scripts/rutina-calendario-2026-10-v2.js como modelo.
 
 import { diaSemana } from './fecha';
 
@@ -30,46 +30,50 @@ export interface DiaAgenda {
 
 const NO_HACER_PROFUNDO = 'Nada de Meta, redes ni WhatsApp personal. Pedido nuevo = 2 min y vuelves.';
 
-function diaLaboral(profundo1: string, profundo2: string, mision: string, recordatorio?: string): DiaAgenda {
+/** `dormir`: se despierta a las 06:00 de lunes a viernes, así que duerme 22:30 domingo a jueves y 23:30 viernes y sábado. */
+function diaLaboral(profundo1: string, profundo2: string, mision: string, recordatorio?: string, dormir = '22:30'): DiaAgenda {
   return {
     mision,
     recordatorio,
     bloques: [
-      { inicio: '07:00', fin: '07:15', titulo: 'Agua, aseo — sin redes', clase: 'personal' },
-      { inicio: '07:15', fin: '07:45', titulo: 'Biblia + oración + reflexión', clase: 'personal' },
-      { inicio: '07:45', fin: '08:15', titulo: 'Desayuno', clase: 'personal' },
-      { inicio: '08:15', fin: '09:15', titulo: 'Gym', clase: 'personal' },
-      { inicio: '09:15', fin: '09:45', titulo: 'Ducha + prepararme', clase: 'personal' },
+      { inicio: '06:00', fin: '06:45', titulo: 'Agua, aseo sin redes + Biblia y oración', clase: 'personal' },
+      { inicio: '06:45', fin: '07:00', titulo: 'Comida pre-entreno', clase: 'personal' },
+      { inicio: '07:00', fin: '09:00', titulo: 'Gym (ir, entrenar y volver)', clase: 'personal' },
+      { inicio: '09:00', fin: '09:30', titulo: 'Desayuno', clase: 'personal' },
+      { inicio: '09:30', fin: '10:00', titulo: 'Ducha + prepararme', clase: 'personal' },
       {
-        inicio: '09:45',
-        fin: '10:10',
-        titulo: 'Revisión rápida: Meta, pedidos, urgencias',
+        inicio: '10:00',
+        fin: '10:30',
+        titulo: 'Revisión de logística #1: guías + novedades, pedidos y Meta',
         clase: 'revision',
-        noHacer: 'Revisar, no optimizar. 25 min y cierras Meta.',
+        noHacer: 'Revisar, no optimizar. 30 min y cierras Meta.',
       },
-      { inicio: '10:10', fin: '12:30', titulo: `Profundo #1 — ${profundo1}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_1' },
-      { inicio: '12:30', fin: '12:50', titulo: 'Logística: guías + novedades (3 tiendas)', clase: 'operativo' },
-      { inicio: '12:50', fin: '14:00', titulo: 'Almuerzo + descanso', clase: 'descanso' },
-      { inicio: '14:00', fin: '16:30', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_2' },
-      { inicio: '16:30', fin: '17:15', titulo: 'Producción / sistemas / secundarias', clase: 'operativo', agendable: 'OPERATIVO' },
-      { inicio: '17:15', fin: '17:35', titulo: 'Última revisión: logística, Meta, urgentes', clase: 'revision' },
+      { inicio: '10:30', fin: '13:00', titulo: `Profundo #1 — ${profundo1}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_1' },
+      { inicio: '13:00', fin: '13:30', titulo: 'Pausa — camina o estírate antes de almorzar', clase: 'descanso' },
+      { inicio: '13:30', fin: '14:30', titulo: 'Almuerzo', clase: 'descanso' },
+      { inicio: '14:30', fin: '17:00', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_2' },
+      { inicio: '17:00', fin: '17:30', titulo: 'Revisión de logística #2: guías, novedades y urgentes', clase: 'revision' },
+      { inicio: '17:30', fin: '17:45', titulo: 'Snack', clase: 'personal' },
+      { inicio: '17:45', fin: '19:00', titulo: 'Producción / sistemas / secundarias', clase: 'operativo', agendable: 'OPERATIVO' },
       {
-        inicio: '17:35',
-        fin: '21:30',
+        inicio: '19:00',
+        fin: '20:00',
         titulo: 'Vida personal — familia, pareja, amigos',
         clase: 'descanso',
         noHacer: 'Ocio sin culpa. No compenses trabajando de noche.',
         agendable: 'PERSONAL',
       },
-      { inicio: '21:30', fin: '22:00', titulo: 'Inglés', clase: 'personal' },
+      { inicio: '20:00', fin: '21:00', titulo: 'Merienda', clase: 'personal' },
+      { inicio: '21:00', fin: '21:20', titulo: 'Revisión de logística #3: la última del día', clase: 'revision' },
+      { inicio: '21:20', fin: '22:00', titulo: 'Vida personal — desconectar, sin trabajo', clase: 'descanso', agendable: 'PERSONAL' },
       { inicio: '22:00', fin: '22:20', titulo: 'Cerrar día + Top 3 de mañana', clase: 'revision' },
-      { inicio: '22:20', fin: '23:30', titulo: 'Descanso', clase: 'descanso', noHacer: 'Nada de trabajo después de las 22:20.' },
-      { inicio: '23:30', fin: '23:59', titulo: 'Dormir', clase: 'descanso' },
+      { inicio: '22:20', fin: dormir, titulo: 'Descanso', clase: 'descanso', noHacer: 'Nada de trabajo después de las 22:20.' },
+      { inicio: dormir, fin: '23:59', titulo: 'Dormir', clase: 'descanso' },
     ],
   };
 }
 
-function diaCandy(mision: string, extra: BloqueAgenda | null, recordatorio?: string): DiaAgenda {
+function diaCandy(mision: string, extra: BloqueAgenda | null, recordatorio?: string, dormir = '23:30'): DiaAgenda {
   const bloques: BloqueAgenda[] = [
     { inicio: '07:00', fin: '07:45', titulo: 'Biblia + oración, sin apuro', clase: 'personal' },
     { inicio: '07:45', fin: '08:30', titulo: 'Desayuno', clase: 'personal' },
@@ -91,7 +95,7 @@ function diaCandy(mision: string, extra: BloqueAgenda | null, recordatorio?: str
       agendable: 'CANDYSHOTS',
     },
     { inicio: '22:00', fin: '22:20', titulo: 'Cerrar día', clase: 'revision' },
-    { inicio: '23:30', fin: '23:59', titulo: 'Dormir', clase: 'descanso' }
+    { inicio: dormir, fin: '23:59', titulo: 'Dormir', clase: 'descanso' }
   );
   return { mision, bloques, recordatorio };
 }
@@ -130,7 +134,8 @@ export function agendaDe(fecha: string, productoActivo = 'producto activo'): Dia
         'Ads: detectar ganadores + tanda 2',
         'Contenido + finanzas + plan de la semana',
         'Marketing, iteración y finanzas',
-        'Antes de cerrar: stock suficiente para sábado, domingo y lunes.'
+        'Antes de cerrar: stock suficiente para sábado, domingo y lunes.',
+        '23:30'
       );
     case 6:
       return diaCandy('CandyShots + operación ligera', null, 'El producto drop de hoy sale igual (preparado el miércoles).');
@@ -138,7 +143,8 @@ export function agendaDe(fecha: string, productoActivo = 'producto activo'): Dia
       return diaCandy(
         'CandyShots + revisión semanal',
         { inicio: '08:30', fin: '09:30', titulo: 'Revisión semanal (30 min, no 3 horas)', clase: 'revision' },
-        'Revisión semanal en CEO → Revisión.'
+        'Revisión semanal en CEO → Revisión.',
+        '22:30'
       );
   }
 }

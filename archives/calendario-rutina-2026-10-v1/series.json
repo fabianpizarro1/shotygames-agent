@@ -1,0 +1,971 @@
+[
+  {
+    "calendario": "Comidas",
+    "calendarId": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583392497674142\"",
+      "id": "i2b8hdkbanab85ks2ehf5e5pks",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=aTJiOGhka2JhbmFiODVrczJlaGY1ZTVwa3NfMjAyNjEwMTJUMTI0NTAwWiA4MDcxM2Y0MGI0MmNlNTViOTY3YzE4ZTY2YjhmZTllZTE5MjgxYTE4MDMyN2FlOTRjZmU3ZTFmODVlYzUxNzkyQGc",
+      "created": "2026-10-11T03:51:46.000Z",
+      "updated": "2026-10-11T05:24:08.837Z",
+      "summary": "Desayuno",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "80713f40b42ce55b967c18e66b8fe9ee19281a180327ae94cfe7e1f85ec51792@group.calendar.google.com",
+        "displayName": "Comidas",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T07:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T08:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "i2b8hdkbanab85ks2ehf5e5pks@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": true
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Ejercicio",
+    "calendarId": "12b25a2b8e504671b1e05c6fd97e8b917d7df7ba1e8291df002ef9e9a2fca78b@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583392456428222\"",
+      "id": "r20ma27htjirt99bcjmvdr1vac",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=cjIwbWEyN2h0amlydDk5YmNqbXZkcjF2YWNfMjAyNjEwMTJUMTMxNTAwWiAxMmIyNWEyYjhlNTA0NjcxYjFlMDVjNmZkOTdlOGI5MTdkN2RmN2JhMWU4MjkxZGYwMDJlZjllOWEyZmNhNzhiQGc",
+      "created": "2026-10-11T03:51:48.000Z",
+      "updated": "2026-10-11T05:23:48.214Z",
+      "summary": "Gym",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "12b25a2b8e504671b1e05c6fd97e8b917d7df7ba1e8291df002ef9e9a2fca78b@group.calendar.google.com",
+        "displayName": "Ejercicio",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T08:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T09:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "r20ma27htjirt99bcjmvdr1vac@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": true
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381413217726\"",
+      "id": "srmgjf2j3fd0lao0ia6l6rqsp0",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=c3JtZ2pmMmozZmQwbGFvMGlhNmw2cnFzcDBfMjAyNjEwMTJUMTIwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:51:44.000Z",
+      "updated": "2026-10-11T03:51:46.608Z",
+      "summary": "Agua, aseo sin redes + Biblia y oración",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T07:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T07:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "srmgjf2j3fd0lao0ia6l6rqsp0@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381425734110\"",
+      "id": "h7iac1lt6krl28um9spt1mrsfk",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=aDdpYWMxbHQ2a3JsMjh1bTlzcHQxbXJzZmtfMjAyNjEwMTJUMTQxNTAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:51:50.000Z",
+      "updated": "2026-10-11T03:51:52.867Z",
+      "summary": "Ducha + prepararme",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T09:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T09:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "h7iac1lt6krl28um9spt1mrsfk@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381429949982\"",
+      "id": "v9ucjev4plf00ds9cdm54uc71g",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=djl1Y2pldjRwbGYwMGRzOWNkbTU0dWM3MWdfMjAyNjEwMTJUMTQ0NTAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:51:53.000Z",
+      "updated": "2026-10-11T03:51:54.974Z",
+      "summary": "Revisión rápida: Meta, pedidos, urgencias (revisar, no optimizar)",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T09:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "v9ucjev4plf00ds9cdm54uc71g@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381434951678\"",
+      "id": "27c37uu05360fi5bvt91a0qe7o",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=MjdjMzd1dTA1MzYwZmk1YnZ0OTFhMHFlN29fMjAyNjEwMTJUMTUxMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:51:55.000Z",
+      "updated": "2026-10-11T03:51:57.475Z",
+      "summary": "🧠 Profundo #1 — CEO: números + UN cuello de botella",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "27c37uu05360fi5bvt91a0qe7o@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381440637118\"",
+      "id": "boq6r2sh2qtol7hgpk9muorrr4",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=Ym9xNnIyc2gycXRvbDdoZ3BrOW11b3JycjRfMjAyNjEwMTJUMTkwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:51:57.000Z",
+      "updated": "2026-10-11T03:52:00.318Z",
+      "summary": "🧠 Profundo #2 — Ads ShotyGames tanda 1",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "boq6r2sh2qtol7hgpk9muorrr4@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381445530526\"",
+      "id": "hl49628p8kegi2c9l3itn60d2o",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=aGw0OTYyOHA4a2VnaTJjOWwzaXRuNjBkMm9fMjAyNjEwMTNUMTUxMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:00.000Z",
+      "updated": "2026-10-11T03:52:02.765Z",
+      "summary": "🧠 Profundo #1 — Producto activo ShotyGames",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-13T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-13T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=TU"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "hl49628p8kegi2c9l3itn60d2o@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381451015326\"",
+      "id": "tkcsdrtcglbm4f26roqjhq5bu4",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=dGtjc2RydGNnbGJtNGYyNnJvcWpocTVidTRfMjAyNjEwMTNUMTkwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:03.000Z",
+      "updated": "2026-10-11T03:52:05.507Z",
+      "summary": "🧠 Profundo #2 — Producto activo ShotyGames",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-13T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-13T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=TU"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "tkcsdrtcglbm4f26roqjhq5bu4@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381455492510\"",
+      "id": "er6u5cq6s1tv1dum1mg3luahd0",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=ZXI2dTVjcTZzMXR2MWR1bTFtZzNsdWFoZDBfMjAyNjEwMTRUMTUxMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:05.000Z",
+      "updated": "2026-10-11T03:52:07.746Z",
+      "summary": "🧠 Profundo #1 — Product Lab",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-14T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-14T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=WE"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "er6u5cq6s1tv1dum1mg3luahd0@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381460415806\"",
+      "id": "a225bpbpj3avfl9g1st4v9pjuc",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=YTIyNWJwYnBqM2F2Zmw5ZzFzdDR2OXBqdWNfMjAyNjEwMTRUMTkwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:08.000Z",
+      "updated": "2026-10-11T03:52:10.207Z",
+      "summary": "🧠 Profundo #2 — Ofertas, landings, creativos, campañas",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-14T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-14T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=WE"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "a225bpbpj3avfl9g1st4v9pjuc@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381464484510\"",
+      "id": "i0agg5hbtkgq0efrnk36819h10",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=aTBhZ2c1aGJ0a2dxMGVmcm5rMzY4MTloMTBfMjAyNjEwMTVUMTUxMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:10.000Z",
+      "updated": "2026-10-11T03:52:12.242Z",
+      "summary": "🧠 Profundo #1 — Sistemas + delegación",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-15T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-15T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=TH"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "i0agg5hbtkgq0efrnk36819h10@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381468363294\"",
+      "id": "l8jisinn2kg4a6d2rt44c5vm4s",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=bDhqaXNpbm4ya2c0YTZkMnJ0NDRjNXZtNHNfMjAyNjEwMTVUMTkwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:12.000Z",
+      "updated": "2026-10-11T03:52:14.181Z",
+      "summary": "🧠 Profundo #2 — CandyShots: procesos",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-15T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-15T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=TH"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "l8jisinn2kg4a6d2rt44c5vm4s@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381472317854\"",
+      "id": "8ctt35pjqiitgqk7pstlhpam7c",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=OGN0dDM1cGpxaWl0Z3FrN3BzdGxocGFtN2NfMjAyNjEwMTZUMTUxMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:14.000Z",
+      "updated": "2026-10-11T03:52:16.158Z",
+      "summary": "🧠 Profundo #1 — Ads: ganadores + tanda 2",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-16T10:10:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-16T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=FR"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "8ctt35pjqiitgqk7pstlhpam7c@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381477672094\"",
+      "id": "dkjdtefcfkkfrnkrmiunh0kqr8",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=ZGtqZHRlZmNma2tmcm5rcm1pdW5oMGtxcjhfMjAyNjEwMTZUMTkwMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:16.000Z",
+      "updated": "2026-10-11T03:52:18.836Z",
+      "summary": "🧠 Profundo #2 — Contenido + finanzas + stock finde",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-16T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-16T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=FR"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "dkjdtefcfkkfrnkrmiunh0kqr8@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false,
+        "overrides": [
+          {
+            "method": "popup",
+            "minutes": 0
+          }
+        ]
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381481805822\"",
+      "id": "gun6f7g8nvnt1ojrudsvignlmc",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=Z3VuNmY3Zzhudm50MW9qcnVkc3ZpZ25sbWNfMjAyNjEwMTJUMTczMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:19.000Z",
+      "updated": "2026-10-11T03:52:20.902Z",
+      "summary": "Logística: guías + novedades (3 tiendas)",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T12:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T12:50:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "gun6f7g8nvnt1ojrudsvignlmc@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381485871230\"",
+      "id": "79lpsm2bdqh3jv7fm56iv2992k",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=NzlscHNtMmJkcWgzanY3Zm01Nml2Mjk5MmtfMjAyNjEwMTJUMTc1MDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:21.000Z",
+      "updated": "2026-10-11T03:52:22.935Z",
+      "summary": "Almuerzo + descanso",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T12:50:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T14:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "79lpsm2bdqh3jv7fm56iv2992k@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381490971902\"",
+      "id": "u36sgcrjg8bl6npn91ce47bnr8",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=dTM2c2djcmpnOGJsNm5wbjkxY2U0N2JucjhfMjAyNjEwMTJUMjEzMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:23.000Z",
+      "updated": "2026-10-11T03:52:25.485Z",
+      "summary": "Producción / sistemas / secundarias",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T16:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T17:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "u36sgcrjg8bl6npn91ce47bnr8@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381494979838\"",
+      "id": "esomlejdmfto9gl4mjokntj60g",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=ZXNvbWxlamRtZnRvOWdsNG1qb2tudGo2MGdfMjAyNjEwMTJUMjIxNTAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:25.000Z",
+      "updated": "2026-10-11T03:52:27.489Z",
+      "summary": "Última revisión: logística, Meta, urgentes",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T17:15:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T17:35:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "esomlejdmfto9gl4mjokntj60g@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381499208350\"",
+      "id": "6mmumj28aui41pj4q00r5skeu4",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=Nm1tdW1qMjhhdWk0MXBqNHEwMHI1c2tldTRfMjAyNjEwMTJUMjIzNTAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:27.000Z",
+      "updated": "2026-10-11T03:52:29.604Z",
+      "summary": "Vida personal — familia, pareja, amigos (sin culpa)",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T17:35:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T21:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "transparency": "transparent",
+      "iCalUID": "6mmumj28aui41pj4q00r5skeu4@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381504175902\"",
+      "id": "rnu7fsbqgm3kc3rv6qur6tto64",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=cm51N2ZzYnFnbTNrYzNydjZxdXI2dHRvNjRfMjAyNjEwMTNUMDIzMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:29.000Z",
+      "updated": "2026-10-11T03:52:32.087Z",
+      "summary": "Inglés",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T21:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T22:00:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+      ],
+      "iCalUID": "rnu7fsbqgm3kc3rv6qur6tto64@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381514287646\"",
+      "id": "0ta5k1i2cdqfor9oicqjs750ck",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=MHRhNWsxaTJjZHFmb3I5b2ljcWpzNzUwY2tfMjAyNjEwMTNUMDQzMDAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:34.000Z",
+      "updated": "2026-10-11T03:52:37.143Z",
+      "summary": "Dormir — celular lejos de la cama",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-12T23:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-12T23:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU"
+      ],
+      "iCalUID": "0ta5k1i2cdqfor9oicqjs750ck@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  },
+  {
+    "calendario": "Rutina",
+    "calendarId": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+    "evento": {
+      "kind": "calendar#event",
+      "etag": "\"3583381524171646\"",
+      "id": "rboqg6hkhc47nre7hlna467pr4",
+      "status": "confirmed",
+      "htmlLink": "https://www.google.com/calendar/event?eid=cmJvcWc2aGtoYzQ3bnJlN2hsbmE0NjdwcjRfMjAyNjEwMTdUMTI0NTAwWiBjNDE4NTE5ZTg1MWZmOGUzYmRlNTE0OTM0NDZlMjhiM2JjYzQ1MDZjYmVmNGQ5NGQ1NDk1NTAwNTYyYzk3ZjY5QGc",
+      "created": "2026-10-11T03:52:40.000Z",
+      "updated": "2026-10-11T03:52:42.085Z",
+      "summary": "Desayuno",
+      "creator": {
+        "email": "contacto@shotygames.com"
+      },
+      "organizer": {
+        "email": "c418519e851ff8e3bde51493446e28b3bcc4506cbef4d94d5495500562c97f69@group.calendar.google.com",
+        "displayName": "Rutina",
+        "self": true
+      },
+      "start": {
+        "dateTime": "2026-10-17T07:45:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "end": {
+        "dateTime": "2026-10-17T08:30:00-05:00",
+        "timeZone": "America/Guayaquil"
+      },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;BYDAY=SA,SU"
+      ],
+      "iCalUID": "rboqg6hkhc47nre7hlna467pr4@google.com",
+      "sequence": 0,
+      "reminders": {
+        "useDefault": false
+      },
+      "eventType": "default"
+    }
+  }
+]
