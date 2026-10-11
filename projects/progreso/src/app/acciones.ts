@@ -6,10 +6,11 @@ import { tokenSesion } from '@/lib/auth';
 import * as db from '@/lib/datos';
 import * as ia from '@/lib/ia';
 import * as organizador from '@/lib/organizador';
+import * as proyectos from '@/lib/proyectos';
 import { hoyEC, lunesDe, sumarDias, ahoraEC } from '@/lib/fecha';
 import { agendaDe } from '@/lib/agenda';
 import { productoActivo } from '@/lib/calculos';
-import { MAX_PROYECTOS_ACTIVOS, type ItemTop3, type Proyecto, type Semana } from '@/lib/tipos';
+import type { ItemTop3, Proyecto, Semana } from '@/lib/tipos';
 
 // Una server action se puede invocar haciendo POST a CUALQUIER ruta — incluida
 // /login, que el proxy deja pasar sin sesión. Por eso cada acción revisa la
@@ -196,57 +197,15 @@ export async function guardarProyecto(p: Partial<Proyecto> & { id: string }) {
     const negocio = p.negocio ?? actual?.negocio;
     const clase = p.clase ?? actual?.clase;
 
-    if (p.estado === 'ACTIVO' && actual?.estado !== 'ACTIVO') {
-      const activos = datos.proyectos.filter((x) => x.estado === 'ACTIVO');
-      if (activos.length >= MAX_PROYECTOS_ACTIVOS) {
-        throw new Error(`Ya tienes ${activos.length} proyectos activos. Termina o pausa uno primero.`);
-      }
-      const productoEnCurso = activos.find((x) => x.clase === 'PRODUCTO' && x.negocio === negocio);
-      if (clase === 'PRODUCTO' && productoEnCurso) {
-        throw new Error(`"${productoEnCurso.nombre}" sigue activo. Los productos van de a uno: termínalo o pausalo.`);
-      }
+    if (p.estado === 'ACTIVO' && actual?.estado !== 'ACTIVO' && negocio && clase) {
+      proyectos.verificarActivacion(datos.proyectos, { id: p.id, negocio, clase });
     }
     await db.guardarProyecto(p);
   });
 }
 
-export async function crearProyecto(p: {
-  nombre: string;
-  negocio: string;
-  clase: Proyecto['clase'];
-  objetivo: string;
-  etapas: string[];
-  fechaObjetivo?: string;
-  /** Activarlo ya y que la IA lo organice hasta la fecha límite. */
-  empezar?: boolean;
-}) {
-  return envolver(async () => {
-    const datos = await db.leerTodo();
-    const id = `P${Date.now()}`;
-    let estado: Proyecto['estado'] = 'EN_COLA';
-    if (p.empezar) {
-      // Mismas reglas que al activar desde la tarjeta: si no se puede, se dice antes de crear nada.
-      const activos = datos.proyectos.filter((x) => x.estado === 'ACTIVO');
-      if (activos.length >= MAX_PROYECTOS_ACTIVOS) throw new Error(`Ya tienes ${activos.length} proyectos activos. Termina o pausa uno, o créalo en la cola.`);
-      const enCurso = activos.find((x) => x.clase === 'PRODUCTO' && x.negocio === p.negocio);
-      if (p.clase === 'PRODUCTO' && enCurso) throw new Error(`"${enCurso.nombre}" sigue activo. Los productos van de a uno: termínalo, páusalo o crea este en la cola.`);
-      estado = 'ACTIVO';
-    }
-    await db.guardarProyecto({
-      id,
-      nombre: p.nombre.trim(),
-      negocio: p.negocio,
-      clase: p.clase,
-      objetivo: p.objetivo,
-      prioridad: 'MEDIA',
-      estado,
-      fechaObjetivo: p.fechaObjetivo ?? '',
-      orden: Math.max(0, ...datos.proyectos.map((x) => x.orden)) + 1,
-      etapas: p.etapas.filter(Boolean).map((nombre) => ({ nombre, pct: 0 })),
-    });
-    const plan = p.empezar && p.fechaObjetivo ? await organizador.organizarProyecto(id, p.fechaObjetivo) : null;
-    return { id, plan };
-  });
+export async function crearProyecto(p: Parameters<typeof proyectos.crearProyecto>[0]) {
+  return envolver(() => proyectos.crearProyecto(p));
 }
 
 /** La IA parte el proyecto en tareas hasta la fecha límite y agenda las próximas 2 semanas. */

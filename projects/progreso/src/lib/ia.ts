@@ -80,7 +80,9 @@ export function fotoDelMomento(d: Datos): string {
     );
   }
   const cola = d.proyectos.filter((x) => x.estado === 'EN_COLA').sort((a, b) => a.orden - b.orden);
-  if (cola.length) l.push(`En cola: ${cola.map((p) => p.nombre).join(' → ')}`);
+  if (cola.length) l.push(`En cola: ${cola.map((p) => `${p.nombre} (id ${p.id})`).join(' → ')}`);
+  const pausados = d.proyectos.filter((x) => x.estado === 'PAUSADO');
+  if (pausados.length) l.push(`Pausados: ${pausados.map((p) => `${p.nombre} (id ${p.id})`).join(', ')}`);
 
   l.push(`\n## Tareas pendientes (top 25 por puntaje, de ${tareas.length})`);
   for (const t of tareas.slice(0, 25)) {

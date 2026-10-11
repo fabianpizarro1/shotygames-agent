@@ -5,8 +5,9 @@ import { tokenSesion } from './lib/auth';
 
 // El manifest tiene que poder leerse sin sesión: iOS lo pide al agregar la
 // app a la pantalla de inicio y no lleva nada sensible.
-// /api/cron se protege solo con CRON_SECRET (Vercel no tiene la cookie).
-const PUBLICAS = ['/login', '/api/auth', '/manifest.webmanifest', '/api/cron/'];
+// /api/cron (CRON_SECRET) y /api/interno (bot de Telegram, tokenInterno) se
+// protegen con su propia clave: quien las llama no tiene la cookie.
+const PUBLICAS = ['/login', '/api/auth', '/manifest.webmanifest', '/api/cron/', '/api/interno/'];
 
 export async function proxy(request: NextRequest) {
   // `request.url` en vez de `request.nextUrl`: Turbopack tiene un bug con NextURL.

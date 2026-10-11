@@ -1,4 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
+const axios = require('axios');
+const crypto = require('crypto');
 const calendar = require('./calendar');
 const sheetsPersonal = require('./sheets-personal');
 const { hoyEC } = require('./fechas');
@@ -12,6 +14,29 @@ const MODELO = 'claude-opus-5-5';
 const OPCIONES_REQUEST = { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } };
 const MAX_VUELTAS = 12;
 const APP = 'https://progreso-eight.vercel.app';
+
+// Organizar proyectos lo hace la app (projects/progreso/src/lib/organizador.ts):
+// el bot le pide por /api/interno/*. La clave se deriva de GOOGLE_CLIENT_SECRET,
+// que los dos servidores ya tienen (ver tokenInterno en lib/auth.ts de la app).
+function tokenInterno() {
+  return crypto.createHmac('sha256', (process.env.GOOGLE_CLIENT_SECRET || '').trim()).update('progreso-interno-v1').digest('hex');
+}
+async function app(metodo, ruta, data) {
+  try {
+    const r = await axios({
+      method: metodo,
+      url: `${APP}/api/interno/${ruta}`,
+      data,
+      headers: { authorization: `Bearer ${tokenInterno()}` },
+      timeout: 290000, // organizar tarda ~2 min
+    });
+    return r.data;
+  } catch (e) {
+    const err = e.response?.data?.error;
+    if (err) return { ok: false, error: err };
+    throw e;
+  }
+}
 const CALENDARIO_TAREAS = 'Tareas';
 // Los mismos ids que usa la app Progreso (projects/progreso/src/lib/tipos.ts).
 const NEGOCIOS = ['SALIR_DE_DEUDAS', 'SHOTYGAMES', 'DROPSHIPPING', 'CANDYSHOTS', 'CONTENIDO', 'PERSONAL'];
@@ -47,6 +72,7 @@ Las tareas SOLO se agendan dentro de los huecos de trabajo: PROFUNDO_1, PROFUNDO
 # Otras reglas
 - Para mover o borrar algo: listar_eventos_calendar, eliminar_evento_calendar con su calendario y, si es una tarea, planificar con tarea_existente_id y el horario nuevo.
 - Una cita con hora fija (médico, reunión, pago) va con crear_evento_calendar, no con planificar.
+- PROYECTOS con fecha límite ("tengo que lanzar X para el 30 de noviembre", "organiza Cartas Parejas para diciembre"): usa organizar_proyecto. Si ya existe (listar_proyectos), pásale su id; si no, créalo con 'crear'. La app arma todas las tareas hasta la fecha, pone fecha a cada etapa y agenda las próximas 2 semanas (lo demás se agenda solo cada domingo). Tarda ~2 min: no repitas con planificar. Solo se organizan proyectos ACTIVOS; si la app dice que no se puede activar (máximo 6 activos, un producto por negocio), díselo tal cual y pregúntale cuál pausa.
 - Si dice que está saturado, QUITAS carga: eliges 1-3 cosas y dices qué se pospone. Nunca agregas tareas en ese momento.
 - Si quiere abrir un proyecto nuevo sin terminar el activo, se lo adviertes.
 - No inventas datos. Respuestas escaneables, sin párrafos largos ni emojis en cada línea.
@@ -172,6 +198,46 @@ const TOOLS = [
         calendario: { type: 'string' }
       },
       required: ['event_id', 'calendario']
+    }
+  },
+  {
+    name: 'listar_proyectos',
+    description: 'Proyectos de Fabián (no terminados) con id, estado, fecha límite, avance y tareas pendientes.',
+    input_schema: { type: 'object', properties: {} }
+  },
+  {
+    name: 'organizar_proyecto',
+    description: 'Organiza un proyecto hasta su fecha límite: tareas + hitos + agenda de las próximas 2 semanas. Pasar proyecto_id de uno existente, o crear para uno nuevo (queda ACTIVO). Tarda ~2 min.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        proyecto_id: { type: 'string', description: 'Id de listar_proyectos, si ya existe' },
+        crear: {
+          type: 'object',
+          description: 'Solo si el proyecto no existe',
+          properties: {
+            nombre: { type: 'string' },
+            negocio: { type: 'string', enum: NEGOCIOS },
+            clase: { type: 'string', enum: ['PRODUCTO', 'SISTEMA'], description: 'PRODUCTO = algo que se vende; SISTEMA = proceso, delegación, automatización' },
+            objetivo: { type: 'string', description: 'Cómo se ve terminado' }
+          },
+          required: ['nombre', 'negocio', 'clase', 'objetivo']
+        },
+        fecha_limite: { type: 'string', description: 'YYYY-MM-DD' }
+      },
+      required: ['fecha_limite']
+    }
+  },
+  {
+    name: 'cambiar_estado_proyecto',
+    description: 'Activa, pausa, termina o devuelve a la cola un proyecto (máximo 6 activos, un producto activo por negocio). Solo si Fabián lo pidió o aceptó.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        proyecto_id: { type: 'string' },
+        estado: { type: 'string', enum: ['ACTIVO', 'PAUSADO', 'EN_COLA', 'TERMINADO'] }
+      },
+      required: ['proyecto_id', 'estado']
     }
   },
   {
@@ -373,6 +439,30 @@ async function executeTool(name, input) {
     case 'eliminar_evento_calendar': {
       await calendar.eliminarEvento(input.event_id, input.calendario);
       return 'Evento eliminado.';
+    }
+    case 'listar_proyectos':
+      return JSON.stringify(await app('get', 'proyectos'));
+    case 'organizar_proyecto': {
+      if (!esFecha(input.fecha_limite)) return 'fecha_limite inválida (YYYY-MM-DD).';
+      if (!input.proyecto_id && !input.crear) return 'Falta proyecto_id o crear.';
+      const cuerpo = input.proyecto_id
+        ? { proyecto_id: input.proyecto_id, fecha_limite: input.fecha_limite }
+        : { crear: input.crear, fecha_limite: input.fecha_limite };
+      const r = await app('post', 'organizar', cuerpo);
+      if (!r.ok) return `❌ No se organizó: ${r.error}`;
+      // Lo justo para que responda: el detalle completo vive en la app.
+      return JSON.stringify({
+        creadas: r.creadas,
+        resumen: r.resumen,
+        advertencia: r.advertencia,
+        hitos: r.hitos,
+        agendadas: r.agendadas,
+        sin_hueco: r.sinHueco
+      });
+    }
+    case 'cambiar_estado_proyecto': {
+      const r = await app('post', 'estado', { proyecto_id: input.proyecto_id, estado: input.estado });
+      return r.ok ? `Listo: ${r.cambio}` : `❌ No se cambió: ${r.error}`;
     }
     case 'guardar_memoria': {
       await sheetsPersonal.guardarMemoria(input);

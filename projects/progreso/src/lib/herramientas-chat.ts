@@ -5,6 +5,7 @@ import { crearEvento, eliminarEvento, eventosEntre } from './calendario';
 import { actualizarTarea, completarTarea, leerTodo } from './datos';
 import { hoyEC, sumarDias } from './fecha';
 import { organizarProyecto } from './organizador';
+import { cambiarEstadoProyecto } from './proyectos';
 import { huecosLibres, planificar } from './planificador';
 import { DECISIONES, NEGOCIOS, TIPOS_TAREA } from './tipos';
 
@@ -60,6 +61,7 @@ const ESQUEMAS = {
   }),
   eliminar_evento: z.object({ event_id: z.string(), calendario: z.string().describe('El que devolvió listar_eventos') }),
   organizar_proyecto: z.object({ proyecto_id: z.string(), fecha_limite: fecha }),
+  cambiar_estado_proyecto: z.object({ proyecto_id: z.string(), estado: z.enum(['ACTIVO', 'PAUSADO', 'EN_COLA', 'TERMINADO']) }),
 };
 
 type NombreHerramienta = keyof typeof ESQUEMAS;
@@ -77,6 +79,8 @@ const DESCRIPCIONES: Record<NombreHerramienta, string> = {
   eliminar_evento: 'Borra un evento de Google Calendar.',
   organizar_proyecto:
     'Parte un proyecto ACTIVO en todas sus tareas hasta la fecha límite (sin repetir las que ya tiene), pone fecha a cada etapa y agenda las próximas 2 semanas. Tarda ~2 min.',
+  cambiar_estado_proyecto:
+    'Activa, pausa, termina o devuelve a la cola un proyecto. Respeta máximo 6 activos y un producto activo por negocio. Solo si Fabián lo pidió o lo aceptó.',
 };
 
 function esquemaJson(s: z.ZodType): Anthropic.Beta.BetaTool['input_schema'] {
@@ -105,10 +109,11 @@ export const ESTADO_HERRAMIENTA: Record<string, string> = {
   crear_evento: 'Agendando…',
   eliminar_evento: 'Borrando el evento…',
   organizar_proyecto: 'Organizando el proyecto (≈2 min)…',
+  cambiar_estado_proyecto: 'Cambiando el proyecto…',
 };
 
 /** Herramientas que escriben: si alguna corrió, las pantallas tienen que refrescarse. */
-export const ESCRIBEN = new Set<string>(['organizar_proyecto', 'planificar', 'completar_tarea', 'actualizar_tarea', 'crear_evento', 'eliminar_evento']);
+export const ESCRIBEN = new Set<string>(['cambiar_estado_proyecto', 'organizar_proyecto', 'planificar', 'completar_tarea', 'actualizar_tarea', 'crear_evento', 'eliminar_evento']);
 
 // Solo en local (.env.development.local): todo se valida y se lee de verdad,
 // pero nada se escribe en el Sheet ni en el calendario.
@@ -170,6 +175,10 @@ async function correr(nombre: NombreHerramienta, x: Record<string, unknown>): Pr
     case 'organizar_proyecto': {
       const i = x as z.infer<typeof ESQUEMAS.organizar_proyecto>;
       return JSON.stringify(await organizarProyecto(i.proyecto_id, i.fecha_limite));
+    }
+    case 'cambiar_estado_proyecto': {
+      const i = x as z.infer<typeof ESQUEMAS.cambiar_estado_proyecto>;
+      return cambiarEstadoProyecto(i.proyecto_id, i.estado);
     }
     case 'eliminar_evento': {
       const i = x as z.infer<typeof ESQUEMAS.eliminar_evento>;
