@@ -14,7 +14,7 @@ Las tareas con fecha viven en la app Progreso (`projects/progreso`, script `scri
 |---|---|---|
 | 1 | **Salir de deudas** (mora en 0 + Arturo + Joselin) | Mora de tarjetas en 0 el 16-oct · Arturo pagado el 23-oct · Joselin pagado el 20-nov · plan de pagos por escrito con papá y mamá el 6-nov y primer abono el 4-dic |
 | 2 | **Cartas para Grupos vendiendo antes de Navidad** | Pedido a imprenta el 6-nov (tope duro; último día posible 13-nov) · lote recibido ~27-nov · anuncios encendidos el 2-dic |
-| 3 | **Product Lab: 7 tests por semana** | Desde la semana del 26-oct, un producto por día. Semana 1 y 2 en rampa (3-4 y 5). Los tests terminan el 14-dic |
+| 3 | **Product Lab: 7 tests por semana** | Desde la semana del 26-oct, un producto por día. Rampa: 4 arranques la semana 1 (jue 15 a dom 18) y 3 la semana 2 (jue 22 a sáb 24). Los tests terminan el 14-dic |
 | 4 | **ShotyGames sin Fabián en producción** | Dados con Marcelo (30-oct), stock listo para Black Friday (6-nov), impresión delegada (13-nov), logística entrenada (20-nov), atención de diciembre definida (4-dic) |
 | 5 | **CandyShots sin Fabián** | SOPs de apertura, cierre, caja, inventario, compras, limpieza y atención. Domingo de prueba sin Fabián el 20-dic |
 | 6 | **Contenido: 1 publicación por día** | Publicando a diario desde el 26-oct |
@@ -47,6 +47,8 @@ Feriado largo alrededor del 2-3 nov: confirmar fechas (el martes es el día de p
 - **Un solo producto activo por negocio.** Cartas Grupos va primero; Cartas Parejas queda en cola hasta enero (decidirlo en el balance del 29-dic).
 - **Producto de dropshipping:** el filtro rápido decide la cola de 7; el método completo de `investigacion-producto` se reserva para el que pase el test (CPA real ≤ $8 a los 4 días). Pendiente de confirmar con Fabián.
 - **Regla de corte:** CPA real mayor a $8 a los 4 días, se apaga.
+- **Publicidad:** toda campaña se deja programada el día anterior y arranca a las 05:00. Nunca se enciende a media tarde.
+- **Horario comercial:** lo que implica contactar a un negocio (imprentas, proveedores, Marcelo, bancos, recoger muestras) va en la ventana de gestiones de las 16:30–17:15 y nunca después de las 18:00; después cierran.
 - **Cada domingo:** revisión semanal de 30 min y sesión con Claude para agendar la semana siguiente. El cron del domingo 20:00 es el respaldo.
 - **Calendario:** solo se agendan las próximas 2 semanas; el resto vive como tareas con fecha.
 - **Descanso:** 11 semanas con sábado y domingo en el local no se sostienen. El proyecto CandyShots sin Fabián existe para liberar al menos los domingos.

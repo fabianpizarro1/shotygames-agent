@@ -4,8 +4,8 @@
 // cambiar las tres.
 //
 // Lo que no está acá (06:00-10:30 mañana con gym y revisión #1, almuerzo,
-// revisión #2 de las 17:00, snack, merienda, revisión #3 de las 21:00, 22:00
-// cierre) es fijo y no se agenda encima. Versión 2 del 2026-10-11.
+// revisión #2 de las 17:15, snack, merienda, revisión #3 de las 21:00, 22:00
+// cierre) es fijo y no se agenda encima. Versión 3 del 2026-10-11.
 
 const TEMAS = {
   1: ['CEO: números + elegir el cuello de botella de la semana', 'Ads ShotyGames — tanda 1 (3-5 creativos)'],
@@ -26,8 +26,9 @@ function huecosDeTrabajo(fecha) {
     const [tema1, tema2] = TEMAS[d];
     return [
       { tipo: 'PROFUNDO_1', inicio: '10:30', fin: '13:00', para: `Trabajo profundo. Tema del día: ${tema1}` },
-      { tipo: 'PROFUNDO_2', inicio: '14:30', fin: '17:00', para: `Trabajo profundo. Tema del día: ${tema2}` },
-      { tipo: 'OPERATIVO', inicio: '17:45', fin: '19:00', para: 'Operativo: compras, Nerea, trámites, producción por lotes' },
+      { tipo: 'PROFUNDO_2', inicio: '14:30', fin: '16:30', para: `Trabajo profundo. Tema del día: ${tema2}` },
+      { tipo: 'GESTIONES', inicio: '16:30', fin: '17:15', para: 'Gestiones en horario comercial: imprentas, proveedores, bancos, compras, Nerea, trámites' },
+      { tipo: 'OPERATIVO', inicio: '18:00', fin: '19:00', para: 'Producción propia por lotes (impresión de bloques), sin llamadas ni anuncios' },
       { tipo: 'PERSONAL', inicio: '19:00', fin: '20:00', para: 'Vida personal: familia, pareja, amigos, mandados personales' },
       { tipo: 'PERSONAL', inicio: '21:20', fin: '22:00', para: 'Vida personal: desconectar, sin trabajo' },
     ];

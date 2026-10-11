@@ -10,7 +10,12 @@ import { diaSemana } from './fecha';
 export type ClaseBloque = 'personal' | 'profundo' | 'operativo' | 'revision' | 'descanso';
 
 /** Bloques donde el chat puede agendar tareas. El resto de la rutina no se toca. */
-export type TipoHueco = 'PROFUNDO_1' | 'PROFUNDO_2' | 'OPERATIVO' | 'PERSONAL' | 'CANDYSHOTS';
+/**
+ * GESTIONES = ventana de horario comercial (16:30-17:15): todo lo que depende de que un negocio esté
+ * atendiendo (imprentas, proveedores, bancos, compras) va ahí y NUNCA después de las 18:00.
+ * OPERATIVO = producción propia de las 18:00 (impresión por lotes), sin llamadas ni anuncios.
+ */
+export type TipoHueco = 'PROFUNDO_1' | 'PROFUNDO_2' | 'GESTIONES' | 'OPERATIVO' | 'PERSONAL' | 'CANDYSHOTS';
 
 export interface BloqueAgenda {
   inicio: string; // 'HH:MM'
@@ -44,17 +49,32 @@ function diaLaboral(profundo1: string, profundo2: string, mision: string, record
       {
         inicio: '10:00',
         fin: '10:30',
-        titulo: 'Revisión de logística #1: guías + novedades, pedidos y Meta',
+        titulo: 'Logística #1 + control del test diario (3 tiendas)',
         clase: 'revision',
         noHacer: 'Revisar, no optimizar. 30 min y cierras Meta.',
       },
       { inicio: '10:30', fin: '13:00', titulo: `Profundo #1 — ${profundo1}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_1' },
       { inicio: '13:00', fin: '13:30', titulo: 'Pausa — camina o estírate antes de almorzar', clase: 'descanso' },
       { inicio: '13:30', fin: '14:30', titulo: 'Almuerzo', clase: 'descanso' },
-      { inicio: '14:30', fin: '17:00', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_2' },
-      { inicio: '17:00', fin: '17:30', titulo: 'Revisión de logística #2: guías, novedades y urgentes', clase: 'revision' },
-      { inicio: '17:30', fin: '17:45', titulo: 'Snack', clase: 'personal' },
-      { inicio: '17:45', fin: '19:00', titulo: 'Producción / sistemas / secundarias', clase: 'operativo', agendable: 'OPERATIVO' },
+      { inicio: '14:30', fin: '16:30', titulo: `Profundo #2 — ${profundo2}`, clase: 'profundo', noHacer: NO_HACER_PROFUNDO, agendable: 'PROFUNDO_2' },
+      {
+        inicio: '16:30',
+        fin: '17:15',
+        titulo: 'Gestiones con negocios (horario comercial)',
+        clase: 'operativo',
+        noHacer: 'Imprentas, proveedores, bancos y compras, antes de que cierren. Los anuncios se PROGRAMAN para las 05:00; nunca se activan ahora.',
+        agendable: 'GESTIONES',
+      },
+      { inicio: '17:15', fin: '17:45', titulo: 'Revisión de logística #2: guías, novedades y urgentes', clase: 'revision' },
+      { inicio: '17:45', fin: '18:00', titulo: 'Snack', clase: 'personal' },
+      {
+        inicio: '18:00',
+        fin: '19:00',
+        titulo: 'Producción por lotes: impresión de bloques / sistemas',
+        clase: 'operativo',
+        noHacer: 'Sin llamadas ni anuncios (a esta hora los negocios ya cerraron). Impresión solo según stock y pedidos.',
+        agendable: 'OPERATIVO',
+      },
       {
         inicio: '19:00',
         fin: '20:00',

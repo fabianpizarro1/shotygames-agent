@@ -4,7 +4,7 @@ _Basado en ciencia de productividad y salud (Sebastián Castro, médico). Aplica
 
 ---
 
-## El día ideal de Fabián (lunes a viernes) — versión 2, vigente desde 2026-10-12
+## El día ideal de Fabián (lunes a viernes) — versión 3, vigente desde 2026-10-12
 
 _La versión del 4-oct (despertar 07:00, gym 08:15, profundos 10:10-12:30 y 14:00-16:30) está en `archives/rutina-2026-10-v1/`; la de junio en `archives/rutina-2026-06/`. Esta la definió Fabián el 11-oct y es la que usa la app Progreso (`projects/progreso/src/lib/agenda.ts`) y el bot de Telegram (`rutina.js`), y está cargada como eventos repetidos en los calendarios **Rutina**, **Comidas** y **Ejercicio** de Google Calendar (script: `scripts/rutina-calendario-2026-10-v2.js`). Si cambia una, cambiar todas._
 
@@ -14,15 +14,18 @@ _La versión del 4-oct (despertar 07:00, gym 08:15, profundos 10:10-12:30 y 14:0
 07:00–09:00   Gym (ir, entrenar y volver: 2 h en total)                   [Ejercicio]
 09:00–09:30   Desayuno (después del gym)                                  [Comidas]
 09:30–10:00   Ducha + prepararme                                          [Rutina]
-10:00–10:30   Revisión de logística #1: guías + novedades (3 tiendas),
-              pedidos y Meta — revisar, no optimizar                      [Rutina]
+10:00–10:30   Logística #1 + control del test diario (3 tiendas):
+              pedidos, guías, novedades; revisar, no optimizar            [Rutina]
 10:30–13:00   🧠 PROFUNDO #1 (150 min)                                    [Rutina, libre]
 13:00–13:30   Pausa: caminar o estirar (zona 2)                           (sin evento)
 13:30–14:30   Almuerzo                                                   [Comidas]
-14:30–17:00   🧠 PROFUNDO #2 (150 min)                                    [Rutina, libre]
-17:00–17:30   Revisión de logística #2: guías, novedades, urgentes       [Rutina]
-17:30–17:45   Snack                                                       [Comidas]
-17:45–19:00   Producción / sistemas / secundarias                         [Rutina, libre]
+14:30–16:30   🧠 PROFUNDO #2 (120 min)                                    [Rutina, libre]
+16:30–17:15   Gestiones con negocios (HORARIO COMERCIAL): imprentas,
+              proveedores, Marcelo, bancos, compras, muestras             [Rutina, libre]
+17:15–17:45   Revisión de logística #2: guías, novedades, urgentes       [Rutina]
+17:45–18:00   Snack                                                       [Comidas]
+18:00–19:00   Producción por lotes: impresión de bloques / sistemas
+              (sin llamadas ni anuncios)                                  [Rutina, libre]
 19:00–20:00   Vida personal — familia, pareja, amigos (sin culpa)         [Rutina, libre]
 20:00–21:00   Merienda                                                    [Comidas]
 21:00–21:20   Revisión de logística #3: la última del día                 [Rutina]
@@ -30,6 +33,10 @@ _La versión del 4-oct (despertar 07:00, gym 08:15, profundos 10:10-12:30 y 14:0
 22:00–22:20   Cerrar el día + Top 3 de mañana                             [Rutina]
 22:30          Dormir (7,5 h) — viernes y sábado 23:30
 ```
+
+**Dos reglas duras (Fabián, 2026-10-11):**
+1. Nada que dependa de un negocio (imprentas, proveedores, Marcelo, bancos, recoger muestras) se agenda después de las 18:00: a esa hora ya cerraron. Eso va en la ventana de gestiones de las 16:30.
+2. La publicidad nunca se enciende a media tarde. Se deja PROGRAMADA el día anterior (o antes) para que arranque a las 05:00.
 
 Inglés: en pausa desde el 11-oct (salió del calendario y del 80% semanal de la app). Para volver, restaurar el hábito en `tipos.ts` y agregar el bloque.
 
@@ -57,10 +64,10 @@ Pedido nuevo = microinterrupción de 1–2 min y de vuelta. Nunca excusa para ab
 
 ## Qué va en cada bloque
 
-### Profundo (10:30–13:00 y 14:30–17:00)
+### Profundo (10:30–13:00 y 14:30–16:30)
 Crear, pensar, construir: producto activo, ads, Product Lab, SOPs, estrategia, contenido. **Prohibido:** WhatsApp, Meta, redes, coordinar con Nerea, compras.
 
-### Operativo (revisiones 10:00, 17:00 y 21:00; bloque 17:45–19:00)
+### Operativo (gestiones 16:30–17:15 · producción 18:00–19:00 · revisiones 10:00, 17:15 y 21:00)
 Guías, novedades, Nerea, compras, trámites, producción por lotes.
 
 ---
@@ -109,4 +116,4 @@ Los bloques profundos son los que pagan las deudas. Si ese tiempo se gasta en Wh
 
 ---
 
-_Horario actualizado: 2026-10-11 (versión 2; antes 2026-10-04). Reglas de salud: 2026-06-29. Fuente: video "Cómo Organizar tu Día Para Estar Más Sano" — Sebastián Castro_
+_Horario actualizado: 2026-10-11 (versión 3; antes 2026-10-04). Reglas de salud: 2026-06-29. Fuente: video "Cómo Organizar tu Día Para Estar Más Sano" — Sebastián Castro_

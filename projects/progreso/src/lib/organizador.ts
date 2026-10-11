@@ -37,7 +37,7 @@ function huecosPara(t: Pick<Tarea, 'tipo' | 'negocio'>): TipoHueco[] {
   if (t.negocio === 'PERSONAL') return ['PERSONAL'];
   const base: TipoHueco[] =
     t.tipo === 'OPERATIVO' || t.tipo === 'ADMINISTRATIVO'
-      ? ['OPERATIVO', 'PROFUNDO_2'] // el operativo dura 45 min: si no cabe, al final del día
+      ? ['GESTIONES', 'PROFUNDO_2'] // horario comercial (16:30-17:15); el bloque de las 18:00 nunca: ya cerraron los negocios
       : ['PROFUNDO_1', 'PROFUNDO_2'];
   return t.negocio === 'CANDYSHOTS' ? [...base, 'CANDYSHOTS'] : base;
 }
