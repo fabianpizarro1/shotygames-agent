@@ -109,12 +109,17 @@ export function fotoDelMomento(d: Datos): string {
     for (const x of n.deuda.items) l.push(`  - ${x.acreedor || x.negocio}: $${x.pendiente}${x.vence ? ` vence ${x.vence}` : ''}`);
   } else l.push('- Deuda: sin dato');
   l.push(n?.caja ? `- Caja real: $${n.caja.total} (${n.caja.cuentas.map((c) => `${c.cuenta} $${c.saldo} al ${c.fecha}`).join(', ')})` : '- Caja: sin dato');
-  if (n?.fisicos) l.push(`- ShotyGames físicos — hoy: ${v(n.fisicos.hoy)} · semana: ${v(n.fisicos.semana)} · mes: ${v(n.fisicos.mes)}`);
+  const p = (c: { pedidos: number; ingreso: number }) => `${c.pedidos} pedidos ($${c.ingreso})`;
+  if (n?.fisicos && n.fisicosCobrados) {
+    l.push(`- ShotyGames VENDIDOS (contra entrega, no es plata todavía) — hoy: ${p(n.fisicos.hoy)} · semana: ${p(n.fisicos.semana)} · mes: ${p(n.fisicos.mes)}`);
+    l.push(`- ShotyGames COBRADOS (entregados/pagados; devueltos restan envío) — semana: ${v(n.fisicosCobrados.semana)} · mes: ${v(n.fisicosCobrados.mes)}`);
+  }
+  if (n?.enCalle) l.push(`- En la calle: ${n.enCalle.pedidos} pedidos sin entregar, $${n.enCalle.porCobrar} de saldo por cobrar (${n.enCalle.viejos} con más de 15 días: atascados o estado sin actualizar)`);
   if (n?.digitales) l.push(`- Digitales pagados — semana: ${v(n.digitales.semana)} · mes: ${v(n.digitales.mes)}`);
   if (n?.dropGenerados && n.dropCobrados) {
     l.push(`- Drop (contra entrega) — generados semana: ${n.dropGenerados.semana.pedidos}, mes: ${n.dropGenerados.mes.pedidos} · cobrados semana: ${v(n.dropCobrados.semana)}, mes: ${v(n.dropCobrados.mes)}`);
   }
-  l.push(`- Utilidad de pedidos del mes (antes de ads y gastos fijos): ${n?.utilidadPedidosMes ?? 'sin dato'} — meta $5.000 de utilidad REAL`);
+  l.push(`- Utilidad COBRADA del mes (solo lo entregado/pagado, antes de ads y gastos fijos): ${n?.utilidadCobradaMes ?? 'sin dato'} — meta $5.000 de utilidad REAL. Nunca presentes lo vendido como si fuera plata: es contra entrega.`);
   for (const [clave, label] of [
     ['UTILIDAD_MES', 'Utilidad REAL del mes (a mano)'],
     ['HORAS_OPERATIVAS', 'Horas operativas semana (a mano)'],

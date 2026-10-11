@@ -51,8 +51,12 @@ export default async function SemanaPage() {
 
       <section className="tarjeta flex flex-col gap-1 p-4 text-sm">
         <p>
-          Ventas ShotyGames esta semana:{' '}
-          <strong>{n?.fisicos ? `${n.fisicos.semana.pedidos} pedidos · $${n.fisicos.semana.ingreso.toLocaleString('es-EC')}` : 'sin dato'}</strong>
+          ShotyGames esta semana:{' '}
+          <strong>
+            {n?.fisicos && n.fisicosCobrados
+              ? `${n.fisicos.semana.pedidos} vendidos · ${n.fisicosCobrados.semana.pedidos} ya cobrados ($${n.fisicosCobrados.semana.ingreso.toLocaleString('es-EC')})`
+              : 'sin dato'}
+          </strong>
         </p>
         <p>
           Drop esta semana:{' '}
@@ -61,7 +65,7 @@ export default async function SemanaPage() {
           </strong>
         </p>
         <p>
-          Utilidad de pedidos del mes: <strong>{n?.utilidadPedidosMes != null ? `$${n.utilidadPedidosMes.toLocaleString('es-EC')}` : 'sin dato'}</strong> de $5.000
+          Utilidad cobrada del mes: <strong>{n?.utilidadCobradaMes != null ? `$${n.utilidadCobradaMes.toLocaleString('es-EC')}` : 'sin dato'}</strong> de $5.000
           {utilidad.actual !== null && ` (real, a mano: $${utilidad.actual.toLocaleString('es-EC')})`}
         </p>
         <p>

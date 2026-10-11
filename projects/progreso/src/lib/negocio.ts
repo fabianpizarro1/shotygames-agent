@@ -1,14 +1,18 @@
 import 'server-only';
 import { unstable_cache } from 'next/cache';
 import { getSheets } from './sheets-cliente';
-import { hoyEC, lunesDe } from './fecha';
+import { hoyEC, lunesDe, sumarDias } from './fecha';
 
 // Dinero y ventas leídos de los Sheets de negocio — SOLO LECTURA. Antes la
 // deuda y la utilidad se escribían a mano en CEO y nadie lo hacía.
 //
 // Las reglas de qué es una venta son las mismas de scripts/analisis-ventas.js
 // de KEPLER (el reporte de las 22:00), que dio Fabián:
-//   - 2026 REGISTRO DE VENTAS / PEDIDOS → toda fila es venta real.
+//   - 2026 REGISTRO DE VENTAS / PEDIDOS → toda fila es venta (salvo CANCELADO).
+//     Pero es contra entrega: la plata y la utilidad cuentan recién en
+//     ENTREGADO o PAGADO, y un DEVUELTO resta el envío. Misma fórmula que
+//     utilidadRealFisica de finanzas-app (adm.shotygames.com), para que las dos
+//     apps den el mismo número.
 //   - 2026 VENTAS DIGITALES / VENTAS    → solo ESTADO = PAGADO.
 //   - DROPSHIPPING / PEDIDOS            → contra entrega: generado (por FECHA)
 //     no es plata; cobrado = ESTADO PAGADO (por FECHA PAGO).
@@ -31,12 +35,17 @@ export interface Negocio {
   leidoEn: string;
   deuda: { pendiente: number; cantidad: number; ultimaRegistrada: string; items: { negocio: string; acreedor: string; pendiente: number; vence: string }[] } | null;
   caja: { total: number; cuentas: { cuenta: string; saldo: number; fecha: string }[] } | null;
+  /** Pedidos vendidos (todo lo no cancelado), por FECHA del pedido. */
   fisicos: Ventanas | null;
+  /** Lo ya cobrado: ENTREGADO/PAGADO con su utilidad; los DEVUELTOS restan el envío. Por FECHA del pedido. */
+  fisicosCobrados: Ventanas | null;
+  /** Pedidos todavía en la calle (sin entregar ni devolver) y el saldo contra entrega que falta cobrar. */
+  enCalle: { pedidos: number; porCobrar: number; viejos: number } | null;
   digitales: Ventanas | null;
   dropGenerados: Ventanas | null;
   dropCobrados: Ventanas | null;
-  /** Utilidad de pedidos del mes: físicos + digitales + drop cobrado. Antes de publicidad y gastos fijos. */
-  utilidadPedidosMes: number | null;
+  /** Utilidad COBRADA del mes: físicos cobrados + digitales pagados + drop cobrado. Antes de publicidad y gastos fijos. */
+  utilidadCobradaMes: number | null;
   errores: string[];
 }
 
@@ -145,17 +154,53 @@ async function leerCaja(): Promise<Negocio['caja']> {
   return { total: r2(cuentas.reduce((s, c) => s + c.saldo, 0)), cuentas };
 }
 
-async function leerFisicos(hoy: string): Promise<Ventanas> {
+const normalizar = (x: unknown) =>
+  String(x ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+async function leerFisicos(hoy: string) {
   const { filas, col } = await tabla(process.env.SHEETS_ID, 'PEDIDOS!A1:AZ6000');
-  const [iNom, iTel, iFecha, iAnt, iSaldo, iUtil] = ['NOMBRE', 'TELEFONO', 'FECHA', 'ANTICIPO', 'SALDO', 'UTILIDAD'].map(col);
-  const v = ventanasVacias();
+  const [iNom, iTel, iFecha, iAnt, iSaldo, iCostos, iEnvio, iEst] = ['NOMBRE', 'TELEFONO', 'FECHA', 'ANTICIPO', 'SALDO', 'COSTOS', 'ENVIO', 'ESTADO'].map(col);
+  const vendidos = ventanasVacias();
+  const cobrados = ventanasVacias();
+  const enCalle = { pedidos: 0, porCobrar: 0, viejos: 0 };
+  const hace15 = sumarDias(hoy, -15);
   const sumar = sumador(hoy);
   for (const f of filas) {
     if (!f[iNom] && !f[iTel]) continue;
+    const estado = normalizar(f[iEst]);
+    if (estado === 'cancelado') continue;
     const fecha = aFecha(f[iFecha]);
-    if (fecha) sumar(v, fecha, monto(f[iAnt]) + monto(f[iSaldo]), monto(f[iUtil]));
+    const venta = monto(f[iAnt]) + monto(f[iSaldo]);
+    const envio = monto(f[iEnvio]);
+    const entregado = estado === 'pagado' || estado === 'entregado';
+    const devuelto = estado.includes('devuelt') || estado.includes('devoluc');
+    if (fecha) sumar(vendidos, fecha, venta, 0);
+    if (entregado && fecha) sumar(cobrados, fecha, venta, venta - monto(f[iCostos]) - envio);
+    else if (devuelto && fecha) {
+      // La torre vuelve a bodega y se revende; el flete de ida se pierde.
+      // Resta utilidad pero no es un pedido cobrado.
+      sumarSoloUtilidad(cobrados, fecha, hoy, -envio);
+    } else if (!entregado && !devuelto) {
+      enCalle.pedidos += 1;
+      enCalle.porCobrar += monto(f[iSaldo]);
+      // Más de 15 días sin entregarse ni volver: atascado o con el estado sin actualizar.
+      if (fecha && fecha < hace15) enCalle.viejos += 1;
+    }
   }
-  return redondear(v);
+  enCalle.porCobrar = r2(enCalle.porCobrar);
+  return { vendidos: redondear(vendidos), cobrados: redondear(cobrados), enCalle };
+}
+
+/** Suma solo utilidad (sin pedido ni ingreso): para los devueltos. */
+function sumarSoloUtilidad(v: Ventanas, fecha: string, hoy: string, utilidad: number) {
+  const lunes = lunesDe(hoy);
+  if (fecha === hoy) v.hoy.utilidad += utilidad;
+  if (fecha >= lunes && fecha <= hoy) v.semana.utilidad += utilidad;
+  if (fecha.startsWith(hoy.slice(0, 7)) && fecha <= hoy) v.mes.utilidad += utilidad;
 }
 
 async function leerDigitales(hoy: string): Promise<Ventanas> {
@@ -208,24 +253,26 @@ async function leerNegocioSinCache(hoy: string): Promise<Negocio> {
     intentar('Ventas digitales', () => leerDigitales(hoy)),
     intentar('Dropshipping', () => leerDrop(hoy)),
   ]);
-  const partes = [fisicos?.mes.utilidad, digitales?.mes.utilidad, drop?.cobrados.mes.utilidad];
+  const partes = [fisicos?.cobrados.mes.utilidad, digitales?.mes.utilidad, drop?.cobrados.mes.utilidad];
   return {
     leidoEn: new Date().toISOString(),
     deuda,
     caja,
-    fisicos,
+    fisicos: fisicos?.vendidos ?? null,
+    fisicosCobrados: fisicos?.cobrados ?? null,
+    enCalle: fisicos?.enCalle ?? null,
     digitales,
     dropGenerados: drop?.generados ?? null,
     dropCobrados: drop?.cobrados ?? null,
     // Si falta una fuente no se muestra una utilidad a medias como si fuera el total.
-    utilidadPedidosMes: partes.every((p) => p !== undefined) ? r2(partes.reduce<number>((s, p) => s + (p ?? 0), 0)) : null,
+    utilidadCobradaMes: partes.every((p) => p !== undefined) ? r2(partes.reduce<number>((s, p) => s + (p ?? 0), 0)) : null,
     errores,
   };
 }
 
 // Caché compartida entre lambdas de Vercel (un Map en memoria no sirve: cada
 // lambda tiene el suyo). 5 minutos: son 5 Sheets y algunos tienen miles de filas.
-const leerCacheado = unstable_cache(leerNegocioSinCache, ['negocio-v1'], { revalidate: 300, tags: ['negocio'] });
+const leerCacheado = unstable_cache(leerNegocioSinCache, ['negocio-v3'], { revalidate: 300, tags: ['negocio'] });
 
 export async function leerNegocio(): Promise<Negocio> {
   // La fecha va en la llave: a medianoche "hoy" cambia aunque la caché siga viva.

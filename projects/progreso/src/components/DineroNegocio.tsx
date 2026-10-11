@@ -43,7 +43,8 @@ export default function DineroNegocio({ negocio, mes }: { negocio: Negocio | nul
     return <p className="tarjeta p-4 text-sm text-[var(--color-texto-suave)]">No pude leer los Sheets de negocio. Revisa la conexión y recarga.</p>;
   }
   const { deuda, caja } = negocio;
-  const utilidad = negocio.utilidadPedidosMes;
+  const utilidad = negocio.utilidadCobradaMes;
+  const calle = negocio.enCalle;
   const pctMeta = utilidad !== null ? Math.max(0, Math.min(100, Math.round((utilidad / 5000) * 100))) : 0;
   const cajaVieja = caja?.cuentas.filter((c) => c.saldo !== 0).map((c) => c.fecha).filter(Boolean).sort()[0] ?? '';
   const nombreMes = MESES[Number(mes.slice(5, 7)) - 1];
@@ -63,11 +64,24 @@ export default function DineroNegocio({ negocio, mes }: { negocio: Negocio | nul
         />
       </div>
 
-      <Tarjeta label={`Utilidad de pedidos (${nombreMes})`} valor={utilidad !== null ? `${usd(utilidad)} / $5.000` : 'sin dato'} detalle="ShotyGames + digitales + drop cobrado. Antes de publicidad y gastos fijos.">
+      <Tarjeta
+        label={`Utilidad cobrada (${nombreMes})`}
+        valor={utilidad !== null ? `${usd(utilidad)} / $5.000` : 'sin dato'}
+        detalle="Solo pedidos ya entregados o pagados (los devueltos restan el envío) + digitales + drop cobrado. Antes de publicidad y gastos fijos."
+      >
         {utilidad !== null && (
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--color-superficie-alta)]">
             <div className="h-full bg-[var(--color-verde)]" style={{ width: `${pctMeta}%` }} />
           </div>
+        )}
+        {calle && calle.pedidos > 0 && (
+          <p className="mt-2 text-xs text-[var(--color-texto-suave)]">
+            En la calle: <strong>{calle.pedidos} pedidos</strong> con <strong>{usd(calle.porCobrar)}</strong> de saldo por cobrar. No cuentan hasta que se
+            entreguen.
+            {calle.viejos > 0 && (
+              <span className="text-[var(--color-ambar)]"> {calle.viejos} llevan más de 15 días: atascados o con el estado sin actualizar.</span>
+            )}
+          </p>
         )}
       </Tarjeta>
 
@@ -82,7 +96,8 @@ export default function DineroNegocio({ negocio, mes }: { negocio: Negocio | nul
             </tr>
           </thead>
           <tbody>
-            <Fila label="ShotyGames" v={negocio.fisicos} />
+            <Fila label="ShotyGames vendidos" v={negocio.fisicos} />
+            <Fila label="ShotyGames cobrados" v={negocio.fisicosCobrados} />
             <Fila label="Digitales" v={negocio.digitales} />
             <Fila label="Drop generados" v={negocio.dropGenerados} />
             <Fila label="Drop cobrados" v={negocio.dropCobrados} />
