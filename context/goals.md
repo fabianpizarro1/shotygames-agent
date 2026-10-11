@@ -1,28 +1,52 @@
-# Metas — Q2 2026 (Abril–Junio)
+# Metas — Q4 2026 (octubre–diciembre)
 
-_Última actualización: 2026-05-26_
-_Actualiza este archivo al inicio de cada trimestre._
+_Última actualización: 2026-10-11. La versión Q2 está en `archives/goals-2026-Q2.md`._
 
-> Fabián no maneja metas formales por trimestre aún. Estas metas están basadas en sus prioridades actuales y la fecha crítica de julio 2026.
+Quedan 81 días de año. Q4 es la temporada fuerte de juegos de fiesta: Halloween (31-oct), Black Friday (27-nov), Navidad (25-dic) y **Año Viejo (31-dic), el pico**. Lo que no esté listo a mediados de noviembre se vende en enero.
+
+Las tareas con fecha viven en la app Progreso (`projects/progreso`, script `scripts/progreso.mjs`). Este archivo es el mapa; la app es el detalle.
 
 ---
 
-## Meta 1: Salir de deudas
-- **Hito:** Todas las deudas pagadas antes del 31 de julio 2026
-- **Cómo:** Aumentar ventas de Shotygames, reducir gastos en ads, abrir CandyShots como fuente adicional de ingresos
+## Metas del trimestre
 
-## Meta 2: Abrir CandyShots
-- **Hito:** Local abierto al público (aunque sea solo granizados) antes de Q3 2026
-- **Cómo:** Terminar pendientes del local, crear recetas, definir SOPs, contratar si es necesario
+| # | Meta | Cómo se sabe que se cumplió (31-dic) |
+|---|---|---|
+| 1 | **Salir de deudas** (mora en 0 + Arturo + Joselin) | Mora de tarjetas en 0 el 16-oct · Arturo pagado el 23-oct · Joselin pagado el 20-nov · plan de pagos por escrito con papá y mamá el 6-nov y primer abono el 4-dic |
+| 2 | **Cartas para Grupos vendiendo antes de Navidad** | Pedido a imprenta el 6-nov (tope duro; último día posible 13-nov) · lote recibido ~27-nov · anuncios encendidos el 2-dic |
+| 3 | **Product Lab: 7 tests por semana** | Desde la semana del 26-oct, un producto por día. Semana 1 y 2 en rampa (3-4 y 5). Los tests terminan el 14-dic |
+| 4 | **ShotyGames sin Fabián en producción** | Dados con Marcelo (30-oct), stock listo para Black Friday (6-nov), impresión delegada (13-nov), logística entrenada (20-nov), atención de diciembre definida (4-dic) |
+| 5 | **CandyShots sin Fabián** | SOPs de apertura, cierre, caja, inventario, compras, limpieza y atención. Domingo de prueba sin Fabián el 20-dic |
+| 6 | **Contenido: 1 publicación por día** | Publicando a diario desde el 26-oct |
 
-## Meta 3: Lanzar contenido orgánico
-- **Hito:** Publicar contenido consistente en Instagram y TikTok (mínimo 3x por semana)
-- **Cómo:** Crear banco de contenido, definir formatos que funcionen, construir skill de contenido
+---
 
-## Meta 4: Sistematizar Shotygames
-- **Hito:** Fabián no es el cuello de botella en ningún proceso operativo
-- **Cómo:** Automatizar registro de pedidos, DROPI, WhatsApp. Dejarle a Nerea rutinas y checklists claros.
+## Semana a semana
 
-## Meta personal: Construir rutina diaria
-- **Hito:** Semana con rutina completa cumplida (ejercicio, alimentación, tiempo de trabajo definido)
-- **Cómo:** Definir rutina ideal, implementar gradualmente, hacer seguimiento
+| Sem | Fechas | Foco | Fecha dura |
+|---|---|---|---|
+| 1 | 12–18 oct | Cartas Grupos: concepto, mecánica, cotizaciones. Mora de tarjetas. 7 productos + Proyector | 12-oct pagar mora · 16-oct mora en 0 |
+| 2 | 19–25 oct | Mecánica v2, lista final de cartas, brief de diseño, elegir imprenta. Arturo | 23-oct Arturo pagado |
+| 3 | 26 oct–1 nov | Arte y reglas de las cartas, muestra de impresión, Halloween | 30-oct dados con Marcelo · 31-oct play-test 3 |
+| 4 | 2–8 nov | Archivos finales, **pedido a imprenta** | **6-nov pedido + anticipo** · 6-nov plan con papá y mamá |
+| 5 | 9–15 nov | Armado del pedido, plan Black Friday, impresión delegada | 13-nov punto de control imprenta |
+| 6 | 16–22 nov | Oferta y landing de cartas, creativos Black Friday | 20-nov Joselin pagado |
+| 7 | 23–29 nov | Landing publicada, **Black Friday**, recepción del lote | 27-nov Black Friday |
+| 8 | 30 nov–6 dic | Cyber Monday, control de calidad, **lanzamiento de cartas** | 2-dic anuncios · 4-dic primer abono |
+| 9 | 7–13 dic | Navidad: oferta de regalo, primera revisión de cartas | |
+| 10 | 14–20 dic | Último corte de envíos de Navidad, cierre de tests | 14-dic fin de tests · 20-dic corte de envíos |
+| 11 | 21–27 dic | Año Viejo: push final de fiesta | 27-dic último día de anuncios de fiesta |
+| 12 | 28 dic–3 ene | Balance del año, deuda final, metas 2027 | 31-dic cierre |
+
+Feriado largo alrededor del 2-3 nov: confirmar fechas (el martes es el día de producto activo).
+
+---
+
+## Reglas que sostienen el plan
+
+- **Un solo producto activo por negocio.** Cartas Grupos va primero; Cartas Parejas queda en cola hasta enero (decidirlo en el balance del 29-dic).
+- **Producto de dropshipping:** el filtro rápido decide la cola de 7; el método completo de `investigacion-producto` se reserva para el que pase el test (CPA real ≤ $8 a los 4 días). Pendiente de confirmar con Fabián.
+- **Regla de corte:** CPA real mayor a $8 a los 4 días, se apaga.
+- **Cada domingo:** revisión semanal de 30 min y sesión con Claude para agendar la semana siguiente. El cron del domingo 20:00 es el respaldo.
+- **Calendario:** solo se agendan las próximas 2 semanas; el resto vive como tareas con fecha.
+- **Descanso:** 11 semanas con sábado y domingo en el local no se sostienen. El proyecto CandyShots sin Fabián existe para liberar al menos los domingos.
