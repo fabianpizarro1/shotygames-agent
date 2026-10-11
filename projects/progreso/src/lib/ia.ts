@@ -1,4 +1,5 @@
 import 'server-only';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
@@ -25,8 +26,22 @@ const MODELO = 'claude-opus-5-5';
 const BETAS = ['server-side-fallback-2026-07-01'];
 
 let cliente: Anthropic | null = null;
+// La IA de la app está apagada para Fabián, pero el bot de Telegram (que
+// sigue con IA por decisión suya) le pide a la app organizar proyectos por
+// /api/interno: esos pedidos corren dentro de conIaDelBot y sí pueden usarla.
+const permisoBot = new AsyncLocalStorage<true>();
+
+export function conIaDelBot<T>(fn: () => Promise<T>): Promise<T> {
+  return permisoBot.run(true, fn);
+}
+
+/** ¿Se puede llamar a Claude en este request? */
+export function iaDisponible(): boolean {
+  return IA_ACTIVA || permisoBot.getStore() === true;
+}
+
 function ia(): Anthropic {
-  if (!IA_ACTIVA) throw new Error(MENSAJE_IA_APAGADA);
+  if (!iaDisponible()) throw new Error(MENSAJE_IA_APAGADA);
   cliente ??= new Anthropic();
   return cliente;
 }

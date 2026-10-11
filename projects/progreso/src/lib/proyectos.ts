@@ -1,7 +1,7 @@
 import 'server-only';
 import { guardarProyecto, leerTodo } from './datos';
 import { organizarProyecto, type ResultadoOrganizar } from './organizador';
-import { IA_ACTIVA } from './ia-activa';
+import { iaDisponible } from './ia';
 import { MAX_PROYECTOS_ACTIVOS, type Proyecto } from './tipos';
 
 // Crear un proyecto: lo usan la pantalla Proyectos (acciones.ts) y el bot de
@@ -44,7 +44,7 @@ export async function crearProyecto(p: {
     orden: Math.max(0, ...datos.proyectos.map((x) => x.orden)) + 1,
     etapas: etapas.map((nombre) => ({ nombre, pct: 0 })),
   });
-  const plan = IA_ACTIVA && p.empezar && p.fechaObjetivo ? await organizarProyecto(id, p.fechaObjetivo) : null;
+  const plan = iaDisponible() && p.empezar && p.fechaObjetivo ? await organizarProyecto(id, p.fechaObjetivo) : null;
   return { id, plan };
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { conIaDelBot } from '@/lib/ia';
 import { organizarProyecto } from '@/lib/organizador';
 import { crearProyecto } from '@/lib/proyectos';
 import { NEGOCIOS } from '@/lib/tipos';
@@ -28,10 +29,12 @@ export async function POST(req: NextRequest) {
   const r = Cuerpo.safeParse(await req.json().catch(() => null));
   if (!r.success) return NextResponse.json({ error: z.prettifyError(r.error) }, { status: 400 });
   try {
-    if ('proyecto_id' in r.data) {
-      return NextResponse.json({ ok: true, ...(await organizarProyecto(r.data.proyecto_id, r.data.fecha_limite)) });
+    // El bot de Telegram sigue con IA aunque la app la tenga apagada.
+    const datos = r.data;
+    if ('proyecto_id' in datos) {
+      return NextResponse.json({ ok: true, ...(await conIaDelBot(() => organizarProyecto(datos.proyecto_id, datos.fecha_limite))) });
     }
-    const { id, plan } = await crearProyecto({ ...r.data.crear, fechaObjetivo: r.data.fecha_limite, empezar: true });
+    const { id, plan } = await conIaDelBot(() => crearProyecto({ ...datos.crear, fechaObjetivo: datos.fecha_limite, empezar: true }));
     return NextResponse.json({ ok: true, proyecto_id: id, ...plan });
   } catch (e) {
     // Errores de negocio ("Cartas Parejas sigue activo…"): el bot se los dice a Fabián.
