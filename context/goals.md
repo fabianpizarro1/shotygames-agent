@@ -13,8 +13,8 @@ Las tareas con fecha viven en la app Progreso (`projects/progreso`, script `scri
 | # | Meta | Cómo se sabe que se cumplió (31-dic) |
 |---|---|---|
 | 1 | **Salir de deudas** (mora en 0 + Arturo + Joselin) | Mora de tarjetas en 0 el 16-oct · Arturo pagado el 23-oct · Joselin pagado el 20-nov · plan de pagos por escrito con papá y mamá el 6-nov y primer abono el 4-dic |
-| 2 | **Cartas para Grupos vendiendo antes de Navidad** | Pedido a imprenta el 6-nov (tope duro; último día posible 13-nov) · lote recibido ~27-nov · anuncios encendidos el 2-dic |
-| 3 | **Product Lab: 7 tests por semana** | Desde la semana del 26-oct, un producto por día. Rampa: 4 arranques la semana 1 (jue 15 a dom 18) y 3 la semana 2 (jue 22 a sáb 24). Los tests terminan el 14-dic |
+| 2 | **Cartas para Grupos vendiendo antes de Navidad** | El juego ya existe (69 cartas, diseño que se vendía antes): se cotiza con las cartas de muestra y se rediseña logo, retos y caja. Pedido a imprenta el 6-nov (tope duro; último día posible 13-nov; si el rediseño cierra a tiempo, adelantarlo al 30-oct) · lote recibido ~27-nov · anuncios programados para el 2-dic |
+| 3 | **Product Lab: 7 tests por semana** | Primer test el martes 13 a las 05:00; un producto por día desde ahí (7 arranques del 13 al 19-oct). Los tests terminan el 14-dic |
 | 4 | **ShotyGames sin Fabián en producción** | Dados con Marcelo (30-oct), stock listo para Black Friday (6-nov), impresión delegada (13-nov), logística entrenada (20-nov), atención de diciembre definida (4-dic) |
 | 5 | **CandyShots sin Fabián** | SOPs de apertura, cierre, caja, inventario, compras, limpieza y atención. Domingo de prueba sin Fabián el 20-dic |
 | 6 | **Contenido: 1 publicación por día** | Publicando a diario desde el 26-oct |
@@ -25,7 +25,7 @@ Las tareas con fecha viven en la app Progreso (`projects/progreso`, script `scri
 
 | Sem | Fechas | Foco | Fecha dura |
 |---|---|---|---|
-| 1 | 12–18 oct | Cartas Grupos: concepto, mecánica, cotizaciones. Mora de tarjetas. 7 productos + Proyector | 12-oct pagar mora · 16-oct mora en 0 |
+| 1 | 12–18 oct | 3 productos de dropshipping listos el lunes y primer test el martes. Cotizar las 69 cartas en imprentas. Fabricar dados (3 h) y sellar juegos (2 h). Mora de tarjetas. Sin gym esta semana | 12-oct pagar mora · 13-oct primer test · 16-oct mora en 0 |
 | 2 | 19–25 oct | Mecánica v2, lista final de cartas, brief de diseño, elegir imprenta. Arturo | 23-oct Arturo pagado |
 | 3 | 26 oct–1 nov | Arte y reglas de las cartas, muestra de impresión, Halloween | 30-oct dados con Marcelo · 31-oct play-test 3 |
 | 4 | 2–8 nov | Archivos finales, **pedido a imprenta** | **6-nov pedido + anticipo** · 6-nov plan con papá y mamá |
