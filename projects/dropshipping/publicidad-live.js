@@ -19,10 +19,11 @@
  *   pedido, así que repartir el CPA entre campañas sería inventado.
  * - "VENTAS REALES" = pedidos del día excluyendo CANCELADO y
  *   PENDIENTE_CONFIRMACION, por FECHA de creación (que es lo que produjo el ads).
- * - GASTO REAL = gasto de Meta × comisión. Desde el 2026-09-25 la comisión es
- *   3% (antes 20% — ver decisions/log.md); los días anteriores a esa fecha
- *   siguen con el 20% real que se pagó entonces (`comisionMeta(fecha)`). CPA y
- *   ROAS se calculan siempre contra el gasto REAL, nunca contra el crudo.
+ * - GASTO REAL = gasto de Meta × comisión del banco, por tramos de fecha: 20%
+ *   hasta el 2026-09-24, 3% del 09-25 al 10-11 y 20% otra vez desde el
+ *   2026-10-12 (ver decisions/log.md). Cada día conserva la comisión que se
+ *   pagó entonces (`comisionMeta(fecha)`). CPA y ROAS se calculan siempre
+ *   contra el gasto REAL, nunca contra el crudo.
  * - El join pedido→producto es por ID DROPI, no por el texto de PRODUCTO: el
  *   mismo id sale escrito distinto según cómo se registró el pedido
  *   ("Olla Freidora con Canasta" vs "Mini Olla Freidora con Canasta Acero
@@ -56,9 +57,14 @@ const { DEFAULTS } = require('./calculadora.js');
 const SHEET_ID = process.env.SHEETS_ID_DROPSHIPPING;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
 const GRAPH_VERSION = 'v20.0';
-// Ver nota de arriba: 20% hasta el día anterior al cambio, 3% desde entonces.
-const CAMBIO_COMISION = '2026-09-25';
-const comisionMeta = (fecha) => (fecha >= CAMBIO_COMISION ? 1.03 : 1.2);
+// Ver nota de arriba. Cada tramo rige desde su fecha (inclusive); si cambia otra
+// vez, AGREGAR un tramo al final sin editar los anteriores.
+const COMISIONES_META = [
+  ['1970-01-01', 1.2],  // 20% hasta el 2026-09-24
+  ['2026-09-25', 1.03], // 3% del 2026-09-25 al 2026-10-11
+  ['2026-10-12', 1.2],  // 20% otra vez desde el 2026-10-12
+];
+const comisionMeta = (fecha) => COMISIONES_META.filter(([desde]) => fecha >= desde).pop()[1];
 const DIAS = 30;
 
 function getAuth() {

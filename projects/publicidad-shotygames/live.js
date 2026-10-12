@@ -27,12 +27,18 @@ const { CUENTAS_ADS, ESTADOS, COSTO_CAJA, COLUMNAS_CANTIDAD } = require('./confi
 const SHEET_ID = process.env.SHEETS_ID;
 const HOJA_DATOS = 'PUBLICIDAD_DATOS';
 const GRAPH_VERSION = 'v20.0';
-// Desde el 2026-09-25 el cobro adicional sobre el gasto de Meta bajó de 20% a
-// una comisión fija de 3% (decisión de Fabián, ver decisions/log.md). Los días
-// ANTERIORES a esa fecha se recalculan en cada corrida (la ventana arranca en
-// enero) y tienen que seguir con el 20% real que se pagó entonces.
-const CAMBIO_COMISION = '2026-09-25';
-const comisionMeta = (fecha) => (fecha >= CAMBIO_COMISION ? 1.03 : 1.2);
+// Cobro adicional del banco sobre el gasto de Meta, por tramos de fecha
+// (decisiones de Fabián, ver decisions/log.md). Cada tramo rige desde su fecha
+// (inclusive) hasta el siguiente. Los días pasados se recalculan en cada corrida
+// (la ventana arranca en enero) y tienen que conservar la comisión que de verdad
+// se pagó ese día. Si cambia otra vez: AGREGAR un tramo al final, no editar los
+// anteriores.
+const COMISIONES_META = [
+  ['1970-01-01', 1.2],  // 20% hasta el 2026-09-24
+  ['2026-09-25', 1.03], // 3% del 2026-09-25 al 2026-10-11
+  ['2026-10-12', 1.2],  // 20% otra vez desde el 2026-10-12
+];
+const comisionMeta = (fecha) => COMISIONES_META.filter(([desde]) => fecha >= desde).pop()[1];
 /**
  * La ventana arranca el 1 de ENERO del año en curso, no N días atrás.
  *
