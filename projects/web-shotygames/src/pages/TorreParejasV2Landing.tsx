@@ -84,6 +84,99 @@ const FOTOS_REALES = [
   { src: torreParejas11, badge: "Reto real 🔥", alt: "Hazme s❤️x❤️ oral por 3 minutos" },
 ];
 
+// Fuera del componente a propósito: el contador del regalo re-renderiza la
+// página cada segundo, y un componente definido adentro es un tipo nuevo en
+// cada render — React desmontaba y volvía a montar estos botones (y en Parejas
+// las 9 imágenes) una vez por segundo, y un toque en ese instante se perdía.
+/** Bloque de imagen a ancho completo. La primera se carga con prioridad
+ *  (es el LCP); el resto en diferido, que son 9 piezas de ~145 KB. */
+const Pieza = ({ i }: { i: number }) => (
+  <img
+    src={PIEZAS[i].src}
+    alt={PIEZAS[i].alt}
+    width={PIEZAS[i].w}
+    height={PIEZAS[i].h}
+    loading={i === 0 ? "eager" : "lazy"}
+    // La primera pieza es el LCP: se le pide prioridad alta al navegador.
+    // En minúscula porque React 18 no reconoce `fetchPriority` en camelCase.
+    {...(i === 0 ? { fetchpriority: "high" } : {})}
+    decoding={i === 0 ? "sync" : "async"}
+    className="w-full h-auto"
+  />
+);
+
+/** Los 3 argumentos que matan las objeciones: no pagas nada ahora, no pagas
+ *  envío, y encima te llevas algo. Van como badges y no como una línea de
+ *  texto porque el resto de la página es 100% visual — un párrafo gris ahí
+ *  abajo no lo lee nadie. */
+const CLAIMS = [
+  { Icono: Banknote, titulo: "Pagas al recibir", pie: "En efectivo, en tu puerta" },
+  { Icono: Truck, titulo: "Envío gratis", pie: "A todo Ecuador" },
+  { Icono: Gift, titulo: "Guía de regalo", pie: "30 posiciones" },
+];
+
+/** Dos variantes:
+ *  - "completo": solo el primer CTA. Precio en el botón, los 3 badges y el
+ *    reloj. Es el único punto donde el visitante todavía no vio esa info.
+ *  - "simple": los de más abajo. Solo el botón — a esa altura ya vio precio,
+ *    envío y regalo tres veces, repetirlo es ruido.
+ *
+ *  Los "simple" además se ocultan en móvil (`hidden md:block`): ahí la barra
+ *  fija de abajo ya lleva un botón de compra pegado a la pantalla todo el
+ *  scroll, así que un segundo botón en el medio del contenido no suma nada. */
+const Cta = ({ texto, variante = "simple", onClick, precio, restante }: { texto: string; variante?: "completo" | "simple"; onClick: () => void; precio: number; restante: string }) => (
+  <div
+    className={
+      variante === "completo"
+        ? "container mx-auto px-4 py-8 md:py-10"
+        : "container mx-auto hidden px-4 py-8 md:block md:py-10"
+    }
+  >
+    <div className="max-w-xl mx-auto space-y-4">
+      <Button
+        onClick={onClick}
+        size="lg"
+        className="flex h-auto w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-[#e91e63] to-[#f50057] hover:from-[#e91e63]/90 hover:to-[#f50057]/90 text-white text-base md:text-2xl font-bold py-6 md:py-8 rounded-xl shadow-2xl hover:scale-105 transition-all"
+      >
+        <span className="flex items-center">
+          <ShoppingCart className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+          {texto}
+        </span>
+        {variante === "completo" && (
+          <span className="rounded-lg bg-white/25 px-2.5 py-0.5 text-lg md:text-2xl tabular-nums">
+            ${precio.toFixed(2)}
+          </span>
+        )}
+      </Button>
+
+      {variante === "completo" && (
+        <>
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
+            {CLAIMS.map(({ Icono, titulo, pie }) => (
+              <div
+                key={titulo}
+                className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-[#e91e63]/25 bg-[#e91e63]/5 px-2 py-3 text-center md:py-4"
+              >
+                <Icono className="h-5 w-5 md:h-6 md:w-6 text-[#e91e63]" />
+                <p className="text-[11px] md:text-sm font-bold leading-tight">{titulo}</p>
+                <p className="text-[10px] md:text-xs leading-tight text-muted-foreground">{pie}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-center">
+            <Clock className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
+            <p className="text-[11px] md:text-sm font-semibold text-yellow-700 dark:text-yellow-300">
+              El regalo se cierra en{" "}
+              <span className="tabular-nums">{restante}</span>
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+);
+
 const TorreParejasV2Landing = () => {
   const productName = "Torre de Shots Parejas";
   const productPrice = 29.99;
@@ -126,94 +219,10 @@ const TorreParejasV2Landing = () => {
     setCheckoutOpen(true);
   };
 
-  /** Bloque de imagen a ancho completo. La primera se carga con prioridad
-   *  (es el LCP); el resto en diferido, que son 9 piezas de ~145 KB. */
-  const Pieza = ({ i }: { i: number }) => (
-    <img
-      src={PIEZAS[i].src}
-      alt={PIEZAS[i].alt}
-      width={PIEZAS[i].w}
-      height={PIEZAS[i].h}
-      loading={i === 0 ? "eager" : "lazy"}
-      // La primera pieza es el LCP: se le pide prioridad alta al navegador.
-      // En minúscula porque React 18 no reconoce `fetchPriority` en camelCase.
-      {...(i === 0 ? { fetchpriority: "high" } : {})}
-      decoding={i === 0 ? "sync" : "async"}
-      className="w-full h-auto"
-    />
-  );
 
-  /** Los 3 argumentos que matan las objeciones: no pagas nada ahora, no pagas
-   *  envío, y encima te llevas algo. Van como badges y no como una línea de
-   *  texto porque el resto de la página es 100% visual — un párrafo gris ahí
-   *  abajo no lo lee nadie. */
-  const CLAIMS = [
-    { Icono: Banknote, titulo: "Pagas al recibir", pie: "En efectivo, en tu puerta" },
-    { Icono: Truck, titulo: "Envío gratis", pie: "A todo Ecuador" },
-    { Icono: Gift, titulo: "Guía de regalo", pie: "30 posiciones" },
-  ];
 
-  /** Dos variantes:
-   *  - "completo": solo el primer CTA. Precio en el botón, los 3 badges y el
-   *    reloj. Es el único punto donde el visitante todavía no vio esa info.
-   *  - "simple": los de más abajo. Solo el botón — a esa altura ya vio precio,
-   *    envío y regalo tres veces, repetirlo es ruido.
-   *
-   *  Los "simple" además se ocultan en móvil (`hidden md:block`): ahí la barra
-   *  fija de abajo ya lleva un botón de compra pegado a la pantalla todo el
-   *  scroll, así que un segundo botón en el medio del contenido no suma nada. */
-  const Cta = ({ texto, variante = "simple" }: { texto: string; variante?: "completo" | "simple" }) => (
-    <div
-      className={
-        variante === "completo"
-          ? "container mx-auto px-4 py-8 md:py-10"
-          : "container mx-auto hidden px-4 py-8 md:block md:py-10"
-      }
-    >
-      <div className="max-w-xl mx-auto space-y-4">
-        <Button
-          onClick={handleBuyClick}
-          size="lg"
-          className="flex h-auto w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-[#e91e63] to-[#f50057] hover:from-[#e91e63]/90 hover:to-[#f50057]/90 text-white text-base md:text-2xl font-bold py-6 md:py-8 rounded-xl shadow-2xl hover:scale-105 transition-all"
-        >
-          <span className="flex items-center">
-            <ShoppingCart className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-            {texto}
-          </span>
-          {variante === "completo" && (
-            <span className="rounded-lg bg-white/25 px-2.5 py-0.5 text-lg md:text-2xl tabular-nums">
-              ${productPrice.toFixed(2)}
-            </span>
-          )}
-        </Button>
 
-        {variante === "completo" && (
-          <>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-              {CLAIMS.map(({ Icono, titulo, pie }) => (
-                <div
-                  key={titulo}
-                  className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-[#e91e63]/25 bg-[#e91e63]/5 px-2 py-3 text-center md:py-4"
-                >
-                  <Icono className="h-5 w-5 md:h-6 md:w-6 text-[#e91e63]" />
-                  <p className="text-[11px] md:text-sm font-bold leading-tight">{titulo}</p>
-                  <p className="text-[10px] md:text-xs leading-tight text-muted-foreground">{pie}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-center">
-              <Clock className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
-              <p className="text-[11px] md:text-sm font-semibold text-yellow-700 dark:text-yellow-300">
-                El regalo se cierra en{" "}
-                <span className="tabular-nums">{regalo.restante}</span>
-              </p>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );  const faqs = [
+  const faqs = [
     {
       q: "¿Llega en empaque discreto?",
       a: "Sí. El paquete llega sellado y sin ninguna referencia al contenido por fuera. Nadie sabe qué hay adentro más que ustedes.",
@@ -269,7 +278,7 @@ const TorreParejasV2Landing = () => {
         <Pieza i={0} />
       </div>
 
-      <Cta texto="LA QUIERO EN MI CASA" variante="completo" />
+      <Cta texto="LA QUIERO EN MI CASA" variante="completo" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
       {/* Centinela: marca dónde termina el CTA de arriba. */}
 
       <div className="mx-auto max-w-2xl">
@@ -378,7 +387,7 @@ const TorreParejasV2Landing = () => {
         </div>
       </section>
 
-      <Cta texto="PEDIR LA MÍA AHORA" />
+      <Cta texto="PEDIR LA MÍA AHORA" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
 
       <div className="mx-auto max-w-2xl">
         <Pieza i={6} />
@@ -386,7 +395,7 @@ const TorreParejasV2Landing = () => {
         <Pieza i={8} />
       </div>
 
-      <Cta texto="PEDIR LA MÍA CON EL REGALO" />
+      <Cta texto="PEDIR LA MÍA CON EL REGALO" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
 
       {/* ---------- PRUEBA SOCIAL ---------- */}
       <Testimonials />

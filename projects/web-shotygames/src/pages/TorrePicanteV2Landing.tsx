@@ -101,6 +101,73 @@ const TIKTOKS: VideoTikTok[] = [
   { id: "7638798502822202642", portada: imgTiktokTimidos, alt: "Este Jenga no es apto para tímidos", autor: "@shotygames_ec" },
 ];
 
+// Fuera del componente a propósito: el contador del regalo re-renderiza la
+// página cada segundo, y un componente definido adentro es un tipo nuevo en
+// cada render — React desmontaba y volvía a montar estos botones (y en Parejas
+// las 9 imágenes) una vez por segundo, y un toque en ese instante se perdía.
+const CLAIMS = [
+  { Icono: Banknote, titulo: "Pagas al recibir", pie: "En efectivo, en tu puerta" },
+  { Icono: Truck, titulo: "Envío gratis", pie: "A todo Ecuador" },
+  { Icono: Gift, titulo: "Ebook de regalo", pie: "25 juegos" },
+];
+
+/** Mismo criterio que Torre Parejas V2:
+ *  - "completo": solo el primer CTA. Precio en el botón, los 3 badges y el reloj.
+ *  - "simple": los de más abajo, solo el botón, y ocultos en móvil porque
+ *    ahí la barra fija de abajo ya lleva el botón de compra. */
+const Cta = ({ texto, variante = "simple", onClick, precio, restante }: { texto: string; variante?: "completo" | "simple"; onClick: () => void; precio: number; restante: string }) => (
+  <div
+    className={
+      variante === "completo"
+        ? "container mx-auto px-4 py-6 md:py-8"
+        : "container mx-auto hidden px-4 py-8 md:block md:py-10"
+    }
+  >
+    <div className="max-w-xl mx-auto space-y-4">
+      <Button
+        onClick={onClick}
+        size="lg"
+        className="flex h-auto w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] hover:from-[#ff3d00]/90 hover:to-[#ff7b00]/90 text-white text-base md:text-2xl font-bold py-6 md:py-8 rounded-xl shadow-2xl hover:scale-105 transition-all"
+      >
+        <span className="flex items-center">
+          <ShoppingCart className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+          {texto}
+        </span>
+        {variante === "completo" && (
+          <span className="rounded-lg bg-white/25 px-2.5 py-0.5 text-lg md:text-2xl tabular-nums">
+            ${precio.toFixed(2)}
+          </span>
+        )}
+      </Button>
+
+      {variante === "completo" && (
+        <>
+          <div className="grid grid-cols-3 gap-2 md:gap-3">
+            {CLAIMS.map(({ Icono, titulo, pie }) => (
+              <div
+                key={titulo}
+                className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-[#ff3d00]/25 bg-[#ff3d00]/5 px-2 py-3 text-center md:py-4"
+              >
+                <Icono className="h-5 w-5 md:h-6 md:w-6 text-[#ff3d00]" />
+                <p className="text-[11px] md:text-sm font-bold leading-tight">{titulo}</p>
+                <p className="text-[10px] md:text-xs leading-tight text-muted-foreground">{pie}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-center">
+            <Clock className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
+            <p className="text-[11px] md:text-sm font-semibold text-yellow-700 dark:text-yellow-300">
+              El regalo se cierra en{" "}
+              <span className="tabular-nums">{restante}</span>
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+);
+
 const TorrePicanteV2Landing = () => {
   const productName = "Torre de Shots Picante";
   const productPrice = 29.99;
@@ -136,68 +203,7 @@ const TorrePicanteV2Landing = () => {
     setCheckoutOpen(true);
   };
 
-  const CLAIMS = [
-    { Icono: Banknote, titulo: "Pagas al recibir", pie: "En efectivo, en tu puerta" },
-    { Icono: Truck, titulo: "Envío gratis", pie: "A todo Ecuador" },
-    { Icono: Gift, titulo: "Ebook de regalo", pie: "25 juegos" },
-  ];
 
-  /** Mismo criterio que Torre Parejas V2:
-   *  - "completo": solo el primer CTA. Precio en el botón, los 3 badges y el reloj.
-   *  - "simple": los de más abajo, solo el botón, y ocultos en móvil porque
-   *    ahí la barra fija de abajo ya lleva el botón de compra. */
-  const Cta = ({ texto, variante = "simple" }: { texto: string; variante?: "completo" | "simple" }) => (
-    <div
-      className={
-        variante === "completo"
-          ? "container mx-auto px-4 py-6 md:py-8"
-          : "container mx-auto hidden px-4 py-8 md:block md:py-10"
-      }
-    >
-      <div className="max-w-xl mx-auto space-y-4">
-        <Button
-          onClick={handleBuyClick}
-          size="lg"
-          className="flex h-auto w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] hover:from-[#ff3d00]/90 hover:to-[#ff7b00]/90 text-white text-base md:text-2xl font-bold py-6 md:py-8 rounded-xl shadow-2xl hover:scale-105 transition-all"
-        >
-          <span className="flex items-center">
-            <ShoppingCart className="mr-2 h-5 w-5 md:h-6 md:w-6" />
-            {texto}
-          </span>
-          {variante === "completo" && (
-            <span className="rounded-lg bg-white/25 px-2.5 py-0.5 text-lg md:text-2xl tabular-nums">
-              ${productPrice.toFixed(2)}
-            </span>
-          )}
-        </Button>
-
-        {variante === "completo" && (
-          <>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-              {CLAIMS.map(({ Icono, titulo, pie }) => (
-                <div
-                  key={titulo}
-                  className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-[#ff3d00]/25 bg-[#ff3d00]/5 px-2 py-3 text-center md:py-4"
-                >
-                  <Icono className="h-5 w-5 md:h-6 md:w-6 text-[#ff3d00]" />
-                  <p className="text-[11px] md:text-sm font-bold leading-tight">{titulo}</p>
-                  <p className="text-[10px] md:text-xs leading-tight text-muted-foreground">{pie}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-center">
-              <Clock className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400" />
-              <p className="text-[11px] md:text-sm font-semibold text-yellow-700 dark:text-yellow-300">
-                El regalo se cierra en{" "}
-                <span className="tabular-nums">{regalo.restante}</span>
-              </p>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
 
   const faqs = [
     {
@@ -291,7 +297,7 @@ const TorrePicanteV2Landing = () => {
           </div>
         </div>
 
-        <Cta texto="LA QUIERO EN MI CASA" variante="completo" />
+        <Cta texto="LA QUIERO EN MI CASA" variante="completo" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
       </section>
 
       {/* ---------- EL PROBLEMA, AGITADO ---------- */}
@@ -541,7 +547,7 @@ const TorrePicanteV2Landing = () => {
         </div>
       </section>
 
-      <Cta texto="PEDIR LA MÍA AHORA" />
+      <Cta texto="PEDIR LA MÍA AHORA" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
 
       {/* ---------- QUE INCLUYE ---------- */}
       <section className="py-12 md:py-16 bg-gradient-to-br from-[#ff3d00]/5 to-[#ff7b00]/5">
