@@ -789,36 +789,24 @@ const TorrePicanteV2Landing = () => {
         </div>
       </section>
 
-      {/* ---------- CTA FINAL ---------- */}
-      <section className="py-12 md:py-16 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#ff3d00] via-[#ff7b00] to-[#ff3d00] opacity-95"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-2xl mx-auto text-center text-white space-y-5 md:space-y-6">
-            <h2 className="text-2xl md:text-4xl font-bold leading-tight">
-              La próxima previa puede ser igual a todas las anteriores
-            </h2>
-            <p className="text-base md:text-xl text-white/90">
-              O puede ser la que todos recuerden. La torre llega en 2-4 días hábiles:
-              pagas cuando la tengas en la mano.
-            </p>
-            <p className="text-base md:text-lg font-semibold text-yellow-300">
-              🎁 Si pides hoy, el Ebook de 25 Juegos va incluido —{" "}
-              <span className="tabular-nums">quedan {regalo.restante}</span>
-            </p>
-
-            <Button
-              onClick={handleBuyClick}
-              size="lg"
-              className="w-full md:w-auto bg-white text-[#ff3d00] hover:bg-white/90 text-lg md:text-2xl font-bold px-8 md:px-14 py-6 md:py-8 rounded-xl shadow-2xl hover:scale-105 transition-all"
-            >
-              <ShoppingCart className="mr-2 h-5 w-5" />
-              PEDIR MI TORRE PICANTE
-            </Button>
-
-            <p className="text-xs md:text-sm text-white/80">
-              💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Ebook de 25 juegos
-            </p>
-          </div>
+      {/* ---------- CTA FINAL ----------
+          Copiado tal cual del último bloque de la principal (TorrePicanteV3Landing,
+          bloque 18) a pedido de Fabián (2026-10-13). Reemplaza a "La próxima
+          previa puede ser igual a todas las anteriores". */}
+      <section className="px-4 py-14 md:py-20 bg-[#19191F] text-white">
+        <div className="mx-auto max-w-xl text-center space-y-4">
+          <h2 className="text-[26px] leading-[1.15] md:text-[40px] font-extrabold tracking-tight">¿LISTOS PARA EL PRIMER RETO? 😈</h2>
+          <p className="text-[15px] md:text-lg text-[#CFCDD2]">Haz que tu próxima reunión tenga una historia más para contar.</p>
+          <p className="text-5xl font-extrabold tabular-nums">${productPrice.toFixed(2)}</p>
+          <button
+            type="button"
+            onClick={handleBuyClick}
+            className="w-full min-h-[56px] rounded-xl px-5 py-4 text-[17px] md:text-xl font-extrabold tracking-wide transition-transform motion-safe:hover:scale-[1.02] active:scale-[0.99] bg-gradient-to-r from-[#FF3D00] to-[#FF7B00] text-white shadow-[0_12px_32px_-10px_rgba(255,61,0,0.75)]"
+          >
+            🔥 QUIERO MI TORRE PICANTE
+          </button>
+          <p className="text-[13px] md:text-sm text-[#CFCDD2]">Envío gratis a todo Ecuador · Pago contraentrega</p>
+          <p className="pt-4 text-[12px] text-[#A9A6AE]">Producto dirigido a adultos (+18). Juega con responsabilidad.</p>
         </div>
       </section>
 
