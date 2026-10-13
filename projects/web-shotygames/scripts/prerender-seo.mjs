@@ -79,15 +79,18 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante-v3",
+    route: "/landing/torre-picante",
     chunk: "src/pages/TorrePicanteV3Landing.tsx",
     // La 1ra foto del carrusel del hero, con el mismo srcset/sizes que su <img>.
     hero: "src/assets/torre-picante-1.webp",
     heroSrcset: [
       ["src/assets/torre-picante-1-640.webp", "640w"],
+      ["src/assets/torre-picante-1-760.webp", "760w"],
       ["src/assets/torre-picante-1.webp", "1080w"],
     ],
-    heroSizes: "(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)",
+    // Arriba del pliegue: titular y precio en 800, chips en 600.
+    fonts: ["poppins-800-latin.woff2", "poppins-600-latin.woff2"],
+    heroSizes: "(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), calc(70vw - 22px)", // = SIZES_CARRUSEL
     title: "Torre de Shots Picante 🌶️ - ¿Quién se atreve? | ShotyGames Ecuador",
     description:
       "51 bloques con retos atrevidos para jugar en grupo. Vaso tequilero incluido y ebook de 25 juegos de regalo. Envío gratis a todo Ecuador y pagas al recibir.",
@@ -95,7 +98,7 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante",
+    route: "/landing/torre-picante-v3",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
     hero: "src/assets/tpk2-00-hero-oferta.webp",
     // Mismo srcset/sizes que el <img> del hero: si el preload pidiera solo la
@@ -362,6 +365,12 @@ for (const page of pages) {
     } else {
       console.warn(`[prerender-seo] hero fuera del manifest: ${page.hero} (${page.route})`);
     }
+  }
+  // Pesos de fuente que esta landing usa arriba del pliegue y que index.html no
+  // precarga (solo 400 y 700): si llegan tarde, el titular se redibuja y empuja
+  // lo de abajo.
+  for (const f of page.fonts ?? []) {
+    preloads.push(`<link rel="preload" href="/fonts/${f}" as="font" type="font/woff2" crossorigin>`);
   }
   if (preloads.length) {
     html = html.replace("</head>", `  ${preloads.join("\n  ")}\n  </head>`);

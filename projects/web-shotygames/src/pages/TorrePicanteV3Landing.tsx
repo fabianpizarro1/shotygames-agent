@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import Seo from "@/components/Seo";
-import Footer from "@/components/Footer";
 import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { useRegaloDeHoy } from "@/hooks/useRegaloDeHoy";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -19,6 +18,8 @@ import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 
+// PRINCIPAL desde 2026-10-13 (/landing/torre-picante; la del póster pasó a
+// /landing/torre-picante-v3). Sin el <Footer> del sitio: pedido de Fabián.
 // V3 (2026-10-13): estructura y copy del "Prompt Maestro" de la IA externa
 // (18 bloques, tema oscuro, ángulo "¿quién se atreve a sacar el primer
 // bloque?"). Esa IA no mandó imágenes: van las fotos que ya teníamos, cada una
@@ -45,33 +46,53 @@ import imgPaso2640 from "@/assets/tpk2-05-paso2-leer-640.webp";
 import imgPaso3640 from "@/assets/tpk2-05-paso3-cumplir-640.webp";
 import torrePicante2 from "@/assets/torre-picante-2.webp";
 import torrePicante2_640 from "@/assets/torre-picante-2-640.webp";
+import torrePicante2_760 from "@/assets/torre-picante-2-760.webp";
 import torrePicante3 from "@/assets/torre-picante-3.webp";
 import torrePicante3_640 from "@/assets/torre-picante-3-640.webp";
+import torrePicante3_760 from "@/assets/torre-picante-3-760.webp";
 import torrePicante4 from "@/assets/torre-picante-4.webp";
 import torrePicante4_640 from "@/assets/torre-picante-4-640.webp";
+import torrePicante4_760 from "@/assets/torre-picante-4-760.webp";
 import torrePicante5 from "@/assets/torre-picante-5.webp";
 import torrePicante5_640 from "@/assets/torre-picante-5-640.webp";
+import torrePicante5_760 from "@/assets/torre-picante-5-760.webp";
 import torrePicante6 from "@/assets/torre-picante-6.webp";
 import torrePicante6_640 from "@/assets/torre-picante-6-640.webp";
+import torrePicante6_760 from "@/assets/torre-picante-6-760.webp";
 import torrePicante7 from "@/assets/torre-picante-7.webp";
 import torrePicante7_640 from "@/assets/torre-picante-7-640.webp";
+import torrePicante7_760 from "@/assets/torre-picante-7-760.webp";
 import torrePicante8 from "@/assets/torre-picante-8.webp";
 import torrePicante8_640 from "@/assets/torre-picante-8-640.webp";
+import torrePicante8_760 from "@/assets/torre-picante-8-760.webp";
 import torrePicante10 from "@/assets/torre-picante-10.webp";
 import torrePicante10_640 from "@/assets/torre-picante-10-640.webp";
+import torrePicante10_760 from "@/assets/torre-picante-10-760.webp";
 import imgOcasiones from "@/assets/torre-picante-life-grupo.webp";
 import imgOcasiones640 from "@/assets/torre-picante-life-grupo-640.webp";
 import torrePicante1_640 from "@/assets/torre-picante-1-640.webp";
+import torrePicante1_760 from "@/assets/torre-picante-1-760.webp";
 import imgEbook from "@/assets/ebook-25-juegos-portada.webp";
+import imgEbook420 from "@/assets/ebook-25-juegos-portada-420.webp";
 import imgCajaOferta from "@/assets/tpk3-oferta-caja.webp";
 import imgResena1 from "@/assets/tpk2-resena-1.webp";
+import imgResena1_600 from "@/assets/tpk2-resena-1-600.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
+import imgResena2_600 from "@/assets/tpk2-resena-2-600.webp";
 import imgResena3 from "@/assets/tpk2-resena-3.webp";
+import imgResena3_600 from "@/assets/tpk2-resena-3-600.webp";
 import imgResena4 from "@/assets/tpk2-resena-4.webp";
+import imgResena4_600 from "@/assets/tpk2-resena-4-600.webp";
 import imgTiktokCrush from "@/assets/tiktok/7649844245884439815.webp";
 import imgTiktokTimidos from "@/assets/tiktok/7638798502822202642.webp";
 
 const PRECIO = 29.99;
+
+/** En móvil se declara el 70% del ancho real: así un teléfono de densidad 3
+ *  baja la de 760 px (2,3x, no se nota) en vez de la de 1080/1400, y uno de
+ *  densidad 2 la de 640. La foto 0 es el LCP: el preload del prerender usa
+ *  exactamente este mismo valor (heroSizes) para no bajarla dos veces. */
+const SIZES_CARRUSEL = "(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), calc(70vw - 22px)";
 const PRECIO_TXT = `$${PRECIO.toFixed(2)}`;
 
 /** Los cuadros de tpk2-05 ya vienen cortados y en el orden real del juego. */
@@ -84,23 +105,23 @@ const PASOS = [
 /** Carrusel del hero: las fotos reales de la v1 (producto + bloques), sin el
  *  "¿Tuvieras sexo...?" (torre-picante-9). */
 const FOTOS_REALES = [
-  { src: torrePicante1, src640: torrePicante1_640, w: 1080, badge: "Foto real 📸", alt: "Torre de Shots Picante: caja, 1 vaso de shots y 51 bloques con retos" },
-  { src: torrePicante7, src640: torrePicante7_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Beso de 3" },
-  { src: torrePicante3, src640: torrePicante3_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Muestra tu ropa interior" },
-  { src: torrePicante4, src640: torrePicante4_640, w: 1400, badge: "Reto real 🌶️", alt: "Bloque real: Sácale una prenda al jugador que quieras" },
-  { src: torrePicante6, src640: torrePicante6_640, w: 1400, badge: "Reto real 💋", alt: "Bloque real: Besa apasionadamente durante 30 seg al jugador que quieras" },
-  { src: torrePicante10, src640: torrePicante10_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Dale una nalgada a alguien del sexo opuesto" },
-  { src: torrePicante2, src640: torrePicante2_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Por cada jugador que se saque una prenda tomas 1 shot" },
-  { src: torrePicante5, src640: torrePicante5_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Finge un orgasmo" },
-  { src: torrePicante8, src640: torrePicante8_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Di tu fantasía sexual" },
+  { src: torrePicante1, src640: torrePicante1_640, src760: torrePicante1_760, w: 1080, badge: "Foto real 📸", alt: "Torre de Shots Picante: caja, 1 vaso de shots y 51 bloques con retos" },
+  { src: torrePicante7, src640: torrePicante7_640, src760: torrePicante7_760, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Beso de 3" },
+  { src: torrePicante3, src640: torrePicante3_640, src760: torrePicante3_760, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Muestra tu ropa interior" },
+  { src: torrePicante4, src640: torrePicante4_640, src760: torrePicante4_760, w: 1400, badge: "Reto real 🌶️", alt: "Bloque real: Sácale una prenda al jugador que quieras" },
+  { src: torrePicante6, src640: torrePicante6_640, src760: torrePicante6_760, w: 1400, badge: "Reto real 💋", alt: "Bloque real: Besa apasionadamente durante 30 seg al jugador que quieras" },
+  { src: torrePicante10, src640: torrePicante10_640, src760: torrePicante10_760, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Dale una nalgada a alguien del sexo opuesto" },
+  { src: torrePicante2, src640: torrePicante2_640, src760: torrePicante2_760, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Por cada jugador que se saque una prenda tomas 1 shot" },
+  { src: torrePicante5, src640: torrePicante5_640, src760: torrePicante5_760, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Finge un orgasmo" },
+  { src: torrePicante8, src640: torrePicante8_640, src760: torrePicante8_760, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Di tu fantasía sexual" },
 ];
 
 /** Las mismas reseñas de la v2, tal cual las pasó Fabián (2026-10-07). */
 const RESENAS = [
-  { foto: imgResena1, nombre: "Daniela M.", ciudad: "Guayaquil", texto: "Me llegó súper rápido y la caja vino en buen estado. Lo usamos el fin de semana con amigos y terminamos riéndonos demasiado 😂 Los retos sí están picantes, recomendado." },
-  { foto: imgResena2, nombre: "Kevin R.", ciudad: "Quito", texto: "Pensé que iba a ser más tranquilo pero sí se pone bueno jajaja. La calidad de los bloques está mejor de lo que esperaba y llegó todo completo. Buen juego para una reunión." },
-  { foto: imgResena3, nombre: "Sofía P.", ciudad: "Cuenca", texto: "Lo compré para una noche con amigos y nos encantó. Hay retos que dan mucha risa y otros que sí te hacen pensarlo dos veces 😅 Llegó bien empacado y sin problemas." },
-  { foto: imgResena4, nombre: "Mateo C.", ciudad: "Machala", texto: "Llegó tal cual se ve en las fotos. Ya lo estrenamos y estuvo buenísimo, especialmente cuando ya llevábamos unas rondas 😂 Sí lo volvería a comprar para regalar." },
+  { foto: imgResena1, foto600: imgResena1_600, nombre: "Daniela M.", ciudad: "Guayaquil", texto: "Me llegó súper rápido y la caja vino en buen estado. Lo usamos el fin de semana con amigos y terminamos riéndonos demasiado 😂 Los retos sí están picantes, recomendado." },
+  { foto: imgResena2, foto600: imgResena2_600, nombre: "Kevin R.", ciudad: "Quito", texto: "Pensé que iba a ser más tranquilo pero sí se pone bueno jajaja. La calidad de los bloques está mejor de lo que esperaba y llegó todo completo. Buen juego para una reunión." },
+  { foto: imgResena3, foto600: imgResena3_600, nombre: "Sofía P.", ciudad: "Cuenca", texto: "Lo compré para una noche con amigos y nos encantó. Hay retos que dan mucha risa y otros que sí te hacen pensarlo dos veces 😅 Llegó bien empacado y sin problemas." },
+  { foto: imgResena4, foto600: imgResena4_600, nombre: "Mateo C.", ciudad: "Machala", texto: "Llegó tal cual se ve en las fotos. Ya lo estrenamos y estuvo buenísimo, especialmente cuando ya llevábamos unas rondas 😂 Sí lo volvería a comprar para regalar." },
 ];
 
 const TIKTOKS: VideoTikTok[] = [
@@ -219,7 +240,7 @@ const TorrePicanteV3Landing = () => {
       <Seo
         title="Torre de Shots Picante 🌶️ - ¿Quién se atreve? | ShotyGames Ecuador"
         description="51 bloques con retos atrevidos para jugar en grupo. Vaso tequilero incluido y ebook de 25 juegos de regalo. Envío gratis a todo Ecuador y pagas al recibir."
-        canonical="https://www.shotygames.com/landing/torre-picante-v3"
+        canonical="https://www.shotygames.com/landing/torre-picante"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
       />
@@ -258,8 +279,8 @@ const TorrePicanteV3Landing = () => {
                       {/* La 0 es el LCP: CarouselImage le da eager + fetchpriority. */}
                       <CarouselImage
                         src={foto.src}
-                        srcSet={`${foto.src640} 640w, ${foto.src} ${foto.w}w`}
-                        sizes="(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)"
+                        srcSet={`${foto.src640} 640w, ${foto.src760} 760w, ${foto.src} ${foto.w}w`}
+                        sizes={SIZES_CARRUSEL}
                         alt={foto.alt}
                         index={index}
                         current={slideFotos}
@@ -272,8 +293,8 @@ const TorrePicanteV3Landing = () => {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="left-2 md:left-4 border-none bg-white/90 text-[#101014] hover:bg-white" />
-              <CarouselNext className="right-2 md:right-4 border-none bg-white/90 text-[#101014] hover:bg-white" />
+              <CarouselPrevious className="left-2 md:left-4 h-10 w-10 border-none bg-white/90 text-[#101014] hover:bg-white" />
+              <CarouselNext className="right-2 md:right-4 h-10 w-10 border-none bg-white/90 text-[#101014] hover:bg-white" />
             </Carousel>
             <p className={`mt-2 text-center text-[13px] ${TEXTO_2}`}>👉 Desliza para ver los retos reales que trae</p>
           </div>
@@ -545,6 +566,8 @@ const TorrePicanteV3Landing = () => {
         <div className="grid md:grid-cols-[2fr_3fr] gap-7 md:gap-14 items-center">
           <img
             src={imgEbook}
+            srcSet={`${imgEbook420} 420w, ${imgEbook} 512w`}
+            sizes="(min-width: 768px) 300px, 62vw"
             alt="Portada del ebook 25 Juegos para Fiestas de ShotyGames"
             width={512}
             height={800}
@@ -609,6 +632,8 @@ const TorrePicanteV3Landing = () => {
             >
               <img
                 src={r.foto}
+                srcSet={`${r.foto600} 600w, ${r.foto} 720w`}
+                sizes="(min-width: 1024px) 262px, (min-width: 640px) 46vw, 80vw"
                 alt={`Torre de Shots Picante recibida por ${r.nombre} en ${r.ciudad}`}
                 width={720}
                 height={960}
@@ -749,8 +774,6 @@ const TorrePicanteV3Landing = () => {
         </div>
       </section>
 
-      <Footer />
-
       {/* ---------- BARRA FIJA MOVIL ---------- */}
       <div
         className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ${
@@ -759,7 +782,7 @@ const TorrePicanteV3Landing = () => {
         aria-hidden={!mostrarBarra}
       >
         <div className={`bg-[#101014]/95 backdrop-blur border-t border-white/10 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl`}>
-          <p className="text-center text-[11px] font-semibold text-yellow-300 mb-1.5">
+          <p className="text-center text-[12px] font-semibold text-yellow-300 mb-1.5">
             🎁 Ebook de 25 juegos gratis · cierra en <span className="tabular-nums font-bold">{regalo.restante}</span>
           </p>
           <button
@@ -769,7 +792,7 @@ const TorrePicanteV3Landing = () => {
             className={`flex w-full min-h-[52px] flex-col items-center justify-center rounded-xl ${DEGRADADO} font-extrabold leading-tight shadow-xl`}
           >
             <span className="text-[16px]">PEDIR POR {PRECIO_TXT}</span>
-            <span className="text-[11px] font-semibold text-white/90">Pagas al recibir</span>
+            <span className="text-[12px] font-semibold text-white/90">Pagas al recibir</span>
           </button>
         </div>
       </div>
