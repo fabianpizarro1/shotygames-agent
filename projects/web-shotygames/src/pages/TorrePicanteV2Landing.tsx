@@ -4,7 +4,7 @@ import { useCheckoutRestore } from "@/hooks/useCheckoutRestore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, Gift, Truck, Clock, Heart, Zap, CheckCircle2, Banknote, Flame, Users } from "lucide-react";
+import { ShoppingCart, Star, Gift, Truck, Clock, Heart, Zap, CheckCircle2, Banknote, Flame, Users, Snowflake, Laugh } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
@@ -300,38 +300,44 @@ const TorrePicanteV2Landing = () => {
         <Cta texto="LA QUIERO EN MI CASA" variante="completo" onClick={handleBuyClick} precio={productPrice} restante={regalo.restante} />
       </section>
 
-      {/* ---------- EL PROBLEMA, AGITADO ---------- */}
-      <section className="py-10 md:py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto grid md:grid-cols-2 gap-6 md:gap-10 items-center">
-            <div className="rounded-2xl overflow-hidden shadow-xl">
-              <img
-                src={imgProblema}
-                srcSet={`${imgProblema640} 640w, ${imgProblema} 1080w`}
-                sizes="(min-width: 768px) 364px, calc(100vw - 32px)"
-                alt="Un invitado aburrido en una previa que no arranca"
-                width={1080}
-                height={1080}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto"
-              />
-            </div>
-            <div className="text-center md:text-left space-y-3 md:space-y-4">
-              <h2 className="text-2xl md:text-4xl font-bold leading-tight">
-                Se juntan, ponen música, y a la hora ya no saben qué más hacer.
+      {/* ---------- EL PROBLEMA ----------
+          Copiada tal cual de la principal (TorrePicanteV3Landing, bloque 03),
+          con su fondo oscuro, a pedido de Fabián (2026-10-13). */}
+      <section className="px-4 py-12 md:py-20 bg-[#19191F] text-white">
+        <div className="mx-auto max-w-[1140px]">
+          <div className="grid md:grid-cols-2 gap-7 md:gap-14 items-center">
+            <div className="space-y-4">
+              <h2 className="text-[26px] leading-[1.15] md:text-[40px] font-extrabold tracking-tight">
+                ¿Otra reunión en la que nadie sabe qué hacer?
               </h2>
-              <div className="text-base md:text-lg text-muted-foreground space-y-3">
-                <p>
-                  Nadie quiere ser el aburrido, pero tampoco el que propone algo y queda en silencio.
-                  Y la previa se apaga antes de arrancar de verdad.
-                </p>
-                <p>No faltan ganas. Falta algo que rompa el hielo por ustedes.</p>
-              </div>
-              <p className="text-lg md:text-2xl font-bold bg-gradient-to-r from-[#ff3d00] to-[#ff7b00] bg-clip-text text-transparent">
-                Alguien tiene que sacar el primer bloque.
+              <p className="text-[15px] md:text-lg leading-relaxed text-[#CFCDD2]">
+                La música está puesta, los amigos llegaron... pero falta algo para arrancar. Torre Picante pone un
+                reto sobre la mesa y hace que cada turno sea impredecible.
               </p>
+              <div className="grid grid-cols-3 gap-2 md:gap-3 pt-1">
+                {[
+                  { Icono: Snowflake, t: "Rompe el hielo" },
+                  { Icono: Laugh, t: "Saca risas y reacciones" },
+                  { Icono: Users, t: "Hace participar al grupo" },
+                ].map(({ Icono, t }) => (
+                  <div key={t} className="rounded-xl bg-[#101014] border border-white/10 px-2 py-3 text-center">
+                    <Icono className="mx-auto mb-1.5 h-6 w-6 text-[#FF7B00]" />
+                    <p className="text-[12px] md:text-sm font-bold leading-tight">{t}</p>
+                  </div>
+                ))}
+              </div>
             </div>
+            <img
+              src={imgProblema}
+              srcSet={`${imgProblema640} 640w, ${imgProblema} 1080w`}
+              sizes="(min-width: 1140px) 513px, (min-width: 768px) calc(50vw - 72px), calc(100vw - 32px)"
+              alt="Un invitado aburrido en una reunión que no arranca"
+              width={1080}
+              height={1080}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-auto rounded-2xl shadow-2xl md:order-first"
+            />
           </div>
         </div>
       </section>
