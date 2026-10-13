@@ -59,6 +59,13 @@ Campos que están en las dos tiendas (base común):
 **`alto` en px es importante** — sin eso el navegador reserva mal el espacio y la página salta
 al cargar (CLS). Ancho de referencia: 940.
 
+**Diseño EDITORIAL (el que Fabián armó en capturas, 2026-10-12):** si el producto trae el campo
+`editorial` en `productos.ts`, `Landing.tsx` lo dibuja con `pages/LandingEditorial.tsx` en vez de la
+plantilla estándar o los bloques de imagen. Es el diseño preferido de Fabián para landings nuevas:
+solo se llena el copy (cinta, galería, tiles, problema, solución, pasos, antes/después, chats,
+comparación 2 columnas, dudas en grupos, reseñas, pie). Un texto admite **negrita**. Ver el producto
+`proyector-navideno` como ejemplo completo.
+
 **`cadenciaCta`**: cada cuántos bloques se fuerza un botón. Ojo con el 0 — es la forma de
 APAGARLO del todo; cualquier otro número sigue metiendo el automático (`i % N === 1` da true
 en `i=1` incluso con N grande).
