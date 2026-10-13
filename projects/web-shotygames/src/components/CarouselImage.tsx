@@ -23,9 +23,12 @@ type Props = {
   /** Cuántas slides a cada lado se precargan. */
   ventana?: number;
   className?: string;
+  /** Opcionales: versiones por ancho, para que el celular baje la chica. */
+  srcSet?: string;
+  sizes?: string;
 };
 
-export const CarouselImage = ({ src, alt, index, current, ventana = 1, className }: Props) => {
+export const CarouselImage = ({ src, alt, index, current, ventana = 1, className, srcSet, sizes }: Props) => {
   const cerca = Math.abs(index - current) <= ventana;
   // Una vez que estuvo cerca, se queda: el usuario ya la vio o la va a ver.
   const yaCargo = useRef(cerca);
@@ -36,6 +39,8 @@ export const CarouselImage = ({ src, alt, index, current, ventana = 1, className
   return (
     <img
       src={src}
+      srcSet={srcSet}
+      sizes={sizes}
       alt={alt}
       className={className}
       loading={index === 0 ? "eager" : "lazy"}

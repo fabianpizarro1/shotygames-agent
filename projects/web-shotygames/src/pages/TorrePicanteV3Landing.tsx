@@ -6,6 +6,9 @@ import { useRegaloDeHoy } from "@/hooks/useRegaloDeHoy";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import { TikTokCarrusel, type VideoTikTok } from "@/components/TikTokCarrusel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
+import { CarouselImage } from "@/components/CarouselImage";
+import { useSlideActual } from "@/hooks/useSlideActual";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 import {
   Star, Gift, Truck, Clock, CheckCircle2, Banknote, Users, Snowflake, Laugh, Package,
@@ -24,8 +27,12 @@ import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 // Decisiones de Fabián: envío gratis "a todo Ecuador" (no "continental"), el
 // contador del regalo se queda, y fuera el bloque "¿Tuvieras sexo con alguien
 // de los presentes?" (torre-picante-9).
-import imgHero from "@/assets/tpk2-02-hero-jugando.webp";
-import imgHero640 from "@/assets/tpk2-02-hero-jugando-640.webp";
+// 2026-10-13 (2da vuelta): el hero pasa a ser el carrusel de fotos reales de la
+// v1 (pedido de Fabián); por eso "Cada bloque es una sorpresa" y "Qué incluye"
+// cambiaron de foto, y la de la caja en la mano (tpk2-08) se sacó: la caja se
+// veía muy chica.
+import imgJugando from "@/assets/tpk2-02-hero-jugando.webp";
+import imgJugando640 from "@/assets/tpk2-02-hero-jugando-640.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
 import imgProblema640 from "@/assets/tpk2-03-problema-640.webp";
 import imgPartida from "@/assets/tpk2-07-con-torre.webp";
@@ -36,18 +43,25 @@ import imgPaso3 from "@/assets/tpk2-05-paso3-cumplir.webp";
 import imgPaso1640 from "@/assets/tpk2-05-paso1-sacar-640.webp";
 import imgPaso2640 from "@/assets/tpk2-05-paso2-leer-640.webp";
 import imgPaso3640 from "@/assets/tpk2-05-paso3-cumplir-640.webp";
-import imgReto2 from "@/assets/torre-picante-2-640.webp";
-import imgReto3 from "@/assets/torre-picante-3-640.webp";
-import imgReto4 from "@/assets/torre-picante-4-640.webp";
-import imgReto5 from "@/assets/torre-picante-5-640.webp";
-import imgReto6 from "@/assets/torre-picante-6-640.webp";
-import imgReto7 from "@/assets/torre-picante-7-640.webp";
-import imgReto8 from "@/assets/torre-picante-8-640.webp";
-import imgReto10 from "@/assets/torre-picante-10-640.webp";
+import torrePicante2 from "@/assets/torre-picante-2.webp";
+import torrePicante2_640 from "@/assets/torre-picante-2-640.webp";
+import torrePicante3 from "@/assets/torre-picante-3.webp";
+import torrePicante3_640 from "@/assets/torre-picante-3-640.webp";
+import torrePicante4 from "@/assets/torre-picante-4.webp";
+import torrePicante4_640 from "@/assets/torre-picante-4-640.webp";
+import torrePicante5 from "@/assets/torre-picante-5.webp";
+import torrePicante5_640 from "@/assets/torre-picante-5-640.webp";
+import torrePicante6 from "@/assets/torre-picante-6.webp";
+import torrePicante6_640 from "@/assets/torre-picante-6-640.webp";
+import torrePicante7 from "@/assets/torre-picante-7.webp";
+import torrePicante7_640 from "@/assets/torre-picante-7-640.webp";
+import torrePicante8 from "@/assets/torre-picante-8.webp";
+import torrePicante8_640 from "@/assets/torre-picante-8-640.webp";
+import torrePicante10 from "@/assets/torre-picante-10.webp";
+import torrePicante10_640 from "@/assets/torre-picante-10-640.webp";
 import imgOcasiones from "@/assets/torre-picante-life-grupo.webp";
 import imgOcasiones640 from "@/assets/torre-picante-life-grupo-640.webp";
-import imgCalidad from "@/assets/tpk2-08-llega-mano.webp";
-import imgIncluye640 from "@/assets/torre-picante-1-640.webp";
+import torrePicante1_640 from "@/assets/torre-picante-1-640.webp";
 import imgEbook from "@/assets/ebook-25-juegos-portada.webp";
 import imgCajaOferta from "@/assets/tpk3-oferta-caja.webp";
 import imgResena1 from "@/assets/tpk2-resena-1.webp";
@@ -67,16 +81,18 @@ const PASOS = [
   { src: imgPaso3, src640: imgPaso3640, w: 1024, h: 515, t: "SIGUE LA RONDA", d: "La torre cambia en cada turno... y nadie sabe qué viene después.", alt: "Jugador celebrando al lado de la torre en plena partida" },
 ];
 
-/** Fotos reales bloque por bloque (las de la v1, en 640 px). */
-const RETOS = [
-  { src: imgReto7, alt: "Bloque real: Beso de 3" },
-  { src: imgReto3, alt: "Bloque real: Muestra tu ropa interior" },
-  { src: imgReto4, alt: "Bloque real: Sácale una prenda al jugador que quieras" },
-  { src: imgReto6, alt: "Bloque real: Besa apasionadamente durante 30 seg al jugador que quieras" },
-  { src: imgReto10, alt: "Bloque real: Dale una nalgada a alguien del sexo opuesto" },
-  { src: imgReto2, alt: "Bloque real: Por cada jugador que se saque una prenda tomas 1 shot" },
-  { src: imgReto5, alt: "Bloque real: Finge un orgasmo" },
-  { src: imgReto8, alt: "Bloque real: Di tu fantasía sexual" },
+/** Carrusel del hero: las fotos reales de la v1 (producto + bloques), sin el
+ *  "¿Tuvieras sexo...?" (torre-picante-9). */
+const FOTOS_REALES = [
+  { src: torrePicante1, src640: torrePicante1_640, w: 1080, badge: "Foto real 📸", alt: "Torre de Shots Picante: caja, 1 vaso de shots y 51 bloques con retos" },
+  { src: torrePicante7, src640: torrePicante7_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Beso de 3" },
+  { src: torrePicante3, src640: torrePicante3_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Muestra tu ropa interior" },
+  { src: torrePicante4, src640: torrePicante4_640, w: 1400, badge: "Reto real 🌶️", alt: "Bloque real: Sácale una prenda al jugador que quieras" },
+  { src: torrePicante6, src640: torrePicante6_640, w: 1400, badge: "Reto real 💋", alt: "Bloque real: Besa apasionadamente durante 30 seg al jugador que quieras" },
+  { src: torrePicante10, src640: torrePicante10_640, w: 1400, badge: "Reto real 😈", alt: "Bloque real: Dale una nalgada a alguien del sexo opuesto" },
+  { src: torrePicante2, src640: torrePicante2_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Por cada jugador que se saque una prenda tomas 1 shot" },
+  { src: torrePicante5, src640: torrePicante5_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Finge un orgasmo" },
+  { src: torrePicante8, src640: torrePicante8_640, w: 1400, badge: "Reto real 🔥", alt: "Bloque real: Di tu fantasía sexual" },
 ];
 
 /** Las mismas reseñas de la v2, tal cual las pasó Fabián (2026-10-07). */
@@ -162,6 +178,10 @@ const TorrePicanteV3Landing = () => {
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
   const regalo = useRegaloDeHoy();
 
+  // El carrusel baja solo la foto a la vista y la vecina (CarouselImage).
+  const [apiFotos, setApiFotos] = useState<CarouselApi>();
+  const slideFotos = useSlideActual(apiFotos);
+
   // La barra fija de abajo se esconde solo mientras el CTA del hero está en
   // pantalla (dos botones juntos competían). Al cargar, en móvil ese CTA queda
   // bajo el pliegue, así que la barra ya está: el primer pantallazo siempre
@@ -229,26 +249,33 @@ const TorrePicanteV3Landing = () => {
             </p>
           </div>
 
-          <div className="relative mt-5 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2 -mx-4 md:mx-0">
-            <img
-              src={imgHero}
-              srcSet={`${imgHero640} 640w, ${imgHero} 1080w`}
-              sizes="(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), 100vw"
-              alt="Chica sacando un bloque de la Torre de Shots Picante, con la caja al lado"
-              width={1080}
-              height={1221}
-              loading="eager"
-              // Es el LCP. En minúscula porque React 18 no reconoce `fetchPriority`.
-              {...{ fetchpriority: "high" }}
-              decoding="sync"
-              className="w-full h-auto md:rounded-3xl md:shadow-2xl"
-            />
-            {/* Precio en HTML sobre la esquina vacía de la foto (la pared), para
-                que el primer pantallazo del celular lo muestre. */}
-            <div className="absolute top-3 right-3 rounded-2xl bg-[#101014]/85 backdrop-blur px-3.5 py-2 text-right shadow-xl md:hidden">
-              <p className="text-[26px] font-extrabold leading-none tabular-nums">{PRECIO_TXT}</p>
-              <p className="mt-1 text-[11px] font-semibold text-[#CFCDD2]">Envío gratis · Pagas al recibir</p>
-            </div>
+          <div className="mt-5 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2">
+            <Carousel opts={{ align: "center", loop: true }} setApi={setApiFotos} className="w-full">
+              <CarouselContent>
+                {FOTOS_REALES.map((foto, index) => (
+                  <CarouselItem key={foto.alt}>
+                    <div className={`relative aspect-square overflow-hidden rounded-2xl md:rounded-3xl ${SUPERFICIE} shadow-2xl`}>
+                      {/* La 0 es el LCP: CarouselImage le da eager + fetchpriority. */}
+                      <CarouselImage
+                        src={foto.src}
+                        srcSet={`${foto.src640} 640w, ${foto.src} ${foto.w}w`}
+                        sizes="(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)"
+                        alt={foto.alt}
+                        index={index}
+                        current={slideFotos}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className={`absolute top-3 right-3 rounded-full ${DEGRADADO} px-3 py-1 text-[12px] md:text-sm font-bold shadow-lg`}>
+                        {foto.badge}
+                      </span>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="left-2 md:left-4 border-none bg-white/90 text-[#101014] hover:bg-white" />
+              <CarouselNext className="right-2 md:right-4 border-none bg-white/90 text-[#101014] hover:bg-white" />
+            </Carousel>
+            <p className={`mt-2 text-center text-[13px] ${TEXTO_2}`}>👉 Desliza para ver los retos reales que trae</p>
           </div>
 
           <div className="mt-5 md:mt-6 md:col-start-2 md:row-start-2 md:self-start space-y-4">
@@ -394,32 +421,33 @@ const TorrePicanteV3Landing = () => {
         </p>
       </Seccion>
 
-      {/* ---------- 06 INTRIGA: retos reales ---------- */}
+      {/* ---------- 06 INTRIGA ---------- */}
       <Seccion>
-        <div className="max-w-2xl mx-auto text-center mb-6 md:mb-10 space-y-4">
-          <H2>Cada bloque es una sorpresa 🌶️</H2>
-          <p className={`text-[15px] md:text-lg leading-relaxed ${TEXTO_2}`}>
-            Algunos retos provocan carcajadas. Otros hacen que todos miren al siguiente jugador. Lo único seguro
-            es que nadie sabe cuál le tocará sacar.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Chip>Retos inesperados</Chip>
-            <Chip>Diversión en grupo</Chip>
-            <Chip>Partidas diferentes</Chip>
+        <div className="grid md:grid-cols-2 gap-7 md:gap-14 items-center">
+          <div className="space-y-4">
+            <H2>Cada bloque es una sorpresa 🌶️</H2>
+            <p className={`text-[15px] md:text-lg leading-relaxed ${TEXTO_2}`}>
+              Algunos retos provocan carcajadas. Otros hacen que todos miren al siguiente jugador. Lo único seguro
+              es que nadie sabe cuál le tocará sacar.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Chip>Retos inesperados</Chip>
+              <Chip>Diversión en grupo</Chip>
+              <Chip>Partidas diferentes</Chip>
+            </div>
           </div>
+          <img
+            src={imgJugando}
+            srcSet={`${imgJugando640} 640w, ${imgJugando} 1080w`}
+            sizes="(min-width: 1140px) 513px, (min-width: 768px) calc(50vw - 72px), calc(100vw - 32px)"
+            alt="Chica sacando un bloque de la Torre de Shots Picante, con la caja al lado"
+            width={1080}
+            height={1221}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-auto rounded-2xl shadow-2xl"
+          />
         </div>
-        {/* Tira con scroll nativo en móvil, grilla de 4 en escritorio. */}
-        <div className="-mx-4 px-4 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:px-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible">
-          {RETOS.map((r) => (
-            <figure key={r.alt} className="relative snap-center shrink-0 w-[72%] sm:w-[45%] md:w-auto overflow-hidden rounded-2xl shadow-xl">
-              <img src={r.src} alt={r.alt} width={640} height={640} loading="lazy" decoding="async" className="w-full aspect-square object-cover" />
-              <span className={`absolute top-2.5 right-2.5 rounded-full ${DEGRADADO} px-2.5 py-1 text-[11px] font-bold`}>
-                Reto real
-              </span>
-            </figure>
-          ))}
-        </div>
-        <p className={`mt-2 text-center text-xs ${TEXTO_2} md:hidden`}>👉 Desliza para ver más retos reales</p>
       </Seccion>
 
       {/* ---------- 07 OCASIONES ---------- */}
@@ -453,16 +481,7 @@ const TorrePicanteV3Landing = () => {
 
       {/* ---------- 08 CALIDAD ---------- */}
       <Seccion>
-        <div className="grid md:grid-cols-2 gap-7 md:gap-14 items-center">
-          <img
-            src={imgCalidad}
-            alt="La caja de la Torre de Shots Picante en la mano"
-            width={680}
-            height={768}
-            loading="lazy"
-            decoding="async"
-            className="w-full max-w-md mx-auto h-auto rounded-2xl shadow-2xl md:order-first order-last"
-          />
+        <div className="max-w-3xl mx-auto text-center">
           <div className="space-y-4">
             <H2>Se ve bien en fotos. Mejor cuando lo tienes en la mesa.</H2>
             <p className={`text-[15px] md:text-lg leading-relaxed ${TEXTO_2}`}>
@@ -510,13 +529,13 @@ const TorrePicanteV3Landing = () => {
             </p>
           </div>
           <img
-            src={imgIncluye640}
-            alt="Torre de Shots Picante: incluye 1 vaso de shots y 51 bloques con retos"
-            width={640}
-            height={640}
+            src={imgCajaOferta}
+            alt="Caja de la Torre de Shots Picante"
+            width={520}
+            height={720}
             loading="lazy"
             decoding="async"
-            className="w-full max-w-md mx-auto h-auto rounded-2xl shadow-2xl"
+            className="w-full max-w-sm mx-auto h-auto rounded-2xl shadow-2xl"
           />
         </div>
       </Seccion>
@@ -641,17 +660,8 @@ const TorrePicanteV3Landing = () => {
         <div className="relative mx-auto max-w-3xl">
           <H2 className="text-center mb-8">Lleva la Torre Picante a tu próxima fiesta 🌶️</H2>
           <div className={`rounded-3xl ${SUPERFICIE} border border-[#FF3D00]/40 p-5 md:p-8 shadow-[0_30px_80px_-30px_rgba(255,61,0,0.6)]`}>
-            <div className="grid grid-cols-[96px_1fr] md:grid-cols-[160px_1fr] gap-4 md:gap-7 items-center">
-              <img
-                src={imgCajaOferta}
-                alt="Caja de la Torre de Shots Picante"
-                width={520}
-                height={720}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-auto rounded-xl"
-              />
-              <ul className="space-y-2">
+            <div>
+              <ul className="mx-auto w-fit space-y-2.5">
                 {[
                   "51 bloques con retos",
                   "1 vaso tequilero",
@@ -659,7 +669,7 @@ const TorrePicanteV3Landing = () => {
                   "Envío gratis a todo Ecuador",
                   "Pago contraentrega",
                 ].map((t) => (
-                  <li key={t} className="flex items-start gap-2 text-[14px] md:text-lg font-semibold">
+                  <li key={t} className="flex items-start gap-2 text-[15px] md:text-lg font-semibold">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#FF7B00]" />
                     {t}
                   </li>
