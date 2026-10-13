@@ -38,8 +38,6 @@ import imgHeroOferta640 from "@/assets/tpk2-00-hero-oferta-640.webp";
 import imgHeroOferta760 from "@/assets/tpk2-00-hero-oferta-760.webp";
 import imgProblema from "@/assets/tpk2-03-problema.webp";
 import imgProblema640 from "@/assets/tpk2-03-problema-640.webp";
-import imgSolucion from "@/assets/tpk2-04-solucion.webp";
-import imgSolucion640 from "@/assets/tpk2-04-solucion-640.webp";
 import imgPaso1 from "@/assets/tpk2-05-paso1-sacar.webp";
 import imgPaso2 from "@/assets/tpk2-05-paso2-leer.webp";
 import imgPaso3 from "@/assets/tpk2-05-paso3-cumplir.webp";
@@ -314,18 +312,6 @@ const TorrePicanteV2Landing = () => {
                 La música está puesta, los amigos llegaron... pero falta algo para arrancar. Torre Picante pone un
                 reto sobre la mesa y hace que cada turno sea impredecible.
               </p>
-              <div className="grid grid-cols-3 gap-2 md:gap-3 pt-1">
-                {[
-                  { Icono: Snowflake, t: "Rompe el hielo" },
-                  { Icono: Laugh, t: "Saca risas y reacciones" },
-                  { Icono: Users, t: "Hace participar al grupo" },
-                ].map(({ Icono, t }) => (
-                  <div key={t} className="rounded-xl bg-[#101014] border border-white/10 px-2 py-3 text-center">
-                    <Icono className="mx-auto mb-1.5 h-6 w-6 text-[#FF7B00]" />
-                    <p className="text-[12px] md:text-sm font-bold leading-tight">{t}</p>
-                  </div>
-                ))}
-              </div>
             </div>
             <img
               src={imgProblema}
@@ -393,39 +379,52 @@ const TorrePicanteV2Landing = () => {
                 </div>
               </figure>
             </div>
+            {/* Las 3 tarjetas que estaban en "¿Otra reunión...?": movidas acá abajo
+                de las fotos a pedido de Fabián (2026-10-13), con su mismo estilo. */}
+            <div className="grid grid-cols-3 gap-2 md:gap-3 mt-5 md:mt-8">
+              {[
+                { Icono: Snowflake, t: "Rompe el hielo" },
+                { Icono: Laugh, t: "Saca risas y reacciones" },
+                { Icono: Users, t: "Hace participar al grupo" },
+              ].map(({ Icono, t }) => (
+                <div key={t} className="rounded-xl bg-[#101014] text-white border border-white/10 px-2 py-3 text-center">
+                  <Icono className="mx-auto mb-1.5 h-6 w-6 text-[#FF7B00]" />
+                  <p className="text-[12px] md:text-sm font-bold leading-tight">{t}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ---------- LA SOLUCION + MECANISMO UNICO ---------- */}
+      {/* ---------- VIDEOS DE TIKTOK ---------- */}
+      {TIKTOKS.length > 0 && (
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center max-w-xl mx-auto mb-6 md:mb-8">
+                <p className="text-xs md:text-sm font-bold tracking-[0.2em] text-[#ff3d00] uppercase mb-2">
+                  Videos de TikTok
+                </p>
+                <h2 className="text-2xl md:text-4xl font-bold leading-tight">
+                  Míralo en acción
+                </h2>
+              </div>
+              <TikTokCarrusel videos={TIKTOKS} />
+              <p className="text-center text-xs text-muted-foreground mt-2 md:hidden">
+                👉 Desliza y toca para reproducir
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ---------- MECANISMO UNICO ----------
+          Sin la foto y el "Se arma en la mesa en 2 minutos" de arriba: los sacó
+          Fabián (2026-10-13); quedan solo las 3 tarjetas. */}
       <section className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8 md:gap-10 items-center mb-8 md:mb-10">
-              <div className="text-center md:text-left order-2 md:order-1">
-                <h2 className="text-2xl md:text-4xl font-bold mb-3">
-                  Se arma en la mesa en 2 minutos
-                </h2>
-                <p className="text-base md:text-xl text-muted-foreground">
-                  Cada bloque tiene un reto distinto. Sacan uno, lo cumplen, siguen.
-                  Lo que empieza incómodo termina en risas — y ninguna previa sale igual.
-                </p>
-              </div>
-              <div className="order-1 md:order-2 rounded-2xl overflow-hidden shadow-2xl max-w-md mx-auto w-full">
-                <img
-                  src={imgSolucion}
-                  srcSet={`${imgSolucion640} 640w, ${imgSolucion} 1080w`}
-                  sizes="(min-width: 480px) 448px, calc(100vw - 32px)"
-                  alt="Torre de Shots Picante: diversión en grupo, súper picante, ideal para fiestas, regalo original"
-                  width={1080}
-                  height={1440}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-auto"
-                />
-              </div>
-            </div>
-
             {/* Mecanismo único: por qué ESTA torre y no cualquier jenga */}
             <div className="grid md:grid-cols-3 gap-4 md:gap-5">
               <Card className="p-5 md:p-6 border-2 border-[#ff3d00]/20 hover:shadow-xl transition-all">
@@ -595,28 +594,6 @@ const TorrePicanteV2Landing = () => {
           </div>
         </div>
       </section>
-
-      {/* ---------- VIDEOS DE TIKTOK ---------- */}
-      {TIKTOKS.length > 0 && (
-        <section className="py-12 md:py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center max-w-xl mx-auto mb-6 md:mb-8">
-                <p className="text-xs md:text-sm font-bold tracking-[0.2em] text-[#ff3d00] uppercase mb-2">
-                  Videos de TikTok
-                </p>
-                <h2 className="text-2xl md:text-4xl font-bold leading-tight">
-                  Míralo en acción
-                </h2>
-              </div>
-              <TikTokCarrusel videos={TIKTOKS} />
-              <p className="text-center text-xs text-muted-foreground mt-2 md:hidden">
-                👉 Desliza y toca para reproducir
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ---------- PRUEBA SOCIAL ----------
           Tira horizontal en móvil (una reseña y media a la vista), 4 columnas
