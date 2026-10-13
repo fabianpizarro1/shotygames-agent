@@ -329,7 +329,7 @@ const TorrePicanteV3Landing = () => {
             </p>
 
             <div className="flex flex-col items-center gap-1 pt-1">
-              <div className="flex gap-0.5" aria-label="5 de 5 estrellas">
+              <div className="flex gap-0.5" role="img" aria-label="5 de 5 estrellas">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-4 w-4 fill-[#FF7B00] text-[#FF7B00]" />
                 ))}
@@ -617,7 +617,7 @@ const TorrePicanteV3Landing = () => {
       {/* ---------- 13 RESEÑAS ---------- */}
       <Seccion>
         <div className="text-center max-w-xl mx-auto mb-6 md:mb-10">
-          <div className="flex justify-center gap-1 mb-3" aria-label="5 de 5 estrellas">
+          <div className="flex justify-center gap-1 mb-3" role="img" aria-label="5 de 5 estrellas">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-6 w-6 fill-[#FF7B00] text-[#FF7B00]" />
             ))}
@@ -642,7 +642,7 @@ const TorrePicanteV3Landing = () => {
                 className="w-full aspect-[3/4] object-cover"
               />
               <div className="flex flex-1 flex-col gap-2 p-4 md:p-5">
-                <div className="flex gap-0.5" aria-label="5 de 5 estrellas">
+                <div className="flex gap-0.5" role="img" aria-label="5 de 5 estrellas">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-[#FF7B00] text-[#FF7B00]" />
                   ))}
@@ -770,7 +770,7 @@ const TorrePicanteV3Landing = () => {
           <p className="text-5xl font-extrabold tabular-nums">{PRECIO_TXT}</p>
           <CtaBoton onClick={handleBuyClick} texto="🔥 QUIERO MI TORRE PICANTE" />
           <p className={`text-[13px] md:text-sm ${TEXTO_2}`}>Envío gratis a todo Ecuador · Pago contraentrega</p>
-          <p className="pt-4 text-[12px] text-white/50">Producto dirigido a adultos (+18). Juega con responsabilidad.</p>
+          <p className="pt-4 text-[12px] text-[#A9A6AE]">Producto dirigido a adultos (+18). Juega con responsabilidad.</p>
         </div>
       </section>
 
