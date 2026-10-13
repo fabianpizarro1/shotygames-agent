@@ -79,6 +79,22 @@ const pages = [
     type: "product",
   },
   {
+    route: "/landing/torre-picante-v3",
+    chunk: "src/pages/TorrePicanteV3Landing.tsx",
+    hero: "src/assets/tpk2-02-hero-jugando.webp",
+    // Mismo srcset/sizes que el <img> del hero.
+    heroSrcset: [
+      ["src/assets/tpk2-02-hero-jugando-640.webp", "640w"],
+      ["src/assets/tpk2-02-hero-jugando.webp", "1080w"],
+    ],
+    heroSizes: "(min-width: 1140px) 546px, (min-width: 768px) calc(50vw - 40px), 100vw",
+    title: "Torre de Shots Picante 🌶️ - ¿Quién se atreve? | ShotyGames Ecuador",
+    description:
+      "51 bloques con retos atrevidos para jugar en grupo. Vaso tequilero incluido y ebook de 25 juegos de regalo. Envío gratis a todo Ecuador y pagas al recibir.",
+    image: resolveImage("src/assets/torre-picante-1.webp"),
+    type: "product",
+  },
+  {
     route: "/landing/torre-picante",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
     hero: "src/assets/tpk2-00-hero-oferta.webp",
