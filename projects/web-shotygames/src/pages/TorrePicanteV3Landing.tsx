@@ -18,8 +18,8 @@ import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 
-// PRINCIPAL desde 2026-10-13 (/landing/torre-picante; la del póster pasó a
-// /landing/torre-picante-v3). Sin el <Footer> del sitio: pedido de Fabián.
+// Vive en /landing/torre-picante-v3. Fue la principal unas horas el 2026-10-13
+// y Fabián volvió a poner la del póster. Sin el <Footer> del sitio: pedido suyo.
 // V3 (2026-10-13): estructura y copy del "Prompt Maestro" de la IA externa
 // (18 bloques, tema oscuro, ángulo "¿quién se atreve a sacar el primer
 // bloque?"). Esa IA no mandó imágenes: van las fotos que ya teníamos, cada una
@@ -240,7 +240,7 @@ const TorrePicanteV3Landing = () => {
       <Seo
         title="Torre de Shots Picante 🌶️ - ¿Quién se atreve? | ShotyGames Ecuador"
         description="51 bloques con retos atrevidos para jugar en grupo. Vaso tequilero incluido y ebook de 25 juegos de regalo. Envío gratis a todo Ecuador y pagas al recibir."
-        canonical="https://www.shotygames.com/landing/torre-picante"
+        canonical="https://www.shotygames.com/landing/torre-picante-v3"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
       />

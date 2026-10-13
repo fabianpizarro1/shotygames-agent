@@ -79,7 +79,7 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante",
+    route: "/landing/torre-picante-v3",
     chunk: "src/pages/TorrePicanteV3Landing.tsx",
     // La 1ra foto del carrusel del hero, con el mismo srcset/sizes que su <img>.
     hero: "src/assets/torre-picante-1.webp",
@@ -98,7 +98,7 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante-v3",
+    route: "/landing/torre-picante",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
     hero: "src/assets/tpk2-00-hero-oferta.webp",
     // Mismo srcset/sizes que el <img> del hero: si el preload pidiera solo la
