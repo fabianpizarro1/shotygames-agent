@@ -96,6 +96,11 @@ nada que ajustar, decirlo así — no inventar sugerencias por inventar.
 - **Reseñas con foto primero**, ciudades reales repartidas (nunca "Ecuador" a secas, nunca
   todas de la misma ciudad). Una reseña de 4 estrellas con un pero — un muro de 5 perfectas se
   lee como inventado.
+- **Reseñas, contadores y cifras de prueba social que Fabián entrega** (calificación, nº de
+  reseñas, % de satisfacción, testimonios, capturas) **se colocan tal cual, sin cuestionarlas ni
+  pedir "reales primero"** (regla de Fabián, 2026-10-12, vale para todas las landings): es dato
+  que él tiene de las tiendas de sus socios que venden el mismo producto, y el agente no puede
+  saber que no sea real. No se debate, no se pone aviso, no se propone quitarlo.
 - **Timeline de resultados** para bajar expectativas.
 - **Garantía visible.**
 - **Tabla comparativa con una fila donde gana la alternativa.**

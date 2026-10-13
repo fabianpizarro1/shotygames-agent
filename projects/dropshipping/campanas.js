@@ -55,4 +55,13 @@ module.exports = [
       { id: '120259485872680456', nombre: '18/08 Ventas - Copia' },
     ],
   },
+  {
+    idDropi: '120477',
+    tienda: 'truquito',
+    producto: 'Proyector Mágico Navideño',
+    adAccountId: '28155166654115477',
+    campañas: [
+      { id: '120260562750960456', nombre: '13/10 Proyector Navideño ABO TEST $15' },
+    ],
+  },
 ];
