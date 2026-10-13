@@ -54,6 +54,8 @@ import imgResena1 from "@/assets/tpk2-resena-1.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
 import imgResena3 from "@/assets/tpk2-resena-3.webp";
 import imgResena4 from "@/assets/tpk2-resena-4.webp";
+import imgTiktokCrush from "@/assets/tiktok/7649844245884439815.webp";
+import imgTiktokTimidos from "@/assets/tiktok/7638798502822202642.webp";
 
 /** La imagen original de "cómo funciona" venía con los cuadros fuera de orden:
  *  en el primero ya tenía el bloque leído arriba de la torre y recién en el
@@ -91,7 +93,13 @@ const RESENAS = [
 /** Videos de TikTok para la tira horizontal. Las portadas se bajan con
  *  `node scripts/tiktok-portadas.mjs <links>` y se importan de src/assets/tiktok.
  *  Mientras esté vacío, la sección no se pinta. */
-const TIKTOKS: VideoTikTok[] = [];
+// Fuera por ahora: 7649563268683517192 ("Dale un pico al jugador que quieras").
+// Es público, pero el reproductor de TikTok da INVALID_VIDEO (2026-10-12). Su
+// portada queda en src/assets/tiktok por si se puede volver a poner.
+const TIKTOKS: VideoTikTok[] = [
+  { id: "7649844245884439815", portada: imgTiktokCrush, alt: "Sale este reto y tu crush está en la mesa", autor: "@shotygames_ec" },
+  { id: "7638798502822202642", portada: imgTiktokTimidos, alt: "Este Jenga no es apto para tímidos", autor: "@shotygames_ec" },
+];
 
 const TorrePicanteV2Landing = () => {
   const productName = "Torre de Shots Picante";

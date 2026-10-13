@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ExternalLink, Play } from "lucide-react";
 
 // Tira horizontal de videos de TikTok.
 //
@@ -11,6 +11,16 @@ import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 //
 // Se reproduce uno a la vez: tocar otro desmonta el anterior, que además
 // corta su audio.
+//
+// El `autoplay=1` de la URL no alcanza: el reproductor carga en pausa y
+// silenciado (probado 2026-10-12), y el cliente tenía que tocar dos veces.
+// Por eso, cuando avisa `onPlayerReady`, se le manda play y unMute con su API
+// de postMessage. El toque en la portada ya cuenta como gesto del usuario, así
+// que el navegador lo deja sonar.
+//
+// Hay videos públicos que TikTok no deja insertar (`onPlayerError`
+// INVALID_VIDEO) y en su lugar muestra videos de otras cuentas. Si pasa, la
+// tarjeta vuelve a la portada y pasa a ser un link al video en TikTok.
 
 export type VideoTikTok = {
   /** El número largo de la URL: tiktok.com/@usuario/video/<id> */
@@ -32,9 +42,33 @@ type Props = {
 const urlPlayer = (id: string) =>
   `https://www.tiktok.com/player/v1/${id}?autoplay=1&loop=1&rel=0&music_info=0&description=0&native_context_menu=0&closed_caption=0`;
 
+const ORIGEN_TIKTOK = "https://www.tiktok.com";
+const urlVideo = (v: VideoTikTok) =>
+  `${ORIGEN_TIKTOK}/@${v.autor?.replace(/^@/, "") ?? "tiktok"}/video/${v.id}`;
+
 export const TikTokCarrusel = ({ videos, acento = "#ff3d00" }: Props) => {
   const [activo, setActivo] = useState<string | null>(null);
   const tiraRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<HTMLIFrameElement>(null);
+  const [fallidos, setFallidos] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    if (!activo) return;
+    const mandar = (type: "play" | "unMute") =>
+      playerRef.current?.contentWindow?.postMessage({ type, "x-tiktok-player": true }, ORIGEN_TIKTOK);
+    const alMensaje = (e: MessageEvent) => {
+      if (e.origin !== ORIGEN_TIKTOK || e.source !== playerRef.current?.contentWindow) return;
+      if (e.data?.type === "onPlayerReady") {
+        mandar("play");
+        mandar("unMute");
+      } else if (e.data?.type === "onPlayerError") {
+        setFallidos((prev) => new Set(prev).add(activo));
+        setActivo(null);
+      }
+    };
+    window.addEventListener("message", alMensaje);
+    return () => window.removeEventListener("message", alMensaje);
+  }, [activo]);
 
   // En móvil se desliza con el dedo; las flechas son para escritorio, donde
   // con mouse no hay forma obvia de scrollear de costado.
@@ -49,7 +83,10 @@ export const TikTokCarrusel = ({ videos, acento = "#ff3d00" }: Props) => {
     <div className="relative">
       <div
         ref={tiraRef}
-        className="-mx-4 px-4 flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        // Con 4 o menos, en escritorio entran todos: se centran en vez de dejar
+        // el hueco a la derecha. En móvil no, porque `justify-center` en una
+        // tira que desborda corta el primer video y no se puede volver a él.
+        className={`-mx-4 px-4 flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${videos.length <= 4 ? "md:justify-center" : ""}`}
       >
         {videos.map((v) => (
           <div
@@ -58,12 +95,27 @@ export const TikTokCarrusel = ({ videos, acento = "#ff3d00" }: Props) => {
           >
             {activo === v.id ? (
               <iframe
+                ref={playerRef}
                 src={urlPlayer(v.id)}
                 title={v.alt}
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full border-0"
               />
+            ) : fallidos.has(v.id) ? (
+              <a
+                href={urlVideo(v)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group absolute inset-0 w-full h-full"
+                aria-label={`Ver en TikTok: ${v.alt}`}
+              >
+                <img src={v.portada} alt={v.alt} className="w-full h-full object-cover" />
+                <span className="absolute inset-0 bg-black/45" aria-hidden />
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-white/90 px-4 py-2 text-sm font-bold text-black shadow-xl">
+                  Ver en TikTok <ExternalLink className="h-4 w-4" />
+                </span>
+              </a>
             ) : (
               <button
                 type="button"

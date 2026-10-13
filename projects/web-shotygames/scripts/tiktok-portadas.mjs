@@ -29,12 +29,23 @@ async function resolver(link) {
   return { id: m[1], url: final.split("?")[0], usuario, html: await res.text() };
 }
 
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// TikTok corta con 429 o con un 503 "overload-protect triggered" apenas se le
+// piden 2-3 videos seguidos (2026-10-12: de 3 links pasó 1). No es que el
+// video no exista: esperando unos segundos responde bien.
+async function fetchConReintento(url, intentos = 5) {
+  for (let i = 0; ; i++) {
+    const r = await fetch(url, { headers: { "User-Agent": UA } });
+    if ((r.status !== 429 && r.status !== 503) || i === intentos - 1) return r;
+    await esperar(4000 * 2 ** i);
+  }
+}
+
 // 1) oEmbed oficial. 2) Si falla, el og:image de la página del video.
 async function portadaDe({ url, html }) {
   try {
-    const r = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`, {
-      headers: { "User-Agent": UA },
-    });
+    const r = await fetchConReintento(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
     if (r.ok) {
       const d = await r.json();
       if (d.thumbnail_url) return { src: d.thumbnail_url, autor: d.author_unique_id, titulo: d.title };
@@ -54,7 +65,8 @@ if (links.length === 0) {
 }
 
 let fallos = 0;
-for (const link of links) {
+for (const [i, link] of links.entries()) {
+  if (i > 0) await esperar(3000);
   try {
     const video = await resolver(link);
     const portada = await portadaDe(video);
