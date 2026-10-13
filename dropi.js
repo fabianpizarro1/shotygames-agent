@@ -321,6 +321,31 @@ async function resolverCiudad(ciudad, provincia, rateType) {
       ambito.filter((c) => c.nNombre !== nCiudad && limpiarNombreCiudad(c.nombre) === nCiudadLimpio)
     );
     let candidatos = [...exactas, ...variantesMismoNombre];
+
+    // Sin provincia conocida, `ambito` es el universo FILTRADO por tarifa, y
+    // el rate_type del catálogo viene vacío (`[]`) en ~355 ciudades —los
+    // pueblos chicos— aunque Servientrega sí las atienda. Ahí la ciudad no
+    // aparecía, resolverCiudad devolvía null y crearOrden caía al fallback
+    // `state = nombre de la ciudad`: DROPI rechazaba con "El departamento no
+    // existe o está deshabilitado ... PIUNTZA" (IVAN OCHOA, 2026-10-12). Misma
+    // regla que ya rige dentro de una provincia conocida: la tarifa ordena,
+    // no descarta. Solo nombre exacto o misma ortografía, nunca parciales.
+    // Se usa ÚNICAMENTE en los puntos donde antes se devolvía null, para no
+    // mover ni una ciudad que ya resolvía (verificado con un diferencial sobre
+    // todo el catálogo: ELOY ALFARO ya resolvía por prefijo a la de Durán).
+    const sinTarifa = () => {
+      if (deLaProvincia.length) return [];
+      const exactasTodas = ordenarPorPrioridad(todas.filter((c) => c.nNombre === nCiudad));
+      const variantesTodas = ordenarPorPrioridad(
+        todas.filter((c) => c.nNombre !== nCiudad && limpiarNombreCiudad(c.nombre) === nCiudadLimpio)
+      );
+      const lista = [...exactasTodas, ...variantesTodas];
+      if (lista.length) {
+        console.log(`resolverCiudad: "${ciudad}" no declara tarifa ${rateType} en el catálogo, pero coincide por nombre (${lista.map((c) => `${c.nombre}/${c.provincia}`).join(', ')}) — se usa`);
+      }
+      return lista;
+    };
+
     if (!candidatos.length) {
       const parciales = ambito.filter((c) => c.nNombre.startsWith(nCiudad) || nCiudad.startsWith(c.nNombre));
       // Un parcial es otro NOMBRE (SAN MIGUEL vs SAN MIGUEL DE BOLIVAR): ahí
@@ -329,10 +354,14 @@ async function resolverCiudad(ciudad, provincia, rateType) {
       // porque DROPI rechaza la que no tiene ruta.
       if (parciales.length === 1) candidatos = parciales;
       else if (parciales.length > 1) {
-        console.log(`resolverCiudad: "${ciudad}" es ambigua (${parciales.map((c) => `${c.nombre}/${c.provincia}`).join(', ')}) — no se adivina`);
-        return null;
+        candidatos = sinTarifa();
+        if (!candidatos.length) {
+          console.log(`resolverCiudad: "${ciudad}" es ambigua (${parciales.map((c) => `${c.nombre}/${c.provincia}`).join(', ')}) — no se adivina`);
+          return null;
+        }
       }
     }
+    if (!candidatos.length) candidatos = sinTarifa();
     if (!candidatos.length) {
       console.log(`resolverCiudad: "${ciudad}" no está en el catálogo con tarifa ${rateType}`);
       return null;
