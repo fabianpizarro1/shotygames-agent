@@ -116,6 +116,11 @@ const CIUDAD_DROPI = {
   // ANDRE VIEIRA, 2026-09-28.
   'BAÑOS DE AGUA SANTA':   'BANOS',
   'BANOS DE AGUA SANTA':   'BANOS',
+  // Servientrega tiene Santa Rosa (El Oro) cargada como "SANTA ROSA (EL ORO)";
+  // la entrada llamada "SANTA ROSA" es de otra transportadora y DROPI rechaza
+  // CON RECAUDO ("la ciudad no tiene habilitado el médoto de envío") — caso
+  // real JOSÉ OCHOA, 2026-10-15.
+  'SANTA ROSA':            'SANTA ROSA (EL ORO)',
   // Agrega más abajo cuando encuentres casos nuevos:
   // 'NOMBRE_QUE_LLEGA': 'NOMBRE_EN_DROPI',
 };
@@ -776,7 +781,7 @@ async function crearOrdenSinGuia(pedido) {
   // "El departamento no existe o está deshabilitado por los momentos" es el
   // mismo problema de ciudad con otro texto: sin esto la orden de ANDRE VIEIRA
   // ni siquiera llegó a reintentarse con las variantes.
-  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado|no tiene habilitado el m[eé]todo de env[ií]o|departamento no existe|deshabilitad/i
+  const esErrorDeCiudad = (d) => /combinacion de ciudades|ciudad no existe|departamento ingresado|no tiene habilitado el m\S{3,8} de env[ií]o|departamento no existe|deshabilitad/i
     .test(String(d?.message || d?.data_error || d?.error || ''));
 
   if (!traeId(res.data) && esErrorDeCiudad(res.data)) {
