@@ -82,6 +82,10 @@ const PROVINCIAS = {
   'AMBATO': 'Tungurahua', 'BANOS': 'Tungurahua', 'PELILEO': 'Tungurahua',
   'BAÑOS': 'Tungurahua', 'BAÑOS DE AGUA SANTA': 'Tungurahua', 'BANOS DE AGUA SANTA': 'Tungurahua',
   'RIOBAMBA': 'Chimborazo', 'ALAUSÍ': 'Chimborazo',
+  // Hay un CUMANDA en Chimborazo (el cantón, con agencia de Servientrega) y otro en
+  // Guayas (recinto de Milagro). Sin provincia el código elegía el de Guayas, que
+  // declara tarifa y DROPI acepta: el paquete salía al destino equivocado sin error.
+  'CUMANDA': 'Chimborazo',
   'IBARRA': 'Imbabura', 'OTAVALO': 'Imbabura', 'COTACACHI': 'Imbabura', 'ANTONIO ANTE': 'Imbabura',
   'LOJA': 'Loja', 'CATAMAYO': 'Loja',
   'ESMERALDAS': 'Esmeraldas', 'ATACAMES': 'Esmeraldas',
