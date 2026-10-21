@@ -334,15 +334,12 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
         </Seccion>
 
         {/* ── Entrega ───────────────────────────────────────────────────── */}
+        {!p.entregaPropia && (
         <Seccion titulo="Entrega">
           <Fila etiqueta="Dirección" valor={p.direccion || '—'} />
           <Fila etiqueta="Ciudad" valor={[p.ciudad, p.provincia].filter(Boolean).join(', ') || '—'} />
           <Fila etiqueta="Teléfono" valor={p.telefono || '—'} />
           <Fila etiqueta="Producto" valor={p.descripcion || '—'} />
-          {p.entregaPropia ? (
-            <Fila etiqueta="Envío" valor="Entrega propia en Machala — sin guía ni transportadora" />
-          ) : (
-            <>
           <Fila etiqueta="Transportadora" valor={p.transportadora ?? '—'} />
           <Fila etiqueta="Guía" valor={p.guia ?? 'todavía sin guía'} />
           {p.pasaPorDropi ? (
@@ -354,8 +351,6 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           ) : (
             <Fila etiqueta="Orden DROPI" valor="no aplica — este envío no pasa por DROPI" />
           )}
-            </>
-          )}
           {tr?.cliente && (
             <Fila
               etiqueta="Cliente en DROPI"
@@ -363,6 +358,7 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             />
           )}
         </Seccion>
+        )}
 
         {/* ── Notas ─────────────────────────────────────────────────────── */}
         <Seccion titulo="Notas">
