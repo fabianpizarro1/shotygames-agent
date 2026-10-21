@@ -21,6 +21,8 @@ interface Props {
   onGuardar: (cambios: {
     estado?: string;
     notas?: string;
+    /** Machala: lo cobrado (se suma al anticipo) y a qué cuenta fue. */
+    cobro?: { valor?: number; cuenta: string };
   }) => Promise<{ error: string | null; aviso: string | null }>;
   /** Marca una plantilla como enviada (solo donde hay columna LOG WA). */
   onMarcarPlantilla: (plantilla: string, enviado: boolean) => Promise<void>;
@@ -32,6 +34,24 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [menuWa, setMenuWa] = useState(false);
+
+  // Machala: cobro de la entrega. Las cuentas son las de la hoja DATOS.
+  const [cuentas, setCuentas] = useState<string[]>([]);
+  const [valorCobro, setValorCobro] = useState('');
+  const [cuentaCobro, setCuentaCobro] = useState('');
+  useEffect(() => {
+    if (!p.entregaPropia) return;
+    fetch('/api/cuentas')
+      .then((r) => r.json())
+      .then((d) => d.ok && setCuentas(d.cuentas))
+      .catch(() => {});
+  }, [p.entregaPropia]);
+  // Al cambiar de pedido (o cuando el cobro ya quedó registrado) el formulario
+  // arranca de cero: el valor sugerido es el saldo, la cuenta la que ya tenga.
+  useEffect(() => {
+    setValorCobro(p.aCobrar > 0 ? p.aCobrar.toFixed(2) : '');
+    setCuentaCobro(p.cuenta && p.cuenta.toUpperCase() !== 'DROPI' ? p.cuenta : '');
+  }, [p.fila, p.aCobrar, p.cuenta]);
 
   // Al cambiar de pedido el textarea tiene que seguir al pedido nuevo, no
   // quedarse con lo que se estaba escribiendo del anterior.
@@ -65,7 +85,7 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
   // en el chat y mandan directo, sin pasar por WhatsApp Web.
   const tieneChatVivo = p.negocio === 'shotygames' && Boolean(p.telefono);
 
-  async function guardar(clave: string, cambios: { estado?: string; notas?: string }) {
+  async function guardar(clave: string, cambios: Parameters<Props['onGuardar']>[0]) {
     setGuardando(clave);
     setError(null);
     setAviso(null);
@@ -238,6 +258,89 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
               Usa "Estado" arriba: Enviado cuando salgas a entregar, Pagado cuando lo entregues y
               cobres.
             </p>
+
+            {/* Cobro: cuánto se cobró y a qué cuenta cayó (efectivo → CAJA,
+                transferencia → el banco…). Se anota como anticipo; ver
+                registrarCobro en sheet-shotygames.ts. */}
+            <div className="mt-3 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2.5">
+              <p className="mb-2 text-xs font-semibold text-[var(--color-texto-suave)]">Cobro</p>
+              <div className="flex flex-wrap items-end gap-2">
+                {p.aCobrar > 0 ? (
+                  <label className="min-w-[7rem] flex-1 text-xs text-[var(--color-texto-tenue)]">
+                    Valor cobrado ($)
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      value={valorCobro}
+                      onChange={(e) => setValorCobro(e.target.value)}
+                      className="mt-1 min-h-10 w-full rounded-lg border border-[var(--color-borde)] bg-[var(--color-superficie)] px-3 text-sm text-[var(--color-texto)] outline-none focus:border-[var(--color-verde)]"
+                    />
+                  </label>
+                ) : (
+                  <p className="prosa w-full text-xs text-[var(--color-texto-suave)]">
+                    {p.anticipo > 0
+                      ? `Cobrado: ${usd(p.anticipo)}${p.cuenta ? ` · cuenta ${p.cuenta}` : ''}`
+                      : 'Sin valor pendiente por cobrar.'}
+                  </p>
+                )}
+                <label className="min-w-[8rem] flex-1 text-xs text-[var(--color-texto-tenue)]">
+                  Cuenta
+                  <select
+                    value={cuentaCobro}
+                    onChange={(e) => setCuentaCobro(e.target.value)}
+                    className="mt-1 min-h-10 w-full rounded-lg border border-[var(--color-borde)] bg-[var(--color-superficie)] px-2.5 text-sm text-[var(--color-texto)] outline-none focus:border-[var(--color-verde)]"
+                  >
+                    <option value="">Elegir cuenta…</option>
+                    {cuentas
+                      .filter((c) => c.toUpperCase() !== 'DROPI')
+                      .map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+
+              {p.anticipo > 0 && p.aCobrar > 0 && (
+                <p className="prosa mt-2 text-xs text-[var(--color-ambar)]">
+                  Este pedido ya tiene {usd(p.anticipo)} de anticipo: la cuenta que elijas aplica a
+                  todo el pedido (anticipo + lo cobrado).
+                </p>
+              )}
+
+              <button
+                type="button"
+                disabled={
+                  guardando !== null ||
+                  !cuentaCobro ||
+                  (p.aCobrar > 0 && !(parseFloat(valorCobro) >= 0)) ||
+                  (p.aCobrar === 0 && cuentaCobro === p.cuenta)
+                }
+                onClick={() =>
+                  guardar('cobro', {
+                    cobro: {
+                      cuenta: cuentaCobro,
+                      ...(p.aCobrar > 0 ? { valor: parseFloat(valorCobro) } : {}),
+                    },
+                  })
+                }
+                className="pulsable mt-3 min-h-10 w-full rounded-lg bg-[var(--color-verde)] px-4 text-sm font-semibold text-[#08110c] disabled:opacity-40"
+              >
+                {guardando === 'cobro'
+                  ? 'Guardando…'
+                  : p.aCobrar > 0
+                    ? 'Registrar cobro'
+                    : 'Cambiar cuenta'}
+              </button>
+              {p.aCobrar > 0 && (
+                <p className="prosa mt-1.5 text-xs text-[var(--color-texto-tenue)]">
+                  Queda en el Sheet como anticipo en la cuenta elegida, y el saldo en blanco.
+                </p>
+              )}
+            </div>
           </Seccion>
         ) : (
           <>

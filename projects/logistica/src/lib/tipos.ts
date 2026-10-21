@@ -131,6 +131,11 @@ export interface Base {
    * tracking, no suman a los totales de la calle y el cron no les avisa.
    */
   entregaPropia: boolean;
+  /**
+   * Columna CUENTA del Sheet: la cuenta del ANTICIPO (y, en DOMICILIO, también
+   * donde cae lo cobrado al entregar). Solo ShotyGames; en dropshipping va vacía.
+   */
+  cuenta: string;
   notas: string;
   /**
    * Marcas de qué plantillas de WhatsApp ya se mandaron ("id|fecha ; id|fecha").

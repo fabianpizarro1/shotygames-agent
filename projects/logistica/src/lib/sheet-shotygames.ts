@@ -33,6 +33,7 @@ const TITULOS: Record<string, string> = {
   TELEFONO: 'telefono',
   CIUDAD: 'ciudad',
   ANTICIPO: 'anticipo',
+  CUENTA: 'cuenta',
   SALDO: 'saldo',
   ESTADO: 'estado',
   TRANSPORTADORA: 'transportadora',
@@ -221,6 +222,7 @@ export function aBase(f: FilaShoty, C: Columnas): Base {
     transportadora: transportadora || null,
     pasaPorDropi: pasaPorDropi(transportadora),
     entregaPropia: esEntregaPropia(transportadora, txt('CIUDAD')),
+    cuenta: txt('CUENTA'),
     // NOTAS (columna AA) tiene info del pedido que no hay que pisar. El
     // seguimiento va en NOTA LOGISTICA, igual que en finanzas-app.
     notas: txt('NOTA_LOGISTICA'),
@@ -292,6 +294,78 @@ export async function actualizarFila(
       canalWa: C.CANAL_WA !== undefined ? String(datos[C.CANAL_WA] ?? '') : '',
     },
   };
+}
+
+/** Las cuentas válidas: la columna CUENTAS de la hoja DATOS (la misma que usa el CRM). */
+export async function leerCuentas(): Promise<string[]> {
+  const r = await getSheets().spreadsheets.values.get({
+    spreadsheetId: sheetId(),
+    range: 'DATOS!A2:A100',
+  });
+  return (r.data.values ?? []).flat().map((x) => String(x).trim()).filter(Boolean);
+}
+
+/**
+ * Registra lo cobrado en una entrega propia (Machala) y a qué cuenta fue.
+ *
+ * Convención acordada con Fabián (2026-10-20): lo cobrado se ANOTA COMO
+ * ANTICIPO (se suma a lo que ya hubiera pagado) y el SALDO queda en blanco —
+ * así queda igual que los Machala ya cerrados. CUENTA es una sola columna y
+ * aplica a todo el pedido.
+ *
+ * Candados: solo filas de entrega propia; y el cobro solo se acepta si el
+ * pedido TODAVÍA tiene saldo, porque sumarlo dos veces duplicaría la plata en
+ * el CRM (el anticipo cuenta siempre, sin mirar el estado).
+ */
+export async function registrarCobro(
+  fila: number,
+  clave: string,
+  cobro: { valor?: number; cuenta: string }
+): Promise<{ error: string | null }> {
+  const C = await getColumnas();
+  if (C.ANTICIPO === undefined || C.SALDO === undefined || C.CUENTA === undefined) {
+    return { error: 'Al Sheet le faltan las columnas ANTICIPO, SALDO o CUENTA' };
+  }
+
+  const { datos } = await leerFila(fila);
+  if (claveDe(datos[C.NOMBRE], datos[C.TELEFONO]) !== clave) {
+    return {
+      error:
+        `La fila ${fila} ya no es el mismo pedido (ahora tiene "${datos[C.NOMBRE] ?? 'vacío'}"). ` +
+        'Recargá la cola antes de volver a intentar.',
+    };
+  }
+  if (!esEntregaPropia(String(datos[C.TRANSPORTADORA] ?? ''), String(datos[C.CIUDAD] ?? ''))) {
+    return { error: 'Este pedido no es de entrega propia: el cobro lo maneja la transportadora.' };
+  }
+
+  const cuentas = await leerCuentas();
+  const cuenta = cuentas.find((c) => norm(c) === norm(cobro.cuenta));
+  if (!cuenta) return { error: `"${cobro.cuenta}" no es una cuenta válida` };
+
+  const data: { range: string; values: (string | number)[][] }[] = [
+    { range: `${HOJA}!${letra(C.CUENTA)}${fila}`, values: [[cuenta]] },
+  ];
+
+  const valor = cobro.valor ?? 0;
+  if (valor > 0) {
+    const saldo = aNumero(datos[C.SALDO]);
+    if (saldo <= 0) {
+      return {
+        error: 'Este pedido ya no tiene saldo pendiente — el cobro ya estaba registrado. Recargá la cola.',
+      };
+    }
+    const anticipo = aNumero(datos[C.ANTICIPO]);
+    // Números y no texto: con el locale es_ES del Sheet, "57.89" se leería mal.
+    data.push({ range: `${HOJA}!${letra(C.ANTICIPO)}${fila}`, values: [[redondear(anticipo + valor)]] });
+    data.push({ range: `${HOJA}!${letra(C.SALDO)}${fila}`, values: [['']] });
+  }
+
+  await getSheets().spreadsheets.values.batchUpdate({
+    spreadsheetId: sheetId(),
+    requestBody: { valueInputOption: 'USER_ENTERED', data },
+  });
+  return { error: null };
 }
 
 /** Lee una sola fila, para confirmar contra qué se está escribiendo. */

@@ -31,11 +31,13 @@ interface Cuerpo {
   clave?: string;
   estado?: string;
   notas?: string;
+  /** Solo ShotyGames, solo entrega propia (Machala). */
+  cobro?: { valor?: number; cuenta?: string };
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { negocio, fila, clave, estado, notas } = (await req.json()) as Cuerpo;
+    const { negocio, fila, clave, estado, notas, cobro } = (await req.json()) as Cuerpo;
 
     if (negocio !== 'dropshipping' && negocio !== 'shotygames') {
       return NextResponse.json({ ok: false, error: 'Negocio inválido' }, { status: 400 });
@@ -46,8 +48,24 @@ export async function POST(req: NextRequest) {
     if (!clave) {
       return NextResponse.json({ ok: false, error: 'Falta la clave del pedido' }, { status: 400 });
     }
-    if (estado === undefined && notas === undefined) {
+    if (estado === undefined && notas === undefined && cobro === undefined) {
       return NextResponse.json({ ok: false, error: 'No hay nada que cambiar' }, { status: 400 });
+    }
+
+    if (cobro !== undefined) {
+      if (negocio !== 'shotygames') {
+        return NextResponse.json({ ok: false, error: 'El cobro solo aplica a ShotyGames' }, { status: 400 });
+      }
+      const valor = cobro.valor === undefined ? undefined : Number(cobro.valor);
+      if (valor !== undefined && (!Number.isFinite(valor) || valor < 0 || valor > 5000)) {
+        return NextResponse.json({ ok: false, error: 'El valor cobrado no es válido' }, { status: 400 });
+      }
+      if (!cobro.cuenta?.trim()) {
+        return NextResponse.json({ ok: false, error: 'Falta elegir la cuenta' }, { status: 400 });
+      }
+      const { error } = await shotygames.registrarCobro(fila, clave, { valor, cuenta: cobro.cuenta });
+      if (error) return NextResponse.json({ ok: false, error }, { status: 409 });
+      return NextResponse.json({ ok: true, fila });
     }
 
     if (estado !== undefined) {

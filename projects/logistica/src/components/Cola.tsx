@@ -184,7 +184,7 @@ export function Cola() {
   const guardar = useCallback(
     async (
       p: Pedido,
-      cambios: { estado?: string; notas?: string }
+      cambios: { estado?: string; notas?: string; cobro?: { valor?: number; cuenta: string } }
     ): Promise<{ error: string | null; aviso: string | null }> => {
       try {
         const r = await fetch('/api/pedidos/actualizar', {
