@@ -124,6 +124,13 @@ export interface Base {
   transportadora: string | null;
   /** DOMICILIO y COOPERATIVA no pasan por DROPI: no tener guía es normal. */
   pasaPorDropi: boolean;
+  /**
+   * Pedidos de Machala: los entrega Fabián en persona (transportadora
+   * DOMICILIO), sin guía ni tracking. Tienen su propia sección en la app y no
+   * se mezclan con la cola de transportadoras: no se les aplican las reglas de
+   * tracking, no suman a los totales de la calle y el cron no les avisa.
+   */
+  entregaPropia: boolean;
   notas: string;
   /**
    * Marcas de qué plantillas de WhatsApp ya se mandaron ("id|fecha ; id|fecha").

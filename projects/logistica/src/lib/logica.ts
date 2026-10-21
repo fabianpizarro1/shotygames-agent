@@ -32,6 +32,9 @@ export type EstadoConsulta = 'ok' | 'no-existe' | 'fallo' | 'sin-orden';
 const FUERA_DE_LA_COLA = new Set<Fase>(['cerrado', 'preparando', 'devuelto']);
 
 export function enMovimiento(b: Base): boolean {
+  // Machala (entrega propia): acá PENDIENTE sí es trabajo — el pedido lo
+  // entrega Fabián, no hay una transportadora a la que "todavía no se lo dio".
+  if (b.entregaPropia) return b.fase !== 'cerrado' && b.fase !== 'devuelto';
   return !FUERA_DE_LA_COLA.has(b.fase);
 }
 
@@ -157,6 +160,20 @@ function calcularAlertas(
 ): Alerta[] {
   const a: Alerta[] = [];
   const t = p.tracking;
+
+  // Entrega propia: no hay tracking, DROPI ni agencia. La única señal es cuánto
+  // lleva el pedido sin entregarse — en Machala lo normal es el mismo día.
+  if (b.entregaPropia) {
+    if (b.fase === 'novedad') {
+      a.push({ nivel: 'rojo', texto: `${b.etiquetaEstado} — revisar qué pasó con la entrega` });
+    }
+    if (p.dias >= 2) {
+      a.push({ nivel: 'rojo', texto: `${p.dias} días sin entregarse` });
+    } else if (p.dias === 1) {
+      a.push({ nivel: 'ambar', texto: 'Pedido de ayer, todavía sin entregar' });
+    }
+    return a;
+  }
 
   if (b.fase === 'novedad') {
     a.push({ nivel: 'rojo', texto: t?.novedad ?? `${b.etiquetaEstado} — sin motivo reportado` });

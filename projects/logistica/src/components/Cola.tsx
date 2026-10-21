@@ -30,7 +30,7 @@ interface Respuesta {
 // paquete parado en agencia, o uno que ya arrancó la vuelta, puede estar en
 // cualquier estado del Sheet.
 type FiltroFase = 'TODAS' | Fase | 'agencia' | 'devolucion';
-type FiltroTienda = 'todas' | Tienda;
+type FiltroTienda = 'todas' | Tienda | 'machala';
 
 const FASES_FILTRO: { clave: FiltroFase; texto: string }[] = [
   { clave: 'TODAS', texto: 'Todos' },
@@ -87,7 +87,23 @@ const pasaFiltro = (p: Pedido, f: FiltroFase) =>
           ? p.fase === 'en-camino' && !p.enAgencia && p.momento !== 'en-devolucion'
           : p.fase === f;
 
-const TIENDAS_FILTRO: FiltroTienda[] = ['todas', 'truquito', 'avanora', 'shotygames'];
+const TIENDAS_FILTRO: FiltroTienda[] = ['todas', 'truquito', 'avanora', 'shotygames', 'machala'];
+
+/**
+ * Machala es una sección aparte: son los pedidos que entrega Fabián en persona
+ * (ver `Base.entregaPropia`). No cuentan en "Todas" ni en ShotyGames — tienen su
+ * propia logística y mezclados con las transportadoras solo hacían ruido.
+ */
+const enTienda = (p: Pedido, t: FiltroTienda) =>
+  t === 'machala' ? p.entregaPropia : !p.entregaPropia && (t === 'todas' || p.tienda === t);
+
+/** Machala no tiene agencia ni devolución: sus etapas son las de entregar. */
+const FASES_MACHALA: { clave: FiltroFase; texto: string }[] = [
+  { clave: 'TODAS', texto: 'Todos' },
+  { clave: 'preparando', texto: 'Por entregar' },
+  { clave: 'en-camino', texto: 'Salió a entregar' },
+  { clave: 'novedad', texto: 'Novedades' },
+];
 
 /**
  * Identificador único de un pedido en TODA la app. Lleva el negocio adentro
@@ -226,7 +242,7 @@ export function Cola() {
   const visibles = useMemo(() => {
     const q = sinTildes(busqueda.trim());
     return pedidos.filter((p) => {
-      if (tienda !== 'todas' && p.tienda !== tienda) return false;
+      if (!enTienda(p, tienda)) return false;
       if (!pasaFiltro(p, fase)) return false;
       if (soloAlerta && p.alertas.length === 0) return false;
       if (!q) return true;
@@ -237,6 +253,16 @@ export function Cola() {
       ).includes(q);
     });
   }, [pedidos, tienda, fase, soloAlerta, busqueda]);
+
+  const resumenMachala = useMemo(() => {
+    const m = pedidos.filter((p) => p.entregaPropia);
+    return {
+      porEntregar: m.filter((p) => p.fase === 'preparando').length,
+      salieron: m.filter((p) => p.fase === 'en-camino').length,
+      novedades: m.filter((p) => p.fase === 'novedad').length,
+      porCobrar: Math.round(m.reduce((s, p) => s + p.aCobrar, 0) * 100) / 100,
+    };
+  }, [pedidos]);
 
   const seleccionado = useMemo(
     () => visibles.find((p) => idDe(p) === abierto) ?? null,
@@ -340,20 +366,23 @@ export function Cola() {
         {/* Tiendas */}
         <div className="tira flex gap-1 overflow-x-auto px-4 pb-3 sm:px-6">
           {TIENDAS_FILTRO.map((t) => {
-            const n = pedidos.filter((p) => t === 'todas' || p.tienda === t).length;
+            const n = pedidos.filter((p) => enTienda(p, t)).length;
             const activa = tienda === t;
             return (
               <button
                 key={t}
                 type="button"
-                onClick={() => setTienda(t)}
+                onClick={() => {
+                  setTienda(t);
+                  setFase('TODAS');
+                }}
                 className={`pulsable min-h-10 shrink-0 rounded-full px-4 text-sm ${
                   activa
                     ? 'bg-[var(--color-texto)] font-semibold text-[var(--color-fondo)]'
                     : 'border border-[var(--color-borde)] text-[var(--color-texto-suave)]'
                 }`}
               >
-                {t === 'todas' ? 'Todas' : tiendaUI(t).nombre}{' '}
+                {t === 'todas' ? 'Todas' : t === 'machala' ? 'Machala' : tiendaUI(t).nombre}{' '}
                 <span className={activa ? 'opacity-60' : 'opacity-50'}>{n}</span>
               </button>
             );
@@ -365,9 +394,9 @@ export function Cola() {
             en el teléfono son lo que más se toca y perderlos de vista obliga a
             subir hasta arriba cada vez. */}
         <div className="tira flex items-center gap-2 overflow-x-auto px-4 pb-2 sm:flex-wrap sm:overflow-visible sm:px-6">
-          {FASES_FILTRO.map((f) => {
-            const enTienda = pedidos.filter((p) => tienda === 'todas' || p.tienda === tienda);
-            const n = enTienda.filter((p) => pasaFiltro(p, f.clave)).length;
+          {(tienda === 'machala' ? FASES_MACHALA : FASES_FILTRO).map((f) => {
+            const deLaTienda = pedidos.filter((p) => enTienda(p, tienda));
+            const n = deLaTienda.filter((p) => pasaFiltro(p, f.clave)).length;
             const activo = fase === f.clave;
             return (
               <button
@@ -404,7 +433,22 @@ export function Cola() {
         {/* En móvil el resumen es una tira que se desliza: como grilla de 2
             columnas empujaba el primer pedido fuera de la pantalla, y lo que
             hay que ver al abrir la app es el trabajo, no las métricas. */}
-        {resumen && (
+        {tienda === 'machala' ? (
+          <div className="tira -mx-4 mb-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mb-5 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
+            <Tile etiqueta="Por entregar" valor={String(resumenMachala.porEntregar)} />
+            <Tile etiqueta="Salió a entregar" valor={String(resumenMachala.salieron)} />
+            <Tile
+              etiqueta="Novedades"
+              valor={String(resumenMachala.novedades)}
+              color={resumenMachala.novedades ? 'text-[var(--color-ambar)]' : undefined}
+            />
+            <Tile
+              etiqueta="Por cobrar"
+              valor={usd(resumenMachala.porCobrar)}
+              color="text-[var(--color-verde)]"
+            />
+          </div>
+        ) : resumen && (
           <div className="tira -mx-4 mb-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mb-5 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-6">
             <Tile etiqueta="En la calle" valor={String(resumen.total)} />
             <Tile
@@ -474,7 +518,11 @@ export function Cola() {
             {!cargando && visibles.length === 0 && (
               <div className="rounded-[var(--radius-tarjeta)] border border-dashed border-[var(--color-borde)] px-6 py-14 text-center">
                 <p className="font-medium">
-                  {pedidos.length === 0 ? 'No hay nada en movimiento' : 'Nada con estos filtros'}
+                  {tienda === 'machala' && !pedidos.some((p) => p.entregaPropia)
+                    ? 'No hay entregas pendientes en Machala'
+                    : pedidos.length === 0
+                      ? 'No hay nada en movimiento'
+                      : 'Nada con estos filtros'}
                 </p>
                 <p className="prosa mt-1 text-sm text-[var(--color-texto-suave)]">
                   {pedidos.length === 0

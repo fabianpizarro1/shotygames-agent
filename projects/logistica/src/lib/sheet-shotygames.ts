@@ -133,6 +133,19 @@ function pasaPorDropi(transportadora: string): boolean {
   return !!t && !/DOMICILIO|COOPERATIVA|RETIRO|LOCAL/.test(t);
 }
 
+/**
+ * Machala: entrega propia de Fabián. Se reconoce por la transportadora
+ * DOMICILIO; y también por la ciudad cuando todavía no se asignó transportadora
+ * (un pedido nuevo de Machala en PENDIENTE), para que no aparezca en la cola de
+ * transportadoras mientras tanto. Si trae OTRA transportadora explícita, manda
+ * esa: va por DROPI aunque sea a Machala.
+ */
+function esEntregaPropia(transportadora: string, ciudad: string): boolean {
+  const t = norm(transportadora);
+  if (/DOMICILIO/.test(t)) return true;
+  return !t && norm(ciudad).startsWith('MACHALA');
+}
+
 export interface FilaShoty {
   fila: number;
   datos: string[];
@@ -207,6 +220,7 @@ export function aBase(f: FilaShoty, C: Columnas): Base {
     guia: txt('GUIA') || null,
     transportadora: transportadora || null,
     pasaPorDropi: pasaPorDropi(transportadora),
+    entregaPropia: esEntregaPropia(transportadora, txt('CIUDAD')),
     // NOTAS (columna AA) tiene info del pedido que no hay que pisar. El
     // seguimiento va en NOTA LOGISTICA, igual que en finanzas-app.
     notas: txt('NOTA_LOGISTICA'),

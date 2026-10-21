@@ -36,7 +36,7 @@ async function conTracking(
   // pide para las guías que van por ahí (98% de los pedidos) y se usa lo suyo
   // cuando contesta. Ver `servientrega.ts`.
   const guiasSV = bases
-    .filter((b) => /SERVIENTREGA/i.test(b.transportadora ?? '') || !b.transportadora)
+    .filter((b) => !b.entregaPropia && (/SERVIENTREGA/i.test(b.transportadora ?? '') || !b.transportadora))
     .map((b) => b.guia ?? '')
     .filter(Boolean);
   const sv = await rastrearVarias(guiasSV);
@@ -146,5 +146,13 @@ export async function construirCola(): Promise<Cola> {
     }
   }
 
-  return { hoy, pedidos: ordenarCola(pedidos), resumen: resumir(pedidos), estados, fallos };
+  // Los totales de la calle son de las transportadoras; Machala se resume aparte
+  // en la interfaz (no tiene "en riesgo" ni tracking).
+  return {
+    hoy,
+    pedidos: ordenarCola(pedidos),
+    resumen: resumir(pedidos.filter((p) => !p.entregaPropia)),
+    estados,
+    fallos,
+  };
 }

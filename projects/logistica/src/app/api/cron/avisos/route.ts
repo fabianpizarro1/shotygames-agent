@@ -70,6 +70,8 @@ export async function GET(req: NextRequest) {
   const candidatos = pedidos.filter(
     (p) =>
       p.negocio === 'shotygames' &&
+      // Machala lo entrega Fabián en persona: no hay transportadora que avise.
+      !p.entregaPropia &&
       // Solo cuando llegó a SU ciudad y todavía se está moviendo. Si ya está
       // en agencia o ya salió a entrega le corresponde otro mensaje, no este.
       p.momento === 'en-ciudad' &&

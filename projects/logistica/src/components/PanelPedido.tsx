@@ -7,7 +7,7 @@ import { PLANTILLAS, linkWhatsApp, marcasEnviadas, plantillaSugerida } from '@/l
 import { fechaCorta, haceCuanto } from '@/lib/fechas';
 import { ESTILO_MOMENTO, ESTILO_PAGO, linkRastreo, tiendaUI, usd } from '@/lib/ui';
 import { ETIQUETA_PAGO, ETIQUETA_PAGO_LARGA } from '@/lib/pago';
-import { ETIQUETA_MOMENTO } from '@/lib/momento';
+import { ETIQUETA_MOMENTO, momentoVisible } from '@/lib/momento';
 import { HistorialNovedades } from './HistorialNovedades';
 import { LineaTiempo } from './LineaTiempo';
 import { ChatPedido } from './ChatPedido';
@@ -50,7 +50,8 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
     return () => window.removeEventListener('keydown', onKey);
   }, [onCerrar]);
 
-  const est = ESTILO_MOMENTO[p.momento];
+  const vista = momentoVisible(p);
+  const est = ESTILO_MOMENTO[vista.momento];
   const t = tiendaUI(p.tienda);
   const tr = p.tracking;
   const rastreo = linkRastreo(p.transportadora, p.guia);
@@ -92,9 +93,11 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
                 className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${est.fondo} ${est.texto}`}
               >
                 <span className={`size-1.5 rounded-full ${est.punto}`} />
-                {ETIQUETA_MOMENTO[p.momento]}
+                {vista.etiqueta}
               </span>
-              <span className={`text-[11px] font-semibold ${t.color}`}>{t.nombre}</span>
+              <span className={`text-[11px] font-semibold ${t.color}`}>
+                {p.entregaPropia ? 'Machala · entrega propia' : t.nombre}
+              </span>
               {p.metodoPago && (
                 <span
                   className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${ESTILO_PAGO[p.metodoPago]}`}
@@ -145,7 +148,13 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
                 cola ya está confirmado y despachado. Ver NO_OFRECIBLES en
                 estados.ts. */}
             {estados
-              .filter((e) => e.ofrecible && e.literal.toUpperCase() !== p.estado.toUpperCase())
+              .filter(
+                (e) =>
+                  // En Machala el pedido sigue en tus manos: PENDIENTE (todavía sin
+                  // salir), ENVIADO (salí a entregar) y CANCELADO sí tienen sentido.
+                  (e.ofrecible || p.entregaPropia) &&
+                  e.literal.toUpperCase() !== p.estado.toUpperCase()
+              )
               .map((e) => (
                 <option key={e.literal} value={e.literal}>
                   Pasar a: {e.etiqueta}
@@ -201,6 +210,37 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           </ul>
         )}
 
+        {p.entregaPropia ? (
+          /* Machala: sin guía, sin transportadora y sin tracking. Lo que hay que
+             tener a mano para salir a entregar. */
+          <Seccion titulo="Entrega en Machala" extra="la haces tú">
+            <div className="prosa space-y-2 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-3 py-2.5 text-sm">
+              <p>
+                <span className="text-xs text-[var(--color-texto-tenue)]">Dirección: </span>
+                {p.direccion || '—'}
+              </p>
+              <p>
+                <span className="text-xs text-[var(--color-texto-tenue)]">Teléfono: </span>
+                {p.telefono || '—'}
+              </p>
+              <p>
+                <span className="text-xs text-[var(--color-texto-tenue)]">Cobrar: </span>
+                <strong>{p.aCobrar > 0 ? usd(p.aCobrar) : 'nada (ya está pagado)'}</strong>
+              </p>
+              {p.descripcion && (
+                <p>
+                  <span className="text-xs text-[var(--color-texto-tenue)]">Lleva: </span>
+                  {p.descripcion}
+                </p>
+              )}
+            </div>
+            <p className="prosa mt-2 text-xs text-[var(--color-texto-tenue)]">
+              Usa "Estado" arriba: Enviado cuando salgas a entregar, Pagado cuando lo entregues y
+              cobres.
+            </p>
+          </Seccion>
+        ) : (
+          <>
         {/* ── Recorrido ─────────────────────────────────────────────────── */}
         {/* Primero: es lo que más se mira al abrir un pedido — dónde está el
             paquete AHORA, no cuánto vale. */}
@@ -242,6 +282,8 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             }
           />
         </Seccion>
+          </>
+        )}
 
         {/* ── Novedades de DROPI (con el comentario de la transportadora) ── */}
         {tr && tr.novedades?.length > 0 && (
@@ -297,6 +339,10 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
           <Fila etiqueta="Ciudad" valor={[p.ciudad, p.provincia].filter(Boolean).join(', ') || '—'} />
           <Fila etiqueta="Teléfono" valor={p.telefono || '—'} />
           <Fila etiqueta="Producto" valor={p.descripcion || '—'} />
+          {p.entregaPropia ? (
+            <Fila etiqueta="Envío" valor="Entrega propia en Machala — sin guía ni transportadora" />
+          ) : (
+            <>
           <Fila etiqueta="Transportadora" valor={p.transportadora ?? '—'} />
           <Fila etiqueta="Guía" valor={p.guia ?? 'todavía sin guía'} />
           {p.pasaPorDropi ? (
@@ -307,6 +353,8 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             />
           ) : (
             <Fila etiqueta="Orden DROPI" valor="no aplica — este envío no pasa por DROPI" />
+          )}
+            </>
           )}
           {tr?.cliente && (
             <Fila

@@ -303,3 +303,19 @@ export function prediccion(p: Pedido): Prediccion | null {
   // dice nada a nadie.
   return texto ? { texto, probabilidad: mejor.p } : null;
 }
+
+/**
+ * Qué estado se muestra en la tarjeta y el panel. Un pedido de entrega propia
+ * (Machala) no tiene tracking, así que su `momento` es siempre "sin-datos";
+ * lo que se ve sale de la fase del Sheet.
+ */
+export function momentoVisible(p: {
+  entregaPropia: boolean;
+  fase: string;
+  momento: Momento;
+}): { momento: Momento; etiqueta: string } {
+  if (!p.entregaPropia) return { momento: p.momento, etiqueta: ETIQUETA_MOMENTO[p.momento] };
+  if (p.fase === 'novedad') return { momento: 'novedad', etiqueta: 'Con novedad' };
+  if (p.fase === 'en-camino') return { momento: 'en-reparto', etiqueta: 'Salió a entregar' };
+  return { momento: 'en-ciudad', etiqueta: 'Por entregar' };
+}

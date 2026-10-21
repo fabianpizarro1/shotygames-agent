@@ -4,7 +4,7 @@ import type { Pedido } from '@/lib/tipos';
 import { haceCuanto } from '@/lib/fechas';
 import { ESTILO_MOMENTO, ESTILO_PAGO, tiendaUI, usd } from '@/lib/ui';
 import { ETIQUETA_PAGO } from '@/lib/pago';
-import { ETIQUETA_MOMENTO } from '@/lib/momento';
+import { momentoVisible } from '@/lib/momento';
 
 /**
  * Una tarjeta de la cola. Está pensada para leerse en un segundo y decidir si
@@ -23,7 +23,8 @@ export function TarjetaPedido({
   // El badge grande es DÓNDE ESTÁ EL PAQUETE, no el estado del Sheet: el Sheet
   // se actualiza a mano y queda viejo. Un pedido que dice "Guía generada" pero
   // lleva tres días en una agencia tiene que gritar "En agencia".
-  const est = ESTILO_MOMENTO[p.momento];
+  const vista = momentoVisible(p);
+  const est = ESTILO_MOMENTO[vista.momento];
   const t = tiendaUI(p.tienda);
   const alerta = p.alertas[0];
   const rojo = alerta?.nivel === 'rojo';
@@ -57,12 +58,14 @@ export function TarjetaPedido({
               className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${est.fondo} ${est.texto}`}
             >
               <span className={`size-1.5 rounded-full ${est.punto}`} />
-              {ETIQUETA_MOMENTO[p.momento]}
+              {vista.etiqueta}
               {/* Servientrega suele devolver cerca de los 7 días sin retiro —
                   se ve de un vistazo, sin tener que abrir el pedido. */}
               {p.diasEnAgencia !== null && ` · ${p.diasEnAgencia}d`}
             </span>
-            <span className={`text-[11px] font-semibold ${t.color}`}>{t.nombre}</span>
+            <span className={`text-[11px] font-semibold ${t.color}`}>
+              {p.entregaPropia ? 'Machala · entrega propia' : t.nombre}
+            </span>
 
             {/* Cómo pagó. Solo donde varía: en Truquito y Avanora todo es
                 contraentrega y el badge no diría nada. */}

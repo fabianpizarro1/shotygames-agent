@@ -278,6 +278,7 @@ export function aBase(f: FilaCruda, C: Columnas, fleteDropi = 0): Base {
     guia: txt('GUIA') || null,
     transportadora: null, // la reporta DROPI; el Sheet no la guarda
     pasaPorDropi: true, // en dropshipping TODO se despacha por DROPI
+    entregaPropia: false,
     notas: txt('NOTAS'),
     // Este Sheet no tiene columnas LOG ni LOG WA, y agregarlas toca su
     // encabezado — no se hace sin preguntarle a Fabián.
