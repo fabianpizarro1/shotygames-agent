@@ -19,6 +19,24 @@ export interface HistorialEstado {
   fecha: string;
 }
 
+/**
+ * Una fila del "Historial de novedades" de DROPI. `comentario` es lo que escribe
+ * la TRANSPORTADORA (ej. "retiro oficina de la floresta", "SE NIEGA A RECIBIR");
+ * `solucion`/`observacion` es lo que respondió Fabián desde el panel de DROPI.
+ */
+export interface NovedadDropi {
+  /** ISO en UTC (viene de `created_at`). */
+  fecha: string;
+  novedad: string;
+  comentario: string;
+  aclaracion: string;
+  solucion: string;
+  observacion: string;
+  /** Hora local de Ecuador, "YYYY-MM-DD HH:mm:ss". */
+  fechaSolucion: string;
+  solucionadoPor: string;
+}
+
 export interface Tracking {
   ordenId: number;
   guia: string | null;
@@ -29,6 +47,8 @@ export interface Tracking {
   transportadora: string | null;
   movimientos: Movimiento[];
   historial: HistorialEstado[];
+  /** Historial de novedades de DROPI, la más reciente primero. */
+  novedades: NovedadDropi[];
   /** Historial del cliente en DROPI: cuánto vale la pena insistirle. */
   cliente: { pedidos: number; entregados: number; devueltos: number } | null;
   direccion: string | null;

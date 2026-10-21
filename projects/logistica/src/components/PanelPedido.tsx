@@ -8,6 +8,7 @@ import { fechaCorta, haceCuanto } from '@/lib/fechas';
 import { ESTILO_MOMENTO, ESTILO_PAGO, linkRastreo, tiendaUI, usd } from '@/lib/ui';
 import { ETIQUETA_PAGO, ETIQUETA_PAGO_LARGA } from '@/lib/pago';
 import { ETIQUETA_MOMENTO } from '@/lib/momento';
+import { HistorialNovedades } from './HistorialNovedades';
 import { LineaTiempo } from './LineaTiempo';
 import { ChatPedido } from './ChatPedido';
 
@@ -241,6 +242,13 @@ export function PanelPedido({ p, estados, onCerrar, onGuardar, onMarcarPlantilla
             }
           />
         </Seccion>
+
+        {/* ── Novedades de DROPI (con el comentario de la transportadora) ── */}
+        {tr && tr.novedades?.length > 0 && (
+          <Seccion titulo="Novedades" extra={`${tr.novedades.length} en DROPI`}>
+            <HistorialNovedades novedades={tr.novedades} />
+          </Seccion>
+        )}
 
         {/* ── WhatsApp ──────────────────────────────────────────────────── */}
         {/* Solo ShotyGames: es el único negocio con el número conectado a

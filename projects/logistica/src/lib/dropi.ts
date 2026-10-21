@@ -28,7 +28,7 @@
 
 import crypto from 'crypto';
 import { unstable_cache } from 'next/cache';
-import type { Movimiento, Tracking, HistorialEstado } from './tipos';
+import type { Movimiento, Tracking, HistorialEstado, NovedadDropi } from './tipos';
 
 const BASE = 'https://api.dropi.ec/api';
 
@@ -348,6 +348,29 @@ function normalizar(o: Record<string, unknown>, ordenId: number): Tracking {
     .filter((h) => h.estado)
     .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
 
+  // `history_new_orders` es la tabla "Historial de novedades" del panel de DROPI.
+  // El comentario de la transportadora viene en `comentario`; `nom_conc` de los
+  // movimientos casi siempre trae solo "." — por eso el motivo real no se veía.
+  const novedades: NovedadDropi[] = (
+    Array.isArray(o.history_new_orders) ? o.history_new_orders : []
+  )
+    .map((n) => {
+      const x = n as Record<string, unknown>;
+      const quien = x.user_solved as Record<string, unknown> | null | undefined;
+      return {
+        fecha: String(x.created_at ?? ''),
+        novedad: String(x.novedad ?? '').trim(),
+        comentario: limpiarMotivo(x.comentario),
+        aclaracion: limpiarMotivo(x.aclaracion),
+        solucion: limpiarMotivo(x.solution),
+        observacion: limpiarMotivo(x.observation),
+        fechaSolucion: String(x.date_solution ?? ''),
+        solucionadoPor: String(quien?.email ?? ''),
+      };
+    })
+    .filter((n) => n.novedad || n.comentario)
+    .sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
+
   // `guia_urls3` es la ruta real del PDF y varía según la transportadora. La
   // versión vieja asumía siempre "servientrega" y el link salía roto para todo
   // lo despachado por GINTRACOM o LAARCOURIER.
@@ -366,6 +389,7 @@ function normalizar(o: Record<string, unknown>, ordenId: number): Tracking {
     transportadora: str(o.shipping_company),
     movimientos,
     historial,
+    novedades,
     direccion: str(o.dir),
     fletePorCobrar: num(o.shipping_amount),
     pdf,
@@ -446,7 +470,7 @@ function crearCliente(cuenta: Cuenta): ClienteDropi {
           if (r.tipo !== 'ok') throw new Error(r.tipo === 'fallo' ? r.motivo : 'no-existe');
           return r;
         },
-        ['dropi-orden', cuenta.id, String(ordenId)],
+        ['dropi-orden-v2', cuenta.id, String(ordenId)],
         { revalidate: TTL_S, tags: [`dropi-tracking-${cuenta.id}`] }
       )();
     } catch (e) {

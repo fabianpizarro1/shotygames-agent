@@ -27,6 +27,7 @@ export function TarjetaPedido({
   const t = tiendaUI(p.tienda);
   const alerta = p.alertas[0];
   const rojo = alerta?.nivel === 'rojo';
+  const comentarioTransp = p.tracking?.novedades?.find((n) => n.comentario)?.comentario ?? '';
 
   return (
     <button
@@ -106,6 +107,16 @@ export function TarjetaPedido({
           {p.alertas.length > 1 && (
             <span className="opacity-60"> · +{p.alertas.length - 1} más</span>
           )}
+        </p>
+      )}
+
+      {/* Lo último que dijo la transportadora sobre la novedad (DROPI →
+          "Comentario de la transportadora"). Solo mientras el pedido siga en
+          novedad: después ya no es lo que hay que resolver. */}
+      {p.fase === 'novedad' && comentarioTransp && (
+        <p className="prosa mt-2 line-clamp-2 rounded-lg border border-[var(--color-borde)] bg-[var(--color-fondo)] px-2.5 py-1.5 text-xs text-[var(--color-texto-suave)]">
+          <span className="text-[var(--color-texto-tenue)]">Transportadora: </span>
+          {comentarioTransp}
         </p>
       )}
 
