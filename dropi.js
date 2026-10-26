@@ -343,7 +343,21 @@ async function resolverCiudad(ciudad, provincia, rateType) {
     // mover ni una ciudad que ya resolvía (verificado con un diferencial sobre
     // todo el catálogo: ELOY ALFARO ya resolvía por prefijo a la de Durán).
     const sinTarifa = () => {
-      if (deLaProvincia.length) return [];
+      if (deLaProvincia.length) {
+        // La provincia que llegó NO contiene la ciudad. Esa provincia a veces la
+        // pone el modelo del bot de memoria (PLAYAS salió como SANTA ELENA siendo
+        // de GUAYAS, KATHERIN PINELA 2026-10-26) y DROPI rechazaba con "la ciudad
+        // no existe en el departamento ingresado". Si el nombre existe EXACTO en
+        // una única provincia de todo el catálogo no hay a quién confundir: se usa
+        // esa. Con homónimos en varias provincias NO se adivina (ver CUMANDA).
+        const exactas = todas.filter((c) => c.nNombre === nCiudad);
+        const provincias = new Set(exactas.map((c) => c.nProvincia));
+        if (exactas.length && provincias.size === 1) {
+          console.log(`resolverCiudad: "${ciudad}" no está en ${provincia}, pero solo existe en ${exactas[0].provincia} — se usa esa`);
+          return exactas;
+        }
+        return [];
+      }
       const exactasTodas = ordenarPorPrioridad(todas.filter((c) => c.nNombre === nCiudad));
       const variantesTodas = ordenarPorPrioridad(
         todas.filter((c) => c.nNombre !== nCiudad && limpiarNombreCiudad(c.nombre) === nCiudadLimpio)
