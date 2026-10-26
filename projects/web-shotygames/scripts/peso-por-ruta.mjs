@@ -29,6 +29,7 @@ const base = collect(entryKey);
 const routes = {
   "/ (home)": "src/pages/Index.tsx",
   "/landing/torre-normal": "src/pages/TorreNormalLanding.tsx",
+  "/landing/torre-normal-v2": "src/pages/TorreNormalV2Landing.tsx",
   "/landing/torre-picante": "src/pages/TorrePicanteLanding.tsx",
   "/landing/torre-parejas": "src/pages/TorreParejasLanding.tsx",
   "/landing/combo-parejas": "src/pages/ComboParejasLanding.tsx",

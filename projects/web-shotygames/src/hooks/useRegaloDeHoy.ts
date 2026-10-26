@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 /**
  * Cuenta regresiva del regalo del día.
@@ -62,4 +62,52 @@ export function useRegaloDeHoy(): RegaloDeHoy {
     horas,
     fecha,
   };
+}
+
+/**
+ * Versión para páginas con varios relojes (hero, oferta, cierre, barra fija).
+ *
+ * `useRegaloDeHoy` guarda el estado en quien lo llama: pintar 4 relojes obliga a
+ * re-renderizar la página entera cada segundo. Acá hay UN solo intervalo para
+ * todos y cada reloj se suscribe por su cuenta: solo se repinta el texto del
+ * reloj, y dos relojes a la vista nunca se desfasan un segundo entre sí.
+ */
+const formatearRestante = (ms: number) => {
+  const totalSeg = Math.max(0, Math.floor(ms / 1000));
+  return `${dosDigitos(Math.floor(totalSeg / 3600))}:${dosDigitos(Math.floor((totalSeg % 3600) / 60))}:${dosDigitos(totalSeg % 60)}`;
+};
+
+let restanteActual = formatearRestante(msHastaMedianocheEC());
+let intervaloCompartido: ReturnType<typeof setInterval> | undefined;
+const oyentes = new Set<() => void>();
+
+const actualizarRestante = () => {
+  const nuevo = formatearRestante(msHastaMedianocheEC());
+  if (nuevo === restanteActual) return;
+  restanteActual = nuevo;
+  oyentes.forEach((avisar) => avisar());
+};
+
+const suscribirRestante = (avisar: () => void) => {
+  oyentes.add(avisar);
+  if (oyentes.size === 1) {
+    actualizarRestante();
+    intervaloCompartido = setInterval(actualizarRestante, 1000);
+  }
+  return () => {
+    oyentes.delete(avisar);
+    if (oyentes.size === 0 && intervaloCompartido) {
+      clearInterval(intervaloCompartido);
+      intervaloCompartido = undefined;
+    }
+  };
+};
+
+/** "07:12:44" hasta la medianoche de Ecuador, con un solo intervalo para todos los relojes. */
+export function useRestanteRegalo(): string {
+  return useSyncExternalStore(
+    suscribirRestante,
+    () => restanteActual,
+    () => restanteActual,
+  );
 }

@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 const Index = lazyWithRetry(() => import("./pages/Index"));
 const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
 const TorreNormalLanding = lazyWithRetry(() => import("./pages/TorreNormalLanding"));
+const TorreNormalV2Landing = lazyWithRetry(() => import("./pages/TorreNormalV2Landing"));
 const TorrePicanteLanding = lazyWithRetry(() => import("./pages/TorrePicanteLanding"));
 const TorrePicanteV2Landing = lazyWithRetry(() => import("./pages/TorrePicanteV2Landing"));
 const TorrePicanteV3Landing = lazyWithRetry(() => import("./pages/TorrePicanteV3Landing"));
@@ -52,6 +53,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
+          {/* Variante para comparar (2026-10-25): copy nuevo + contador del regalo.
+              La principal, donde caen los anuncios, sigue siendo /landing/torre-normal. */}
+          <Route path="/landing/torre-normal-v2" element={<TorreNormalV2Landing />} />
         {/* Principal (donde caen los anuncios): la del póster (TorrePicanteV2Landing),
             con los cambios del 13-oct. Volvió a la principal el 2026-10-13 a pedido
             de Fabián; la oscura con carrusel (TorrePicanteV3Landing) quedó en -v3 y

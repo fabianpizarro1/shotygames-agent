@@ -69,6 +69,16 @@ const pages = [
     type: "product",
   },
   {
+    route: "/landing/torre-normal-v2",
+    chunk: "src/pages/TorreNormalV2Landing.tsx",
+    hero: "src/assets/torre-normal-brillo.webp",
+    title: "Torre La Previa: juego de retos para amigos | ShotyGames Ecuador",
+    description:
+      "51 bloques con retos para tu próxima reunión. Torre La Previa por $29.99, envío gratis a todo Ecuador y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
+    image: resolveImage("src/assets/torre-normal-brillo.webp"),
+    type: "product",
+  },
+  {
     route: "/landing/torre-picante-v2",
     chunk: "src/pages/TorrePicanteLanding.tsx",
     hero: "src/assets/torre-picante-1.webp",
