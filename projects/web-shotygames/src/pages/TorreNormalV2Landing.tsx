@@ -10,10 +10,7 @@ import Testimonials from "@/components/Testimonials";
 import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
-import {
-  Star, Gift, Truck, Clock, Banknote, CheckCircle2, Droplets, Users, MapPin,
-  ClipboardList, MessageCircle, PartyPopper,
-} from "lucide-react";
+import { Star, Gift, Truck, Clock, Banknote, Package, Wine, BookOpen, Hand, Flame, PartyPopper } from "lucide-react";
 import torreNormal1 from "@/assets/torre-normal-brillo.webp";
 import torreNormal2 from "@/assets/torre-normal-2.webp";
 import torreNormal3 from "@/assets/torre-normal-3.webp";
@@ -24,11 +21,14 @@ import torreNormal7 from "@/assets/torre-normal-7.webp";
 import torreNormal8 from "@/assets/torre-normal-8.webp";
 import torreNormal9 from "@/assets/torre-normal-9.webp";
 import torreNormal10 from "@/assets/torre-normal-10.webp";
-import lifeFiesta from "@/assets/torre-normal-life-fiesta.webp";
-import lifeRonda from "@/assets/torre-normal-life-ronda.webp";
-import imgEbook from "@/assets/ebook-25-juegos-portada.webp";
-import imgEbook420 from "@/assets/ebook-25-juegos-portada-420.webp";
-import imgEbookEjemplo from "@/assets/ebook-25-juegos-ejemplo.webp";
+import retoEx from "@/assets/previa-reto-ex.webp";
+import retoEx640 from "@/assets/previa-reto-ex-640.webp";
+import retoEx760 from "@/assets/previa-reto-ex-760.webp";
+import nocheEx from "@/assets/previa-noche-ex.webp";
+import nocheEx640 from "@/assets/previa-noche-ex-640.webp";
+import retoCachudo from "@/assets/previa-reto-cachudo.webp";
+import retoCachudo640 from "@/assets/previa-reto-cachudo-640.webp";
+import portadaGuia from "@/assets/ebook-25-juegos-portada-120.webp";
 import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
@@ -37,23 +37,27 @@ import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 // Vive en /landing/torre-normal-v2. La que sigue vendiendo (y recibiendo los
 // anuncios) es /landing/torre-normal: ésta es la variante para comparar.
 // 2026-10-25: copy del documento "Reescribir landing de ventas" de la IA externa,
-// filtrado con las decisiones de Fabián — ruta nueva, los claims del producto
-// (pino premium, sellado, no se borra el texto, se puede mojar) se quedan, y
-// con contador del regalo como en la Picante. Lo que ese documento pedía quitar
-// y NO se quitó: +3.500 clientes y las capturas (regla del 12-oct), el ancla de
-// $4.90 de la guía (es el precio real de Ebook25JuegosLanding), "2 a 4 días" y
-// el "envío gratis a todo Ecuador". La foto lifestyle `torre-normal-life-producto`
-// ya no se usa: muestra 2 vasos (se vende 1) y la caja dice "Blaques con retas".
-// OJO: el nombre del producto no se toca — n8n (PEDIDOS WEB LOVABLE) lo compara exacto.
+// filtrado con las decisiones de Fabián (ruta nueva, claims del producto, contador).
+// 2026-10-26: "hay mucho texto" → reescrita con el mínimo de palabras, imagen
+// primero y enfocada al feriado del sáb 31-oct al mar 3-nov (Difuntos + Cuenca).
+// Fotos: las 3 de Descargas "LA PREVIA - GENERADAS LOTE1/LOTE2" (las de los
+// anuncios). Ojo: en ellas la caja dice "LA PREVIA" y el bloque "…O TOMA 3 SHOTS";
+// los bloques de las fotos reales del carrusel dicen solo "LLAMA A TU EX".
+// Se quedan: claims del producto, +3.500, capturas, ancla de $4.90 de la guía (es
+// el precio real de Ebook25JuegosLanding), "2 a 4 días" y el envío gratis a todo
+// Ecuador. OJO: el nombre del producto no se toca — n8n lo compara exacto.
 const PRODUCT_NAME = "Torre La Previa";
 const PRECIO = 29.99;
 const PRECIO_TXT = `$${PRECIO.toFixed(2)}`;
 
 const GRADIENTE = "bg-gradient-to-r from-[#ff3d00] to-[#ff7b00]";
 
-// Primero la foto del producto y los 3 retos que mejor se entienden de un
-// vistazo (ex, WhatsApp, mandarina); después el resto.
-const FOTOS = [
+/** Mismo valor en el <img> del hero y en el preload del prerender (scripts/prerender-seo.mjs). */
+const SIZES_HERO = "(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)";
+
+// Fotos REALES de los bloques (la foto del producto y los retos que mejor se
+// entienden de un vistazo primero).
+const FOTOS_REALES = [
   { src: torreNormal1, badge: "Foto real 📸", alt: "Torre La Previa: caja, 1 vaso de shot y 51 bloques con retos" },
   { src: torreNormal2, badge: "Reto real 🔥", alt: "Bloque real: Llama a tu ex" },
   { src: torreNormal9, badge: "Reto real 📱", alt: "Bloque real: Muestra tu último mensaje de WhatsApp" },
@@ -66,64 +70,30 @@ const FOTOS = [
   { src: torreNormal10, badge: "Reto real 📸", alt: "Bloque real: Sube una historia y pon que extrañas a tu ex" },
 ];
 
-const PASOS_JUEGO = [
-  { n: "1", t: "Arman la torre" },
-  { n: "2", t: "Sacan un bloque y leen el reto" },
-  { n: "3", t: "Lo cumplen o toman 3 shots 🍸" },
-  { n: "4", t: "El que la tumba paga la penitencia final 💥" },
+const PASOS = [
+  { Icono: Package, t: "Arma la torre" },
+  { Icono: Hand, t: "Saca un bloque" },
+  { Icono: BookOpen, t: "Lee el reto en voz alta" },
+  { Icono: Flame, t: "Cúmplelo o toma 3 shots" },
 ];
 
-const PASOS_PEDIDO = [
-  { Icono: ClipboardList, t: "Completa tu pedido", d: "Déjanos tus datos y dirección de entrega." },
-  { Icono: MessageCircle, t: "Confirma por WhatsApp", d: "Te llevamos a WhatsApp con el mensaje ya escrito: solo envíalo para confirmar." },
-  { Icono: PartyPopper, t: "Recibe y paga", d: "Recibe La Previa con tu vaso, las instrucciones y el QR de tu guía digital. Pagas en efectivo al recibir." },
+const INCLUYE = [
+  { Icono: Package, t: "51 bloques con retos" },
+  { Icono: Wine, t: "1 vaso tequilero" },
+  { Icono: BookOpen, t: "Instrucciones de juego" },
 ];
 
 const FAQS = [
-  {
-    q: "¿Qué es La Previa?",
-    a: "Es nuestra Torre de Shots versión Normal (así la verás escrita en la caja): una torre de 51 bloques de madera con retos para jugar entre amigos. En cada turno sacan un bloque, leen el reto y siguen las instrucciones del juego.",
-  },
-  {
-    q: "¿Es muy fuerte? ¿Para qué grupo sirve?",
-    a: "Es la versión más suave de las tres: los retos son para reírse, sin nada subido de tono. Eso sí, es un juego para adultos (+18) y algunos retos hablan de ex, mensajes y bromas personales: mira los ejemplos de esta página para ver si encaja con tu grupo.",
-  },
-  {
-    q: "¿De qué material es? ¿Aguanta que se derrame trago encima?",
-    a: "Es madera de pino 100% premium, lijada y sellada. Se puede mojar y no se daña ni se borra el texto de los bloques. Es un juego de shots — está hecha para eso.",
-  },
-  {
-    q: "¿Qué incluye mi pedido?",
-    a: "La torre de 51 bloques, 1 vaso tequilero y las instrucciones de juego. Por pedir hoy también recibes gratis la Guía Digital de 25 Juegos para Fiestas.",
-  },
-  {
-    q: "¿La guía es un libro físico?",
-    a: "No. Es digital: dentro de la caja viene una tarjeta con código QR para descargarla en tu celular. Sin costo extra.",
-  },
-  {
-    q: "¿Cuánto tarda en llegar?",
-    a: "Entre 2 y 4 días hábiles a todo Ecuador. Si pides antes de las 3 de la tarde, sale el mismo día.",
-  },
-  {
-    q: "¿Tengo que pagar por adelantado?",
-    a: "No. Pagas todo en efectivo cuando el paquete llega a tu puerta. Para confirmar el pedido solo te llevamos a WhatsApp con el mensaje ya escrito: lo envías y listo, no adelantas nada.",
-  },
-  {
-    q: "¿Para cuántas personas sirve?",
-    a: "La caja dice para 2 o más, pero se disfruta de verdad desde 3 en adelante, sin límite. Entre más grande el grupo, más se arma.",
-  },
-  {
-    q: "¿Es obligatorio tomar alcohol?",
-    a: "No. Pueden adaptar la dinámica y disfrutar del juego sin bebidas alcohólicas.",
-  },
-  {
-    q: "¿Es lo mismo que la Torre Picante? ¿Y si quiero algo más atrevido?",
-    a: "No. La Previa es la más suave: bromas y retos entre amigos. Si quieres algo más atrevido tenemos la Torre Picante (retos más subidos de tono para grupos con confianza) y la Torre Parejas (solo para dos). Puedes agregarlas a tu pedido al momento de comprar y te sale más barato que pedirlas por separado.",
-  },
+  { q: "¿Cuándo llega?", a: "2 a 4 días hábiles a todo Ecuador. Si pides antes de las 3 de la tarde, sale el mismo día." },
+  { q: "¿Pago por adelantado?", a: "No. Pagas en efectivo al recibir. Confirmas por WhatsApp con un mensaje ya escrito." },
+  { q: "¿Es muy fuerte?", a: "Es la más suave de las tres. Es para adultos (+18): hay retos de ex, mensajes y bromas personales." },
+  { q: "¿Aguanta que se moje?", a: "Sí. Pino premium, lijado y sellado: no se daña ni se borra el texto." },
+  { q: "¿Para cuántos? ¿Hay que tomar?", a: "Desde 3 personas, sin límite. Tomar es opcional: pueden adaptar la dinámica sin alcohol." },
+  { q: "¿Algo más atrevido?", a: "Agrega la Torre Picante o la Parejas (+$10 cada una) al hacer tu pedido." },
 ];
 
 const Seccion = ({ children, className = "", ancho = "max-w-5xl" }: { children: ReactNode; className?: string; ancho?: string }) => (
-  <section className={`px-4 py-10 md:py-16 ${className}`}>
+  <section className={`px-4 py-8 md:py-14 ${className}`}>
     <div className={`mx-auto ${ancho}`}>{children}</div>
   </section>
 );
@@ -145,20 +115,6 @@ const CtaBoton = ({ texto, onClick, variante = "lleno" }: { texto: string; onCli
   >
     {texto}
   </button>
-);
-
-// En móvil el icono va al lado del texto (3 tarjetas apiladas con el icono arriba
-// ocupaban casi una pantalla entera); desde md vuelve a ir arriba.
-const Ventaja = ({ Icono, titulo, children }: { Icono: typeof Droplets; titulo: ReactNode; children: ReactNode }) => (
-  <Card className="flex gap-4 border-2 border-[#ff3d00]/20 p-4 md:block md:p-6">
-    <div className="h-fit w-fit shrink-0 rounded-full bg-[#ff3d00]/10 p-3 md:mb-4">
-      <Icono className="h-6 w-6 text-[#ff3d00]" aria-hidden="true" />
-    </div>
-    <div>
-      <h3 className="mb-1 text-base font-bold md:mb-2 md:text-lg">{titulo}</h3>
-      <p className="text-sm text-muted-foreground md:text-base">{children}</p>
-    </div>
-  </Card>
 );
 
 // Cada reloj se suscribe solo (useRestanteRegalo): la página no re-renderiza.
@@ -211,8 +167,8 @@ const TorreNormalV2Landing = () => {
 
   // La barra de abajo solo aparece cuando el CTA del hero ya salió de pantalla:
   // el hero ya trae botón, precio y regalo en el primer pantallazo y dos botones
-  // juntos compiten. Arranca escondida (en este hero el CTA se ve desde el
-  // inicio); si el navegador no tiene IntersectionObserver, queda siempre visible.
+  // juntos compiten. Arranca escondida; si el navegador no tiene
+  // IntersectionObserver, queda siempre visible.
   const ctaHeroRef = useRef<HTMLDivElement>(null);
   const [mostrarBarra, setMostrarBarra] = useState(false);
   useEffect(() => {
@@ -245,10 +201,10 @@ const TorreNormalV2Landing = () => {
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">
       <Seo
-        title="Torre La Previa: juego de retos para amigos | ShotyGames Ecuador"
-        description="51 bloques con retos para tu próxima reunión. Torre La Previa por $29.99, envío gratis a todo Ecuador y pago al recibir. Pide hoy y recibe una guía digital de regalo."
+        title="Torre La Previa: el juego del feriado | ShotyGames Ecuador"
+        description="Este feriado lleva La Previa: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
         canonical="https://www.shotygames.com/landing/torre-normal-v2"
-        image={`https://www.shotygames.com${torreNormal1}`}
+        image={`https://www.shotygames.com${retoEx}`}
         type="product"
       />
 
@@ -257,68 +213,68 @@ const TorreNormalV2Landing = () => {
         <p className="text-[11px] md:text-base leading-tight">💵 Pagas al recibir · 🚚 Envío gratis a todo Ecuador</p>
       </div>
 
-      {/* ---------- HERO: qué es, cuánto cuesta, qué regalo y botón en el primer pantallazo ---------- */}
-      <section className="bg-gradient-to-br from-background to-muted/30 px-4 pt-5 pb-10 md:py-14">
-        <div className="mx-auto max-w-5xl md:grid md:grid-cols-2 md:items-center md:gap-x-12">
-          <div>
-            <p className="mb-2 text-[12px] md:text-sm font-bold uppercase tracking-[0.14em] text-[#ff3d00]">
-              La Previa · juego de retos para amigos
+      {/* ---------- HERO: feriado + foto del reto + precio, regalo y botón ----------
+          Móvil: titular → foto → oferta. Escritorio: texto a la izquierda, foto a la derecha. */}
+      <section className="bg-gradient-to-br from-background to-muted/30 px-4 pt-4 pb-8 md:py-12">
+        <div className="mx-auto max-w-5xl md:grid md:grid-cols-2 md:gap-x-12">
+          <div className="md:col-start-1 md:row-start-1 md:self-end">
+            <p className="mb-2 inline-flex rounded-full bg-[#ff3d00]/10 px-3 py-1 text-[12px] md:text-sm font-bold uppercase tracking-[0.12em] text-[#ff3d00]">
+              🎉 Feriado · 31 oct – 3 nov
             </p>
-            <h1 className="text-[30px] leading-[1.1] md:text-5xl font-bold tracking-tight">
-              Tú llevas la torre.{" "}
-              <span className={`block ${GRADIENTE} bg-clip-text text-transparent`}>El grupo pone las anécdotas.</span>
+            <h1 className="text-balance text-[30px] leading-[1.1] md:text-5xl font-bold tracking-tight">
+              Este feriado, tú llevas la torre.
+              <span className={`mt-1 block text-[22px] md:text-3xl ${GRADIENTE} bg-clip-text text-transparent`}>
+                El grupo pone las anécdotas.
+              </span>
             </h1>
-            <p className="mt-3 text-[15px] md:text-xl text-muted-foreground">
-              51 bloques de madera con retos para jugar entre amigos. Sacan uno, leen lo que les tocó y empieza la
-              parte de la reunión que van a querer contar.
-            </p>
+          </div>
 
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {["Retos ya escritos", "Fácil de aprender"].map((t) => (
-                <li
-                  key={t}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#ff3d00]/25 bg-[#ff3d00]/5 px-3 py-1.5 text-[13px] md:text-sm font-semibold"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-[#ff3d00]" aria-hidden="true" />
-                  {t}
-                </li>
-              ))}
-            </ul>
+          <div className="mt-4 md:mt-0 md:col-start-2 md:row-start-1 md:row-span-2 md:self-center">
+            <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-muted shadow-2xl md:aspect-square">
+              <img
+                src={retoEx}
+                srcSet={`${retoEx640} 640w, ${retoEx760} 760w, ${retoEx} 1080w`}
+                sizes={SIZES_HERO}
+                alt="Amigos riendo mientras una muestra el bloque «Llama a tu ex o toma 3 shots» de la Torre La Previa"
+                width={1080}
+                height={1080}
+                decoding="sync"
+                {...{ fetchpriority: "high" }}
+                className="h-full w-full object-cover object-[50%_42%]"
+              />
+            </div>
+          </div>
 
-            <div className="mt-5 flex items-center justify-between gap-4 rounded-2xl border-2 border-[#ff3d00]/20 bg-white px-4 py-3 shadow-sm">
+          <div className="mt-4 space-y-3 md:col-start-1 md:row-start-2 md:mt-5 md:self-start">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border-2 border-[#ff3d00]/20 bg-white px-4 py-3 shadow-sm">
               <div className="min-w-0">
-                <p className="text-sm md:text-base font-bold uppercase tracking-wide">Torre La Previa</p>
+                <p className="text-sm font-bold uppercase tracking-wide md:text-base">Torre La Previa</p>
                 <p className="text-[13px] text-muted-foreground">51 bloques + vaso tequilero</p>
                 <p className="mt-0.5 flex items-center gap-1 text-[13px] font-semibold text-green-700">
                   <Truck className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Envío gratis
                 </p>
               </div>
-              <p className="text-[32px] min-[360px]:text-[38px] md:text-[46px] font-bold leading-none tabular-nums text-[#ff3d00]">{PRECIO_TXT}</p>
+              <p className="text-[32px] font-bold leading-none tabular-nums text-[#ff3d00] min-[360px]:text-[38px] md:text-[46px]">
+                {PRECIO_TXT}
+              </p>
             </div>
 
-            <div className="mt-3 rounded-xl border-2 border-yellow-400/60 bg-yellow-50 px-4 py-2.5 text-center">
-              <p className="text-[14px] md:text-base font-semibold text-yellow-900">
-                🎁 Pide hoy y recibe <strong>GRATIS</strong> la Guía Digital de 25 Juegos para Fiestas
+            <div className="rounded-xl border-2 border-yellow-400/60 bg-yellow-50 px-4 py-2.5 text-center">
+              <p className="text-[14px] font-semibold text-yellow-900 md:text-base">
+                🎁 Pide hoy: <strong>Guía de 25 juegos GRATIS</strong>
               </p>
               <RelojRegalo className="mt-1 text-amber-700" />
             </div>
 
-            <div ref={ctaHeroRef} className="mt-4">
+            <div ref={ctaHeroRef}>
               <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
             </div>
-            <p className="mt-2 text-center text-[13px] text-muted-foreground">
-              Sin pago anticipado: confirmas por WhatsApp con un mensaje ya escrito.
-            </p>
 
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs md:text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-muted-foreground md:text-sm">
               <span className="flex items-center gap-1.5">
                 <Banknote className="h-4 w-4 text-green-600" aria-hidden="true" />
                 <span className="font-semibold text-foreground">Contraentrega</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Truck className="h-4 w-4 text-[#ff3d00]" aria-hidden="true" />
-                Envío gratis
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4 text-[#ff3d00]" aria-hidden="true" />
@@ -326,286 +282,141 @@ const TorreNormalV2Landing = () => {
               </span>
             </div>
 
-            <div className="mt-4 flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-1" role="img" aria-label="5 de 5 estrellas">
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center gap-0.5" role="img" aria-label="5 de 5 estrellas">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 fill-[#ff3d00] text-[#ff3d00]" />
+                  <Star key={i} className="h-4 w-4 fill-[#ff3d00] text-[#ff3d00]" />
                 ))}
               </div>
-              <p className="text-center text-sm md:text-base font-semibold">
-                +3.500 clientes en Ecuador ya la tienen en su casa
-              </p>
+              <p className="text-sm font-semibold">+3.500 clientes en Ecuador</p>
             </div>
-          </div>
-
-          <div className="mt-8 md:mt-0">
-            <Carousel opts={{ align: "center", loop: true }} setApi={setApi} className="w-full">
-              <CarouselContent>
-                {FOTOS.map((foto, index) => (
-                  <CarouselItem key={foto.alt}>
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-2xl">
-                      {/* La 0 es el LCP: CarouselImage le da eager + fetchpriority. */}
-                      <CarouselImage
-                        src={foto.src}
-                        alt={foto.alt}
-                        index={index}
-                        current={slideActual}
-                        className="h-full w-full object-cover"
-                      />
-                      <span className={`absolute top-3 right-3 rounded-full ${GRADIENTE} px-3 py-1 text-sm font-bold text-white shadow-lg`}>
-                        {foto.badge}
-                      </span>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2 md:left-4" />
-              <CarouselNext className="right-2 md:right-4" />
-            </Carousel>
-            <p className="mt-2 text-center text-sm text-muted-foreground">👉 Desliza para ver los retos reales que trae</p>
           </div>
         </div>
       </section>
 
-      {/* ---------- EL PROBLEMA ---------- */}
+      {/* ---------- EL PROBLEMA, EN UNA LÍNEA ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-3xl">
-        <div className="space-y-4 text-center md:space-y-6">
-          <H2>Todos llegaron. Y a la hora ya cada uno está en su celular.</H2>
-          <div className="space-y-3 text-base text-muted-foreground md:text-xl">
-            <p>
-              No es que la gente no quiera pasarla bien. Es que nadie propone nada, y la reunión se apaga sola antes
-              de arrancar de verdad.
-            </p>
-            <p>Siempre falta el que rompa el hielo. Y ese papel cansa.</p>
-            <p className={`pt-2 text-lg font-bold md:text-2xl ${GRADIENTE} bg-clip-text text-transparent`}>
-              Poner la torre en la mesa hace ese trabajo por ti.
-            </p>
-          </div>
-        </div>
-      </Seccion>
-
-      {/* ---------- LA SOLUCIÓN: imaginar la escena + lo que la hace distinta ---------- */}
-      <Seccion>
-        <div className="mb-8 grid items-center gap-8 md:mb-10 md:grid-cols-2 md:gap-10">
-          <div className="space-y-3 text-center md:text-left">
-            <H2>Ahora imagina a tus amigos sacando estos bloques.</H2>
-            <p className="text-base text-muted-foreground md:text-xl">
-              La gracia está en descubrir a quién le toca. Un bloque pone a alguien en aprietos, otro desata las
-              bromas… y todos quieren ver qué sale después.
-            </p>
-            <p className="text-base text-muted-foreground md:text-xl">
-              Se arma en la mesa en 2 minutos. Nadie tiene que proponer nada: la torre lo hace por ustedes, y ninguna
-              reunión sale igual.
-            </p>
-          </div>
-          <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl md:aspect-square">
-            <img
-              src={lifeFiesta}
-              alt="Grupo de amigos celebrando alrededor de la Torre La Previa"
-              width={1000}
-              height={1000}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-[50%_25%]"
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3 md:gap-5">
-          <Ventaja Icono={Droplets} titulo="Aguanta que le derramen encima">
-            Madera de pino 100% premium, lijada y sellada. Se puede mojar y
-            <strong className="text-foreground"> no se daña ni se borra el texto</strong>. Es un juego de shots: está
-            hecha para eso.
-          </Ventaja>
-          <Ventaja Icono={Users} titulo="La más suave de las tres">
-            Retos para reírse, sin nada subido de tono.
-            <strong className="text-foreground"> Rompe el hielo con tus amigos de siempre</strong>.
-          </Ventaja>
-          <Ventaja Icono={MapPin} titulo="Hecha en Ecuador 🇪🇨">
-            Producida y armada acá, no importada genérica. Los retos están escritos{" "}
-            <strong className="text-foreground">como hablamos nosotros</strong>, no traducidos.
-          </Ventaja>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-xl space-y-4 text-center">
-          <p className={`text-xl font-bold md:text-2xl ${GRADIENTE} bg-clip-text text-transparent`}>
-            ¿Ya sabes quién de tu grupo no querría sacar el siguiente?
-          </p>
-          <CtaBoton texto="QUIERO LLEVARLA A LA PRÓXIMA REUNIÓN" onClick={handleBuyClick} />
+        <div className="space-y-2 text-center">
+          <H2>4 días de feriado. ¿Y nadie propone nada?</H2>
+          <p className={`text-xl font-bold md:text-2xl ${GRADIENTE} bg-clip-text text-transparent`}>La torre lo propone por ti.</p>
         </div>
       </Seccion>
 
       {/* ---------- CÓMO SE JUEGA ---------- */}
-      <Seccion className="bg-muted/30">
-        <div className="mb-8 space-y-2 text-center md:mb-10">
-          <H2>Saca un bloque. Lee el reto. Ahora te toca.</H2>
-          <p className="text-base text-muted-foreground md:text-xl">
-            No necesitas preparar una lista de preguntas ni dirigir toda la reunión.
-          </p>
-        </div>
-        <div className="grid items-center gap-6 md:grid-cols-[minmax(0,280px)_1fr] md:gap-8">
-          <div className="mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-2xl shadow-2xl md:aspect-auto md:h-full">
+      <Seccion>
+        <H2 className="mb-6 text-center">Saca. Lee. Cumple.</H2>
+        <div className="grid items-center gap-5 md:grid-cols-2 md:gap-10">
+          <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl md:aspect-square">
             <img
-              src={lifeRonda}
-              alt="Sacando un bloque de la Torre La Previa"
-              width={1000}
-              height={1000}
+              src={nocheEx}
+              srcSet={`${nocheEx640} 640w, ${nocheEx} 1080w`}
+              sizes="(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)"
+              alt="Un grupo de amigos en la noche: alguien muestra el bloque «Llama a tu ex o toma 3 shots»"
+              width={1080}
+              height={1080}
               loading="lazy"
               decoding="async"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover object-[50%_45%]"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3 md:gap-5">
-            {PASOS_JUEGO.map((paso) => (
-              <Card key={paso.n} className="p-4 text-center md:p-6">
-                <div className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full ${GRADIENTE} text-lg font-bold text-white md:h-12 md:w-12 md:text-xl`}>
-                  {paso.n}
-                </div>
-                <p className="text-sm font-semibold md:text-base">{paso.t}</p>
+          <div className="grid grid-cols-2 gap-3">
+            {PASOS.map(({ Icono, t }) => (
+              <Card key={t} className="flex flex-col items-center gap-2 p-4 text-center">
+                <span className={`flex h-11 w-11 items-center justify-center rounded-full ${GRADIENTE} text-white`}>
+                  <Icono className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <p className="text-sm font-semibold md:text-base">{t}</p>
               </Card>
             ))}
           </div>
         </div>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Juego para adultos (+18). Acuerden los límites del grupo antes de empezar.
+        <p className="mt-4 text-center text-xs text-muted-foreground md:text-sm">
+          Si cae la torre, penitencia final 💥 · Juego para adultos (+18)
         </p>
       </Seccion>
 
-      {/* ---------- PRUEBA SOCIAL (componente compartido) ---------- */}
-      <Testimonials />
-
-      {/* ---------- EL REGALO ---------- */}
-      <Seccion className="bg-gradient-to-br from-yellow-50 to-orange-50">
-        <div className="grid items-center gap-8 md:grid-cols-[2fr_3fr] md:gap-12">
-          <div className="mx-auto flex w-full max-w-[300px] items-end justify-center -space-x-6 md:max-w-none md:-space-x-8">
-            <img
-              src={imgEbook}
-              srcSet={`${imgEbook420} 420w, ${imgEbook} 512w`}
-              sizes="(min-width: 768px) 190px, 42vw"
-              alt="Portada de la Guía Digital de 25 Juegos para Fiestas de ShotyGames"
-              width={512}
-              height={800}
-              loading="lazy"
-              decoding="async"
-              className="relative z-10 h-auto w-[46%] max-w-[210px] -rotate-3 rounded-xl shadow-[0_20px_50px_-15px_rgba(255,123,0,0.55)]"
-            />
-            <img
-              src={imgEbookEjemplo}
-              alt="Una de las páginas de la guía: ficha de un juego con preparación y condiciones de victoria"
-              width={512}
-              height={800}
-              loading="lazy"
-              decoding="async"
-              className="mb-4 h-auto w-[40%] max-w-[180px] rotate-3 rounded-xl shadow-xl"
-            />
-          </div>
-          <div className="space-y-4 text-center md:text-left">
-            <span className="inline-block rounded-full bg-yellow-300 px-3 py-1 text-[12px] font-bold tracking-wide text-yellow-950">
-              REGALO POR TU PEDIDO DE HOY
-            </span>
-            <H2>La torre pone los retos. Tu regalo suma 25 juegos más.</H2>
-            <p className="text-base text-muted-foreground md:text-xl">
-              Pide hoy La Previa y recibe GRATIS la Guía Digital de 25 Juegos para Fiestas: más ideas para variar el
-              plan y seguir jugando con tu grupo.
-            </p>
-            <p className="text-sm text-muted-foreground md:text-base">
-              Dentro de tu caja encontrarás una tarjeta con código QR para descargar la guía en tu celular. Es una
-              guía digital, no un libro físico.
-            </p>
-            <RelojRegalo className="text-amber-700 md:justify-start" />
-            <CtaBoton texto="PEDIR MI TORRE CON LA GUÍA GRATIS" onClick={handleBuyClick} />
-          </div>
-        </div>
+      {/* ---------- RETOS REALES ---------- */}
+      <Seccion className="bg-muted/30" ancho="max-w-xl">
+        <H2 className="mb-5 text-center">Retos reales del juego</H2>
+        <Carousel opts={{ align: "center", loop: true }} setApi={setApi} className="w-full">
+          <CarouselContent>
+            {FOTOS_REALES.map((foto, index) => (
+              <CarouselItem key={foto.alt}>
+                <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-2xl">
+                  <CarouselImage
+                    src={foto.src}
+                    alt={foto.alt}
+                    index={index}
+                    current={slideActual}
+                    prioridad={false}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className={`absolute top-3 right-3 rounded-full ${GRADIENTE} px-3 py-1 text-sm font-bold text-white shadow-lg`}>
+                    {foto.badge}
+                  </span>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-2" />
+          <CarouselNext className="right-2" />
+        </Carousel>
+        <p className="mt-2 text-center text-sm text-muted-foreground">👉 Desliza</p>
       </Seccion>
 
-      {/* ---------- LA OFERTA: acá se junta todo ---------- */}
+      {/* ---------- LO QUE LLEGA + PRECIO ---------- */}
       <section className="relative overflow-hidden px-4 py-10 md:py-16">
         <div className={`absolute inset-0 ${GRADIENTE} opacity-95`} aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-2xl text-center text-white">
-          <span className="mb-4 inline-block rounded-full bg-white px-4 py-1.5 text-sm font-bold text-[#ff3d00] md:text-base">
-            🎁 REGALO POR PEDIDO DE HOY
-          </span>
-          <h2 className="mb-6 text-2xl font-bold leading-tight md:mb-8 md:text-4xl">
-            Tu próxima previa empieza con este paquete
-          </h2>
+        <div className="relative z-10 mx-auto max-w-xl text-center text-white">
+          <h2 className="mb-5 text-2xl font-bold leading-tight md:text-4xl">Lo que llega a tu casa</h2>
 
-          <div className="space-y-5 rounded-2xl border-2 border-white/30 bg-black/25 p-6 backdrop-blur-sm md:p-8">
-            <div className="space-y-3 text-left">
-              <div className="flex items-center justify-between gap-3 text-base md:text-lg">
-                <span className="flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  Torre La Previa: 51 bloques con retos + vaso tequilero + instrucciones
-                </span>
-                <span className="whitespace-nowrap font-semibold">{PRECIO_TXT}</span>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-base md:text-lg">
-                <span className="flex items-center gap-2">
-                  <Gift className="h-5 w-5 shrink-0 text-yellow-300" aria-hidden="true" />
-                  Guía Digital de 25 Juegos para Fiestas
-                </span>
+          <div className="space-y-4 rounded-2xl border-2 border-white/30 bg-black/25 p-5 backdrop-blur-sm md:p-7">
+            <ul className="space-y-3 text-left text-base md:text-lg">
+              {INCLUYE.map(({ Icono, t }) => (
+                <li key={t} className="flex items-center gap-3">
+                  <Icono className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  {t}
+                </li>
+              ))}
+              <li className="flex items-center gap-3">
+                <img src={portadaGuia} alt="" width={96} height={150} loading="lazy" decoding="async" className="h-10 w-auto shrink-0 rounded" />
+                <span className="flex-1">Guía de 25 juegos</span>
                 <span className="whitespace-nowrap font-bold text-yellow-300">
                   <span className="mr-2 font-normal text-white/60 line-through">$4.90</span>GRATIS
                 </span>
-              </div>
-              <div className="flex items-center justify-between gap-3 text-base md:text-lg">
-                <span className="flex items-center gap-2">
-                  <Truck className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  Envío a todo Ecuador
-                </span>
-                <span className="whitespace-nowrap font-bold">GRATIS</span>
-              </div>
-            </div>
+              </li>
+              <li className="flex items-center gap-3">
+                <Gift className="h-5 w-5 shrink-0 opacity-0" aria-hidden="true" />
+                <span className="flex-1">Envío a todo Ecuador</span>
+                <span className="font-bold">GRATIS</span>
+              </li>
+            </ul>
 
             <div className="h-px bg-white/25" />
 
             <div>
-              <p className="mb-1 text-base text-white/80 md:text-lg">Hoy pagas</p>
-              <p className="text-5xl font-bold tabular-nums md:text-7xl">{PRECIO_TXT}</p>
+              <p className="text-sm text-white/80">Hoy pagas</p>
+              <p className="text-5xl font-bold tabular-nums md:text-6xl">{PRECIO_TXT}</p>
+              <p className="mt-1 text-base font-semibold">Al recibirla 💵</p>
             </div>
 
             <RelojRegalo className="rounded-xl border border-yellow-300/40 bg-yellow-300/15 px-3 py-2 text-yellow-200" />
 
-            <p className="text-lg font-bold md:text-2xl">Pagas cuando la tengas en la mano 💵</p>
-
             <CtaBoton texto="PEDIR LA MÍA CON EL REGALO" onClick={handleBuyClick} variante="blanco" />
-            <p className="text-[13px] text-white/85">Completa tus datos y confirma por WhatsApp.</p>
           </div>
+
+          <p className="mt-4 text-[13px] text-white/90">
+            🇪🇨 Hecha en Ecuador desde 2017 · 🔁 Si llega defectuosa, la reponemos
+          </p>
         </div>
       </section>
 
-      {/* ---------- COMPRA Y ENTREGA ---------- */}
-      <Seccion ancho="max-w-4xl">
-        <H2 className="mb-8 text-center md:mb-10">Pídela hoy y empieza a preparar la próxima reunión.</H2>
-        <ol className="grid gap-4 md:grid-cols-3 md:gap-6">
-          {PASOS_PEDIDO.map(({ Icono, t, d }, i) => (
-            <li key={t}>
-              <Card className="flex h-full gap-3 p-4 md:flex-col md:p-6">
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${GRADIENTE} font-bold text-white`}>
-                  {i + 1}
-                </span>
-                <div>
-                  <p className="mb-1 flex items-center gap-1.5 text-base font-bold md:text-lg">
-                    {t} <Icono className="h-4 w-4 text-[#ff3d00]" aria-hidden="true" />
-                  </p>
-                  <p className="text-sm text-muted-foreground">{d}</p>
-                </div>
-              </Card>
-            </li>
-          ))}
-        </ol>
-        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground md:text-base">
-          Llega en 2 a 4 días hábiles a todo Ecuador vía Servientrega. Si pides antes de las 3 de la tarde, sale el
-          mismo día.
-        </p>
-        <p className="mx-auto mt-3 max-w-2xl text-center text-sm font-semibold md:text-base">
-          🚚 Envío gratis, ya incluido en el precio · 🇪🇨 Marca ecuatoriana desde 2017 · 🔁 Si algo llega defectuoso o
-          incompleto, lo reponemos
-        </p>
-      </Seccion>
+      {/* ---------- PRUEBA SOCIAL (componente compartido) ---------- */}
+      <Testimonials />
 
-      {/* ---------- PREGUNTAS FRECUENTES ---------- */}
-      <Seccion className="bg-muted/30" ancho="max-w-3xl">
-        <H2 className="mb-8 text-center md:mb-10">Antes de llevarla a tu próxima previa</H2>
+      {/* ---------- PREGUNTAS ---------- */}
+      <Seccion ancho="max-w-3xl">
+        <H2 className="mb-6 text-center">Preguntas rápidas</H2>
         <Accordion type="single" collapsible className="w-full">
           {FAQS.map((faq, i) => (
             <AccordionItem key={faq.q} value={`faq-${i}`}>
@@ -617,29 +428,28 @@ const TorreNormalV2Landing = () => {
       </Seccion>
 
       {/* ---------- CIERRE ---------- */}
-      <section className="relative overflow-hidden px-4 py-10 md:py-16">
-        <div className={`absolute inset-0 ${GRADIENTE} opacity-95`} aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-2xl space-y-5 text-center text-white md:space-y-6">
-          <h2 className="text-2xl font-bold leading-tight md:text-4xl">En la próxima reunión, sé quien lleva el juego.</h2>
-          <p className="text-base text-white/90 md:text-xl">
-            Que alguien ponga la música. Tú lleva La Previa y deja que el primer bloque abra la conversación.
-          </p>
-          <p className="text-base font-semibold md:text-lg">
-            Torre + vaso + instrucciones por {PRECIO_TXT}. Envío gratis y pago al recibir.
-          </p>
-          <div>
-            <p className="text-base font-semibold text-yellow-300">
-              🎁 Pide hoy y recibe GRATIS la Guía Digital de 25 Juegos para Fiestas
-            </p>
-            <RelojRegalo className="mt-1 text-yellow-200" />
+      <Seccion className="bg-muted/30" ancho="max-w-xl">
+        <div className="space-y-4 text-center">
+          <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl">
+            <img
+              src={retoCachudo}
+              srcSet={`${retoCachudo640} 640w, ${retoCachudo} 1080w`}
+              sizes="(min-width: 640px) 576px, calc(100vw - 32px)"
+              alt="Una amiga muestra el bloque «Toma el más cachudo/a del grupo» frente a la Torre La Previa"
+              width={1080}
+              height={1080}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover object-[50%_40%]"
+            />
           </div>
-
-          <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} variante="blanco" />
-
-          <p className="text-xs text-white/80 md:text-sm">💵 Pagas al recibir · 🚚 Envío gratis · 🎁 Guía de 25 juegos</p>
-          <p className="pt-2 text-[12px] text-white/70">Producto dirigido a adultos (+18). Juega con responsabilidad.</p>
+          <H2>Que el feriado no se quede sin plan.</H2>
+          <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
+          <p className="text-xs text-muted-foreground md:text-sm">
+            💵 Pagas al recibir · 🚚 Envío gratis · Producto para adultos (+18)
+          </p>
         </div>
-      </section>
+      </Seccion>
 
       <BarraFija visible={mostrarBarra && !checkoutOpen} onClick={handleBuyClick} />
 

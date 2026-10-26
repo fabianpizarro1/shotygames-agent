@@ -26,9 +26,12 @@ type Props = {
   /** Opcionales: versiones por ancho, para que el celular baje la chica. */
   srcSet?: string;
   sizes?: string;
+  /** La foto 0 es el LCP salvo que la página diga lo contrario (carrusel bajo el pliegue). */
+  prioridad?: boolean;
 };
 
-export const CarouselImage = ({ src, alt, index, current, ventana = 1, className, srcSet, sizes }: Props) => {
+export const CarouselImage = ({ src, alt, index, current, ventana = 1, className, srcSet, sizes, prioridad }: Props) => {
+  const alta = prioridad ?? index === 0;
   const cerca = Math.abs(index - current) <= ventana;
   // Una vez que estuvo cerca, se queda: el usuario ya la vio o la va a ver.
   const yaCargo = useRef(cerca);
@@ -43,9 +46,9 @@ export const CarouselImage = ({ src, alt, index, current, ventana = 1, className
       sizes={sizes}
       alt={alt}
       className={className}
-      loading={index === 0 ? "eager" : "lazy"}
-      {...(index === 0 ? { fetchpriority: "high" } : {})}
-      decoding={index === 0 ? "sync" : "async"}
+      loading={alta ? "eager" : "lazy"}
+      {...(alta ? { fetchpriority: "high" } : {})}
+      decoding={alta ? "sync" : "async"}
     />
   );
 };

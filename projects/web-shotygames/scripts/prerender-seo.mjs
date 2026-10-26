@@ -71,11 +71,18 @@ const pages = [
   {
     route: "/landing/torre-normal-v2",
     chunk: "src/pages/TorreNormalV2Landing.tsx",
-    hero: "src/assets/torre-normal-brillo.webp",
-    title: "Torre La Previa: juego de retos para amigos | ShotyGames Ecuador",
+    // Foto del reto arriba del pliegue (el LCP), con el mismo srcset/sizes que su <img>.
+    hero: "src/assets/previa-reto-ex.webp",
+    heroSrcset: [
+      ["src/assets/previa-reto-ex-640.webp", "640w"],
+      ["src/assets/previa-reto-ex-760.webp", "760w"],
+      ["src/assets/previa-reto-ex.webp", "1080w"],
+    ],
+    heroSizes: "(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)", // = SIZES_HERO
+    title: "Torre La Previa: el juego del feriado | ShotyGames Ecuador",
     description:
-      "51 bloques con retos para tu próxima reunión. Torre La Previa por $29.99, envío gratis a todo Ecuador y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
-    image: resolveImage("src/assets/torre-normal-brillo.webp"),
+      "Este feriado lleva La Previa: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
+    image: resolveImage("src/assets/previa-reto-ex.webp"),
     type: "product",
   },
   {
