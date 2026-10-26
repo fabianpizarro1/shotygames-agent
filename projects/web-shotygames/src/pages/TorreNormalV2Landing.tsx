@@ -458,7 +458,7 @@ const TorreNormalV2Landing = () => {
       </section>
 
       {/* ---------- PRUEBA SOCIAL (componente compartido) ---------- */}
-      <Testimonials />
+      <Testimonials sinParejas />
 
       {/* ---------- PREGUNTAS ---------- */}
       <Seccion ancho="max-w-3xl">

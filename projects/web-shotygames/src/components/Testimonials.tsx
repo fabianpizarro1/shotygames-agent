@@ -11,13 +11,16 @@ import testimonial5 from "@/assets/testimonial-5.jpg";
 import testimonial6 from "@/assets/testimonial-6.jpg";
 const testimonialImages = [{
   image: testimonial1,
-  alt: "Testimonio real de cliente - Entrega confirmada del producto"
+  alt: "Testimonio real de cliente - Entrega confirmada del producto",
+  parejas: true
 }, {
   image: testimonial2,
-  alt: "Cliente satisfecho con Torre de Shots Parejas"
+  alt: "Cliente satisfecho con Torre de Shots Parejas",
+  parejas: true
 }, {
   image: testimonial3,
-  alt: "Testimonio positivo - Producto recibido con agradecimiento"
+  alt: "Testimonio positivo - Producto recibido con agradecimiento",
+  parejas: true
 }, {
   image: testimonial4,
   alt: "Confirmación de entrega - Cliente agradecido"
@@ -28,7 +31,10 @@ const testimonialImages = [{
   image: testimonial6,
   alt: "Testimonio destacado - Profesionalismo y puntualidad 10/10"
 }];
-const Testimonials = () => {
+// `sinParejas`: las landings que no venden la Torre Parejas ocultan las capturas donde se
+// ve su caja (1, 2 y 3). Por defecto salen las 6, como siempre.
+const Testimonials = ({ sinParejas = false }: { sinParejas?: boolean }) => {
+  const imagenes = sinParejas ? testimonialImages.filter(t => !t.parejas) : testimonialImages;
   // Sin esto el carrusel baja las 6 capturas de golpe: embla las pone todas
   // en la misma fila y el navegador las considera "casi visibles".
   const [api, setApi] = useState<CarouselApi>();
@@ -53,7 +59,7 @@ const Testimonials = () => {
           loop: true
         }} setApi={setApi} className="w-full max-w-5xl mx-auto">
             <CarouselContent className="-ml-2 sm:-ml-4">
-              {testimonialImages.map((testimonial, index) => <CarouselItem key={index} className="pl-2 sm:pl-4 md:basis-1/2 lg:basis-1/3">
+              {imagenes.map((testimonial, index) => <CarouselItem key={index} className="pl-2 sm:pl-4 md:basis-1/2 lg:basis-1/3">
                   <div className="p-1">
                     {/* aspect-ratio fijo (las 6 son 945x1181 = 4:5 real) para que el
                         carrusel no salte de alto mientras cargan las imágenes */}
