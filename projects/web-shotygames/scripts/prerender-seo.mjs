@@ -109,9 +109,9 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante-v4",
+    route: "/landing/torre-picante",
     chunk: "src/pages/TorrePicanteV4Landing.tsx",
-    // Versión aparte para el feriado: el gráfico de la torre con sus retos (cuadrado) arriba del pliegue.
+    // La principal desde 2026-10-26: el gráfico de la torre con sus retos (cuadrado) arriba del pliegue (el LCP).
     hero: "src/assets/torre-picante-1.webp",
     heroSrcset: [
       ["src/assets/torre-picante-1-640.webp", "640w"],
@@ -126,8 +126,9 @@ const pages = [
     type: "product",
   },
   {
-    route: "/landing/torre-picante",
+    route: "/landing/torre-picante-v4",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
+    // La del póster: principal hasta el 2026-10-26, ahora en -v4.
     hero: "src/assets/tpk2-00-hero-oferta.webp",
     // Mismo srcset/sizes que el <img> del hero: si el preload pidiera solo la
     // grande y el <img> eligiera la de 640, el celular bajaría las dos.

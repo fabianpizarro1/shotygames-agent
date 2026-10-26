@@ -41,14 +41,9 @@ import torrePicante10_760 from "@/assets/torre-picante-10-760.webp";
 import beso3 from "@/assets/picante-beso-3.webp";
 import beso3_640 from "@/assets/picante-beso-3-640.webp";
 import beso3_760 from "@/assets/picante-beso-3-760.webp";
-import beso1_360 from "@/assets/picante-beso-1-360.webp";
-import beso1_640 from "@/assets/picante-beso-1-640.webp";
-import beso2_360 from "@/assets/picante-beso-2-360.webp";
-import beso2_640 from "@/assets/picante-beso-2-640.webp";
-import beso5_360 from "@/assets/picante-beso-5-360.webp";
-import beso5_640 from "@/assets/picante-beso-5-640.webp";
-import grupo360 from "@/assets/torre-picante-life-grupo-360.webp";
+import grupo from "@/assets/torre-picante-life-grupo.webp";
 import grupo640 from "@/assets/torre-picante-life-grupo-640.webp";
+import grupo760 from "@/assets/torre-picante-life-grupo-760.webp";
 import imgResena1 from "@/assets/tpk2-resena-1.webp";
 import imgResena1_600 from "@/assets/tpk2-resena-1-600.webp";
 import imgResena2 from "@/assets/tpk2-resena-2.webp";
@@ -64,16 +59,19 @@ import torreNormalImgThumb from "@/assets/thumbs/torre-normal-brillo.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 
-// Vive en /landing/torre-picante-v4: versión APARTE de la Torre Picante para el feriado
-// (sáb 31-oct al mar 3-nov; ROTAR el copy después del 3-nov). La principal de la Picante, donde
-// caen los anuncios, sigue siendo /landing/torre-picante (TorrePicanteV2Landing). Pedido de
-// Fabián el 2026-10-26: "misma estructura que la normal", con el gráfico de la torre y sus retos
-// como imagen principal. Es la hermana de TorreNormalV2Landing (La Previa): misma estructura,
-// mismos componentes de compra (afuera del componente de la página a propósito) y el mismo
-// contador del regalo. Fotos: las 5 generadas de Descargas "PICANTE - GENERADAS LOTE1 BESO DE 3"
-// (la caja que muestran sí es la real) y `life-grupo` de la landing anterior; los retos reales,
-// las reseñas con foto y los 2 TikToks son los de la Picante principal. El tachado de la guía en
-// $9.90 es el mismo que Fabián pidió para La Previa (suelta se vende a $4.90).
+// PRINCIPAL de la Torre Picante desde 2026-10-26 (/landing/torre-picante, donde caen los anuncios).
+// Nació ese mismo día como versión aparte para el feriado (sáb 31-oct al mar 3-nov; ROTAR el copy
+// después del 3-nov) y Fabián ordenó promoverla; la anterior (el póster, TorrePicanteV2Landing)
+// quedó en /landing/torre-picante-v4 (mismo cruce que La Previa; los archivos no se renombran).
+// Pedido de Fabián: "misma estructura que la normal", con el gráfico de la torre y sus retos como
+// imagen principal. Es la hermana de TorreNormalV2Landing (La Previa): misma estructura, mismos
+// componentes de compra (afuera del componente de la página a propósito) y el mismo contador del
+// regalo. Fotos: "Saca. Lee. Cumple." usa una de las generadas de Descargas "PICANTE - GENERADAS
+// LOTE1 BESO DE 3" (la caja que muestran sí es la real; las otras —1, 2 y 5— quedaron sin usar en
+// src/assets) y la zona del feriado lleva UNA sola foto, `life-grupo` (la fiesta con confeti), por
+// orden de Fabián (antes era un mosaico de 4). Los retos reales, las reseñas con foto y los 2
+// TikToks son los de la Picante del póster. El tachado de la guía en $9.90 es el mismo que Fabián
+// pidió para La Previa (suelta se vende a $4.90).
 // OJO: el nombre del producto no se toca — n8n lo compara exacto.
 const PRODUCT_NAME = "Torre de Shots Picante";
 const PRECIO = 29.99;
@@ -95,13 +93,6 @@ const FOTOS_REALES = [
   { src: torrePicante2, src640: torrePicante2_640, src760: torrePicante2_760, badge: "Reto real 🔥", alt: "Bloque real: Por cada jugador que se saque una prenda tomas 1 shot" },
   { src: torrePicante5, src640: torrePicante5_640, src760: torrePicante5_760, badge: "Reto real 🔥", alt: "Bloque real: Finge un orgasmo" },
   { src: torrePicante8, src640: torrePicante8_640, src760: torrePicante8_760, badge: "Reto real 🔥", alt: "Bloque real: Di tu fantasía sexual" },
-];
-
-const MOSAICO = [
-  { src360: beso1_360, src640: beso1_640, alt: "Un amigo muestra el bloque «Beso de 3» frente a la Torre de Shots Picante" },
-  { src360: beso5_360, src640: beso5_640, alt: "Una amiga muestra el bloque «Beso de 3» frente a la Torre de Shots Picante" },
-  { src360: beso2_360, src640: beso2_640, alt: "Amigos sonriendo mientras alguien muestra el bloque «Beso de 3»" },
-  { src360: grupo360, src640: grupo640, alt: "Grupo de amigos celebrando alrededor de la Torre de Shots Picante" },
 ];
 
 // Las mismas reseñas con foto de la Picante principal, tal cual las pasó Fabián (2026-10-07).
@@ -259,7 +250,7 @@ const TorrePicanteV4Landing = () => {
       <Seo
         title="Torre de Shots Picante: el juego del feriado | ShotyGames Ecuador"
         description="Este feriado sube la temperatura: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
-        canonical="https://www.shotygames.com/landing/torre-picante-v4"
+        canonical="https://www.shotygames.com/landing/torre-picante"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
       />
@@ -377,25 +368,21 @@ const TorrePicanteV4Landing = () => {
         <p className="mt-4 text-center text-xs text-muted-foreground md:text-sm">Juego para adultos (+18)</p>
       </Seccion>
 
-      {/* ---------- MOSAICO DE FOTOS + EL FERIADO ---------- */}
+      {/* ---------- FOTO DE LA FIESTA + EL FERIADO ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-xl">
         <div className="space-y-4 text-center">
-          <div className="grid grid-cols-2 gap-2">
-            {MOSAICO.map((foto) => (
-              <div key={foto.alt} className="aspect-square overflow-hidden rounded-xl shadow-lg">
-                <img
-                  src={foto.src360}
-                  srcSet={`${foto.src360} 360w, ${foto.src640} 640w`}
-                  sizes="(min-width: 640px) 284px, calc(50vw - 20px)"
-                  alt={foto.alt}
-                  width={360}
-                  height={360}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ))}
+          <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-2xl">
+            <img
+              src={grupo}
+              srcSet={`${grupo640} 640w, ${grupo760} 760w, ${grupo} 1000w`}
+              sizes="(min-width: 608px) 576px, calc(100vw - 32px)"
+              alt="Grupo de amigos celebrando con confeti alrededor de la Torre de Shots Picante"
+              width={1000}
+              height={1000}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
           </div>
           <H2>Que el feriado no se quede tibio.</H2>
           <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />

@@ -166,6 +166,8 @@ const Cta = ({ texto, variante = "simple", onClick, precio, restante }: { texto:
   </div>
 );
 
+// Versión anterior de la Picante (la del póster). Desde 2026-10-26 vive en /landing/torre-picante-v4;
+// la principal (donde caen los anuncios) es TorrePicanteV4Landing en /landing/torre-picante.
 const TorrePicanteV2Landing = () => {
   const productName = "Torre de Shots Picante";
   const productPrice = 29.99;
@@ -235,7 +237,7 @@ const TorrePicanteV2Landing = () => {
       <Seo
         title="Torre de Shots Picante 🌶️ - Retos Atrevidos | ShotyGames Ecuador"
         description="51 retos atrevidos para grupos con confianza. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador."
-        canonical="https://www.shotygames.com/landing/torre-picante"
+        canonical="https://www.shotygames.com/landing/torre-picante-v4"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
       />

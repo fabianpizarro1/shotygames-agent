@@ -60,17 +60,16 @@ const App = () => (
               git y el prerender de SEO los referencian por ruta de archivo). */}
           <Route path="/landing/torre-normal" element={<TorreNormalV2Landing />} />
           <Route path="/landing/torre-normal-v2" element={<TorreNormalLanding />} />
-        {/* Principal (donde caen los anuncios): la del póster (TorrePicanteV2Landing),
-            con los cambios del 13-oct. Volvió a la principal el 2026-10-13 a pedido
-            de Fabián; la oscura con carrusel (TorrePicanteV3Landing) quedó en -v3 y
-            la original sigue en -v2. */}
-        <Route path="/landing/torre-picante" element={<TorrePicanteV2Landing />} />
+        {/* Principal de la Picante (donde caen los anuncios) desde 2026-10-26: la nueva
+            (TorrePicanteV4Landing: misma estructura que la nueva Previa, gráfico de la torre
+            con sus retos arriba, enfoque al feriado). La del póster (TorrePicanteV2Landing,
+            principal desde el 2026-10-13) quedó en -v4; la oscura con carrusel
+            (TorrePicanteV3Landing) sigue en -v3 y la original en -v2. Mismo cruce que Parejas
+            y La Previa: los archivos NO se renombran. */}
+        <Route path="/landing/torre-picante" element={<TorrePicanteV4Landing />} />
           <Route path="/landing/torre-picante-v2" element={<TorrePicanteLanding />} />
           <Route path="/landing/torre-picante-v3" element={<TorrePicanteV3Landing />} />
-          {/* Versión APARTE para el feriado (31-oct al 3-nov): misma estructura que la nueva
-              La Previa, con el gráfico de la torre y sus retos de imagen principal. No toca la
-              principal. Para promoverla: mismo cruce de rutas que se hizo con La Previa. */}
-          <Route path="/landing/torre-picante-v4" element={<TorrePicanteV4Landing />} />
+          <Route path="/landing/torre-picante-v4" element={<TorrePicanteV2Landing />} />
           {/* Intercambiadas el 2026-09-02: la variante de creativos pasa a ser la
               principal (es la ruta a la que apuntan los anuncios) y la original
               queda como la B. Los nombres de archivo NO se renombraron a
