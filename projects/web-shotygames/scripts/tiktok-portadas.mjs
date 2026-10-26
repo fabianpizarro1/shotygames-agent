@@ -42,7 +42,9 @@ async function fetchConReintento(url, intentos = 5) {
   }
 }
 
-// 1) oEmbed oficial. 2) Si falla, el og:image de la página del video.
+// 1) oEmbed oficial. 2) Si falla, el og:image de la página del video. 3) Si tampoco
+// hay (2026-10-26: el oEmbed dejó de mandar thumbnail_url/title y la página no trae
+// og:image), la portada y la descripción vienen en el JSON de hidratación de la página.
 async function portadaDe({ url, html }) {
   try {
     const r = await fetchConReintento(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
@@ -55,6 +57,16 @@ async function portadaDe({ url, html }) {
   }
   const og = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/)?.[1];
   if (og) return { src: og.replace(/&amp;/g, "&") };
+  const json = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)<\/script>/s)?.[1];
+  if (json) {
+    try {
+      const item = JSON.parse(json)?.__DEFAULT_SCOPE__?.["webapp.video-detail"]?.itemInfo?.itemStruct;
+      const src = item?.video?.originCover || item?.video?.cover || item?.video?.dynamicCover;
+      if (src) return { src, autor: item.author?.uniqueId, titulo: item.desc };
+    } catch {
+      /* JSON distinto al esperado: cae al error de abajo */
+    }
+  }
   throw new Error(`sin portada para ${url}`);
 }
 

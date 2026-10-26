@@ -7,10 +7,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { LazyCheckoutModal as CheckoutModal } from "@/components/LazyCheckoutModal";
 import Testimonials from "@/components/Testimonials";
+import { TikTokCarrusel, type VideoTikTok } from "@/components/TikTokCarrusel";
 import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
-import { Star, Gift, Truck, Clock, Banknote, Package, Wine, BookOpen, Hand, Flame, PartyPopper } from "lucide-react";
+import { Gift, Truck, Clock, Banknote, Package, Wine, BookOpen, Hand, Flame } from "lucide-react";
 import torreNormal1 from "@/assets/torre-normal-brillo.webp";
 import torreNormal2 from "@/assets/torre-normal-2.webp";
 import torreNormal3 from "@/assets/torre-normal-3.webp";
@@ -21,13 +22,20 @@ import torreNormal7 from "@/assets/torre-normal-7.webp";
 import torreNormal8 from "@/assets/torre-normal-8.webp";
 import torreNormal9 from "@/assets/torre-normal-9.webp";
 import torreNormal10 from "@/assets/torre-normal-10.webp";
+import lifeRonda from "@/assets/torre-normal-life-ronda.webp";
+import fiesta360 from "@/assets/torre-normal-life-fiesta-360.webp";
+import fiesta640 from "@/assets/torre-normal-life-fiesta-640.webp";
 import retoEx from "@/assets/previa-reto-ex.webp";
+import retoEx360 from "@/assets/previa-reto-ex-360.webp";
 import retoEx640 from "@/assets/previa-reto-ex-640.webp";
-import retoEx760 from "@/assets/previa-reto-ex-760.webp";
-import nocheEx from "@/assets/previa-noche-ex.webp";
+import nocheEx360 from "@/assets/previa-noche-ex-360.webp";
 import nocheEx640 from "@/assets/previa-noche-ex-640.webp";
-import retoCachudo from "@/assets/previa-reto-cachudo.webp";
+import retoCachudo360 from "@/assets/previa-reto-cachudo-360.webp";
 import retoCachudo640 from "@/assets/previa-reto-cachudo-640.webp";
+import ttCachudo from "@/assets/tiktok/7629538696882146567.webp";
+import ttAmigo from "@/assets/tiktok/7628628724530941192.webp";
+import ttControl from "@/assets/tiktok/7628410923962682632.webp";
+import ttEx from "@/assets/tiktok/7565926233649810706.webp";
 import portadaGuia from "@/assets/ebook-25-juegos-portada-120.webp";
 import torrePicanteImgThumb from "@/assets/thumbs/torre-picante.webp";
 import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
@@ -38,27 +46,27 @@ import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 // anuncios) es /landing/torre-normal: ésta es la variante para comparar.
 // 2026-10-25: copy del documento "Reescribir landing de ventas" de la IA externa,
 // filtrado con las decisiones de Fabián (ruta nueva, claims del producto, contador).
-// 2026-10-26: "hay mucho texto" → reescrita con el mínimo de palabras, imagen
-// primero y enfocada al feriado del sáb 31-oct al mar 3-nov (Difuntos + Cuenca).
-// Fotos: las 3 de Descargas "LA PREVIA - GENERADAS LOTE1/LOTE2" (las de los
-// anuncios). Ojo: en ellas la caja dice "LA PREVIA" y el bloque "…O TOMA 3 SHOTS";
-// los bloques de las fotos reales del carrusel dicen solo "LLAMA A TU EX".
-// Se quedan: claims del producto, +3.500, capturas, ancla de $4.90 de la guía (es
-// el precio real de Ebook25JuegosLanding), "2 a 4 días" y el envío gratis a todo
-// Ecuador. OJO: el nombre del producto no se toca — n8n lo compara exacto.
+// 2026-10-26: "hay mucho texto" → mínimo de palabras, imagen primero y enfocada al
+// feriado del sáb 31-oct al mar 3-nov (Difuntos + Cuenca). Mismo día, 2da vuelta de
+// Fabián: sin la etiqueta del feriado arriba, el hero es el gráfico de la torre con
+// sus retos (el que abría el carrusel de fotos reales), sin el "+3.500" del inicio,
+// tachado de la guía en $9.90 (suelta se vende a $4.90 en Ebook25JuegosLanding),
+// el bloque "Que el feriado no se quede sin plan" sube y se vuelve mosaico, y hay
+// sección de videos de TikTok (vacía hasta que pase los links).
+// Fotos generadas: Descargas "LA PREVIA - GENERADAS LOTE1/LOTE2" (las de los
+// anuncios; en ellas la caja dice "LA PREVIA" y el bloque "…O TOMA 3 SHOTS", y los
+// bloques de las fotos reales dicen solo "LLAMA A TU EX"). De la v1 se reusan
+// `life-fiesta` y `life-ronda`; `life-producto` NO (2 vasos y la caja dice "Blaques con retas").
+// OJO: el nombre del producto no se toca — n8n lo compara exacto.
 const PRODUCT_NAME = "Torre La Previa";
 const PRECIO = 29.99;
 const PRECIO_TXT = `$${PRECIO.toFixed(2)}`;
 
 const GRADIENTE = "bg-gradient-to-r from-[#ff3d00] to-[#ff7b00]";
 
-/** Mismo valor en el <img> del hero y en el preload del prerender (scripts/prerender-seo.mjs). */
-const SIZES_HERO = "(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)";
-
-// Fotos REALES de los bloques (la foto del producto y los retos que mejor se
-// entienden de un vistazo primero).
+// Fotos REALES de los bloques (la foto del producto sube al hero; acá van los
+// retos que mejor se entienden de un vistazo primero).
 const FOTOS_REALES = [
-  { src: torreNormal1, badge: "Foto real 📸", alt: "Torre La Previa: caja, 1 vaso de shot y 51 bloques con retos" },
   { src: torreNormal2, badge: "Reto real 🔥", alt: "Bloque real: Llama a tu ex" },
   { src: torreNormal9, badge: "Reto real 📱", alt: "Bloque real: Muestra tu último mensaje de WhatsApp" },
   { src: torreNormal7, badge: "Reto real 🍊", alt: "Bloque real: Toma el más mandarina" },
@@ -68,6 +76,24 @@ const FOTOS_REALES = [
   { src: torreNormal6, badge: "Reto real 🌶️", alt: "Bloque real: Toma el más tóxico/a" },
   { src: torreNormal8, badge: "Reto real 👴", alt: "Bloque real: Escríbeles a tus padres y diles que serán abuelos" },
   { src: torreNormal10, badge: "Reto real 📸", alt: "Bloque real: Sube una historia y pon que extrañas a tu ex" },
+];
+
+const MOSAICO = [
+  { src360: retoEx360, src640: retoEx640, alt: "Una amiga muestra el bloque «Llama a tu ex o toma 3 shots» frente a la Torre La Previa" },
+  { src360: retoCachudo360, src640: retoCachudo640, alt: "Una amiga muestra el bloque «Toma el más cachudo/a del grupo» frente a la Torre La Previa" },
+  { src360: nocheEx360, src640: nocheEx640, alt: "Amigos de noche reaccionando al reto «Llama a tu ex o toma 3 shots»" },
+  { src360: fiesta360, src640: fiesta640, alt: "Grupo de amigos celebrando alrededor de la Torre La Previa" },
+];
+
+// Videos de TikTok de @shotygames_ec (los 4 links que pasó Fabián el 2026-10-26; la
+// sección solo se ve si hay alguno). Para sumar:
+//   node scripts/tiktok-portadas.mjs <link1> <link2> ...   → baja la portada a src/assets/tiktok/<id>.webp
+// y pegar acá { id, portada: <import>, alt, autor }.
+const TIKTOKS: VideoTikTok[] = [
+  { id: "7629538696882146567", portada: ttCachudo, alt: "Ya sabes a quién mandarle este video", autor: "@shotygames_ec" },
+  { id: "7628628724530941192", portada: ttAmigo, alt: "No le mandes este video a tu amigo", autor: "@shotygames_ec" },
+  { id: "7628410923962682632", portada: ttControl, alt: "Dijiste que no ibas a tomar… pero viste este juego", autor: "@shotygames_ec" },
+  { id: "7565926233649810706", portada: ttEx, alt: "¿Y tú qué harías si te sale este reto?", autor: "@shotygames_ec" },
 ];
 
 const PASOS = [
@@ -161,14 +187,13 @@ const TorreNormalV2Landing = () => {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const { shouldOpenCheckout, setShouldOpenCheckout } = useCheckoutRestore();
 
-  // Para saber qué foto del carrusel está a la vista y no bajar las otras 9.
+  // Para saber qué foto del carrusel está a la vista y no bajar las otras 8.
   const [api, setApi] = useState<CarouselApi>();
   const slideActual = useSlideActual(api);
 
   // La barra de abajo solo aparece cuando el CTA del hero ya salió de pantalla:
-  // el hero ya trae botón, precio y regalo en el primer pantallazo y dos botones
-  // juntos compiten. Arranca escondida; si el navegador no tiene
-  // IntersectionObserver, queda siempre visible.
+  // el hero ya trae botón, precio y regalo y dos botones juntos compiten. Arranca
+  // escondida; si el navegador no tiene IntersectionObserver, queda siempre visible.
   const ctaHeroRef = useRef<HTMLDivElement>(null);
   const [mostrarBarra, setMostrarBarra] = useState(false);
   useEffect(() => {
@@ -213,14 +238,11 @@ const TorreNormalV2Landing = () => {
         <p className="text-[11px] md:text-base leading-tight">💵 Pagas al recibir · 🚚 Envío gratis a todo Ecuador</p>
       </div>
 
-      {/* ---------- HERO: feriado + foto del reto + precio, regalo y botón ----------
+      {/* ---------- HERO: la torre con sus retos + precio, regalo y botón ----------
           Móvil: titular → foto → oferta. Escritorio: texto a la izquierda, foto a la derecha. */}
-      <section className="bg-gradient-to-br from-background to-muted/30 px-4 pt-4 pb-8 md:py-12">
+      <section className="bg-gradient-to-br from-background to-muted/30 px-4 pt-5 pb-8 md:py-12">
         <div className="mx-auto max-w-5xl md:grid md:grid-cols-2 md:gap-x-12">
           <div className="md:col-start-1 md:row-start-1 md:self-end">
-            <p className="mb-2 inline-flex rounded-full bg-[#ff3d00]/10 px-3 py-1 text-[12px] md:text-sm font-bold uppercase tracking-[0.12em] text-[#ff3d00]">
-              🎉 Feriado · 31 oct – 3 nov
-            </p>
             <h1 className="text-balance text-[30px] leading-[1.1] md:text-5xl font-bold tracking-tight">
               Este feriado, tú llevas la torre.
               <span className={`mt-1 block text-[22px] md:text-3xl ${GRADIENTE} bg-clip-text text-transparent`}>
@@ -230,17 +252,15 @@ const TorreNormalV2Landing = () => {
           </div>
 
           <div className="mt-4 md:mt-0 md:col-start-2 md:row-start-1 md:row-span-2 md:self-center">
-            <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-muted shadow-2xl md:aspect-square">
+            <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-2xl">
               <img
-                src={retoEx}
-                srcSet={`${retoEx640} 640w, ${retoEx760} 760w, ${retoEx} 1080w`}
-                sizes={SIZES_HERO}
-                alt="Amigos riendo mientras una muestra el bloque «Llama a tu ex o toma 3 shots» de la Torre La Previa"
-                width={1080}
-                height={1080}
+                src={torreNormal1}
+                alt="Torre La Previa: la caja, 1 vaso de shot, 51 bloques con retos y algunos de los retos"
+                width={675}
+                height={675}
                 decoding="sync"
                 {...{ fetchpriority: "high" }}
-                className="h-full w-full object-cover object-[50%_42%]"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
@@ -281,15 +301,6 @@ const TorreNormalV2Landing = () => {
                 Llega en 2-4 días hábiles
               </span>
             </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <div className="flex items-center gap-0.5" role="img" aria-label="5 de 5 estrellas">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-[#ff3d00] text-[#ff3d00]" />
-                ))}
-              </div>
-              <p className="text-sm font-semibold">+3.500 clientes en Ecuador</p>
-            </div>
           </div>
         </div>
       </section>
@@ -308,12 +319,10 @@ const TorreNormalV2Landing = () => {
         <div className="grid items-center gap-5 md:grid-cols-2 md:gap-10">
           <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl md:aspect-square">
             <img
-              src={nocheEx}
-              srcSet={`${nocheEx640} 640w, ${nocheEx} 1080w`}
-              sizes="(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)"
-              alt="Un grupo de amigos en la noche: alguien muestra el bloque «Llama a tu ex o toma 3 shots»"
-              width={1080}
-              height={1080}
+              src={lifeRonda}
+              alt="Sacando un bloque de la Torre La Previa"
+              width={1000}
+              height={1000}
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover object-[50%_45%]"
@@ -335,8 +344,45 @@ const TorreNormalV2Landing = () => {
         </p>
       </Seccion>
 
-      {/* ---------- RETOS REALES ---------- */}
+      {/* ---------- MOSAICO DE FOTOS + EL FERIADO ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-xl">
+        <div className="space-y-4 text-center">
+          <div className="grid grid-cols-2 gap-2">
+            {MOSAICO.map((foto) => (
+              <div key={foto.alt} className="aspect-square overflow-hidden rounded-xl shadow-lg">
+                <img
+                  src={foto.src360}
+                  srcSet={`${foto.src360} 360w, ${foto.src640} 640w`}
+                  sizes="(min-width: 640px) 284px, calc(50vw - 20px)"
+                  alt={foto.alt}
+                  width={360}
+                  height={360}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+          <H2>Que el feriado no se quede sin plan.</H2>
+          <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
+          <p className="text-xs text-muted-foreground md:text-sm">
+            💵 Pagas al recibir · 🚚 Envío gratis · Producto para adultos (+18)
+          </p>
+        </div>
+      </Seccion>
+
+      {/* ---------- VIDEOS DE TIKTOK (aparece cuando TIKTOKS tiene videos) ---------- */}
+      {TIKTOKS.length > 0 && (
+        <Seccion ancho="max-w-5xl">
+          <H2 className="mb-6 text-center">Míralo en acción</H2>
+          <TikTokCarrusel videos={TIKTOKS} />
+          <p className="mt-2 text-center text-xs text-muted-foreground md:hidden">👉 Desliza y toca para reproducir</p>
+        </Seccion>
+      )}
+
+      {/* ---------- RETOS REALES ---------- */}
+      <Seccion className={TIKTOKS.length > 0 ? "bg-muted/30" : ""} ancho="max-w-xl">
         <H2 className="mb-5 text-center">Retos reales del juego</H2>
         <Carousel opts={{ align: "center", loop: true }} setApi={setApi} className="w-full">
           <CarouselContent>
@@ -382,7 +428,7 @@ const TorreNormalV2Landing = () => {
                 <img src={portadaGuia} alt="" width={96} height={150} loading="lazy" decoding="async" className="h-10 w-auto shrink-0 rounded" />
                 <span className="flex-1">Guía de 25 juegos</span>
                 <span className="whitespace-nowrap font-bold text-yellow-300">
-                  <span className="mr-2 font-normal text-white/60 line-through">$4.90</span>GRATIS
+                  <span className="mr-2 font-normal text-white/60 line-through">$9.90</span>GRATIS
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -425,30 +471,6 @@ const TorreNormalV2Landing = () => {
             </AccordionItem>
           ))}
         </Accordion>
-      </Seccion>
-
-      {/* ---------- CIERRE ---------- */}
-      <Seccion className="bg-muted/30" ancho="max-w-xl">
-        <div className="space-y-4 text-center">
-          <div className="aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl">
-            <img
-              src={retoCachudo}
-              srcSet={`${retoCachudo640} 640w, ${retoCachudo} 1080w`}
-              sizes="(min-width: 640px) 576px, calc(100vw - 32px)"
-              alt="Una amiga muestra el bloque «Toma el más cachudo/a del grupo» frente a la Torre La Previa"
-              width={1080}
-              height={1080}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-[50%_40%]"
-            />
-          </div>
-          <H2>Que el feriado no se quede sin plan.</H2>
-          <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
-          <p className="text-xs text-muted-foreground md:text-sm">
-            💵 Pagas al recibir · 🚚 Envío gratis · Producto para adultos (+18)
-          </p>
-        </div>
       </Seccion>
 
       <BarraFija visible={mostrarBarra && !checkoutOpen} onClick={handleBuyClick} />
