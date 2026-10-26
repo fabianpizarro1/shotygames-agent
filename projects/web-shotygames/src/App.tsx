@@ -52,10 +52,13 @@ const App = () => (
         <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/landing/torre-normal" element={<TorreNormalLanding />} />
-          {/* Variante para comparar (2026-10-25): copy nuevo + contador del regalo.
-              La principal, donde caen los anuncios, sigue siendo /landing/torre-normal. */}
-          <Route path="/landing/torre-normal-v2" element={<TorreNormalV2Landing />} />
+          {/* Principal de La Previa (donde caen los anuncios) desde 2026-10-26: la nueva
+              (TorreNormalV2Landing: poco texto, torre y retos arriba, mosaico, TikToks,
+              contador del regalo). La anterior (TorreNormalLanding) quedó en -v2. Mismo cruce
+              que Parejas y Picante: los archivos NO se renombran a propósito (el historial de
+              git y el prerender de SEO los referencian por ruta de archivo). */}
+          <Route path="/landing/torre-normal" element={<TorreNormalV2Landing />} />
+          <Route path="/landing/torre-normal-v2" element={<TorreNormalLanding />} />
         {/* Principal (donde caen los anuncios): la del póster (TorrePicanteV2Landing),
             con los cambios del 13-oct. Volvió a la principal el 2026-10-13 a pedido
             de Fabián; la oscura con carrusel (TorrePicanteV3Landing) quedó en -v3 y

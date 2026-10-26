@@ -36,6 +36,8 @@ import { CarouselImage } from "@/components/CarouselImage";
 import { useSlideActual } from "@/hooks/useSlideActual";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/pixels";
 
+// Versión anterior de La Previa. Desde 2026-10-26 vive en /landing/torre-normal-v2; la principal
+// (donde caen los anuncios) es TorreNormalV2Landing en /landing/torre-normal.
 const TorreNormalLanding = () => {
   const productName = "Torre La Previa";
   const productPrice = 29.99;
@@ -114,7 +116,7 @@ const TorreNormalLanding = () => {
       <Seo
         title="Torre La Previa 🎉 - El Juego que Prende la Reunión | ShotyGames Ecuador"
         description="51 retos que convierten cualquier reunión en fiesta. Madera de pino premium. Pagas en efectivo al recibir. Envío gratis a todo Ecuador."
-        canonical="https://www.shotygames.com/landing/torre-normal"
+        canonical="https://www.shotygames.com/landing/torre-normal-v2"
         image={`https://www.shotygames.com${torreNormal1}`}
         type="product"
       />

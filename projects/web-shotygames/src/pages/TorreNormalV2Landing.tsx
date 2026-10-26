@@ -42,17 +42,18 @@ import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 
-// Vive en /landing/torre-normal-v2. La que sigue vendiendo (y recibiendo los
-// anuncios) es /landing/torre-normal: ésta es la variante para comparar.
-// 2026-10-25: copy del documento "Reescribir landing de ventas" de la IA externa,
-// filtrado con las decisiones de Fabián (ruta nueva, claims del producto, contador).
-// 2026-10-26: "hay mucho texto" → mínimo de palabras, imagen primero y enfocada al
-// feriado del sáb 31-oct al mar 3-nov (Difuntos + Cuenca). Mismo día, 2da vuelta de
-// Fabián: sin la etiqueta del feriado arriba, el hero es el gráfico de la torre con
-// sus retos (el que abría el carrusel de fotos reales), sin el "+3.500" del inicio,
-// tachado de la guía en $9.90 (suelta se vende a $4.90 en Ebook25JuegosLanding),
-// el bloque "Que el feriado no se quede sin plan" sube y se vuelve mosaico, y hay
-// sección de videos de TikTok (vacía hasta que pase los links).
+// Landing PRINCIPAL de La Previa (/landing/torre-normal, donde caen los anuncios) desde
+// 2026-10-26. La anterior (TorreNormalLanding.tsx) quedó en /landing/torre-normal-v2: mismo
+// cruce que Parejas y Picante, y el archivo "V2" no se renombra (el historial de git y el
+// prerender de SEO lo referencian por ruta de archivo).
+// 2026-10-25: copy del documento "Reescribir landing de ventas" de la IA externa, filtrado con
+// las decisiones de Fabián (claims del producto, contador del regalo).
+// 2026-10-26: "hay mucho texto" → mínimo de palabras, imagen primero y enfocada al feriado del
+// sáb 31-oct al mar 3-nov (Difuntos + Cuenca: ROTAR el copy después del 3-nov). Hero = gráfico
+// de la torre con sus retos, sin "+3.500" arriba, tachado de la guía en $9.90 (suelta se vende
+// a $4.90 en Ebook25JuegosLanding), bloque "Que el feriado no se quede sin plan" con mosaico de
+// fotos, 4 TikToks de @shotygames_ec (con el reproductor de TikTok: Fabián prefirió dejarlo así
+// antes que alojar los videos) y reseñas sin las capturas de la Torre Parejas.
 // Fotos generadas: Descargas "LA PREVIA - GENERADAS LOTE1/LOTE2" (las de los
 // anuncios; en ellas la caja dice "LA PREVIA" y el bloque "…O TOMA 3 SHOTS", y los
 // bloques de las fotos reales dicen solo "LLAMA A TU EX"). De la v1 se reusan
@@ -228,7 +229,7 @@ const TorreNormalV2Landing = () => {
       <Seo
         title="Torre La Previa: el juego del feriado | ShotyGames Ecuador"
         description="Este feriado lleva La Previa: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
-        canonical="https://www.shotygames.com/landing/torre-normal-v2"
+        canonical="https://www.shotygames.com/landing/torre-normal"
         image={`https://www.shotygames.com${retoEx}`}
         type="product"
       />
