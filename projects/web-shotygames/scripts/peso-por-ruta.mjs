@@ -31,6 +31,7 @@ const routes = {
   "/landing/torre-normal": "src/pages/TorreNormalV2Landing.tsx",
   "/landing/torre-normal-v2": "src/pages/TorreNormalLanding.tsx",
   "/landing/torre-picante": "src/pages/TorrePicanteLanding.tsx",
+  "/landing/torre-picante-v4": "src/pages/TorrePicanteV4Landing.tsx",
   "/landing/torre-parejas": "src/pages/TorreParejasLanding.tsx",
   "/landing/combo-parejas": "src/pages/ComboParejasLanding.tsx",
   "/landing/emparejados": "src/pages/EmparejadosLanding.tsx",

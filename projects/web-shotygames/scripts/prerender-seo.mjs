@@ -109,6 +109,23 @@ const pages = [
     type: "product",
   },
   {
+    route: "/landing/torre-picante-v4",
+    chunk: "src/pages/TorrePicanteV4Landing.tsx",
+    // Versión aparte para el feriado: el gráfico de la torre con sus retos (cuadrado) arriba del pliegue.
+    hero: "src/assets/torre-picante-1.webp",
+    heroSrcset: [
+      ["src/assets/torre-picante-1-640.webp", "640w"],
+      ["src/assets/torre-picante-1-760.webp", "760w"],
+      ["src/assets/torre-picante-1.webp", "1080w"],
+    ],
+    heroSizes: "(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)", // = SIZES_HERO
+    title: "Torre de Shots Picante: el juego del feriado | ShotyGames Ecuador",
+    description:
+      "Este feriado sube la temperatura: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
+    image: resolveImage("src/assets/torre-picante-1.webp"),
+    type: "product",
+  },
+  {
     route: "/landing/torre-picante",
     chunk: "src/pages/TorrePicanteV2Landing.tsx",
     hero: "src/assets/tpk2-00-hero-oferta.webp",
