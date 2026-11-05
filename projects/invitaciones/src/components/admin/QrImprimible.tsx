@@ -2,6 +2,7 @@
 
 import QRCode from 'qrcode';
 import { useEffect, useState, type CSSProperties } from 'react';
+import { BolaDisco, Brillo, Globo, Humo, Sticker } from '../Decor';
 
 interface Props {
   urlBase: string;
@@ -19,7 +20,7 @@ export function QrImprimible({ urlBase, titulo, evento, colores }: Props) {
     const u = `${(urlBase || window.location.origin).replace(/\/$/, '')}/fotos`;
     setUrl(u);
     // Oscuro sobre blanco: el contraste es lo que hace que el QR escanee bien con poca luz.
-    QRCode.toDataURL(u, { width: 900, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#3a0712', light: '#ffffff' } }).then(setPng);
+    QRCode.toDataURL(u, { width: 900, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } }).then(setPng);
   }, [urlBase]);
 
   const tema = { '--fondo': colores.fondo, '--fondo2': colores.fondo2, '--papel': colores.papel, '--texto': colores.texto, '--acento': colores.acento } as CSSProperties;
@@ -36,14 +37,21 @@ export function QrImprimible({ urlBase, titulo, evento, colores }: Props) {
         </div>
       </div>
 
-      <div style={{ ...tema, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }} className="rayas mx-auto flex aspect-[3/4] w-full max-w-md flex-col items-center justify-center gap-5 p-8 text-center">
-        <p className="f-serif text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--papel)', opacity: 0.85 }}>{evento}</p>
-        <h1 className="f-script text-6xl leading-none" style={{ color: 'var(--papel)' }}>{titulo}</h1>
-        <div className="papel rounded-sm p-4">
+      <div style={{ ...tema, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }} className="rayas relative mx-auto flex min-h-[640px] w-full max-w-md flex-col items-center justify-center gap-5 overflow-hidden px-8 py-20 text-center shadow-sm ring-1 ring-black/20">
+        <Humo />
+        <Humo lado="abajo" />
+        <Globo ancho={46} className="left-2 top-4" />
+        <BolaDisco tam={120} className="-right-8 top-0" />
+        <Sticker nombre="labios" tono="negro" ancho={38} rot={-12} className="bottom-6 left-6" />
+        <Sticker nombre="martini" tono="plata" ancho={44} rot={8} className="bottom-6 right-6" />
+        <Brillo tam={18} className="text-black" style={{ left: '14%', top: '38%' }} />
+        <p className="f-cond relative z-[2] text-xs tracking-[0.3em] opacity-70">{evento}</p>
+        <h1 className="f-script relative z-[2] max-w-[15rem] text-5xl leading-[0.95]">{titulo}</h1>
+        <div className="papel relative z-[2] rounded-sm p-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {png ? <img src={png} alt={`Código QR que lleva a ${url}`} className="size-56" /> : <div className="size-56" />}
         </div>
-        <p className="f-serif max-w-[16rem] text-sm" style={{ color: 'var(--papel)' }}>Escanea con la cámara de tu celular y sube tus fotos de la fiesta</p>
+        <p className="f-cond relative z-[2] max-w-[16rem] text-sm font-medium leading-snug">Escanea con la cámara de tu celular y sube tus fotos de la fiesta</p>
       </div>
 
       <p className="mx-auto mt-4 max-w-md break-all text-center text-xs text-stone-500 print:hidden">{url}</p>

@@ -46,3 +46,19 @@ export function matrizMes(y: number, mo: number): (number | null)[][] {
   for (let i = 0; i < celdas.length; i += 7) semanas.push(celdas.slice(i, i + 7));
   return semanas;
 }
+
+const MESES_TXT = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const DIAS_TXT = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+// Piezas sueltas para el diseño de la invitación (día en letras, mes, número, hora en formato 12 h).
+export function piezasFecha(iso: string): { dia: string; mes: string; numero: string; hora: string } | null {
+  const p = partes(iso);
+  if (!p) return null;
+  const h12 = p.h % 12 || 12;
+  return {
+    dia: DIAS_TXT[p.dow],
+    mes: MESES_TXT[p.mo - 1],
+    numero: String(p.d).padStart(2, '0'),
+    hora: `${h12}:${String(p.mi).padStart(2, '0')} ${p.h >= 12 ? 'PM' : 'AM'}`,
+  };
+}

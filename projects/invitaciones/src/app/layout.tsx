@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, Pinyon_Script, Playfair_Display } from 'next/font/google';
+import { Bowlby_One, DM_Sans, Mrs_Saint_Delafield, Oswald, Playfair_Display, Sacramento } from 'next/font/google';
 import './globals.css';
 
-const script = Pinyon_Script({ weight: '400', subsets: ['latin'], variable: '--f-script', display: 'swap' });
-const serif = Playfair_Display({ subsets: ['latin'], variable: '--f-serif', display: 'swap' });
+const sacramento = Sacramento({ weight: '400', subsets: ['latin'], variable: '--f-sacramento', display: 'swap' });
+const delafield = Mrs_Saint_Delafield({ weight: '400', subsets: ['latin'], variable: '--f-delafield', display: 'swap' });
+const bowlby = Bowlby_One({ weight: '400', subsets: ['latin'], variable: '--f-bowlby', display: 'swap' });
+const oswald = Oswald({ weight: ['500', '700'], subsets: ['latin'], variable: '--f-oswald', display: 'swap' });
+const serif = Playfair_Display({ weight: ['500', '700', '900'], subsets: ['latin'], variable: '--f-serif', display: 'swap' });
 const sans = DM_Sans({ subsets: ['latin'], variable: '--f-sans', display: 'swap' });
 
 export const metadata: Metadata = {
@@ -14,12 +17,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#7a1226',
+  themeColor: '#e9e6e1',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${script.variable} ${serif.variable} ${sans.variable}`}>
+    <html lang="es" className={`${sacramento.variable} ${delafield.variable} ${bowlby.variable} ${oswald.variable} ${serif.variable} ${sans.variable}`}>
       <body>{children}</body>
     </html>
   );

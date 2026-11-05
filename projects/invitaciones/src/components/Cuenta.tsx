@@ -35,13 +35,13 @@ export function Cuenta({ fechaHora }: { fechaHora: string }) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="f-serif text-center text-sm font-semibold uppercase tracking-[0.3em]">
+        <h2 className="f-cond text-center text-sm font-bold tracking-[0.35em]">
           {t?.terminado ? '¡Es hoy!' : 'Faltan'}
         </h2>
         <div className="mt-4 grid grid-cols-4 gap-2" aria-live="off">
           {celdas.map(([etiqueta, valor]) => (
-            <div key={etiqueta} className="rounded-md py-3 text-center" style={{ background: 'color-mix(in srgb, var(--acento) 28%, var(--papel))' }}>
-              <div className="f-serif text-3xl font-semibold tabular-nums leading-none">{valor === undefined ? '--' : String(valor).padStart(2, '0')}</div>
+            <div key={etiqueta} className="rounded-md py-3 text-center" style={{ background: 'var(--texto)', color: 'var(--papel)' }}>
+              <div className="f-impact text-3xl tabular-nums leading-none">{valor === undefined ? '--' : String(valor).padStart(2, '0')}</div>
               <div className="mt-1.5 text-[10px] uppercase tracking-widest opacity-70">{etiqueta}</div>
             </div>
           ))}
@@ -50,7 +50,7 @@ export function Cuenta({ fechaHora }: { fechaHora: string }) {
 
       {p && (
         <div>
-          <p className="f-serif mb-3 text-center text-xs uppercase tracking-[0.3em] opacity-80">{nombreMes(fechaHora)}</p>
+          <p className="f-cond mb-3 text-center text-xs tracking-[0.3em] opacity-80">{nombreMes(fechaHora)}</p>
           <div className="grid grid-cols-7 gap-y-1.5 text-center text-sm">
             {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
               <span key={i} className="pb-1 text-[10px] font-semibold opacity-50">{d}</span>

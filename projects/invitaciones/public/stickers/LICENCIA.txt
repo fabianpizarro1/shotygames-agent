@@ -1,0 +1,4 @@
+Stickers: Noto Emoji de Google (https://github.com/googlefonts/noto-emoji), obtenidos de
+https://fonts.gstatic.com/s/e/notoemoji/latest/<codigo>/emoji.svg
+Licencia: Apache License 2.0 (imagenes de Noto Emoji). Se muestran en blanco y negro con filtros CSS.
+Fuentes tipograficas (Google Fonts): SIL Open Font License 1.1.

@@ -153,7 +153,7 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
   return (
     <div style={tema} className="rayas min-h-dvh">
       <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-10">
-        <header className="text-center" style={{ color: 'var(--papel)' }}>
+        <header className="text-center" style={{ color: 'var(--texto)' }}>
           <p className="f-serif text-xs uppercase tracking-[0.3em] opacity-80">{c.evento}</p>
           <h1 className="f-script mt-2 text-5xl leading-none">{c.titulo}</h1>
           {c.mensaje && <p className="mx-auto mt-4 max-w-[19rem] text-sm opacity-90">{c.mensaje}</p>}
@@ -258,7 +258,7 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
 
         {c.url && (
           <p className="text-center">
-            <a href={c.url} target="_blank" rel="noopener noreferrer" className="boton inline-block rounded-full border-2 px-5 py-3 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--papel)', color: 'var(--papel)' }}>
+            <a href={c.url} target="_blank" rel="noopener noreferrer" className="boton inline-block rounded-full border-2 px-5 py-3 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)', color: 'var(--texto)' }}>
               Abrir la playlist en Spotify
             </a>
           </p>

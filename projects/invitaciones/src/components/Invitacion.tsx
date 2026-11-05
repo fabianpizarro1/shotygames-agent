@@ -1,14 +1,18 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Config } from '@/lib/config';
-import { partes, textoFecha, textoHora } from '@/lib/fechas';
+import { piezasFecha } from '@/lib/fechas';
 import { Cuenta } from './Cuenta';
+import { BolaDisco, Brillo, Globo, Humo, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
+import { Portada } from './Portada';
 import { Rsvp } from './Rsvp';
-import { Sobre } from './Sobre';
-import { Copa, Pastel, Polaroid } from './Stickers';
+import { Polaroid } from './Stickers';
+
+// Invitación en capítulos tipo historia (blanco, negro y plata), inspirada en la plantilla
+// "RIP 20s": cada capítulo ocupa la pantalla y sus textos se escriben al entrar.
 
 interface InvitadoVista {
   token: string;
@@ -21,22 +25,75 @@ interface InvitadoVista {
   mensaje: string;
 }
 
-function Revelar({ children, className = '' }: { children: ReactNode; className?: string }) {
+// Mientras la portada está cerrada los textos esperan, para que no terminen de animarse debajo.
+const Listo = createContext(true);
+
+const SUAVE = [0.22, 1, 0.36, 1] as const;
+
+function Entra({ children, retraso = 0, className = '' }: { children: ReactNode; retraso?: number; className?: string }) {
+  const listo = useContext(Listo);
   return (
-    <motion.section
-      className={className}
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+    <motion.div
+      className={`relative z-[2] ${className}`}
+      initial="off"
+      animate={listo ? undefined : 'off'}
+      whileInView={listo ? 'on' : undefined}
       viewport={{ once: true, margin: '0px 0px -8% 0px' }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      variants={{ off: { opacity: 0, y: 24 }, on: { opacity: 1, y: 0 } }}
+      transition={{ duration: 0.65, ease: SUAVE, delay: retraso }}
     >
       {children}
-    </motion.section>
+    </motion.div>
   );
 }
 
-function Titulo({ children }: { children: ReactNode }) {
-  return <h2 className="f-serif mb-4 text-center text-sm font-semibold uppercase tracking-[0.3em]">{children}</h2>;
+// Efecto "escrito a mano": el texto se destapa de izquierda a derecha. El detector de visibilidad
+// va en un envoltorio sin recorte: un elemento recortado por completo con clip-path nunca se
+// detecta como visible y su animación no arrancaría.
+function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { children: ReactNode; className?: string; retraso?: number; dur?: number }) {
+  const listo = useContext(Listo);
+  return (
+    <motion.span
+      className={`relative z-[2] inline-block ${className}`}
+      initial="off"
+      animate={listo ? undefined : 'off'}
+      whileInView={listo ? 'on' : undefined}
+      viewport={{ once: true, margin: '0px 0px -8% 0px' }}
+      variants={{ off: {}, on: {} }}
+    >
+      <motion.span
+        className="inline-block"
+        variants={{
+          off: { clipPath: 'inset(-60% 101% -60% -20%)', opacity: 0 },
+          on: { clipPath: 'inset(-60% -30% -60% -20%)', opacity: 1 },
+        }}
+        transition={{ duration: dur, ease: 'easeOut', delay: retraso }}
+      >
+        {children}
+      </motion.span>
+    </motion.span>
+  );
+}
+
+function Capitulo({ children, humoAbajo = true, className = '' }: { children: ReactNode; humoAbajo?: boolean; className?: string }) {
+  return (
+    <section className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-hidden px-8 py-24 text-center ${className}`}>
+      <Humo />
+      {humoAbajo && <Humo lado="abajo" />}
+      {children}
+    </section>
+  );
+}
+
+// Foto de la festejada en arco, en blanco y negro, que se funde con el papel por abajo.
+function FotoArco({ src, bn }: { src: string; bn: boolean }) {
+  return (
+    <div className="relative mt-8 h-[270px] w-[225px] overflow-hidden rounded-t-[112px]" style={{ boxShadow: '0 0 0 1px rgb(0 0 0 / 0.85)' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" loading="lazy" decoding="async" className="size-full object-cover" style={{ filter: bn ? 'grayscale(1) contrast(1.08)' : undefined }} />
+      <div className="absolute inset-x-0 bottom-0 h-24" style={{ background: 'linear-gradient(to top, var(--fondo), transparent)' }} />
+    </div>
+  );
 }
 
 export function Invitacion({ config: c, invitado }: { config: Config; invitado: InvitadoVista }) {
@@ -51,7 +108,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
     };
   }, [portada]);
 
-  // Marca "abierto" una sola vez por sesión (alimenta las estadísticas del dashboard).
+  // Marca "abierto" una sola vez por sesión (alimenta las estadísticas del panel).
   useEffect(() => {
     try {
       const k = `abierto-${invitado.token}`;
@@ -61,15 +118,10 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
     fetch('/api/abierto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invitado.token }) }).catch(() => {});
   }, [invitado.token]);
 
-  const tema = {
-    '--fondo': c.color_fondo,
-    '--fondo2': c.color_fondo_2,
-    '--papel': c.color_papel,
-    '--texto': c.color_texto,
-    '--acento': c.color_acento,
-  } as CSSProperties;
+  const tema = { '--fondo': c.color_fondo, '--fondo2': c.color_fondo_2, '--papel': c.color_papel, '--texto': c.color_texto, '--acento': c.color_acento } as CSSProperties;
 
-  const titulo = c.titulo.replace('{invitada}', invitado.genero === 'M' ? 'invitado' : 'invitada');
+  const invitada = invitado.genero === 'M' ? 'invitado' : 'invitada';
+  const f = piezasFecha(c.fecha_hora);
   const maps = c.maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([c.lugar_nombre, c.lugar_direccion].filter(Boolean).join(' '))}`;
   const itinerario = c.itinerario
     .split('\n')
@@ -77,196 +129,297 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
     .filter((p) => p.length >= 2 && p[1].trim())
     .map(([hora, texto]) => [hora.trim(), texto.trim()]);
   const fotos = c.galeria_fotos.split('\n').map((u) => u.trim()).filter(Boolean);
-  const p = partes(c.fecha_hora);
+  const colores = c.dresscode_colores.split(',').map((x) => x.trim()).filter((x) => /^#[0-9a-f]{3,8}$/i.test(x));
+  const bn = c.foto_bn.trim().toLowerCase() !== 'no';
+  const rip = c.rip_numero.match(/^(\d+)(.*)$/);
+  const ripBase = rip ? rip[1] : c.rip_numero;
+  const ripSufijo = rip ? rip[2] : '';
   const limite = c.fecha_limite_rsvp && !Number.isNaN(new Date(c.fecha_limite_rsvp).getTime())
     ? new Intl.DateTimeFormat('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }).format(new Date(c.fecha_limite_rsvp))
     : '';
   const wa = c.contacto_whatsapp.replace(/\D/g, '');
   const telVisible = wa.startsWith('593') ? `0${wa.slice(3)}` : wa;
+  const alterno = c.fotos_activas.trim().toLowerCase() !== 'no';
+  const lista = c.playlist_activa.trim().toLowerCase() !== 'no';
 
   return (
-    <div style={tema} className="rayas min-h-dvh">
-      <AnimatePresence>
-        {portada && (
-          <Sobre
-            nombre={invitado.nombre}
-            inicial={(c.festejado.trim()[0] ?? '♥').toUpperCase()}
-            onAbrir={() => musica.current?.reproducir()}
-            onListo={() => setPortada(false)}
-          />
-        )}
-      </AnimatePresence>
+    <Listo.Provider value={!portada}>
+      <div style={tema} className="rayas min-h-dvh">
+        <AnimatePresence>
+          {portada && (
+            <Portada nombre={invitado.nombre} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
+          )}
+        </AnimatePresence>
 
-      <main className="mx-auto w-full max-w-[430px] space-y-14 px-5 pb-28 pt-10">
-        {/* Tarjeta principal */}
-        <motion.div
-          className="relative pt-14"
-          initial={{ opacity: 0, y: 24 }}
-          animate={portada ? { opacity: 0, y: 24 } : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-        >
-          <Copa src={c.sticker_copa_url} className="flota absolute -left-3 top-0 z-10 -rotate-6 scale-90" />
-          <div className="papel relative rounded-sm px-6 pb-24 pt-14 text-center">
-            <p className="f-serif text-lg">{titulo}</p>
-            <h1 className="f-script mt-3 text-[3.6rem] leading-[0.95] sm:text-6xl">{c.nombre_evento}</h1>
-            {c.portada_url && <Polaroid src={c.portada_url} giro={-2} className="mx-auto mt-7 w-[78%]" />}
-            {c.mensaje && <p className="mx-auto mt-6 max-w-[17rem] text-sm leading-relaxed opacity-80">{c.mensaje}</p>}
+        {/* 1 · Te invito a celebrar */}
+        <Capitulo>
+          <Globo ancho={64} className="left-3 top-8" />
+          <Globo ancho={52} className="left-0 top-28" retraso={1.2} />
+          <BolaDisco tam={210} className="-right-16 top-4" />
+          <Sticker nombre="mono" tono="negro" ancho={70} rot={14} className="right-4 top-[19%]" anim="balanceo" />
+          <Sticker nombre="corona" tono="plata" ancho={96} rot={-4} className="left-1/2 top-[19%] -ml-12" anim="flota" />
+          <Sticker nombre="martini" tono="plata" ancho={58} rot={8} className="right-5 top-[40%]" anim="flota" retraso={0.8} />
+          <Sticker nombre="labios" tono="negro" ancho={50} rot={-16} className="left-6 top-[48%]" />
+          <Sticker nombre="labios" tono="negro" ancho={42} rot={12} className="right-8 top-[66%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={78} rot={-8} className="bottom-6 left-[34%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={78} rot={6} espejo className="bottom-5 left-[48%]" />
+          <BolaDisco tam={170} className="-left-12 bottom-0" />
+          <Sticker nombre="rosa" tono="gris" ancho={46} rot={10} className="bottom-24 left-[18%]" />
+          <Brillo tam={24} className="text-black" style={{ left: '14%', top: '30%' }} />
+          <Brillo tam={16} className="text-black/70" style={{ right: '30%', top: '57%' }} retraso={1} />
 
-            <div className="mt-8 space-y-2 text-[15px] font-medium uppercase tracking-wide">
-              <p>{textoFecha(c.fecha_hora)}</p>
-              <p>{c.lugar_nombre}</p>
-              <p>{textoHora(c.fecha_hora)} h{c.hora_fin_texto ? ` · ${c.hora_fin_texto}` : ''}</p>
-            </div>
-
-            <div className="mt-8 text-sm">
-              <p className="opacity-80">dress code:</p>
-              <p className="font-semibold">{c.dresscode_titulo}</p>
-            </div>
-
-            <a
-              href="#confirmar"
-              className="boton mt-8 inline-block rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-widest"
-              style={{ background: 'var(--texto)', color: 'var(--papel)' }}
-            >
-              Confirmar asistencia
-            </a>
-
-            {c.regalos_texto && <p className="mx-auto mt-8 max-w-[16rem] text-[11px] opacity-70">{c.regalos_texto}</p>}
+          <Entra>
+            <p className="f-cond text-[11px] font-medium tracking-[0.4em] opacity-60">Para</p>
+            <p className="f-cond mt-1 text-sm font-bold tracking-[0.2em]">{invitado.nombre}</p>
+          </Entra>
+          <div className="mt-24 flex flex-col items-center">
+            <Escribe className="f-script text-[2rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
+            <Escribe className="f-firma -mt-1 text-[5.8rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>
           </div>
-          <Pastel src={c.sticker_pastel_url} className="flota absolute -bottom-8 -right-3 z-10 rotate-6 scale-90" />
-        </motion.div>
+        </Capitulo>
 
-        {/* Cuenta regresiva y calendario */}
-        <Revelar>
-          <div className="papel rounded-sm p-6">
-            <Cuenta fechaHora={c.fecha_hora} />
-          </div>
-        </Revelar>
+        {/* 2 · RIP 20s */}
+        <Capitulo>
+          <Globo ancho={60} className="left-3 top-6" />
+          <Globo ancho={48} className="left-2 top-[18%]" retraso={0.9} />
+          <BolaDisco tam={185} className="-right-14 top-2" />
+          <Sticker nombre="mono" tono="negro" ancho={64} rot={10} className="right-6 top-[20%]" anim="balanceo" />
+          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-4 top-[43%]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-4 top-[50%]" />
+          <Brillo tam={20} className="text-black" style={{ left: '12%', top: '38%' }} />
+          <Entra className="relative">
+            <div className="flex items-end justify-center gap-1">
+              <span className="f-serif pb-4 text-[3.4rem] font-black leading-none tracking-wide">RIP</span>
+              <Brillo tam={16} className="text-black" style={{ left: '-4px', top: '-4px' }} />
+            </div>
+            <div className="-mt-2 flex items-end justify-center">
+              <span className="globo-num text-[9.5rem]" data-t={ripBase}>{ripBase}</span>
+              {ripSufijo && <span className="f-serif mb-5 ml-1 text-xl font-bold">{ripSufijo}</span>}
+            </div>
+          </Entra>
+          <Entra retraso={0.2}>
+            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.35rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
+          </Entra>
+          {c.portada_url ? <Entra retraso={0.3}><FotoArco src={c.portada_url} bn={bn} /></Entra> : (
+            <div className="relative mt-8 h-24 w-full" aria-hidden>
+              <Sticker nombre="copas" tono="plata" ancho={80} rot={-6} className="left-1/2 -ml-10" anim="flota" />
+            </div>
+          )}
+        </Capitulo>
 
-        {/* Galería de fotos */}
-        {fotos.length > 0 && (
-          <Revelar>
-            <div className="text-center">
-              {c.galeria_titulo && <p className="f-script mb-6 text-5xl leading-none" style={{ color: 'var(--papel)' }}>{c.galeria_titulo}</p>}
-              <div className="grid grid-cols-2 gap-x-3 gap-y-5">
-                {fotos.map((u, k) => (
-                  <Polaroid key={u + k} src={u} giro={[-3, 2.5, 2, -2.5][k % 4]} className={k % 2 ? 'mt-6' : ''} />
+        {/* 3 · Bienvenida a los 30 */}
+        <Capitulo>
+          <Globo ancho={60} className="left-3 top-6" />
+          <Globo ancho={50} className="left-1 top-[17%]" retraso={1.1} />
+          <BolaDisco tam={200} className="-right-16 top-0" />
+          <Sticker nombre="mono" tono="negro" ancho={62} rot={12} className="right-5 top-[19%]" anim="balanceo" />
+          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[45%]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={44} rot={-10} className="left-5 top-[58%]" />
+          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-12 left-1/2 -ml-[75px]" anim="flota" />
+          <BolaDisco tam={170} className="-right-10 bottom-0" />
+          <Sticker nombre="rosa" tono="gris" ancho={52} rot={-8} className="bottom-4 left-5" />
+          <Brillo tam={22} className="text-black" style={{ left: '20%', bottom: '30%' }} />
+          <Entra>
+            <p className="f-serif mx-auto max-w-[13rem] text-[1.05rem] leading-snug">{c.bienvenida_linea}</p>
+          </Entra>
+          <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
+          <Entra retraso={0.4}>
+            <p className="f-serif mt-1 text-[1.05rem]">a los</p>
+          </Entra>
+          <Entra retraso={0.5} className="relative mt-1">
+            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero}>{c.bienvenida_numero}</span>
+            <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
+              <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
+            </Escribe>
+          </Entra>
+        </Capitulo>
+
+        {/* 4 · Fecha y lugar */}
+        <Capitulo>
+          <Sticker nombre="lentes" tono="negro" ancho={84} rot={-3} className="right-6 top-[3.5%]" anim="flota" />
+          <Globo ancho={56} className="left-3 top-6" />
+          <Sticker nombre="labios" tono="negro" ancho={46} rot={-14} className="left-4 top-[36%]" />
+          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[28%]" anim="flota" />
+          <BolaDisco tam={160} className="-right-10 bottom-4" />
+          <Brillo tam={20} className="text-black" style={{ left: '16%', top: '20%' }} />
+          <Entra>
+            <p className="f-cond mx-auto max-w-[14rem] text-[0.95rem] font-medium leading-snug opacity-80">{c.fecha_linea}</p>
+          </Entra>
+          {f && (
+            <Entra retraso={0.15} className="mt-5">
+              <div className="flex items-center justify-center gap-3">
+                <div className="f-script text-[3.1rem] leading-[0.85]">
+                  <p>{f.dia}</p>
+                  <p>{f.mes}</p>
+                </div>
+                <span className="f-serif text-[6.2rem] font-black leading-none" style={{ fontVariantNumeric: 'lining-nums' }}>{f.numero}</span>
+              </div>
+              <div className="mx-auto mt-4 w-64 border-y border-black py-1.5">
+                <span className="f-serif text-[1.5rem] tracking-[0.35em]" style={{ fontVariantNumeric: 'lining-nums' }}>{f.hora}</span>
+              </div>
+              {c.hora_fin_texto && <p className="mt-2 text-xs opacity-70">{c.hora_fin_texto}</p>}
+            </Entra>
+          )}
+          <Entra retraso={0.3} className="mt-7">
+            <p className="f-cond text-[1.5rem] font-bold leading-none">Lugar</p>
+            <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.15rem] font-bold leading-tight">{c.lugar_nombre}</p>
+            {c.lugar_direccion && <p className="mt-1 text-sm opacity-75">{c.lugar_direccion}</p>}
+            <div className="mt-5 flex flex-col items-center gap-2.5">
+              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-black px-7 py-3 text-xs font-bold tracking-[0.3em] text-white">Cómo llegar</a>
+              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-xs font-bold tracking-[0.3em]">Abrir en Waze</a>}
+              <a href="/api/ics" className="text-xs underline underline-offset-4 opacity-70">Agregar al calendario</a>
+            </div>
+          </Entra>
+          <Entra retraso={0.15} className="mt-10 w-full">
+            <div className="papel rounded-sm p-5">
+              <Cuenta fechaHora={c.fecha_hora} />
+            </div>
+          </Entra>
+        </Capitulo>
+
+        {/* 5 · Código de vestimenta */}
+        <Capitulo>
+          <Globo ancho={58} className="left-3 top-6" />
+          <Globo ancho={48} className="left-1 top-[17%]" retraso={0.8} />
+          <BolaDisco tam={185} className="-right-12 top-2" />
+          <Sticker nombre="mono" tono="negro" ancho={60} rot={12} className="right-6 top-[20%]" anim="balanceo" />
+          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[47%]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={44} rot={-12} className="left-5 top-[46%]" />
+          <BolaDisco tam={170} className="-left-12 bottom-0" />
+          <Sticker nombre="tacon" tono="negro" ancho={84} rot={-6} className="bottom-6 right-[26%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={84} rot={8} espejo className="bottom-5 right-[10%]" />
+          <Brillo tam={22} className="text-black" style={{ left: '18%', top: '36%' }} />
+          <Entra className="flex items-end justify-center gap-1">
+            <span className="f-serif pb-2 text-3xl font-black leading-none">RIP</span>
+            <span className="globo-num text-[5.2rem]" data-t={ripBase}>{ripBase}</span>
+            {ripSufijo && <span className="f-serif mb-3 text-base font-bold">{ripSufijo}</span>}
+          </Entra>
+          <Entra retraso={0.15} className="mt-6">
+            <p className="f-cond text-[0.95rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
+            <p className="f-cond mx-auto mt-1 max-w-[16rem] text-[2.1rem] font-bold leading-[1.05]">{c.dresscode_titulo}</p>
+            {c.dresscode_detalle && <p className="mx-auto mt-3 max-w-[15rem] text-sm leading-snug opacity-80">({c.dresscode_detalle})</p>}
+            {colores.length > 0 && (
+              <div className="mt-6 flex justify-center gap-3" aria-hidden>
+                {colores.map((col) => (
+                  <span key={col} className="size-10 rounded-full" style={{ background: col, boxShadow: '0 0 0 1.5px #111, 0 6px 8px -3px rgb(0 0 0 / 0.4)' }} />
                 ))}
               </div>
-            </div>
-          </Revelar>
+            )}
+          </Entra>
+        </Capitulo>
+
+        {/* Programa y momentos (solo si hay) */}
+        {(itinerario.length > 0 || fotos.length > 0) && (
+          <Capitulo humoAbajo={false}>
+            {itinerario.length > 0 && (
+              <Entra className="w-full">
+                <p className="f-script mb-5 text-5xl leading-none">Programa</p>
+                <ul className="mx-auto max-w-[17rem] space-y-3 text-left">
+                  {itinerario.map(([hora, texto]) => (
+                    <li key={hora + texto} className="flex items-baseline gap-4 border-b border-black/20 pb-2">
+                      <span className="f-serif w-16 shrink-0 text-right text-lg font-bold tabular-nums">{hora}</span>
+                      <span className="f-cond text-sm font-medium">{texto}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Entra>
+            )}
+            {fotos.length > 0 && (
+              <Entra className={`w-full ${itinerario.length ? 'mt-14' : ''}`}>
+                {c.galeria_titulo && <p className="f-script mb-6 text-5xl leading-none">{c.galeria_titulo}</p>}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-5">
+                  {fotos.map((u, k) => (
+                    <Polaroid key={u + k} src={u} giro={[-3, 2.5, 2, -2.5][k % 4]} className={k % 2 ? 'mt-6' : ''} bn={bn} />
+                  ))}
+                </div>
+              </Entra>
+            )}
+          </Capitulo>
         )}
 
-        {/* Lugar */}
-        <Revelar>
-          <div className="papel rounded-sm p-6 text-center">
-            <Titulo>Dónde</Titulo>
-            <p className="f-script text-4xl leading-tight">{c.lugar_nombre}</p>
-            {c.lugar_direccion && <p className="mt-2 text-sm opacity-80">{c.lugar_direccion}</p>}
-            <div className="mt-5 flex flex-col gap-3">
-              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton rounded-full px-5 py-3 text-xs font-semibold uppercase tracking-widest" style={{ background: 'var(--texto)', color: 'var(--papel)' }}>
-                Cómo llegar
-              </a>
-              {c.waze_url && (
-                <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton rounded-full border-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)' }}>
-                  Abrir en Waze
+        {/* 6 · La festejada invita */}
+        <Capitulo>
+          <Globo ancho={58} className="left-3 top-6" />
+          <BolaDisco tam={190} className="-right-14 top-0" />
+          <Sticker nombre="martini" tono="plata" ancho={58} rot={8} className="right-4 top-[40%]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-5 top-[40%]" />
+          <Sticker nombre="mono" tono="negro" ancho={64} rot={12} className="left-8 bottom-[18%]" anim="balanceo" />
+          <BolaDisco tam={170} className="-right-10 bottom-0" />
+          <Sticker nombre="corona" tono="plata" ancho={92} rot={-4} className="bottom-16 left-1/2 -ml-24" anim="flota" />
+          <Brillo tam={22} className="text-black" style={{ left: '20%', top: '24%' }} />
+          <Escribe className="f-script text-[3.4rem] leading-[0.95]">{c.invita_titulo}</Escribe>
+          {c.regalos_texto && (
+            <Entra retraso={0.3}>
+              <p className="f-cond mx-auto mt-6 max-w-[16rem] text-[1.5rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
+            </Entra>
+          )}
+          {c.mensaje && (
+            <Entra retraso={0.45}>
+              <p className="mx-auto mt-4 max-w-[15rem] text-sm leading-snug opacity-80">{c.mensaje}</p>
+            </Entra>
+          )}
+        </Capitulo>
+
+        {/* 7 · Te espero + confirmación */}
+        <Capitulo className="!justify-start">
+          <Globo ancho={56} className="left-3 top-6" />
+          <BolaDisco tam={170} className="-right-12 top-0" />
+          <Sticker nombre="corona" tono="plata" ancho={84} rot={-4} className="left-1/2 top-6 -ml-[42px]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={42} rot={14} className="right-6 top-[17%]" />
+          <Brillo tam={20} className="text-black" style={{ left: '16%', top: '14%' }} />
+          <div className="mt-20">
+            <Escribe className="f-script text-[4rem] leading-none">{c.final_titulo}</Escribe>
+            <Entra retraso={0.3}>
+              <p className="f-cond mx-auto mt-3 max-w-[14rem] text-[1.3rem] font-bold leading-tight">{c.final_texto}</p>
+            </Entra>
+          </div>
+
+          <Entra retraso={0.15} className="mt-8 w-full">
+            <div id="confirmar" className="papel scroll-mt-6 rounded-sm p-6 text-left">
+              <p className="f-script text-center text-[2.6rem] leading-none">{invitado.nombre}</p>
+              <div className="mt-5">
+                <Rsvp
+                  token={invitado.token}
+                  cupos={invitado.cupos}
+                  limite={limite}
+                  inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, restricciones: invitado.restricciones, mensaje: invitado.mensaje }}
+                />
+              </div>
+            </div>
+          </Entra>
+
+          {(lista || alterno) && (
+            <Entra retraso={0.1} className="mt-8 grid w-full gap-3">
+              {lista && (
+                <a href={`/playlist?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
+                  <span className="f-cond block text-base font-bold tracking-[0.2em]">{c.playlist_titulo}</span>
+                  <span className="mt-1 block text-xs opacity-70">{c.playlist_mensaje}</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[11px] font-bold tracking-[0.3em] text-white">Pedir mis canciones</span>
                 </a>
               )}
-            </div>
-          </div>
-        </Revelar>
-
-        {/* Dress code */}
-        <Revelar>
-          <div className="papel rounded-sm p-6 text-center">
-            <Titulo>Dress code</Titulo>
-            <p className="f-script text-4xl leading-tight">{c.dresscode_titulo}</p>
-            {c.dresscode_detalle && <p className="mt-3 text-sm opacity-80">{c.dresscode_detalle}</p>}
-            <div className="mt-5 flex justify-center gap-3" aria-hidden>
-              {['#f9d3da', '#f4b6c2', '#ef9aa8', '#f7e1e5'].map((col) => (
-                <span key={col} className="size-9 rounded-full" style={{ background: col, boxShadow: 'inset 0 0 0 2px rgb(0 0 0 / 0.08)' }} />
-              ))}
-            </div>
-          </div>
-        </Revelar>
-
-        {/* Itinerario (solo si hay) */}
-        {itinerario.length > 0 && (
-          <Revelar>
-            <div className="papel rounded-sm p-6">
-              <Titulo>Programa</Titulo>
-              <ul className="space-y-3">
-                {itinerario.map(([hora, texto]) => (
-                  <li key={hora + texto} className="flex items-baseline gap-4">
-                    <span className="f-serif w-14 shrink-0 text-right text-lg font-semibold tabular-nums">{hora}</span>
-                    <span className="text-sm">{texto}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Revelar>
-        )}
-
-        {/* RSVP */}
-        <Revelar>
-          <div id="confirmar" className="papel scroll-mt-6 rounded-sm p-6">
-            <Titulo>Confirma tu asistencia</Titulo>
-            <p className="f-script mb-5 text-center text-4xl leading-tight">{invitado.nombre}</p>
-            <Rsvp
-              token={invitado.token}
-              cupos={invitado.cupos}
-              limite={limite}
-              inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, restricciones: invitado.restricciones, mensaje: invitado.mensaje }}
-            />
-          </div>
-        </Revelar>
-
-        {/* Playlist */}
-        {c.playlist_activa.trim().toLowerCase() !== 'no' && (
-          <Revelar>
-            <div className="papel rounded-sm p-6 text-center">
-              <Titulo>{c.playlist_titulo}</Titulo>
-              <p className="text-sm opacity-80">{c.playlist_mensaje}</p>
-              <a href={`/playlist?t=${invitado.token}`} className="boton mt-5 inline-block rounded-full border-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)' }}>
-                Pedir mis canciones
-              </a>
-            </div>
-          </Revelar>
-        )}
-
-        {/* Fotos de la fiesta */}
-        {c.fotos_activas.trim().toLowerCase() !== 'no' && (
-          <Revelar>
-            <div className="papel rounded-sm p-6 text-center">
-              <Titulo>{c.fotos_titulo}</Titulo>
-              <p className="text-sm opacity-80">{c.fotos_mensaje}</p>
-              <a href={`/fotos?t=${invitado.token}`} className="boton mt-5 inline-block rounded-full border-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)' }}>
-                Ir a las fotos
-              </a>
-            </div>
-          </Revelar>
-        )}
-
-        {/* Pie */}
-        <Revelar className="text-center" >
-          <p className="f-script text-5xl leading-none" style={{ color: 'var(--papel)' }}>
-            {p ? '¡No faltes!' : ''}
-          </p>
-          {wa && (
-            <a
-              href={`https://wa.me/${wa}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-4 inline-block text-sm underline underline-offset-4"
-              style={{ color: 'var(--papel)' }}
-            >
-              ¿Dudas? Escríbeme al {telVisible}
-            </a>
+              {alterno && (
+                <a href={`/fotos?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
+                  <span className="f-cond block text-base font-bold tracking-[0.2em]">{c.fotos_titulo}</span>
+                  <span className="mt-1 block text-xs opacity-70">{c.fotos_mensaje}</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[11px] font-bold tracking-[0.3em] text-white">Ir a las fotos</span>
+                </a>
+              )}
+            </Entra>
           )}
-        </Revelar>
-      </main>
 
-      <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />
-    </div>
+          {wa && (
+            <Entra className="mt-8">
+              <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-sm underline underline-offset-4">¿Dudas? Escríbeme al {telVisible}</a>
+            </Entra>
+          )}
+          <div className="relative mt-16 h-28 w-full" aria-hidden>
+            <Sticker nombre="tacon" tono="negro" ancho={84} rot={-6} className="left-[26%] top-2" />
+            <Sticker nombre="tacon" tono="negro" ancho={84} rot={8} espejo className="left-[46%] top-1" />
+          </div>
+        </Capitulo>
+
+        <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />
+      </div>
+    </Listo.Provider>
   );
 }

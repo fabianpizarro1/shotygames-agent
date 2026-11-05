@@ -143,7 +143,7 @@ export function Fotos({ config: c, inicial, nombreInicial }: Props) {
   return (
     <div style={tema} className="rayas min-h-dvh">
       <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-10">
-        <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="text-center" style={{ color: 'var(--papel)' }}>
+        <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="text-center" style={{ color: 'var(--texto)' }}>
           <p className="f-serif text-xs uppercase tracking-[0.3em] opacity-80">{c.evento}</p>
           <h1 className="f-script mt-2 text-5xl leading-none">{c.titulo}</h1>
           {c.mensaje && <p className="mx-auto mt-4 max-w-[19rem] text-sm opacity-90">{c.mensaje}</p>}
