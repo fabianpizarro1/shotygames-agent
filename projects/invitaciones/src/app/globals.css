@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --fondo: #7a1226;
+  --fondo2: #5e0c1c;
+  --papel: #f7f2ec;
+  --texto: #8c1d2f;
+  --acento: #ef9aa8;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--f-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.f-script { font-family: var(--f-script), cursive; font-weight: 400; }
+.f-serif { font-family: var(--f-serif), Georgia, serif; }
+
+/* Rayas pintadas a mano: dos tonos de vino, con un leve degradado vertical para que no se vea plano */
+.rayas {
+  background-color: var(--fondo);
+  background-image:
+    linear-gradient(180deg, rgb(0 0 0 / 0.0) 0%, rgb(0 0 0 / 0.22) 100%),
+    repeating-linear-gradient(90deg, var(--fondo) 0 26px, var(--fondo2) 26px 52px);
+}
+
+.papel {
+  background: var(--papel);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--texto) 80%, #000), 0 24px 50px -12px rgb(0 0 0 / 0.55);
+}
+
+.sticker {
+  background: #f4ece0;
+  color: var(--texto);
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.35));
+}
+
+@keyframes flota {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-5px) rotate(var(--r, 0deg)); }
+}
+.flota { animation: flota 4.5s ease-in-out infinite; }
+
+@keyframes barra {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.boton {
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+.boton:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flota { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
