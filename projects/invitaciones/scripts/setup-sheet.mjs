@@ -15,7 +15,7 @@ const api = sheets({ version: 'v4', auth });
 const HOJAS = {
   INVITADOS: ['token', 'nombre', 'telefono', 'grupo', 'cupos', 'estado', 'asistentes', 'restricciones', 'mensaje', 'enviado_at', 'abierto_at', 'confirmado_at', 'notas', 'genero'],
   CONFIG: ['clave', 'valor', 'descripcion'],
-  CANCIONES: ['id', 'spotify_uri', 'cancion', 'artista', 'pedida_por', 'estado', 'creada_at'],
+  CANCIONES: ['id', 'spotify_uri', 'cancion', 'artista', 'pedida_por', 'estado', 'creada_at', 'deezer_id', 'isrc', 'portada', 'token'],
   MENSAJES: ['id', 'nombre', 'mensaje', 'creado_at'],
 };
 

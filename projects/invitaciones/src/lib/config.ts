@@ -27,9 +27,12 @@ async function leerConfig(): Promise<Config> {
 
 const configCacheada = unstable_cache(leerConfig, ['config'], { tags: ['config'], revalidate: 60 });
 
+// La caché de datos de Next SOBREVIVE a los deploys: tras publicar, la primera petición puede
+// recibir la configuración guardada por la versión anterior, sin las claves nuevas
+// (undefined.trim() → 500). Por eso el resultado siempre se mezcla sobre los valores por defecto.
 export async function getConfig(): Promise<Config> {
   try {
-    return await configCacheada();
+    return { ...porDefecto(), ...(await configCacheada()) };
   } catch (e) {
     console.error('[config] no se pudo leer CONFIG, uso valores por defecto (sin cachear)', e);
     return porDefecto();

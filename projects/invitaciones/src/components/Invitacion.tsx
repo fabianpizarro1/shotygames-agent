@@ -221,6 +221,19 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </div>
         </Revelar>
 
+        {/* Playlist */}
+        {c.playlist_activa.trim().toLowerCase() !== 'no' && (
+          <Revelar>
+            <div className="papel rounded-sm p-6 text-center">
+              <Titulo>{c.playlist_titulo}</Titulo>
+              <p className="text-sm opacity-80">{c.playlist_mensaje}</p>
+              <a href={`/playlist?t=${invitado.token}`} className="boton mt-5 inline-block rounded-full border-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)' }}>
+                Pedir mis canciones
+              </a>
+            </div>
+          </Revelar>
+        )}
+
         {/* Fotos de la fiesta */}
         {c.fotos_activas.trim().toLowerCase() !== 'no' && (
           <Revelar>
