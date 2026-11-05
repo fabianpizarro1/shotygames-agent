@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio';
 
 const GRUPOS: { titulo: string; campos: [string, string, Tipo][] }[] = [
   { titulo: 'Evento', campos: [['festejado', 'Quién cumple', 'texto'], ['nombre_evento', 'Título grande', 'texto'], ['titulo', 'Frase de arriba ({invitada} se ajusta al invitado)', 'texto'], ['mensaje', 'Mensaje de bienvenida', 'largo']] },
@@ -12,6 +12,7 @@ const GRUPOS: { titulo: string; campos: [string, string, Tipo][] }[] = [
   { titulo: 'Dress code', campos: [['dresscode_titulo', 'Dress code', 'texto'], ['dresscode_detalle', 'Detalle', 'largo']] },
   { titulo: 'Programa y regalos', campos: [['itinerario', 'Programa — una línea por actividad: hora|texto (vacío = se oculta)', 'largo'], ['regalos_texto', 'Nota sobre regalos', 'largo'], ['fecha_limite_rsvp', 'Fecha límite para confirmar (opcional)', 'fecha']] },
   { titulo: 'Fotos y stickers', campos: [['portada_url', 'Foto principal (sale en la tarjeta)', 'imagen'], ['galeria_titulo', 'Título de la galería', 'texto'], ['galeria_fotos', 'Galería de fotos (polaroids)', 'galeria'], ['sticker_copa_url', 'Sticker de la copa (PNG)', 'imagen'], ['sticker_pastel_url', 'Sticker del pastel (PNG)', 'imagen']] },
+  { titulo: 'Fotos de la fiesta (QR)', campos: [['fotos_activas', 'Fotos habilitadas', 'sino'], ['fotos_titulo', 'Título de la página de fotos', 'texto'], ['fotos_mensaje', 'Texto de la página de fotos', 'largo'], ['fotos_subida_desde', 'Se pueden subir fotos desde', 'fechahora'], ['fotos_subida_hasta', 'Se cierra la subida', 'fechahora'], ['fotos_galeria_desde', 'La galería se ve desde', 'fechahora'], ['fotos_max_por_persona', 'Máximo de fotos por persona', 'texto']] },
   { titulo: 'Música', campos: [['musica_url', 'Canción de la invitación', 'audio'], ['musica_titulo', 'Nombre que se muestra', 'texto']] },
   { titulo: 'Colores', campos: [['color_fondo', 'Rayas (tono 1)', 'color'], ['color_fondo_2', 'Rayas (tono 2)', 'color'], ['color_papel', 'Tarjeta', 'color'], ['color_texto', 'Texto', 'color'], ['color_acento', 'Rosa del sobre y detalles', 'color']] },
   { titulo: 'Envío por WhatsApp', campos: [['contacto_whatsapp', 'WhatsApp de contacto (593…)', 'texto'], ['wa_mensaje', 'Mensaje ({nombre} y {link} se reemplazan; sin emojis)', 'largo'], ['url_base', 'Dominio público de la invitación (vacío = el actual)', 'texto']] },
@@ -70,6 +71,11 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
                   <div className="mt-2"><Subidor tipo="imagen" multiple={tipo === 'galeria'} valor={v} onChange={(x) => set(clave, x)} maxLado={clave.startsWith('sticker') ? 1000 : 1600} /></div>
                 ) : tipo === 'audio' ? (
                   <div className="mt-2"><Subidor tipo="audio" valor={v} onChange={(x) => set(clave, x)} /></div>
+                ) : tipo === 'sino' ? (
+                  <label className="mt-1 flex items-center gap-3">
+                    <input id={clave} type="checkbox" checked={v.trim().toLowerCase() !== 'no'} onChange={(e) => set(clave, e.target.checked ? 'si' : 'no')} className="size-5" />
+                    <span>{v.trim().toLowerCase() !== 'no' ? 'Sí' : 'No'}</span>
+                  </label>
                 ) : tipo === 'largo' ? (
                   <textarea id={clave} rows={3} value={v} onChange={(e) => set(clave, e.target.value)} className={campoCls} />
                 ) : tipo === 'color' ? (

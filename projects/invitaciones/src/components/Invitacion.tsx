@@ -221,6 +221,19 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </div>
         </Revelar>
 
+        {/* Fotos de la fiesta */}
+        {c.fotos_activas.trim().toLowerCase() !== 'no' && (
+          <Revelar>
+            <div className="papel rounded-sm p-6 text-center">
+              <Titulo>{c.fotos_titulo}</Titulo>
+              <p className="text-sm opacity-80">{c.fotos_mensaje}</p>
+              <a href={`/fotos?t=${invitado.token}`} className="boton mt-5 inline-block rounded-full border-2 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest" style={{ borderColor: 'var(--texto)' }}>
+                Ir a las fotos
+              </a>
+            </div>
+          </Revelar>
+        )}
+
         {/* Pie */}
         <Revelar className="text-center" >
           <p className="f-script text-5xl leading-none" style={{ color: 'var(--papel)' }}>

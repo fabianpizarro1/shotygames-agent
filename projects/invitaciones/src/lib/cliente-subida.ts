@@ -45,3 +45,45 @@ export async function subirArchivo(file: File, opciones: { maxLado?: number; alP
   }
   throw new Error('La subida no terminó');
 }
+
+// ---- Fotos de la fiesta (invitados) ----
+// Una foto de celular pesa 3-8 MB: se manda una versión de 1600 px (< 3 MB, límite del servidor)
+// y una miniatura de 420 px (~25 KB) para que la galería cargue rápido.
+
+async function aJpeg(bmp: ImageBitmap, maxLado: number, calidad: number): Promise<Blob> {
+  const k = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bmp.width * k);
+  canvas.height = Math.round(bmp.height * k);
+  canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', calidad));
+  if (!blob) throw new Error('No se pudo procesar la foto');
+  return blob;
+}
+
+export async function prepararFoto(file: File): Promise<{ foto: Blob; mini: Blob }> {
+  const bmp = await createImageBitmap(file).catch(() => null);
+  if (!bmp) throw new Error('No se pudo leer la foto');
+  try {
+    let foto = await aJpeg(bmp, 1600, 0.82);
+    for (const [lado, q] of [[1400, 0.72], [1200, 0.65]] as const) {
+      if (foto.size <= 2.8 * 1024 * 1024) break;
+      foto = await aJpeg(bmp, lado, q);
+    }
+    return { foto, mini: await aJpeg(bmp, 420, 0.7) };
+  } finally {
+    bmp.close();
+  }
+}
+
+export async function enviarFoto(partes: { foto: Blob; mini: Blob }, uploader: string, autor: string): Promise<void> {
+  const base = `/api/fotos/subir?u=${encodeURIComponent(uploader)}`;
+  const post = async (url: string, cuerpo: Blob) => {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: cuerpo });
+    const j = await r.json().catch(() => ({ ok: false, error: 'Respuesta inválida' }));
+    if (!r.ok || !j.ok) throw new Error(j.error || 'No se pudo subir');
+    return j.id as string;
+  };
+  const th = await post(`${base}&tipo=mini`, partes.mini);
+  await post(`${base}&tipo=foto&autor=${encodeURIComponent(autor)}&th=${encodeURIComponent(th)}`, partes.foto);
+}

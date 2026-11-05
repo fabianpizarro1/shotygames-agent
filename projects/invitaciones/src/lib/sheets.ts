@@ -19,6 +19,21 @@ export function sheetId(): string {
   return id;
 }
 
+// El Sheet tiene ~60 lecturas/min por usuario: ante un 429 o un 5xx se reintenta con espera
+// (0,5 s y 2 s) antes de rendirse, para que un pico en plena fiesta no tumbe la página.
+async function conReintento<T>(fn: () => Promise<T>): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const x = e as { code?: number | string; status?: number; response?: { status?: number } };
+      const codigo = Number(x.code ?? x.status ?? x.response?.status);
+      if (i >= 2 || ![429, 500, 502, 503].includes(codigo)) throw e;
+      await new Promise((r) => setTimeout(r, 500 * (i + 1) ** 2));
+    }
+  }
+}
+
 export type Fila = Record<string, string> & { _fila: number };
 
 // Convierte un índice de columna (0 = A) a letra. Las letras nunca se escriben
@@ -34,11 +49,13 @@ export function letra(i: number): string {
 }
 
 export async function leerTabla(hoja: string): Promise<{ encabezados: string[]; filas: Fila[] }> {
-  const r = await getSheets().spreadsheets.values.get({
-    spreadsheetId: sheetId(),
-    range: `${hoja}!A1:ZZ`,
-    valueRenderOption: 'FORMATTED_VALUE',
-  });
+  const r = await conReintento(() =>
+    getSheets().spreadsheets.values.get({
+      spreadsheetId: sheetId(),
+      range: `${hoja}!A1:ZZ`,
+      valueRenderOption: 'FORMATTED_VALUE',
+    }),
+  );
   const [cab = [], ...resto] = r.data.values ?? [];
   const encabezados = cab.map((c) => String(c).trim());
   const filas: Fila[] = [];
@@ -79,10 +96,12 @@ export async function actualizarCeldas(
     return { range: `${hoja}!${letra(col)}${fila}`, values: [[valor]] };
   });
   if (!data.length) return;
-  await getSheets().spreadsheets.values.batchUpdate({
-    spreadsheetId: sheetId(),
-    requestBody: { valueInputOption: 'RAW', data },
-  });
+  await conReintento(() =>
+    getSheets().spreadsheets.values.batchUpdate({
+      spreadsheetId: sheetId(),
+      requestBody: { valueInputOption: 'RAW', data },
+    }),
+  );
 }
 
 // Agrega varias filas de una sola llamada (importaciones masivas).

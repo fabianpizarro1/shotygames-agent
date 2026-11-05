@@ -10,23 +10,31 @@ export { CONFIG_DEFAULTS };
 
 export type Config = Record<keyof typeof CONFIG_DEFAULTS, string>;
 
+const porDefecto = () =>
+  Object.fromEntries(Object.entries(CONFIG_DEFAULTS).map(([k, v]) => [k, v.valor])) as Config;
+
+// Lanza si el Sheet falla: unstable_cache no guarda los errores, así que un fallo no deja
+// "la configuración por defecto" cacheada un minuto pisando lo que se editó en el panel.
 async function leerConfig(): Promise<Config> {
-  const base = Object.fromEntries(
-    Object.entries(CONFIG_DEFAULTS).map(([k, v]) => [k, v.valor]),
-  ) as Config;
-  try {
-    const { filas } = await leerTabla('CONFIG');
-    for (const f of filas) {
-      const clave = (f['clave'] ?? '').trim();
-      if (clave in base) (base as Record<string, string>)[clave] = f['valor'] ?? '';
-    }
-  } catch (e) {
-    console.error('[config] no se pudo leer CONFIG, uso valores por defecto', e);
+  const base = porDefecto();
+  const { filas } = await leerTabla('CONFIG');
+  for (const f of filas) {
+    const clave = (f['clave'] ?? '').trim();
+    if (clave in base) (base as Record<string, string>)[clave] = f['valor'] ?? '';
   }
   return base;
 }
 
-export const getConfig = unstable_cache(leerConfig, ['config'], { tags: ['config'], revalidate: 60 });
+const configCacheada = unstable_cache(leerConfig, ['config'], { tags: ['config'], revalidate: 60 });
+
+export async function getConfig(): Promise<Config> {
+  try {
+    return await configCacheada();
+  } catch (e) {
+    console.error('[config] no se pudo leer CONFIG, uso valores por defecto (sin cachear)', e);
+    return porDefecto();
+  }
+}
 
 // ---- Escritura (solo dashboard) ----
 
