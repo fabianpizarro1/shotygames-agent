@@ -174,8 +174,9 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
-        <Capitulo nombre="brindis" className="!pt-12 !pb-44">
+        <Capitulo nombre="brindis" className="!pt-12 !pb-48">
           <Confeti cantidad={6} />
+          <Pegatina nombre="going-on-30" ancho={150} rot={-6} className="bottom-12 left-3" />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
           <Brillo tam={18} className="text-black" style={{ right: '14%', top: '30%' }} />
           <div className="mt-6">
@@ -198,10 +199,9 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 3 · Bienvenida a los 30 (corona) */}
-        <Capitulo nombre="bienvenida">
-          <Pegatina nombre="going-on-30" ancho={150} rot={8} className="right-3 top-[12%]" />
+        <Capitulo nombre="bienvenida" className="!min-h-0 !pt-14 !pb-60">
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
-          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-8 left-3" />
+          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '46%' }} retraso={0.9} />
           <Entra>
