@@ -9,6 +9,7 @@ type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imag
 const GRUPOS: { titulo: string; campos: [string, string, Tipo][] }[] = [
   { titulo: 'Evento', campos: [['festejado', 'Quién cumple (sale como firma sobre el número)', 'texto'], ['nombre_evento', 'Nombre del evento (calendario, fotos, título de la pestaña)', 'texto']] },
   { titulo: 'Textos de la invitación (capítulos)', campos: [['intro_linea', '1 · Línea de arriba', 'texto'], ['intro_titulo', '1 · Título grande', 'texto'], ['rip_numero', '1 · Número del globo (ej: 20s)', 'texto'], ['rip_texto', '1 · Texto ({invitada} se ajusta al invitado)', 'largo'], ['brindis_titulo', '2 · Título', 'texto'], ['brindis_texto', '2 · Texto bajo la foto', 'largo'], ['bienvenida_linea', '3 · Línea de arriba', 'texto'], ['bienvenida_palabra', '3 · Palabra grande', 'texto'], ['bienvenida_numero', '3 · Número del globo', 'texto'], ['cinta_texto', 'Cinta que se desplaza (vacío = sin cinta)', 'texto'], ['fecha_linea', '4 · Frase sobre la fecha', 'texto'], ['vestimenta_titulo', '5 · Título de vestimenta', 'texto'], ['invita_titulo', '6 · Título (vacío = se oculta)', 'texto'], ['regalos_texto', '6 · Texto destacado (regalos, bebidas, etc.; vacío = oculto)', 'largo'], ['mensaje', '6 · Texto pequeño', 'largo'], ['final_titulo', '6 · Título final', 'texto'], ['final_texto', '6 · Texto sobre la confirmación', 'texto']] },
+  { titulo: 'Textos de la versión 2 (collage)', campos: [['b_linea1', 'Nota del inicio', 'texto'], ['b_linea2', 'Nota del capítulo 2', 'texto'], ['b_linea3', 'Globo de diálogo ({invitadas} se ajusta)', 'largo'], ['b_final_humor', 'Frase divertida antes de confirmar', 'texto']] },
   { titulo: 'Fecha y lugar', campos: [['fecha_hora', 'Fecha y hora', 'fechahora'], ['hora_fin_texto', 'Hora de fin (texto, opcional)', 'texto'], ['lugar_nombre', 'Nombre del lugar', 'texto'], ['lugar_direccion', 'Dirección o ciudad', 'texto'], ['lugar_foto_url', 'Foto del lugar (sale en la invitación y lleva al mapa)', 'imagen'], ['maps_url', 'Link de Google Maps', 'texto'], ['waze_url', 'Link de Waze (opcional)', 'texto']] },
   { titulo: 'Dress code', campos: [['dresscode_titulo', 'Dress code', 'texto'], ['dresscode_detalle', 'Detalle (va entre paréntesis)', 'largo'], ['dresscode_colores', 'Círculos de color (#hex separados por coma; vacío = sin círculos)', 'texto']] },
   { titulo: 'Programa', campos: [['itinerario', 'Programa — una línea por actividad: hora|texto (vacío = se oculta)', 'largo'], ['fecha_limite_rsvp', 'Fecha límite para confirmar (opcional)', 'fecha']] },
@@ -54,6 +55,11 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
       {primero && (
         <a href={`/i/${primero.token}`} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-white p-3.5 text-sm ring-1 ring-stone-200">
           Ver la invitación como <b>{primero.nombre}</b> →
+        </a>
+      )}
+      {primero && (
+        <a href={`/i/${primero.token}?v=2`} target="_blank" rel="noopener noreferrer" className="block rounded-xl bg-white p-3.5 text-sm ring-1 ring-stone-200">
+          Ver la <b>versión 2 (collage)</b> como <b>{primero.nombre}</b> →
         </a>
       )}
 

@@ -238,6 +238,7 @@ export function TabInvitados({ invitados, campos, recargar }: { invitados: Invit
                 <button onClick={() => enviarWhatsApp(i)} className={btnOscuro}>{i.enviado_at ? 'Reenviar' : 'Enviar'} por WhatsApp</button>
                 <button onClick={() => copiar(i)} className={btn}>Copiar link</button>
                 <a href={link(i)} target="_blank" rel="noopener noreferrer" className={btn}>Ver</a>
+                <a href={`${link(i)}?v=2`} target="_blank" rel="noopener noreferrer" className={btn}>Ver estilo 2</a>
                 <button onClick={() => setModal(i)} className={btn}>Editar</button>
                 <button onClick={() => eliminar(i)} className={`${btn} text-red-700`}>Eliminar</button>
               </div>

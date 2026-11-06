@@ -6,15 +6,18 @@ import { useMemo, type CSSProperties } from 'react';
 // (licencia libre) convertidos a blanco y negro con filtros; la bola disco y los globos se
 // dibujan aquí para controlar el brillo y las animaciones.
 
-export type Tono = 'plata' | 'negro' | 'gris';
+export type Tono = 'plata' | 'negro' | 'gris' | 'color' | 'rosa';
 
 const FILTROS: Record<Tono, string> = {
-  plata: 'grayscale(1) contrast(1.08) drop-shadow(0 5px 6px rgb(0 0 0 / 0.28))',
-  negro: 'grayscale(1) brightness(0.16) contrast(1.25) drop-shadow(0 4px 5px rgb(0 0 0 / 0.25))',
-  gris: 'grayscale(1) brightness(0.55) contrast(1.15) drop-shadow(0 4px 5px rgb(0 0 0 / 0.25))',
+  // Solo filtros de color (baratos). Nada de drop-shadow: es lo más caro de pintar en un celular.
+  plata: 'grayscale(1) contrast(1.08)',
+  negro: 'grayscale(1) brightness(0.16) contrast(1.25)',
+  gris: 'grayscale(1) brightness(0.55) contrast(1.15)',
+  color: 'none',
+  rosa: 'sepia(1) saturate(3.4) hue-rotate(305deg) brightness(1.05)',
 };
 
-export type NombreSticker = 'labios' | 'martini' | 'corona' | 'tacon' | 'lentes' | 'mono' | 'rosa' | 'destello' | 'disco' | 'globo' | 'copas';
+export type NombreSticker = 'labios' | 'martini' | 'corona' | 'tacon' | 'lentes' | 'mono' | 'rosa' | 'destello' | 'disco' | 'globo' | 'copas' | 'reloj' | 'megafono' | 'tv' | 'champan' | 'coctel' | 'mariposa' | 'cereza' | 'corazon' | 'telefono';
 
 interface StickerProps {
   nombre: NombreSticker;
@@ -24,7 +27,7 @@ interface StickerProps {
   espejo?: boolean;
   className?: string;
   style?: CSSProperties;
-  anim?: 'flota' | 'balanceo' | 'ninguna';
+  anim?: 'flota' | 'balanceo' | 'pop' | 'ninguna';
   retraso?: number;
 }
 
@@ -40,7 +43,7 @@ export function Sticker({ nombre, tono = 'negro', ancho = 64, rot = 0, espejo = 
       loading="lazy"
       decoding="async"
       draggable={false}
-      className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : anim === 'balanceo' ? 'balanceo' : ''} ${className}`}
+      className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : anim === 'balanceo' ? 'balanceo' : anim === 'pop' ? 'pop' : ''} ${className}`}
       style={{ width: ancho, height: 'auto', filter: FILTROS[tono], ['--r' as string]: `${rot}deg`, transform: `rotate(${rot}deg) scaleX(${espejo ? -1 : 1})`, animationDelay: `${retraso}s`, ...style }}
     />
   );
@@ -201,7 +204,7 @@ export function Confeti({ cantidad = 26, className = '' }: { cantidad?: number; 
 // los memes de cumpleaños. Los de base plana se colocan asomándose desde un borde.
 export type NombrePegatina = 'globos-rosa' | 'disco-estrellas' | 'mono-pastel' | 'mono-globos' | 'nena-brindis' | 'perro-lentes' | 'hamster-pastel' | 'treinta-29' | 'garner-susto' | 'mujer-copa' | 'nena-corona' | 'gorro-rojo' | 'treinta-coqueta' | 'treinta-brillando' | 'going-on-30' | 'labios-rojos' | 'hecha-90s' | 'ticket-birthday';
 
-export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, className = '', style, anim = 'ninguna', retraso = 0 }: { nombre: NombrePegatina; ancho?: number; rot?: number; espejo?: boolean; className?: string; style?: CSSProperties; anim?: 'flota' | 'ninguna'; retraso?: number }) {
+export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, className = '', style, anim = 'ninguna', retraso = 0 }: { nombre: NombrePegatina; ancho?: number; rot?: number; espejo?: boolean; className?: string; style?: CSSProperties; anim?: 'flota' | 'pop' | 'ninguna'; retraso?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -211,7 +214,7 @@ export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, classNa
       loading="lazy"
       decoding="async"
       draggable={false}
-      className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : ''} ${className}`}
+      className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : anim === 'pop' ? 'pop' : ''} ${className}`}
       style={{ width: ancho, height: 'auto', scale: espejo ? '-1 1' : undefined, ['--r' as string]: `${rot}deg`, transform: `rotate(${rot}deg)`, animationDelay: `${retraso}s`, ...style }}
     />
   );

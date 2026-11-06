@@ -9,6 +9,8 @@ import { Brillo, Humo, Pegatina, Sticker } from './Decor';
 // Solo se animan transform y opacity.
 
 interface Props {
+  fondo?: string;
+  humo?: boolean;
   nombre: string;
   inicial: string;
   numero: string;
@@ -16,7 +18,7 @@ interface Props {
   onListo: () => void;
 }
 
-export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
+export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, onAbrir, onListo }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [solapaAtras, setSolapaAtras] = useState(false);
   const timers = useRef<number[]>([]);
@@ -39,12 +41,12 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
 
   return (
     <motion.div
-      className="rayas fixed inset-0 z-50 flex flex-col items-center justify-center gap-7 overflow-hidden px-6 pb-44"
+      className={`${fondo} fixed inset-0 z-50 flex flex-col items-center justify-center gap-7 overflow-hidden px-6 pb-44`}
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
     >
-      <Humo />
-      <Humo lado="abajo" />
+      {humo && <Humo />}
+      {humo && <Humo lado="abajo" />}
       <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
       <Pegatina nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
       <Sticker nombre="martini" tono="plata" ancho={46} rot={10} className="right-5 top-[14%]" anim="flota" retraso={0.5} />
