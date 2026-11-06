@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, type CSSPropert
 import type { Config } from '@/lib/config';
 import { piezasFecha } from '@/lib/fechas';
 import { Cuenta } from './Cuenta';
-import { BolaDisco, Brillo, Confeti, Globo, Humo, Sticker } from './Decor';
+import { Brillo, Confeti, Humo, Pegatina, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
 import { Rsvp } from './Rsvp';
 import { Sobre } from './Sobre';
@@ -166,10 +166,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
         <Capitulo>
-          <Globo ancho={60} className="left-3 top-6" />
-          <Globo ancho={48} className="left-0 top-24" retraso={1.2} />
-          <BolaDisco tam={200} className="-right-14 top-2" />
-          <Sticker nombre="mono" tono="negro" ancho={66} rot={14} className="right-5 top-[17%]" anim="balanceo" />
+          <Pegatina nombre="globos-rosa" ancho={118} rot={-6} className="-left-2 top-4" anim="flota" />
+          <Pegatina nombre="disco-estrellas" ancho={190} rot={6} className="-right-12 top-0" anim="flota" retraso={0.6} />
+          <Pegatina nombre="mono-pastel" ancho={132} className="-bottom-1 right-4" />
           <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
           <Brillo tam={18} className="text-black/80" style={{ left: '8%', bottom: '22%' }} retraso={0.5} />
@@ -193,8 +192,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
-        <Capitulo>
+        <Capitulo className="!pb-44">
           <Confeti cantidad={28} />
+          <Pegatina nombre="nena-brindis" ancho={132} className="-bottom-1 right-3" />
           <Sticker nombre="copas" tono="plata" ancho={104} rot={-12} className="left-3 top-[8%]" anim="flota" />
           <Sticker nombre="destello" tono="plata" ancho={46} rot={10} className="right-6 top-[11%]" anim="flota" retraso={1} />
           <Brillo tam={20} className="text-black" style={{ right: '16%', top: '34%' }} />
@@ -222,7 +222,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 3 · Bienvenida a los 30 (corona) */}
         <Capitulo>
-          <Sticker nombre="copas" tono="plata" ancho={72} rot={-10} className="left-5 top-[9%]" anim="flota" />
+          <Pegatina nombre="treinta-29" ancho={150} rot={-6} className="left-3 top-[6%]" anim="flota" />
           <Sticker nombre="labios" tono="negro" ancho={46} rot={14} className="right-6 top-[17%]" />
           <Sticker nombre="corona" tono="plata" ancho={170} rot={-3} className="bottom-10 left-1/2 -ml-[85px]" anim="flota" />
           <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
@@ -248,7 +248,6 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
         <Capitulo>
-          <Sticker nombre="lentes" tono="negro" ancho={84} rot={-3} className="right-6 top-[3.5%]" anim="flota" />
           <Sticker nombre="martini" tono="plata" ancho={52} rot={8} className="left-4 top-[7%]" anim="flota" retraso={0.7} />
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
@@ -275,8 +274,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.15rem] font-bold leading-tight">{c.lugar_nombre}</p>
             {c.lugar_direccion && <p className="mt-1 text-sm opacity-75">{c.lugar_direccion}</p>}
             {c.lugar_foto_url && (
-              <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="block">
-                <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="mx-auto mt-5 w-[92%]" />
+              <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-24 block">
+                <Pegatina nombre="perro-lentes" ancho={92} rot={7} className="-top-[5.6rem] right-4" />
+                <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="relative mx-auto w-[92%]" />
               </a>
             )}
             <div className="mt-5 flex flex-col items-center gap-2.5">
@@ -294,8 +294,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
         <Capitulo fondo={fondoVestimenta}>
           <Sticker nombre="mono" tono="negro" ancho={74} rot={-14} className="left-5 top-[8%]" anim="balanceo" />
-          <Sticker nombre="tacon" tono="negro" ancho={116} rot={-6} className="bottom-[5.5rem] left-[14%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={116} rot={6} espejo className="bottom-20 right-[12%]" />
+          <Pegatina nombre="mono-globos" ancho={150} className="-bottom-1 right-1" />
+          <Sticker nombre="tacon" tono="negro" ancho={108} rot={-6} className="bottom-20 left-[3%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={108} rot={6} espejo className="bottom-16 left-[30%]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Brillo tam={18} className="text-black/80" style={{ right: '9%', bottom: '34%' }} retraso={0.5} />
@@ -345,9 +346,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo className="!justify-start">
           <Confeti cantidad={16} />
-          <Globo ancho={54} className="left-3 top-5" />
-          <Globo ancho={44} className="left-1 top-24" retraso={1} />
-          <BolaDisco tam={150} className="-right-10 top-2" />
+          <Pegatina nombre="globos-rosa" ancho={98} rot={-6} className="-left-1 top-3" anim="flota" />
+          <Pegatina nombre="disco-estrellas" ancho={150} rot={6} className="-right-9 top-1" anim="flota" retraso={0.6} />
+          <Pegatina nombre="hamster-pastel" ancho={112} className="-bottom-1 left-1/2 -ml-14" />
           <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
           <div className="mt-16 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
@@ -407,10 +408,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-sm underline underline-offset-4">¿Dudas? Escríbeme al {telVisible}</a>
             </Entra>
           )}
-          <div className="relative mt-14 h-24 w-full" aria-hidden>
-            <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-[24%] top-2" />
-            <Sticker nombre="martini" tono="plata" ancho={52} rot={8} className="left-[52%] top-0" anim="flota" />
-          </div>
+          <div className="h-28 w-full" aria-hidden />
         </Capitulo>
 
         <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />

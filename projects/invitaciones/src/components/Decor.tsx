@@ -196,3 +196,23 @@ export function Confeti({ cantidad = 26, className = '' }: { cantidad?: number; 
     </div>
   );
 }
+
+// Sticker de foto (WebP recortado, con su propio color): globos rosa, bola disco con estrellas y
+// los memes de cumpleaños. Los de base plana se colocan asomándose desde un borde.
+export type NombrePegatina = 'globos-rosa' | 'disco-estrellas' | 'mono-pastel' | 'mono-globos' | 'nena-brindis' | 'perro-lentes' | 'hamster-pastel' | 'treinta-29';
+
+export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, className = '', style, anim = 'ninguna', retraso = 0 }: { nombre: NombrePegatina; ancho?: number; rot?: number; espejo?: boolean; className?: string; style?: CSSProperties; anim?: 'flota' | 'ninguna'; retraso?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`/stickers/${nombre}.webp`}
+      alt=""
+      aria-hidden
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+      className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : ''} ${className}`}
+      style={{ width: ancho, height: 'auto', scale: espejo ? '-1 1' : undefined, filter: 'drop-shadow(0 6px 8px rgb(0 0 0 / 0.3))', ['--r' as string]: `${rot}deg`, transform: `rotate(${rot}deg)`, animationDelay: `${retraso}s`, ...style }}
+    />
+  );
+}
