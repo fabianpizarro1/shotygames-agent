@@ -3,9 +3,8 @@ import { notFound } from 'next/navigation';
 import { getConfig } from '@/lib/config';
 import { invitadoPorToken } from '@/lib/invitados';
 import { Invitacion } from '@/components/Invitacion';
-import { InvitacionCollage } from '@/components/InvitacionCollage';
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ v?: string }> };
+type Props = { params: Promise<{ token: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
@@ -18,15 +17,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function Pagina({ params, searchParams }: Props) {
+export default async function Pagina({ params }: Props) {
   const { token } = await params;
-  const { v } = await searchParams;
-  // ?v=2 muestra la versión 2 (collage); sin parámetro, la versión plata.
-  const Version = v === '2' || v === 'collage' ? InvitacionCollage : Invitacion;
   const [config, inv] = await Promise.all([getConfig(), invitadoPorToken(token)]);
   if (!inv) notFound();
   return (
-    <Version
+    <Invitacion
       config={config}
       invitado={{
         token: inv.token,

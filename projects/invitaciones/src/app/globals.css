@@ -24,49 +24,6 @@ body {
   overflow-x: clip;
 }
 
-/* ---- Versión 2 (collage): papel kraft, notas de cuaderno, globo foil rosa ---- */
-.f-mano { font-family: var(--f-mano), 'Comic Sans MS', cursive; font-weight: 400; }
-.kraft {
-  background-color: #ddc8a5;
-  background-image: url('/textura/kraft.webp');
-  background-size: 512px 512px;
-}
-.nota {
-  position: relative;
-  background-color: #fbf6e8;
-  background-image: repeating-linear-gradient(to bottom, transparent 0 27px, rgb(70 110 170 / 0.30) 27px 28px);
-  background-position: 0 16px;
-  box-shadow: 0 1px 0 #fff inset, 0 16px 20px -14px rgb(60 35 20 / 0.6);
-  padding: 24px 20px 20px;
-  border-radius: 2px;
-}
-.foil {
-  font-family: var(--f-bowlby), Impact, sans-serif;
-  line-height: 0.9;
-  display: inline-block;
-  position: relative;
-  background: linear-gradient(150deg, #ffe3f0 0%, #f26aa9 28%, #b3256c 62%, #ff93c4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 8px 6px rgb(70 20 40 / 0.35));
-}
-.foil::after {
-  content: attr(data-t);
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 24% 18%, rgb(255 255 255 / 0.85), transparent 26%), radial-gradient(circle at 72% 80%, rgb(255 255 255 / 0.28), transparent 22%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-@keyframes pop {
-  0% { scale: 0.2; opacity: 0; }
-  60% { scale: 1.12; opacity: 1; }
-  100% { scale: 1; opacity: 1; }
-}
-.pop { animation: pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-
 .f-script { font-family: var(--f-sacramento), cursive; font-weight: 400; }
 .f-firma { font-family: var(--f-delafield), cursive; font-weight: 400; }
 .f-serif { font-family: var(--f-serif), Georgia, serif; }
@@ -172,7 +129,7 @@ section[data-vis="0"] * { animation: none !important; }
 .boton:active { transform: scale(0.97); }
 
 @media (prefers-reduced-motion: reduce) {
-  .flota, .balanceo, .columpio, .titila, .barrido, .marquesina, .pop, .aparece { animation: none; }
+  .flota, .balanceo, .columpio, .titila, .barrido, .marquesina, .aparece { animation: none; }
   .confeti { animation: none; display: none; }
   * { scroll-behavior: auto !important; }
 }
