@@ -147,12 +147,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </AnimatePresence>
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
-        <Capitulo nombre="inicio" className="!min-h-[960px] !justify-start !pt-48">
+        <Capitulo nombre="inicio" className="!min-h-[920px] !justify-start !pt-48">
           <Humo />
           <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
           <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
-          <Pegatina nombre="mono-pastel" ancho={172} className="bottom-0 right-3" />
-          <Pegatina nombre="ticket-birthday" ancho={150} rot={-7} className="bottom-8 left-3" />
+          <Pegatina nombre="mono-pastel" ancho={160} className="bottom-0 right-3" />
           <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
@@ -176,13 +175,10 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
         <Capitulo nombre="brindis" className="!pb-44">
-          <Confeti cantidad={10} />
+          <Confeti cantidad={6} />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
-          <Sticker nombre="copas" tono="plata" ancho={130} rot={-12} className="left-2 top-[7%]" />
-          <Pegatina nombre="labios-rojos" ancho={96} rot={12} className="right-4 top-[9%]" />
-          <Brillo tam={20} className="text-black" style={{ right: '16%', top: '34%' }} />
-          <Brillo tam={15} className="text-black/70" style={{ left: '9%', top: '52%' }} retraso={1.1} />
-          <div className="mt-20">
+          <Brillo tam={18} className="text-black" style={{ right: '14%', top: '30%' }} />
+          <div className="mt-6">
             <Escribe className="f-script text-[3.6rem] leading-none">{c.brindis_titulo}</Escribe>
           </div>
           {c.portada_url ? (
@@ -277,12 +273,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
         <Capitulo nombre="vestimenta" fondo={fondoVestimenta}>
-          <Sticker nombre="mono" tono="negro" ancho={92} rot={-14} className="left-3 top-[3%]" />
           <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-[5%]" />
           <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[14%]" />
           <Pegatina nombre="mono-globos" ancho={200} className="bottom-0 right-0" />
-          <Sticker nombre="tacon" tono="negro" ancho={130} rot={-6} className="bottom-24 left-[1%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={130} rot={6} espejo className="bottom-20 left-[27%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={104} rot={-6} className="bottom-24 left-[4%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={104} rot={6} espejo className="bottom-20 left-[28%]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Entra>
@@ -330,14 +325,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo nombre="final" className="!justify-start">
-          <Pegatina nombre="globos-rosa" ancho={128} rot={-6} className="-left-2 top-3" />
           <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" />
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
           <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
           <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
-          <div className="mt-48 flex flex-col items-center">
+          <div className="mt-28 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
               <>
