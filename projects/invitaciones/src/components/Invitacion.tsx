@@ -272,12 +272,9 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-[780px] !justify-start !pt-10">
+        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-10">
           <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-3" />
           <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[110px]" />
-          <Pegatina nombre="mono-globos" ancho={200} className="bottom-0 right-0" />
-          <Sticker nombre="tacon" tono="negro" ancho={104} rot={-6} className="bottom-24 left-[4%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={104} rot={6} espejo className="bottom-20 left-[28%]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Entra className="mt-44">
@@ -325,6 +322,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo nombre="final" className="!justify-start">
+          <Pegatina nombre="mono-globos" ancho={175} className="left-1 top-2" />
           <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" />
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
