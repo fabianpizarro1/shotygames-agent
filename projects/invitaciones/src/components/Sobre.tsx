@@ -59,7 +59,7 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, o
         animate={{ opacity: abierto ? 0 : 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
-        <span className="f-cond block text-[15px] tracking-[0.4em] opacity-70">Para</span>
+        <span className="f-cond block text-[16.8px] tracking-[0.4em] opacity-70">Para</span>
         <span className="f-firma block text-[3.4rem] leading-tight">{nombre}</span>
       </motion.p>
 
@@ -81,8 +81,8 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, o
           transition={{ duration: 0.55, ease: 'easeOut', delay: abierto ? 0.4 : 0 }}
         >
           <span className="flex items-end gap-1 pt-2">
-            <span className="f-serif pb-1 text-lg font-black">RIP</span>
-            <span className="globo-num text-[2.6rem]" data-t={numero}>{numero}</span>
+            <span className="f-serif pb-1 text-[1.26rem] font-black">RIP</span>
+            <span className="globo-num text-[2.912rem]" data-t={numero}>{numero}</span>
           </span>
         </motion.div>
 
@@ -117,12 +117,12 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, o
           animate={abierto ? { scale: [1, 1.2, 0], opacity: [1, 1, 0] } : { scale: [1, 1.07, 1] }}
           transition={abierto ? { duration: 0.28, ease: 'easeOut' } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <span className="f-firma text-4xl leading-none">{inicial}</span>
+          <span className="f-firma text-[2.52rem] leading-none">{inicial}</span>
         </motion.button>
       </motion.div>
 
       <motion.p
-        className="f-cond relative z-[2] text-[13.5px] tracking-[0.3em]"
+        className="f-cond relative z-[2] text-[15.12px] tracking-[0.3em]"
         initial={{ opacity: 0 }}
         animate={{ opacity: abierto ? 0 : 0.75 }}
         transition={{ delay: abierto ? 0 : 0.8, duration: 0.4 }}

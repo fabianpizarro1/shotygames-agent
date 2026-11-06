@@ -12,7 +12,7 @@ interface Props {
   limite: string;
 }
 
-const campo = 'w-full rounded-md border bg-white/70 px-3 py-2.5 text-base outline-none transition-colors focus:bg-white';
+const campo = 'w-full rounded-md border bg-white/70 px-3 py-2.5 text-[1.12rem] outline-none transition-colors focus:bg-white';
 
 export function Rsvp({ token, cupos, inicial, limite }: Props) {
   const [estado, setEstado] = useState<Estado>(inicial.estado);
@@ -64,9 +64,9 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className="text-center"
           >
-            <p className="f-script text-5xl leading-none">{gracias}</p>
-            <p className="mt-3 text-[15.5px] opacity-80">{detalle}</p>
-            <button type="button" onClick={() => setEditando(true)} className="mt-4 block w-full text-[13.5px] underline underline-offset-4 opacity-70">
+            <p className="f-script text-[3.36rem] leading-none">{gracias}</p>
+            <p className="mt-3 text-[17.36px] opacity-80">{detalle}</p>
+            <button type="button" onClick={() => setEditando(true)} className="mt-4 block w-full text-[15.12px] underline underline-offset-4 opacity-70">
               Cambiar mi respuesta
             </button>
           </motion.div>
@@ -91,7 +91,7 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
                     type="button"
                     onClick={() => setElegido(valor)}
                     aria-pressed={activo}
-                    className="boton rounded-md border-2 py-3.5 text-[15.5px] font-semibold"
+                    className="boton rounded-md border-2 py-3.5 text-[17.36px] font-semibold"
                     style={{
                       borderColor: 'var(--texto)',
                       background: activo ? 'var(--texto)' : 'transparent',
@@ -105,35 +105,35 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
             </div>
 
             {elegido === 'confirmado' && cupos > 1 && (
-              <label className="block text-[15.5px]">
-                <span className="mb-1.5 block text-[13.5px] font-semibold uppercase tracking-widest opacity-70">¿Cuántos asisten? (máx. {cupos})</span>
+              <label className="block text-[17.36px]">
+                <span className="mb-1.5 block text-[15.12px] font-semibold uppercase tracking-widest opacity-70">¿Cuántos asisten? (máx. {cupos})</span>
                 <div className="flex items-center gap-4">
-                  <button type="button" onClick={() => setAsistentes((n) => Math.max(1, n - 1))} className="boton size-10 rounded-full border-2 text-lg" style={{ borderColor: 'var(--texto)' }} aria-label="Menos">−</button>
-                  <span className="f-serif w-6 text-center text-2xl font-semibold">{asistentes}</span>
-                  <button type="button" onClick={() => setAsistentes((n) => Math.min(cupos, n + 1))} className="boton size-10 rounded-full border-2 text-lg" style={{ borderColor: 'var(--texto)' }} aria-label="Más">+</button>
+                  <button type="button" onClick={() => setAsistentes((n) => Math.max(1, n - 1))} className="boton size-10 rounded-full border-2 text-[1.26rem]" style={{ borderColor: 'var(--texto)' }} aria-label="Menos">−</button>
+                  <span className="f-serif w-6 text-center text-[1.68rem] font-semibold">{asistentes}</span>
+                  <button type="button" onClick={() => setAsistentes((n) => Math.min(cupos, n + 1))} className="boton size-10 rounded-full border-2 text-[1.26rem]" style={{ borderColor: 'var(--texto)' }} aria-label="Más">+</button>
                 </div>
               </label>
             )}
 
             {elegido && (
-              <label className="block text-[15.5px]">
-                <span className="mb-1.5 block text-[13.5px] font-semibold uppercase tracking-widest opacity-70">Un mensaje para la cumpleañera (opcional)</span>
+              <label className="block text-[17.36px]">
+                <span className="mb-1.5 block text-[15.12px] font-semibold uppercase tracking-widest opacity-70">Un mensaje para la cumpleañera (opcional)</span>
                 <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} maxLength={500} rows={3} className={campo} style={{ borderColor: 'color-mix(in srgb, var(--texto) 35%, transparent)' }} />
               </label>
             )}
 
-            {error && <p role="alert" className="text-center text-[15.5px] font-semibold">{error}</p>}
+            {error && <p role="alert" className="text-center text-[17.36px] font-semibold">{error}</p>}
 
             <button
               type="button"
               onClick={enviar}
               disabled={!elegido || enviando}
-              className="boton w-full rounded-full py-3.5 text-[15.5px] font-semibold uppercase tracking-widest disabled:opacity-40"
+              className="boton w-full rounded-full py-3.5 text-[17.36px] font-semibold uppercase tracking-widest disabled:opacity-40"
               style={{ background: 'var(--texto)', color: 'var(--papel)' }}
             >
               {enviando ? 'Guardando…' : 'Enviar respuesta'}
             </button>
-            {limite && <p className="text-center text-[13.5px] opacity-60">Confirma antes del {limite}</p>}
+            {limite && <p className="text-center text-[15.12px] opacity-60">Confirma antes del {limite}</p>}
           </motion.div>
         )}
       </AnimatePresence>

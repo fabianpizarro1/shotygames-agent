@@ -81,7 +81,7 @@ export function Cinta({ texto, fondo = '#000', color = '#fff' }: { texto: string
   ));
   return (
     <div ref={ref} aria-hidden className="relative z-[3] -my-2 w-full -rotate-1 overflow-hidden py-3 shadow-[0_6px_14px_-6px_rgb(0_0_0/0.6)]" style={{ background: fondo, color }}>
-      <div className="marquesina f-cond flex w-max whitespace-nowrap text-[15px] font-bold tracking-[0.3em]" style={{ animationPlayState: visible ? 'running' : 'paused' }}>
+      <div className="marquesina f-cond flex w-max whitespace-nowrap text-[15px] font-bold tracking-[0.3em]" style={{ animation: visible ? undefined : 'none' }}>
         <div className="flex">{mitad}</div>
         <div className="flex">{mitad}</div>
       </div>

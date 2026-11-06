@@ -32,6 +32,21 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
   const [portada, setPortada] = useState(true);
   const musica = useRef<MusicaApi>(null);
 
+  // Siempre desde el principio: sin esto el navegador restaura el scroll anterior (al recargar o volver
+  // atrás) y la invitación arranca "a la mitad" al abrir el sobre.
+  useEffect(() => {
+    try {
+      history.scrollRestoration = 'manual';
+    } catch {}
+    window.scrollTo(0, 0);
+  }, []);
+  useEffect(() => {
+    if (portada) return;
+    window.scrollTo(0, 0);
+    const id = requestAnimationFrame(() => window.scrollTo(0, 0));
+    return () => cancelAnimationFrame(id);
+  }, [portada]);
+
   // La portada bloquea el scroll mientras está abierta.
   useEffect(() => {
     document.body.style.overflow = portada ? 'hidden' : '';
@@ -80,7 +95,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
       <div style={tema} className="rayas min-h-dvh overflow-x-clip">
         <AnimatePresence>
           {portada && (
-            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
+            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => {}} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
@@ -95,26 +110,26 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
           <Entra className="mt-2">
-            <p className="f-cond text-[15px] font-medium tracking-[0.4em] opacity-70">Para</p>
-            <p className="f-cond mt-1 text-[1.6rem] font-bold leading-none tracking-[0.12em]">{invitado.nombre}</p>
+            <p className="f-cond text-[16.8px] font-medium tracking-[0.4em] opacity-70">Para</p>
+            <p className="f-cond mt-1 text-[1.792rem] font-bold leading-none tracking-[0.12em]">{invitado.nombre}</p>
           </Entra>
           <div className="mt-10 flex flex-col items-center">
-            <Escribe className="f-script text-[1.9rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
+            <Escribe className="f-script text-[2.128rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
             <Escribe className="f-firma -mt-1 text-[5.4rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>
           </div>
           <Entra retraso={0.3} className="mt-9">
             <div className="flex items-end justify-center gap-1">
-              <span className="f-serif pb-3 text-[3rem] font-black leading-none tracking-wide">RIP</span>
+              <span className="f-serif pb-3 text-[3.36rem] font-black leading-none tracking-wide">RIP</span>
               <span className="globo-num text-[8.4rem]" data-t={ripBase}>{ripBase}</span>
-              {ripSufijo && <span className="f-serif mb-4 text-xl font-bold">{ripSufijo}</span>}
+              {ripSufijo && <span className="f-serif mb-4 text-[1.4rem] font-bold">{ripSufijo}</span>}
             </div>
-            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.3rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
+            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.456rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
           </Entra>
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
         <Capitulo className="!pb-44">
-          <Confeti cantidad={14} />
+          <Confeti cantidad={10} />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
           <Sticker nombre="copas" tono="plata" ancho={130} rot={-12} className="left-2 top-[7%]" />
           <Pegatina nombre="labios-rojos" ancho={96} rot={12} className="right-4 top-[9%]" />
@@ -134,7 +149,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           )}
           {c.brindis_texto && (
             <Entra retraso={0.4} className="mt-9">
-              <p className="f-cond mx-auto max-w-[16rem] text-[1.2rem] font-bold leading-[1.2]">{c.brindis_texto}</p>
+              <p className="f-cond mx-auto max-w-[16rem] text-[1.344rem] font-bold leading-[1.2]">{c.brindis_texto}</p>
             </Entra>
           )}
         </Capitulo>
@@ -148,11 +163,11 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '46%' }} retraso={0.9} />
           <Entra>
-            <p className="f-serif mx-auto max-w-[13rem] text-[1.05rem] leading-snug">{c.bienvenida_linea}</p>
+            <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
           </Entra>
           <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
           <Entra retraso={0.4}>
-            <p className="f-serif mt-1 text-[1.05rem]">a los</p>
+            <p className="f-serif mt-1 text-[1.176rem]">a los</p>
           </Entra>
           <Entra retraso={0.5} className="relative mt-1">
             <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
@@ -171,7 +186,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
           <Entra>
-            <p className="f-cond mx-auto max-w-[14rem] text-[0.95rem] font-medium leading-snug opacity-80">{c.fecha_linea}</p>
+            <p className="f-cond mx-auto max-w-[14rem] text-[1.064rem] font-medium leading-snug opacity-80">{c.fecha_linea}</p>
           </Entra>
           {f && (
             <Entra retraso={0.15} className="mt-5">
@@ -183,15 +198,15 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
                 <span className="f-serif text-[6.2rem] font-black leading-none" style={{ fontVariantNumeric: 'lining-nums' }}>{f.numero}</span>
               </div>
               <div className="mx-auto mt-4 w-64 border-y border-black py-1.5">
-                <span className="f-serif text-[1.5rem] tracking-[0.35em]" style={{ fontVariantNumeric: 'lining-nums' }}>{f.hora}</span>
+                <span className="f-serif text-[1.68rem] tracking-[0.35em]" style={{ fontVariantNumeric: 'lining-nums' }}>{f.hora}</span>
               </div>
-              {c.hora_fin_texto && <p className="mt-2 text-[13.5px] opacity-70">{c.hora_fin_texto}</p>}
+              {c.hora_fin_texto && <p className="mt-2 text-[15.12px] opacity-70">{c.hora_fin_texto}</p>}
             </Entra>
           )}
           <Entra retraso={0.3} className="mt-7">
-            <p className="f-cond text-[1.5rem] font-bold leading-none">Lugar</p>
-            <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.15rem] font-bold leading-tight">{c.lugar_nombre}</p>
-            {c.lugar_direccion && <p className="mt-1 text-[15.5px] opacity-75">{c.lugar_direccion}</p>}
+            <p className="f-cond text-[1.68rem] font-bold leading-none">Lugar</p>
+            <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.288rem] font-bold leading-tight">{c.lugar_nombre}</p>
+            {c.lugar_direccion && <p className="mt-1 text-[17.36px] opacity-75">{c.lugar_direccion}</p>}
             {c.lugar_foto_url && (
               <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-32 block">
                 <Pegatina nombre="perro-lentes" ancho={120} rot={7} className="-top-[7rem] right-3" />
@@ -199,8 +214,8 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               </a>
             )}
             <div className="mt-5 flex flex-col items-center gap-2.5">
-              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-black px-7 py-3 text-[13.5px] font-bold tracking-[0.3em] text-white">Cómo llegar</a>
-              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-[13.5px] font-bold tracking-[0.3em]">Abrir en Waze</a>}
+              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-black px-7 py-3 text-[15.12px] font-bold tracking-[0.3em] text-white">Cómo llegar</a>
+              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-[15.12px] font-bold tracking-[0.3em]">Abrir en Waze</a>}
             </div>
           </Entra>
           <Entra retraso={0.15} className="mt-32 w-full">
@@ -224,9 +239,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Entra>
-            <p className="f-cond text-[0.95rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
-            <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.6rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
-            {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-[15.5px] leading-snug opacity-80">({c.dresscode_detalle})</p>}
+            <p className="f-cond text-[1.064rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
+            <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.912rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
+            {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-[17.36px] leading-snug opacity-80">({c.dresscode_detalle})</p>}
             {colores.length > 0 && (
               <div className="mt-8 flex justify-center gap-3" aria-hidden>
                 {colores.map((col) => (
@@ -242,12 +257,12 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <Capitulo>
             {itinerario.length > 0 && (
               <Entra className="w-full">
-                <p className="f-script mb-5 text-5xl leading-none">Programa</p>
+                <p className="f-script mb-5 text-[3.36rem] leading-none">Programa</p>
                 <ul className="mx-auto max-w-[17rem] space-y-3 text-left">
                   {itinerario.map(([hora, texto]) => (
                     <li key={hora + texto} className="flex items-baseline gap-4 border-b border-black/20 pb-2">
-                      <span className="f-serif w-16 shrink-0 text-right text-lg font-bold tabular-nums">{hora}</span>
-                      <span className="f-cond text-[15.5px] font-medium">{texto}</span>
+                      <span className="f-serif w-16 shrink-0 text-right text-[1.26rem] font-bold tabular-nums">{hora}</span>
+                      <span className="f-cond text-[17.36px] font-medium">{texto}</span>
                     </li>
                   ))}
                 </ul>
@@ -255,7 +270,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             )}
             {fotos.length > 0 && (
               <Entra className={`w-full ${itinerario.length ? 'mt-14' : ''}`}>
-                {c.galeria_titulo && <p className="f-script mb-6 text-5xl leading-none">{c.galeria_titulo}</p>}
+                {c.galeria_titulo && <p className="f-script mb-6 text-[3.36rem] leading-none">{c.galeria_titulo}</p>}
                 <div className="grid grid-cols-2 gap-x-3 gap-y-5">
                   {fotos.map((u, k) => (
                     <Polaroid key={u + k} src={u} giro={[-3, 2.5, 2, -2.5][k % 4]} className={k % 2 ? 'mt-6' : ''} bn={bn} />
@@ -268,37 +283,36 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo className="!justify-start">
-          <Confeti cantidad={8} />
-          <Pegatina nombre="globos-rosa" ancho={128} rot={-6} className="-left-2 top-3" anim="flota" />
-          <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" anim="flota" retraso={0.6} />
+          <Pegatina nombre="globos-rosa" ancho={128} rot={-6} className="-left-2 top-3" />
+          <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" />
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
           <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
           <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
           <div className="mt-48 flex flex-col items-center">
-            {c.invita_titulo && <Escribe className="f-script text-[3rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
+            {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
               <Entra retraso={0.3}>
-                <p className="f-cond mx-auto mt-5 max-w-[16rem] text-[1.4rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
+                <p className="f-cond mx-auto mt-5 max-w-[16rem] text-[1.568rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
               </Entra>
             )}
             {c.mensaje && (
               <Entra retraso={0.45}>
-                <p className="mx-auto mt-3 max-w-[15rem] text-[15.5px] leading-snug opacity-80">{c.mensaje}</p>
+                <p className="mx-auto mt-3 max-w-[15rem] text-[17.36px] leading-snug opacity-80">{c.mensaje}</p>
               </Entra>
             )}
           </div>
           <div className="mt-12">
             <Escribe className="f-script text-[4rem] leading-none">{c.final_titulo}</Escribe>
             <Entra retraso={0.3}>
-              <p className="f-cond mx-auto mt-3 max-w-[14rem] text-[1.3rem] font-bold leading-tight">{c.final_texto}</p>
+              <p className="f-cond mx-auto mt-3 max-w-[14rem] text-[1.456rem] font-bold leading-tight">{c.final_texto}</p>
             </Entra>
           </div>
 
           <Entra retraso={0.15} className="mt-8 w-full">
             <div id="confirmar" className="papel scroll-mt-6 rounded-sm p-6 text-left">
-              <p className="f-script text-center text-[2.6rem] leading-none">{invitado.nombre}</p>
+              <p className="f-script text-center text-[2.912rem] leading-none">{invitado.nombre}</p>
               <div className="mt-5">
                 <Rsvp
                   token={invitado.token}
@@ -314,16 +328,16 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             <Entra retraso={0.1} className="mt-8 grid w-full gap-3">
               {lista && (
                 <a href={`/playlist?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
-                  <span className="f-cond block text-base font-bold tracking-[0.2em]">{c.playlist_titulo}</span>
-                  <span className="mt-1 block text-[13.5px] opacity-70">{c.playlist_mensaje}</span>
-                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[13.5px] font-bold tracking-[0.3em] text-white">Pedir mis canciones</span>
+                  <span className="f-cond block text-[1.12rem] font-bold tracking-[0.2em]">{c.playlist_titulo}</span>
+                  <span className="mt-1 block text-[15.12px] opacity-70">{c.playlist_mensaje}</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-white">Pedir mis canciones</span>
                 </a>
               )}
               {alterno && (
                 <a href={`/fotos?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
-                  <span className="f-cond block text-base font-bold tracking-[0.2em]">{c.fotos_titulo}</span>
-                  <span className="mt-1 block text-[13.5px] opacity-70">{c.fotos_mensaje}</span>
-                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[13.5px] font-bold tracking-[0.3em] text-white">Ir a las fotos</span>
+                  <span className="f-cond block text-[1.12rem] font-bold tracking-[0.2em]">{c.fotos_titulo}</span>
+                  <span className="mt-1 block text-[15.12px] opacity-70">{c.fotos_mensaje}</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-white">Ir a las fotos</span>
                 </a>
               )}
             </Entra>

@@ -159,6 +159,21 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
   const [portada, setPortada] = useState(true);
   const musica = useRef<MusicaApi>(null);
 
+  // Siempre desde el principio: sin esto el navegador restaura el scroll anterior (al recargar o volver
+  // atrás) y la invitación arranca "a la mitad" al abrir el sobre.
+  useEffect(() => {
+    try {
+      history.scrollRestoration = 'manual';
+    } catch {}
+    window.scrollTo(0, 0);
+  }, []);
+  useEffect(() => {
+    if (portada) return;
+    window.scrollTo(0, 0);
+    const id = requestAnimationFrame(() => window.scrollTo(0, 0));
+    return () => cancelAnimationFrame(id);
+  }, [portada]);
+
   useEffect(() => {
     document.body.style.overflow = portada ? 'hidden' : '';
     return () => {
@@ -195,7 +210,7 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
       <div style={tema} className="kraft min-h-dvh overflow-x-clip" data-version="2">
         <AnimatePresence>
           {portada && (
-            <Sobre fondo="kraft" humo={false} nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
+            <Sobre fondo="kraft" humo={false} nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => {}} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
@@ -212,9 +227,9 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           </Entra>
           <Entra retraso={0.25} className="mt-9 w-[90%]">
             <Nota giro={-2}>
-              <p className="f-mano text-[1.3rem] uppercase leading-[28px] opacity-70">Para</p>
-              <p className="f-mano text-[2.1rem] leading-[28px]" style={{ color: ROSA }}>{invitado.nombre}</p>
-              <p className="f-mano mt-3 text-[1.65rem] uppercase leading-[28px]">{c.b_linea1}</p>
+              <p className="f-mano text-[1.456rem] uppercase leading-[28px] opacity-70">Para</p>
+              <p className="f-mano text-[2.352rem] leading-[28px]" style={{ color: ROSA }}>{invitado.nombre}</p>
+              <p className="f-mano mt-3 text-[1.848rem] uppercase leading-[28px]">{c.b_linea1}</p>
             </Nota>
           </Entra>
         </Capitulo>
@@ -227,12 +242,12 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           <Sticker nombre="mariposa" tono="color" ancho={58} rot={-18} className="bottom-72 right-24" anim="pop" retraso={0.4} />
           <Entra className="mt-40 w-[88%]">
             <Nota giro={2}>
-              <p className="f-mano text-[1.65rem] uppercase leading-[28px]">{c.b_linea2}</p>
+              <p className="f-mano text-[1.848rem] uppercase leading-[28px]">{c.b_linea2}</p>
             </Nota>
           </Entra>
           <Entra retraso={0.2} className="mt-14 w-[92%]">
             <Dialogo>
-              <p className="f-cond text-[1.5rem] font-bold leading-[1.15]">{c.b_linea3.replace('{invitadas}', invitadas)}</p>
+              <p className="f-cond text-[1.68rem] font-bold leading-[1.15]">{c.b_linea3.replace('{invitadas}', invitadas)}</p>
             </Dialogo>
           </Entra>
         </Capitulo>
@@ -244,7 +259,7 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           <Pegatina nombre="nena-brindis" ancho={185} className="bottom-0 right-1" />
           <Sticker nombre="copas" tono="color" ancho={100} rot={-8} className="bottom-24 left-3" anim="pop" retraso={0.4} />
           <Entra className="mt-32">
-            <p className="f-mano -rotate-3 text-[1.9rem] uppercase leading-none" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>Estás {invitada} a mis</p>
+            <p className="f-mano -rotate-3 text-[2.128rem] uppercase leading-none" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>Estás {invitada} a mis</p>
           </Entra>
           <Entra retraso={0.2} className="mt-2">
             <Foil numero={c.bienvenida_numero} foto={c.portada_url} />
@@ -263,29 +278,29 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
             <Nota giro={-1.5} className="text-center">
               {f && (
                 <>
-                  <p className="f-mano text-[1.9rem] uppercase leading-[28px]">{f.dia}</p>
+                  <p className="f-mano text-[2.128rem] uppercase leading-[28px]">{f.dia}</p>
                   <p className="f-mano mt-1 text-[4.6rem] leading-[56px]" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{f.numero}</p>
-                  <p className="f-mano text-[2.3rem] uppercase leading-[34px]" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{f.mes}</p>
-                  <p className="mx-auto mt-3 w-fit rounded-full px-5 py-1 f-mano text-[1.7rem] leading-[34px] text-white" style={{ background: MALVA }}>{f.hora}</p>
+                  <p className="f-mano text-[2.576rem] uppercase leading-[34px]" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{f.mes}</p>
+                  <p className="mx-auto mt-3 w-fit rounded-full px-5 py-1 f-mano text-[1.904rem] leading-[34px] text-white" style={{ background: MALVA }}>{f.hora}</p>
                   <Sticker nombre="reloj" tono="color" ancho={70} rot={-12} className="bottom-[3.2rem] left-[6%] z-[3]" anim="pop" />
                 </>
               )}
-              <a href="#confirmar" className="f-mano mt-4 block text-[1.2rem] uppercase underline underline-offset-4">Confirmar asistencia!!</a>
+              <a href="#confirmar" className="f-mano mt-4 block text-[1.344rem] uppercase underline underline-offset-4">Confirmar asistencia!!</a>
             </Nota>
           </Entra>
           <Entra retraso={0.2} className="mt-12 w-[90%]">
             <Nota giro={1.5} className="text-center">
-              <p className="f-mano text-[1.9rem] uppercase leading-[28px]">Lugar</p>
-              <p className="f-mano mt-1 text-[1.6rem] leading-[28px]">{c.lugar_nombre}</p>
-              {c.lugar_direccion && <p className="f-mano text-[1.25rem] leading-[28px] opacity-75">{c.lugar_direccion}</p>}
+              <p className="f-mano text-[2.128rem] uppercase leading-[28px]">Lugar</p>
+              <p className="f-mano mt-1 text-[1.792rem] leading-[28px]">{c.lugar_nombre}</p>
+              {c.lugar_direccion && <p className="f-mano text-[1.4rem] leading-[28px] opacity-75">{c.lugar_direccion}</p>}
               {c.lugar_foto_url && (
                 <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-24 block">
                   <Pegatina nombre="perro-lentes" ancho={125} rot={7} className="-top-[7.2rem] right-2" />
                   <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="relative mx-auto w-[96%]" />
                 </a>
               )}
-              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-mano mt-5 inline-block rounded-full px-7 py-2.5 text-[1.35rem] uppercase text-white" style={{ background: ROSA }}>Cómo llegar</a>
-              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-mano ml-2 mt-5 inline-block rounded-full border-2 px-6 py-2 text-[1.25rem] uppercase" style={{ borderColor: TINTA }}>Waze</a>}
+              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-mano mt-5 inline-block rounded-full px-7 py-2.5 text-[1.512rem] uppercase text-white" style={{ background: ROSA }}>Cómo llegar</a>
+              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-mano ml-2 mt-5 inline-block rounded-full border-2 px-6 py-2 text-[1.4rem] uppercase" style={{ borderColor: TINTA }}>Waze</a>}
             </Nota>
           </Entra>
           <Entra retraso={0.15} className="mt-12 w-[92%]">
@@ -303,9 +318,9 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           <Sticker nombre="tacon" tono="rosa" ancho={126} rot={8} espejo className="bottom-20 left-[26%]" />
           <Entra className="mt-44 w-[90%]">
             <Nota giro={1.5} className="text-center">
-              <p className="f-mano text-[1.35rem] uppercase leading-[28px] opacity-75">{c.vestimenta_titulo}</p>
-              <p className="f-mano mt-1 text-[2.2rem] uppercase leading-[34px]" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{c.dresscode_titulo}</p>
-              {c.dresscode_detalle && <p className="f-mano mt-3 text-[1.25rem] leading-[28px]">({c.dresscode_detalle})</p>}
+              <p className="f-mano text-[1.512rem] uppercase leading-[28px] opacity-75">{c.vestimenta_titulo}</p>
+              <p className="f-mano mt-1 text-[2.464rem] uppercase leading-[34px]" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{c.dresscode_titulo}</p>
+              {c.dresscode_detalle && <p className="f-mano mt-3 text-[1.4rem] leading-[28px]">({c.dresscode_detalle})</p>}
               {colores.length > 0 && (
                 <div className="mt-4 flex justify-center gap-3" aria-hidden>
                   {colores.map((col) => (
@@ -320,7 +335,7 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
         {fotos.length > 0 && (
           <Capitulo>
             <Entra className="w-full">
-              {c.galeria_titulo && <p className="f-mano mb-6 text-[2.6rem] uppercase leading-none" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{c.galeria_titulo}</p>}
+              {c.galeria_titulo && <p className="f-mano mb-6 text-[2.912rem] uppercase leading-none" style={{ color: ROSA, textShadow: '0 2px 0 #fff' }}>{c.galeria_titulo}</p>}
               <div className="grid grid-cols-2 gap-x-3 gap-y-5">
                 {fotos.map((u, k) => (
                   <Polaroid key={u + k} src={u} giro={[-3, 2.5, 2, -2.5][k % 4]} className={k % 2 ? 'mt-6' : ''} cinta />
@@ -336,19 +351,19 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           <Sticker nombre="megafono" tono="color" ancho={104} rot={-12} className="left-1 top-[15%]" anim="pop" />
           <Sticker nombre="champan" tono="color" ancho={92} rot={14} className="right-3 top-[17%]" anim="pop" retraso={0.2} />
           <Entra className="mt-52 flex flex-col items-center gap-3">
-            <span className="f-cond rounded-full px-7 py-2 text-[2rem] font-bold uppercase tracking-wide text-white" style={{ background: ROSA, boxShadow: '0 8px 12px -8px rgb(60 20 40 / 0.7)' }}>¡Te espero!</span>
-            <span className="f-cond rounded-full px-6 py-1.5 text-[1.5rem] font-bold uppercase tracking-wide" style={{ background: MALVA, color: TINTA }}>No faltes…</span>
+            <span className="f-cond rounded-full px-7 py-2 text-[2.24rem] font-bold uppercase tracking-wide text-white" style={{ background: ROSA, boxShadow: '0 8px 12px -8px rgb(60 20 40 / 0.7)' }}>¡Te espero!</span>
+            <span className="f-cond rounded-full px-6 py-1.5 text-[1.68rem] font-bold uppercase tracking-wide" style={{ background: MALVA, color: TINTA }}>No faltes…</span>
           </Entra>
           {c.b_final_humor && (
             <Entra retraso={0.2} className="mt-8">
-              <p className="f-mano text-[1.7rem] uppercase leading-tight">{c.b_final_humor}</p>
+              <p className="f-mano text-[1.904rem] uppercase leading-tight">{c.b_final_humor}</p>
               <Flechas />
             </Entra>
           )}
           <Entra retraso={0.1} className="mt-3 w-full">
             <Nota giro={-1} className="text-left">
               <div id="confirmar" className="scroll-mt-6">
-                <p className="f-mano text-center text-[2.3rem] leading-[34px]" style={{ color: ROSA }}>{invitado.nombre}</p>
+                <p className="f-mano text-center text-[2.576rem] leading-[34px]" style={{ color: ROSA }}>{invitado.nombre}</p>
                 <div className="mt-5">
                   <Rsvp token={invitado.token} cupos={invitado.cupos} limite={limite} inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, mensaje: invitado.mensaje }} />
                 </div>
@@ -360,18 +375,18 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
               {lista && (
                 <a href={`/playlist?t=${invitado.token}`} className="boton block">
                   <Nota giro={1.5} className="text-center">
-                    <span className="f-mano block text-[1.6rem] uppercase leading-[28px]">{c.playlist_titulo}</span>
-                    <span className="f-mano mt-1 block text-[1.2rem] leading-[26px] opacity-75">{c.playlist_mensaje}</span>
-                    <span className="f-mano mt-3 inline-block rounded-full px-5 py-1.5 text-[1.25rem] uppercase text-white" style={{ background: ROSA }}>Pedir mis canciones</span>
+                    <span className="f-mano block text-[1.792rem] uppercase leading-[28px]">{c.playlist_titulo}</span>
+                    <span className="f-mano mt-1 block text-[1.344rem] leading-[26px] opacity-75">{c.playlist_mensaje}</span>
+                    <span className="f-mano mt-3 inline-block rounded-full px-5 py-1.5 text-[1.4rem] uppercase text-white" style={{ background: ROSA }}>Pedir mis canciones</span>
                   </Nota>
                 </a>
               )}
               {alterno && (
                 <a href={`/fotos?t=${invitado.token}`} className="boton block">
                   <Nota giro={-1.5} className="text-center">
-                    <span className="f-mano block text-[1.6rem] uppercase leading-[28px]">{c.fotos_titulo}</span>
-                    <span className="f-mano mt-1 block text-[1.2rem] leading-[26px] opacity-75">{c.fotos_mensaje}</span>
-                    <span className="f-mano mt-3 inline-block rounded-full px-5 py-1.5 text-[1.25rem] uppercase text-white" style={{ background: ROSA }}>Ir a las fotos</span>
+                    <span className="f-mano block text-[1.792rem] uppercase leading-[28px]">{c.fotos_titulo}</span>
+                    <span className="f-mano mt-1 block text-[1.344rem] leading-[26px] opacity-75">{c.fotos_mensaje}</span>
+                    <span className="f-mano mt-3 inline-block rounded-full px-5 py-1.5 text-[1.4rem] uppercase text-white" style={{ background: ROSA }}>Ir a las fotos</span>
                   </Nota>
                 </a>
               )}
