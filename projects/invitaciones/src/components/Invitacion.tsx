@@ -9,6 +9,7 @@ import { Cuenta } from './Cuenta';
 import { Brillo, Confeti, Humo, Pegatina, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
 import { Rsvp } from './Rsvp';
+import { SobreRegalo } from './SobreRegalo';
 import { Sobre } from './Sobre';
 import { Polaroid } from './Stickers';
 
@@ -293,9 +294,12 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <div className="mt-48 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
-              <Entra retraso={0.3}>
-                <p className="f-cond mx-auto mt-5 max-w-[16rem] text-[1.568rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
-              </Entra>
+              <>
+                <SobreRegalo className="mt-2" />
+                <Entra retraso={0.3}>
+                  <p className="f-cond mx-auto mt-6 max-w-[16rem] text-[1.568rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
+                </Entra>
+              </>
             )}
             {c.mensaje && (
               <Entra retraso={0.45}>
