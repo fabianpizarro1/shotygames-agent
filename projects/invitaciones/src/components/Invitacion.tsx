@@ -147,11 +147,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </AnimatePresence>
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
-        <Capitulo nombre="inicio" className="!min-h-[920px] !justify-start !pt-48">
+        <Capitulo nombre="inicio" className="!min-h-0 !justify-start !pt-48 !pb-52">
           <Humo />
           <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
           <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
-          <Pegatina nombre="mono-pastel" ancho={160} className="bottom-0 right-3" />
+          <Pegatina nombre="treinta-29" ancho={200} rot={-3} className="bottom-3 left-1/2 -ml-[100px]" />
           <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
@@ -174,7 +174,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
-        <Capitulo nombre="brindis" className="!pb-44">
+        <Capitulo nombre="brindis" className="!pt-12 !pb-44">
           <Confeti cantidad={6} />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
           <Brillo tam={18} className="text-black" style={{ right: '14%', top: '30%' }} />
@@ -199,7 +199,6 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* 3 · Bienvenida a los 30 (corona) */}
         <Capitulo nombre="bienvenida">
-          <Pegatina nombre="treinta-29" ancho={190} rot={-6} className="left-2 top-[4%]" />
           <Pegatina nombre="going-on-30" ancho={150} rot={8} className="right-3 top-[12%]" />
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
           <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-8 left-3" />
