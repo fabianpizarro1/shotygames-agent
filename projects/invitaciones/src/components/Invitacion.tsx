@@ -7,7 +7,7 @@ import { piezasFecha } from '@/lib/fechas';
 import { Cuenta } from './Cuenta';
 import { BolaDisco, Brillo, Globo, Humo, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
-import { Portada } from './Portada';
+import { Sobre } from './Sobre';
 import { Rsvp } from './Rsvp';
 import { Polaroid } from './Stickers';
 
@@ -147,7 +147,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
       <div style={tema} className="rayas min-h-dvh">
         <AnimatePresence>
           {portada && (
-            <Portada nombre={invitado.nombre} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
+            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
@@ -264,10 +264,14 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             <p className="f-cond text-[1.5rem] font-bold leading-none">Lugar</p>
             <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.15rem] font-bold leading-tight">{c.lugar_nombre}</p>
             {c.lugar_direccion && <p className="mt-1 text-sm opacity-75">{c.lugar_direccion}</p>}
+            {c.lugar_foto_url && (
+              <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="block">
+                <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="mx-auto mt-5 w-[92%]" />
+              </a>
+            )}
             <div className="mt-5 flex flex-col items-center gap-2.5">
               <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-black px-7 py-3 text-xs font-bold tracking-[0.3em] text-white">Cómo llegar</a>
               {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-xs font-bold tracking-[0.3em]">Abrir en Waze</a>}
-              <a href="/api/ics" className="text-xs underline underline-offset-4 opacity-70">Agregar al calendario</a>
             </div>
           </Entra>
           <Entra retraso={0.15} className="mt-10 w-full">

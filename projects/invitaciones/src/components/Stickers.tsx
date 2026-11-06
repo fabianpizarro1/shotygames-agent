@@ -52,11 +52,11 @@ function Imagen({ src, className }: { src: string; className: string }) {
   );
 }
 
-export function Polaroid({ src, giro = 0, className = '', bn = false }: { src: string; giro?: number; className?: string; bn?: boolean }) {
+export function Polaroid({ src, giro = 0, className = '', bn = false, ancha = false }: { src: string; giro?: number; className?: string; bn?: boolean; ancha?: boolean }) {
   return (
     <figure className={`bg-white p-2 pb-8 ${className}`} style={{ transform: `rotate(${giro}deg)`, boxShadow: '0 12px 24px -8px rgb(0 0 0 / 0.5)' }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" loading="lazy" decoding="async" className="aspect-[4/5] w-full object-cover" style={{ filter: bn ? 'grayscale(1) contrast(1.08)' : undefined }} />
+      <img src={src} alt="" loading="lazy" decoding="async" className={`w-full object-cover ${ancha ? 'aspect-[16/10]' : 'aspect-[4/5]'}`} style={{ filter: bn ? 'grayscale(1) contrast(1.08)' : undefined }} />
     </figure>
   );
 }

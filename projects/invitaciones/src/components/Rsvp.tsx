@@ -67,15 +67,6 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
           >
             <p className="f-script text-5xl leading-none">{gracias}</p>
             <p className="mt-3 text-sm opacity-80">{detalle}</p>
-            {estado === 'confirmado' && (
-              <a
-                href="/api/ics"
-                className="boton mt-5 inline-block rounded-full px-5 py-2.5 text-xs font-semibold uppercase tracking-widest"
-                style={{ background: 'var(--texto)', color: 'var(--papel)' }}
-              >
-                Agregar al calendario
-              </a>
-            )}
             <button type="button" onClick={() => setEditando(true)} className="mt-4 block w-full text-xs underline underline-offset-4 opacity-70">
               Cambiar mi respuesta
             </button>
