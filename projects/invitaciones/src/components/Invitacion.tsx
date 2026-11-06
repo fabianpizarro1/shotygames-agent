@@ -78,14 +78,12 @@ function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { childre
   );
 }
 
-function Capitulo({ children, humoAbajo = true, fondo, className = '' }: { children: ReactNode; humoAbajo?: boolean; fondo?: string; className?: string }) {
+function Capitulo({ children, fondo, className = '' }: { children: ReactNode; fondo?: string; className?: string }) {
   return (
     <section
-      className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-hidden px-8 py-24 text-center ${className}`}
+      className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-x-clip px-8 py-24 text-center ${className}`}
       style={fondo ? { background: fondo } : undefined}
     >
-      <Humo />
-      {humoAbajo && <Humo lado="abajo" />}
       {children}
     </section>
   );
@@ -153,7 +151,8 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
   const alterno = c.fotos_activas.trim().toLowerCase() !== 'no';
   const lista = c.playlist_activa.trim().toLowerCase() !== 'no';
   // El capítulo del código de vestimenta se tiñe del primer color del código (rosa, en este caso).
-  const fondoVestimenta = colores[0] ? `color-mix(in srgb, ${colores[0]} 50%, var(--fondo))` : undefined;
+  const tinte = colores[0] ? `color-mix(in srgb, ${colores[0]} 50%, var(--fondo))` : '';
+  const fondoVestimenta = tinte ? `linear-gradient(to bottom, transparent 0%, ${tinte} 18%, ${tinte} 82%, transparent 100%)` : undefined;
 
   return (
     <Listo.Provider value={!portada}>
@@ -165,15 +164,17 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </AnimatePresence>
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
-        <Capitulo>
-          <Pegatina nombre="globos-rosa" ancho={118} rot={-6} className="-left-2 top-4" anim="flota" />
-          <Pegatina nombre="disco-estrellas" ancho={190} rot={6} className="-right-12 top-0" anim="flota" retraso={0.6} />
-          <Pegatina nombre="mono-pastel" ancho={132} className="-bottom-1 right-4" />
+        <Capitulo className="!min-h-[1040px]">
+          <Humo />
+          <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
+          <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 top-0" anim="flota" retraso={0.6} />
+          <Pegatina nombre="mono-pastel" ancho={172} base className="bottom-0 right-3" />
+          <Pegatina nombre="ticket-birthday" ancho={150} rot={-7} className="bottom-8 left-3" />
           <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
           <Brillo tam={18} className="text-black/80" style={{ left: '8%', bottom: '22%' }} retraso={0.5} />
 
-          <Entra>
+          <Entra className="mt-28">
             <p className="f-cond text-[11px] font-medium tracking-[0.4em] opacity-60">Para</p>
             <p className="f-cond mt-1 text-sm font-bold tracking-[0.2em]">{invitado.nombre}</p>
           </Entra>
@@ -194,9 +195,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
         <Capitulo className="!pb-44">
           <Confeti cantidad={28} />
-          <Pegatina nombre="nena-brindis" ancho={132} className="-bottom-1 right-3" />
-          <Sticker nombre="copas" tono="plata" ancho={104} rot={-12} className="left-3 top-[8%]" anim="flota" />
-          <Sticker nombre="destello" tono="plata" ancho={46} rot={10} className="right-6 top-[11%]" anim="flota" retraso={1} />
+          <Pegatina nombre="nena-brindis" ancho={172} base className="bottom-0 right-2" />
+          <Sticker nombre="copas" tono="plata" ancho={130} rot={-12} className="left-2 top-[7%]" anim="flota" />
+          <Pegatina nombre="labios-rojos" ancho={96} rot={12} className="right-4 top-[9%]" />
           <Brillo tam={20} className="text-black" style={{ right: '16%', top: '34%' }} />
           <Brillo tam={15} className="text-black/70" style={{ left: '9%', top: '52%' }} retraso={1.1} />
           <Brillo tam={18} className="text-black/80" style={{ left: '14%', bottom: '14%' }} retraso={0.5} />
@@ -222,9 +223,10 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 3 · Bienvenida a los 30 (corona) */}
         <Capitulo>
-          <Pegatina nombre="treinta-29" ancho={150} rot={-6} className="left-3 top-[6%]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={46} rot={14} className="right-6 top-[17%]" />
-          <Sticker nombre="corona" tono="plata" ancho={170} rot={-3} className="bottom-10 left-1/2 -ml-[85px]" anim="flota" />
+          <Pegatina nombre="treinta-29" ancho={190} rot={-6} className="left-2 top-[4%]" anim="flota" />
+          <Pegatina nombre="going-on-30" ancho={150} rot={8} className="right-3 top-[12%]" />
+          <Pegatina nombre="garner-susto" ancho={190} base className="bottom-0 right-0" />
+          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-8 left-3" anim="flota" />
           <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '46%' }} retraso={0.9} />
           <Brillo tam={20} className="text-black" style={{ left: '14%', bottom: '24%' }} retraso={1.5} />
@@ -237,6 +239,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             <p className="f-serif mt-1 text-[1.05rem]">a los</p>
           </Entra>
           <Entra retraso={0.5} className="relative mt-1">
+            <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
             <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero}>{c.bienvenida_numero}</span>
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
@@ -248,7 +251,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
         <Capitulo>
-          <Sticker nombre="martini" tono="plata" ancho={52} rot={8} className="left-4 top-[7%]" anim="flota" retraso={0.7} />
+          <Sticker nombre="martini" tono="plata" ancho={68} rot={8} className="left-3 top-[6%]" anim="flota" retraso={0.7} />
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
           <Entra>
@@ -274,8 +277,8 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
             <p className="f-serif mx-auto mt-2 max-w-[17rem] text-[1.15rem] font-bold leading-tight">{c.lugar_nombre}</p>
             {c.lugar_direccion && <p className="mt-1 text-sm opacity-75">{c.lugar_direccion}</p>}
             {c.lugar_foto_url && (
-              <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-24 block">
-                <Pegatina nombre="perro-lentes" ancho={92} rot={7} className="-top-[5.6rem] right-4" />
+              <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-32 block">
+                <Pegatina nombre="perro-lentes" ancho={120} rot={7} className="-top-[7rem] right-3" />
                 <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="relative mx-auto w-[92%]" />
               </a>
             )}
@@ -284,19 +287,24 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-xs font-bold tracking-[0.3em]">Abrir en Waze</a>}
             </div>
           </Entra>
-          <Entra retraso={0.15} className="mt-10 w-full">
-            <div className="papel rounded-sm p-5">
-              <Cuenta fechaHora={c.fecha_hora} />
+          <Entra retraso={0.15} className="mt-32 w-full">
+            <div className="relative">
+              <Pegatina nombre="mujer-copa" ancho={150} rot={-4} className="-top-[6.8rem] left-4" />
+              <div className="papel relative rounded-sm p-5">
+                <Cuenta fechaHora={c.fecha_hora} />
+              </div>
             </div>
           </Entra>
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
         <Capitulo fondo={fondoVestimenta}>
-          <Sticker nombre="mono" tono="negro" ancho={74} rot={-14} className="left-5 top-[8%]" anim="balanceo" />
-          <Pegatina nombre="mono-globos" ancho={150} className="-bottom-1 right-1" />
-          <Sticker nombre="tacon" tono="negro" ancho={108} rot={-6} className="bottom-20 left-[3%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={108} rot={6} espejo className="bottom-16 left-[30%]" />
+          <Sticker nombre="mono" tono="negro" ancho={92} rot={-14} className="left-3 top-[3%]" anim="balanceo" />
+          <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-[5%]" />
+          <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[14%]" />
+          <Pegatina nombre="mono-globos" ancho={200} base className="bottom-0 right-0" />
+          <Sticker nombre="tacon" tono="negro" ancho={130} rot={-6} className="bottom-24 left-[1%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={130} rot={6} espejo className="bottom-20 left-[27%]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Brillo tam={18} className="text-black/80" style={{ right: '9%', bottom: '34%' }} retraso={0.5} />
@@ -316,7 +324,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* Programa y momentos (solo si hay) */}
         {(itinerario.length > 0 || fotos.length > 0) && (
-          <Capitulo humoAbajo={false}>
+          <Capitulo>
             {itinerario.length > 0 && (
               <Entra className="w-full">
                 <p className="f-script mb-5 text-5xl leading-none">Programa</p>
@@ -346,11 +354,14 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo className="!justify-start">
           <Confeti cantidad={16} />
-          <Pegatina nombre="globos-rosa" ancho={98} rot={-6} className="-left-1 top-3" anim="flota" />
-          <Pegatina nombre="disco-estrellas" ancho={150} rot={6} className="-right-9 top-1" anim="flota" retraso={0.6} />
-          <Pegatina nombre="hamster-pastel" ancho={112} className="-bottom-1 left-1/2 -ml-14" />
+          <Pegatina nombre="globos-rosa" ancho={128} rot={-6} className="-left-2 top-3" anim="flota" />
+          <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" anim="flota" retraso={0.6} />
+          <Pegatina nombre="hamster-pastel" ancho={140} base className="bottom-0 left-1/2 -ml-[70px]" />
+          <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
+          <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
+          <Humo lado="abajo" />
           <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
-          <div className="mt-16 flex flex-col items-center">
+          <div className="mt-48 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
               <Entra retraso={0.3}>
@@ -408,7 +419,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-sm underline underline-offset-4">¿Dudas? Escríbeme al {telVisible}</a>
             </Entra>
           )}
-          <div className="h-28 w-full" aria-hidden />
+          <div className="h-56 w-full" aria-hidden />
         </Capitulo>
 
         <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />

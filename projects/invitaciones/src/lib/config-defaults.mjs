@@ -18,7 +18,7 @@ export const CONFIG_DEFAULTS = {
   rip_texto: { valor: 'Estás cordialmente {invitada} a la despedida de mis 20s', descripcion: 'Capítulo 2: texto ({invitada} se ajusta a invitada/invitado)' },
   brindis_titulo: { valor: '¡Brindemos!', descripcion: 'Capítulo 2: título' },
   brindis_texto: { valor: 'Por una década de risas, aventuras y buenas historias… ¡y por todo lo que viene!', descripcion: 'Capítulo 2: texto bajo la foto' },
-  cinta_texto: { valor: 'RIP 20s ✦ BIENVENIDA 30 ✦ JOSELIN ✦ 21.11.2026', descripcion: 'Cinta que se desplaza entre capítulos (vacío = sin cinta)' },
+  cinta_texto: { valor: '', descripcion: 'Cinta negra que se desplaza entre capítulos, ej: RIP 20s ✦ HOLA 30 (vacío = sin cinta, el fondo queda continuo)' },
   bienvenida_linea: { valor: 'Esta preciosura le da la', descripcion: 'Capítulo 3: línea de arriba' },
   bienvenida_palabra: { valor: 'Bienvenida', descripcion: 'Capítulo 3: palabra grande' },
   bienvenida_numero: { valor: '30', descripcion: 'Capítulo 3: número del globo' },

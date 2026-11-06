@@ -45,8 +45,8 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
     >
       <Humo />
       <Humo lado="abajo" />
-      <Pegatina nombre="globos-rosa" ancho={118} rot={-6} className="bottom-6 left-1" anim="flota" />
-      <Pegatina nombre="globos-rosa" ancho={96} rot={8} espejo className="bottom-10 right-2" anim="flota" retraso={0.9} />
+      <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
+      <Pegatina nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
       <Sticker nombre="martini" tono="plata" ancho={46} rot={10} className="right-5 top-[14%]" anim="flota" retraso={0.5} />
       <Brillo tam={20} className="text-black" style={{ left: '24%', top: '10%' }} />
       <Brillo tam={15} className="text-black/70" style={{ right: '22%', bottom: '30%' }} retraso={1} />
