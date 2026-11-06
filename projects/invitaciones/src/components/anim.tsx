@@ -55,7 +55,7 @@ export function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { 
   );
 }
 
-export function Capitulo({ children, fondo, className = '' }: { children: ReactNode; fondo?: string; className?: string }) {
+export function Capitulo({ children, fondo, className = '', nombre }: { children: ReactNode; fondo?: string; className?: string; nombre?: string }) {
   const ref = useRef<HTMLElement>(null);
   // Cuando el capítulo está lejos de la pantalla sus animaciones se pausan (ver globals.css).
   const visible = useInView(ref, { margin: '100px 0px 100px 0px' });
@@ -63,6 +63,7 @@ export function Capitulo({ children, fondo, className = '' }: { children: ReactN
     <section
       ref={ref}
       data-vis={visible ? '1' : '0'}
+      data-cap={nombre}
       className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-x-clip px-8 py-24 text-center ${className}`}
       style={fondo ? { background: fondo } : undefined}
     >

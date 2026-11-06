@@ -112,6 +112,12 @@ section[data-vis="0"] * { animation: none !important; }
 }
 .marquesina { animation: marquesina 22s linear infinite; }
 
+/* Vista previa del panel: cada capítulo se resalta al pasar el mouse y se puede tocar para editarlo */
+.vista-previa section[data-cap] { cursor: pointer; }
+@media (hover: hover) {
+  .vista-previa section[data-cap]:hover { outline: 3px dashed rgb(224 98 159 / 0.8); outline-offset: -6px; }
+}
+
 @keyframes aparece {
   from { opacity: 0; transform: translateY(-8px) scale(0.96); }
   to { opacity: 1; transform: none; }

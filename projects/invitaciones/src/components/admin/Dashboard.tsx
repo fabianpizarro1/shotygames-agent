@@ -38,7 +38,7 @@ export function Dashboard() {
   return (
     <div className="min-h-dvh bg-stone-100 text-stone-900">
       <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
+        <div className={`mx-auto flex items-center justify-between gap-2 px-3 py-3 sm:px-4 ${tab === 'contenido' ? 'max-w-6xl' : 'max-w-3xl'}`}>
           <nav className="flex min-w-0 gap-0.5 overflow-x-auto rounded-xl bg-stone-100 p-1 text-[13px] font-medium sm:gap-1 sm:text-sm" aria-label="Secciones">
             {([['invitados', 'Invitados'], ['fotos', 'Fotos'], ['playlist', 'Playlist'], ['contenido', 'Contenido']] as const).map(([k, t]) => (
               <button
@@ -55,7 +55,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 pb-32 pt-5">
+      <main className={`mx-auto px-4 pb-32 pt-5 ${tab === 'contenido' ? 'max-w-6xl' : 'max-w-3xl'}`}>
         {error && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
         {tab === 'invitados' ? (
           <TabInvitados invitados={invitados} campos={campos} recargar={cargarInvitados} />

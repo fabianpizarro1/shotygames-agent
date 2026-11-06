@@ -10,11 +10,12 @@ interface Props {
   cupos: number;
   inicial: { estado: Estado; asistentes: number; mensaje: string };
   limite: string;
+  deshabilitado?: boolean;
 }
 
 const campo = 'w-full rounded-md border bg-white/70 px-3 py-2.5 text-[1.12rem] outline-none transition-colors focus:bg-white';
 
-export function Rsvp({ token, cupos, inicial, limite }: Props) {
+export function Rsvp({ token, cupos, inicial, limite, deshabilitado = false }: Props) {
   const [estado, setEstado] = useState<Estado>(inicial.estado);
   const [editando, setEditando] = useState(inicial.estado === 'pendiente');
   const [elegido, setElegido] = useState<'confirmado' | 'no_asiste' | null>(
@@ -127,11 +128,11 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
             <button
               type="button"
               onClick={enviar}
-              disabled={!elegido || enviando}
+              disabled={!elegido || enviando || deshabilitado}
               className="boton w-full rounded-full py-3.5 text-[17.36px] font-semibold uppercase tracking-widest disabled:opacity-40"
               style={{ background: 'var(--texto)', color: 'var(--papel)' }}
             >
-              {enviando ? 'Guardando…' : 'Enviar respuesta'}
+              {deshabilitado ? 'Vista previa (no envía)' : enviando ? 'Guardando…' : 'Enviar respuesta'}
             </button>
             {limite && <p className="text-center text-[15.12px] opacity-60">Confirma antes del {limite}</p>}
           </motion.div>

@@ -29,8 +29,24 @@ interface InvitadoVista {
   mensaje: string;
 }
 
-export function Invitacion({ config: c, invitado }: { config: Config; invitado: InvitadoVista }) {
-  const [portada, setPortada] = useState(true);
+// Solo http(s) o rutas propias en cualquier campo que acabe como enlace o archivo.
+const CAMPOS_URL = new Set(['maps_url', 'waze_url', 'url_base', 'musica_url', 'portada_url', 'lugar_foto_url', 'playlist_url', 'galeria_fotos']);
+const urlSegura = (v: string) => v.split('\n').every((l) => !l.trim() || /^(\/|https?:\/\/)/i.test(l.trim()));
+function limpiarValores(v: unknown, base: Config): Partial<Config> {
+  const out: Record<string, string> = {};
+  if (!v || typeof v !== 'object') return out;
+  for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
+    if (!(k in base) || typeof x !== 'string' || x.length > 5000) continue;
+    out[k] = CAMPOS_URL.has(k) && !urlSegura(x) ? '' : x;
+  }
+  return out;
+}
+
+export function Invitacion({ config, invitado, vistaPrevia = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean }) {
+  // En la vista previa del panel, `c` se actualiza en vivo con lo que se está editando (sin guardar).
+  const [c, setC] = useState(config);
+  useEffect(() => setC(config), [config]);
+  const [portada, setPortada] = useState(!vistaPrevia);
   const musica = useRef<MusicaApi>(null);
 
   // Siempre desde el principio: sin esto el navegador restaura el scroll anterior (al recargar o volver
@@ -56,15 +72,45 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
     };
   }, [portada]);
 
+  // Vista previa (solo admin): recibe los cambios del panel, salta a un capítulo y avisa qué capítulo se tocó.
+  useEffect(() => {
+    if (!vistaPrevia) return;
+    const yo = window.location.origin;
+    const alMensaje = (e: MessageEvent) => {
+      if (e.origin !== yo) return;
+      const d = e.data as { tipo?: string; valores?: unknown; cap?: string } | null;
+      if (d?.tipo === 'config') setC((prev) => ({ ...prev, ...limpiarValores(d.valores, config) }));
+      else if (d?.tipo === 'ir' && typeof d.cap === 'string') {
+        const s = d.cap === 'inicio' ? null : document.querySelector(`section[data-cap="${CSS.escape(d.cap)}"]`);
+        if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        else window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+    const alClic = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('a')) e.preventDefault();
+      const cap = (t?.closest?.('section[data-cap]') as HTMLElement | null)?.dataset.cap;
+      if (cap) window.parent.postMessage({ tipo: 'editar', cap }, yo);
+    };
+    window.addEventListener('message', alMensaje);
+    document.addEventListener('click', alClic, true);
+    window.parent.postMessage({ tipo: 'listo' }, yo);
+    return () => {
+      window.removeEventListener('message', alMensaje);
+      document.removeEventListener('click', alClic, true);
+    };
+  }, [vistaPrevia, config]);
+
   // Marca "abierto" una sola vez por sesión (alimenta las estadísticas del panel).
   useEffect(() => {
+    if (vistaPrevia) return;
     try {
       const k = `abierto-${invitado.token}`;
       if (sessionStorage.getItem(k)) return;
       sessionStorage.setItem(k, '1');
     } catch {}
     fetch('/api/abierto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invitado.token }) }).catch(() => {});
-  }, [invitado.token]);
+  }, [invitado.token, vistaPrevia]);
 
   const tema = { '--fondo': c.color_fondo, '--fondo2': c.color_fondo_2, '--papel': c.color_papel, '--texto': c.color_texto, '--acento': c.color_acento } as CSSProperties;
 
@@ -93,7 +139,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
   return (
     <Listo.Provider value={!portada}>
-      <div style={tema} className="rayas min-h-dvh overflow-x-clip">
+      <div style={tema} className={`rayas min-h-dvh overflow-x-clip ${vistaPrevia ? 'vista-previa' : ''}`}>
         <AnimatePresence>
           {portada && (
             <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => {}} onListo={() => setPortada(false)} />
@@ -101,7 +147,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </AnimatePresence>
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
-        <Capitulo className="!min-h-[960px] !justify-start !pt-48">
+        <Capitulo nombre="inicio" className="!min-h-[960px] !justify-start !pt-48">
           <Humo />
           <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
           <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
@@ -129,7 +175,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
-        <Capitulo className="!pb-44">
+        <Capitulo nombre="brindis" className="!pb-44">
           <Confeti cantidad={10} />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
           <Sticker nombre="copas" tono="plata" ancho={130} rot={-12} className="left-2 top-[7%]" />
@@ -156,7 +202,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </Capitulo>
 
         {/* 3 · Bienvenida a los 30 (corona) */}
-        <Capitulo>
+        <Capitulo nombre="bienvenida">
           <Pegatina nombre="treinta-29" ancho={190} rot={-6} className="left-2 top-[4%]" />
           <Pegatina nombre="going-on-30" ancho={150} rot={8} className="right-3 top-[12%]" />
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
@@ -182,7 +228,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
                 <Cinta texto={c.cinta_texto} />
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
-        <Capitulo>
+        <Capitulo nombre="fecha">
           <Sticker nombre="martini" tono="plata" ancho={68} rot={8} className="left-3 top-[6%]" />
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
@@ -230,7 +276,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo fondo={fondoVestimenta}>
+        <Capitulo nombre="vestimenta" fondo={fondoVestimenta}>
           <Sticker nombre="mono" tono="negro" ancho={92} rot={-14} className="left-3 top-[3%]" />
           <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-[5%]" />
           <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[14%]" />
@@ -255,7 +301,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* Programa y momentos (solo si hay) */}
         {(itinerario.length > 0 || fotos.length > 0) && (
-          <Capitulo>
+          <Capitulo nombre="programa">
             {itinerario.length > 0 && (
               <Entra className="w-full">
                 <p className="f-script mb-5 text-[3.36rem] leading-none">Programa</p>
@@ -283,7 +329,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo className="!justify-start">
+        <Capitulo nombre="final" className="!justify-start">
           <Pegatina nombre="globos-rosa" ancho={128} rot={-6} className="-left-2 top-3" />
           <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" />
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
@@ -319,6 +365,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               <p className="f-script text-center text-[2.912rem] leading-none">{invitado.nombre}</p>
               <div className="mt-5">
                 <Rsvp
+                  deshabilitado={vistaPrevia}
                   token={invitado.token}
                   cupos={invitado.cupos}
                   limite={limite}
