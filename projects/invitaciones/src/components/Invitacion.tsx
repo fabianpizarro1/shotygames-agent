@@ -345,7 +345,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           <div className="h-56 w-full" aria-hidden />
         </Capitulo>
 
-        <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />
+        <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} visible={!portada} />
       </div>
     </Listo.Provider>
   );

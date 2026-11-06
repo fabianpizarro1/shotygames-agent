@@ -398,7 +398,7 @@ export function InvitacionCollage({ config: c, invitado }: { config: Config; inv
           <div className="h-52 w-full" aria-hidden />
         </Capitulo>
 
-        <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} />
+        <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} visible={!portada} />
       </div>
     </Listo.Provider>
   );

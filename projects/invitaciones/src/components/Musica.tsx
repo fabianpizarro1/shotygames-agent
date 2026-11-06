@@ -6,10 +6,10 @@ export interface MusicaApi {
   reproducir: () => void;
 }
 
-// Botón de música fijo, arriba a la derecha, visible desde la portada del sobre.
+// Botón de música fijo, arriba a la derecha. Aparece (con un fundido) cuando se abre el sobre: `visible`.
 // La música NUNCA empieza sola: solo suena cuando el invitado toca este botón.
 // Solo aparece si hay musica_url en CONFIG.
-export function Musica({ url, titulo, apiRef }: { url: string; titulo: string; apiRef?: Ref<MusicaApi> }) {
+export function Musica({ url, titulo, apiRef, visible = true }: { url: string; titulo: string; apiRef?: Ref<MusicaApi>; visible?: boolean }) {
   const audio = useRef<HTMLAudioElement>(null);
   const [suena, setSuena] = useState(false);
 
@@ -39,13 +39,14 @@ export function Musica({ url, titulo, apiRef }: { url: string; titulo: string; a
   return (
     <>
       <audio ref={audio} src={url} loop preload="metadata" />
+      {visible && (
       <button
         type="button"
         data-musica="boton-inicio"
         onClick={() => (suena ? audio.current?.pause() : audio.current?.play().catch(() => {}))}
         aria-label={suena ? 'Pausar música' : 'Reproducir música'}
         aria-pressed={suena}
-        className="boton fixed right-3 z-[60] flex min-h-[46px] items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4 text-[1.176rem] font-semibold"
+        className="boton aparece fixed right-3 z-[60] flex min-h-[46px] items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-4 text-[1.176rem] font-semibold"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
           background: 'var(--papel)',
@@ -62,6 +63,7 @@ export function Musica({ url, titulo, apiRef }: { url: string; titulo: string; a
         </span>
         <span className="leading-none">{suena ? 'Pausar música' : titulo ? `Escuchar: ${titulo}` : 'Escuchar música'}</span>
       </button>
+      )}
     </>
   );
 }
