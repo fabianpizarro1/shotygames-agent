@@ -271,7 +271,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-14">
+        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-4">
           <Pegatina nombre="nena-corona" ancho={150} rot={5} className="right-3 top-2" />
           <Pegatina nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
@@ -320,14 +320,14 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo nombre="final" className="!justify-start !pt-14">
+        <Capitulo nombre="final" className="!justify-start !pt-6">
           {/* Ocultos a pedido (se pueden volver a poner): mono-globos y disco-estrellas */}
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
           <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
-          <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
-          <div className="mt-10 flex flex-col items-center">
+          <Brillo tam={18} className="text-black" style={{ left: '30%', top: '40px' }} />
+          <div className="mt-2 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
               <>
@@ -343,7 +343,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               </Entra>
             )}
           </div>
-          <div className="mt-12">
+          <div className="mt-20">
             <Escribe className="f-script text-[4rem] leading-none">{c.final_titulo}</Escribe>
             <Entra retraso={0.3}>
               <p className="f-cond mx-auto mt-3 max-w-[14rem] text-[1.456rem] font-bold leading-tight">{c.final_texto}</p>
