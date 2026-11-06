@@ -223,7 +223,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 <Cinta texto={c.cinta_texto} />
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
-        <Capitulo nombre="fecha" className="!pb-14">
+        <Capitulo nombre="fecha" className="!pb-10">
           <Sticker nombre="martini" tono="plata" ancho={68} rot={8} className="left-3 top-[6%]" />
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
@@ -271,12 +271,12 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-10">
-          <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-3" />
-          <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[110px]" />
+        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-14">
+          <Pegatina nombre="nena-corona" ancho={150} rot={5} className="right-3 top-2" />
+          <Pegatina nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
-          <Entra className="mt-44">
+          <Entra className="mt-[140px]">
             <p className="f-cond text-[1.064rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
             <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.912rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
             {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-[17.36px] leading-snug opacity-80">({c.dresscode_detalle})</p>}
@@ -320,15 +320,14 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo nombre="final" className="!justify-start">
-          <Pegatina nombre="mono-globos" ancho={175} className="left-1 top-2" />
-          <Pegatina nombre="disco-estrellas" ancho={180} rot={6} className="-right-11 top-0" />
+        <Capitulo nombre="final" className="!justify-start !pt-14">
+          {/* Ocultos a pedido (se pueden volver a poner): mono-globos y disco-estrellas */}
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
           <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
           <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
-          <div className="mt-28 flex flex-col items-center">
+          <div className="mt-10 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
               <>
