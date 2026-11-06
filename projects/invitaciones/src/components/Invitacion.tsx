@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useRef, useState, type CSSPropert
 import type { Config } from '@/lib/config';
 import { piezasFecha } from '@/lib/fechas';
 import { Cuenta } from './Cuenta';
-import { BolaDisco, Brillo, Globo, Humo, Sticker } from './Decor';
+import { BolaDisco, Brillo, Confeti, Globo, Humo, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
 import { Rsvp } from './Rsvp';
 import { Sobre } from './Sobre';
@@ -13,7 +13,7 @@ import { Polaroid } from './Stickers';
 
 // Invitación en capítulos tipo historia (blanco, negro y plata), inspirada en la plantilla
 // "RIP 20s". Cada capítulo tiene su propio "protagonista" para que no se vea repetido:
-//   1 invitación + RIP 20s (globos, bola disco)   2 esquela (fondo negro, rosas)
+//   1 invitación + RIP 20s (globos, bola disco)   2 brindis (foto con cinta, confeti)
 //   3 bienvenida a los 30 (corona)                4 fecha y lugar (lentes, foto)
 //   5 vestimenta (tacones, fondo rosado)          6 confirmación (globos y bola, cierre)
 
@@ -78,14 +78,14 @@ function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { childre
   );
 }
 
-function Capitulo({ children, humoAbajo = true, oscuro = false, fondo, className = '' }: { children: ReactNode; humoAbajo?: boolean; oscuro?: boolean; fondo?: string; className?: string }) {
+function Capitulo({ children, humoAbajo = true, fondo, className = '' }: { children: ReactNode; humoAbajo?: boolean; fondo?: string; className?: string }) {
   return (
     <section
       className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-hidden px-8 py-24 text-center ${className}`}
-      style={oscuro ? { background: 'var(--fondo2)', color: '#f4f4f4' } : fondo ? { background: fondo } : undefined}
+      style={fondo ? { background: fondo } : undefined}
     >
-      <Humo claro={oscuro} />
-      {humoAbajo && <Humo lado="abajo" claro={oscuro} />}
+      <Humo />
+      {humoAbajo && <Humo lado="abajo" />}
       {children}
     </section>
   );
@@ -102,27 +102,6 @@ function Cinta({ texto }: { texto: string }) {
       <div className="marquesina f-cond flex w-max whitespace-nowrap text-[13px] font-bold tracking-[0.35em] text-white">
         <div className="flex">{mitad}</div>
         <div className="flex">{mitad}</div>
-      </div>
-    </div>
-  );
-}
-
-// Lápida: arco oscuro con la foto en blanco y negro (si hay) y "RIP 20s" grabado abajo.
-function Lapida({ foto, bn, base, sufijo, fechas }: { foto: string; bn: boolean; base: string; sufijo: string; fechas: string }) {
-  return (
-    <div className="relative mx-auto h-[390px] w-[255px] overflow-hidden rounded-t-[128px]" style={{ background: 'linear-gradient(#242424, #060606)', boxShadow: '0 0 0 1px rgb(255 255 255 / 0.55), 0 0 0 7px #0d0d0d, 0 0 0 8px rgb(255 255 255 / 0.25)' }}>
-      {foto && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={foto} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover opacity-85" style={{ filter: bn ? 'grayscale(1) contrast(1.1)' : undefined }} />
-      )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 6%, rgb(0 0 0 / 0.55) 38%, transparent 70%)' }} />
-      <div className="absolute inset-x-0 bottom-7 text-center">
-        <p className="f-serif text-[2.2rem] font-black leading-none tracking-wide text-white">RIP</p>
-        <p className="num-plata mt-1 flex items-end justify-center text-[4.6rem]">
-          <span>{base}</span>
-          {sufijo && <span className="f-serif mb-2 ml-1 text-lg font-bold text-white">{sufijo}</span>}
-        </p>
-        {fechas && <p className="f-cond mt-2 text-[11px] tracking-[0.45em] text-white/80">{fechas}</p>}
       </div>
     </div>
   );
@@ -213,23 +192,30 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </Entra>
         </Capitulo>
 
-        {/* 2 · Esquela (fondo negro, rosas) */}
-        <Capitulo oscuro>
-          <Brillo tam={20} className="text-white" style={{ left: '12%', top: '10%' }} />
-          <Brillo tam={14} className="text-white/80" style={{ right: '14%', top: '16%' }} retraso={1.2} />
-          <Brillo tam={18} className="text-white/90" style={{ right: '10%', top: '48%' }} retraso={0.6} />
-          <Brillo tam={12} className="text-white/70" style={{ left: '9%', top: '58%' }} retraso={1.8} />
-          <Sticker nombre="rosa" tono="claro" ancho={62} rot={-12} className="bottom-8 left-6" anim="flota" />
-          <Sticker nombre="rosa" tono="claro" ancho={50} rot={14} espejo className="bottom-12 right-7" anim="flota" retraso={1} />
-          <Entra>
-            <p className="f-cond text-[0.8rem] font-medium tracking-[0.5em] text-white/70">{c.esquela_titulo}</p>
-          </Entra>
-          <Entra retraso={0.2} className="mt-7">
-            <Lapida foto={c.portada_url} bn={bn} base={ripBase} sufijo={ripSufijo} fechas={c.esquela_fechas} />
-          </Entra>
-          {c.esquela_texto && (
+        {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
+        <Capitulo>
+          <Confeti cantidad={28} />
+          <Sticker nombre="copas" tono="plata" ancho={104} rot={-12} className="left-3 top-[8%]" anim="flota" />
+          <Sticker nombre="destello" tono="plata" ancho={46} rot={10} className="right-6 top-[11%]" anim="flota" retraso={1} />
+          <Brillo tam={20} className="text-black" style={{ right: '16%', top: '34%' }} />
+          <Brillo tam={15} className="text-black/70" style={{ left: '9%', top: '52%' }} retraso={1.1} />
+          <Brillo tam={18} className="text-black/80" style={{ left: '14%', bottom: '14%' }} retraso={0.5} />
+          <Brillo tam={13} className="text-black/60" style={{ right: '10%', bottom: '22%' }} retraso={1.6} />
+          <div className="mt-20">
+            <Escribe className="f-script text-[3.6rem] leading-none">{c.brindis_titulo}</Escribe>
+          </div>
+          {c.portada_url ? (
+            <Entra retraso={0.25} className="mt-9 w-full">
+              <Polaroid src={c.portada_url} giro={3} bn={bn} cinta className="mx-auto w-[74%]" />
+            </Entra>
+          ) : (
+            <div className="relative mt-9 h-40 w-full" aria-hidden>
+              <Sticker nombre="copas" tono="plata" ancho={130} rot={-6} className="left-1/2 -ml-[65px]" anim="flota" />
+            </div>
+          )}
+          {c.brindis_texto && (
             <Entra retraso={0.4} className="mt-9">
-              <p className="f-serif mx-auto max-w-[17rem] text-[0.98rem] italic leading-relaxed text-white/85">{c.esquela_texto}</p>
+              <p className="f-cond mx-auto max-w-[16rem] text-[1.2rem] font-bold leading-[1.2]">{c.brindis_texto}</p>
             </Entra>
           )}
         </Capitulo>
@@ -358,6 +344,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo className="!justify-start">
+          <Confeti cantidad={16} />
           <Globo ancho={54} className="left-3 top-5" />
           <Globo ancho={44} className="left-1 top-24" retraso={1} />
           <BolaDisco tam={150} className="-right-10 top-2" />

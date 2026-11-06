@@ -62,17 +62,6 @@ body {
   color: transparent;
 }
 
-/* Número en plata para fondos negros (lápida) */
-.num-plata {
-  font-family: var(--f-bowlby), Impact, sans-serif;
-  line-height: 0.95;
-  background: linear-gradient(150deg, #ffffff 0%, #c4c4c4 35%, #f3f3f3 58%, #8e8e8e 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 8px rgb(255 255 255 / 0.18));
-}
-
 @keyframes flota {
   0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
   50% { transform: translateY(-9px) rotate(calc(var(--r, 0deg) + 1.5deg)); }
@@ -104,6 +93,13 @@ body {
 }
 .barrido { animation: barrido 4.2s ease-in-out infinite; }
 
+@keyframes caer {
+  0% { transform: translate3d(0, -30px, 0) rotate(0deg); }
+  50% { transform: translate3d(14px, 55dvh, 0) rotate(260deg); }
+  100% { transform: translate3d(-10px, 112dvh, 0) rotate(560deg); }
+}
+.confeti { animation: caer 12s linear infinite; will-change: transform; }
+
 @keyframes marquesina {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -122,5 +118,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .flota, .balanceo, .columpio, .titila, .barrido, .marquesina { animation: none; }
+  .confeti { animation: none; display: none; }
   * { scroll-behavior: auto !important; }
 }
