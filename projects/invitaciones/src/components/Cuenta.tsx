@@ -35,14 +35,14 @@ export function Cuenta({ fechaHora }: { fechaHora: string }) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="f-cond text-center text-sm font-bold tracking-[0.35em]">
+        <h2 className="f-cond text-center text-[15.5px] font-bold tracking-[0.35em]">
           {t?.terminado ? '¡Es hoy!' : 'Faltan'}
         </h2>
         <div className="mt-4 grid grid-cols-4 gap-2" aria-live="off">
           {celdas.map(([etiqueta, valor]) => (
             <div key={etiqueta} className="rounded-md py-3 text-center" style={{ background: 'var(--texto)', color: 'var(--papel)' }}>
               <div className="f-impact text-3xl tabular-nums leading-none">{valor === undefined ? '--' : String(valor).padStart(2, '0')}</div>
-              <div className="mt-1.5 text-[10px] uppercase tracking-widest opacity-70">{etiqueta}</div>
+              <div className="mt-1.5 text-[13px] uppercase tracking-widest opacity-70">{etiqueta}</div>
             </div>
           ))}
         </div>
@@ -50,17 +50,17 @@ export function Cuenta({ fechaHora }: { fechaHora: string }) {
 
       {p && (
         <div>
-          <p className="f-cond mb-3 text-center text-xs tracking-[0.3em] opacity-80">{nombreMes(fechaHora)}</p>
-          <div className="grid grid-cols-7 gap-y-1.5 text-center text-sm">
+          <p className="f-cond mb-3 text-center text-[13.5px] tracking-[0.3em] opacity-80">{nombreMes(fechaHora)}</p>
+          <div className="grid grid-cols-7 gap-y-1.5 text-center text-[15.5px]">
             {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-              <span key={i} className="pb-1 text-[10px] font-semibold opacity-50">{d}</span>
+              <span key={i} className="pb-1 text-[13px] font-semibold opacity-50">{d}</span>
             ))}
             {semanas.flat().map((dia, i) => (
               <span key={i} className="relative grid h-9 place-items-center">
                 {dia === p.d ? (
                   <>
                     <Corazon className="absolute size-9" />
-                    <span className="relative text-xs font-bold" style={{ color: 'var(--papel)' }}>{dia}</span>
+                    <span className="relative text-[13.5px] font-bold" style={{ color: 'var(--papel)' }}>{dia}</span>
                   </>
                 ) : (
                   <span className="opacity-80">{dia ?? ''}</span>

@@ -157,7 +157,7 @@ export function Humo({ lado = 'arriba', className = '' }: { lado?: 'arriba' | 'a
           filter: 'blur(16px)',
         }}
       />
-      {[8, 24, 41, 58, 73, 88].map((x, i) => (
+      {[10, 36, 63, 88].map((x, i) => (
         <span
           key={x}
           className="titila absolute rounded-full bg-white"
@@ -201,7 +201,7 @@ export function Confeti({ cantidad = 26, className = '' }: { cantidad?: number; 
 // los memes de cumpleaños. Los de base plana se colocan asomándose desde un borde.
 export type NombrePegatina = 'globos-rosa' | 'disco-estrellas' | 'mono-pastel' | 'mono-globos' | 'nena-brindis' | 'perro-lentes' | 'hamster-pastel' | 'treinta-29' | 'garner-susto' | 'mujer-copa' | 'nena-corona' | 'gorro-rojo' | 'treinta-coqueta' | 'treinta-brillando' | 'going-on-30' | 'labios-rojos' | 'hecha-90s' | 'ticket-birthday';
 
-export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, className = '', style, anim = 'ninguna', retraso = 0, base = false }: { nombre: NombrePegatina; ancho?: number; rot?: number; espejo?: boolean; className?: string; style?: CSSProperties; anim?: 'flota' | 'ninguna'; retraso?: number; base?: boolean }) {
+export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, className = '', style, anim = 'ninguna', retraso = 0 }: { nombre: NombrePegatina; ancho?: number; rot?: number; espejo?: boolean; className?: string; style?: CSSProperties; anim?: 'flota' | 'ninguna'; retraso?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -212,7 +212,7 @@ export function Pegatina({ nombre, ancho = 110, rot = 0, espejo = false, classNa
       decoding="async"
       draggable={false}
       className={`pointer-events-none absolute select-none ${anim === 'flota' ? 'flota' : ''} ${className}`}
-      style={{ width: ancho, height: 'auto', scale: espejo ? '-1 1' : undefined, filter: 'drop-shadow(0 6px 8px rgb(0 0 0 / 0.3))', ['--r' as string]: `${rot}deg`, transform: `rotate(${rot}deg)`, animationDelay: `${retraso}s`, ...(base ? { maskImage: 'linear-gradient(to bottom, #000 74%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, #000 74%, transparent 100%)' } : {}), ...style }}
+      style={{ width: ancho, height: 'auto', scale: espejo ? '-1 1' : undefined, ['--r' as string]: `${rot}deg`, transform: `rotate(${rot}deg)`, animationDelay: `${retraso}s`, ...style }}
     />
   );
 }

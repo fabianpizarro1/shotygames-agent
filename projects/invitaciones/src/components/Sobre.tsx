@@ -39,7 +39,7 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
 
   return (
     <motion.div
-      className="rayas fixed inset-0 z-50 flex flex-col items-center justify-center gap-7 overflow-hidden px-6"
+      className="rayas fixed inset-0 z-50 flex flex-col items-center justify-center gap-7 overflow-hidden px-6 pb-44"
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
     >
@@ -57,7 +57,7 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
         animate={{ opacity: abierto ? 0 : 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
-        <span className="f-cond block text-[11px] tracking-[0.4em] opacity-60">Para</span>
+        <span className="f-cond block text-[15px] tracking-[0.4em] opacity-70">Para</span>
         <span className="f-firma block text-[3.4rem] leading-tight">{nombre}</span>
       </motion.p>
 
@@ -120,7 +120,7 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
       </motion.div>
 
       <motion.p
-        className="f-cond relative z-[2] text-xs tracking-[0.3em]"
+        className="f-cond relative z-[2] text-[13.5px] tracking-[0.3em]"
         initial={{ opacity: 0 }}
         animate={{ opacity: abierto ? 0 : 0.75 }}
         transition={{ delay: abierto ? 0 : 0.8, duration: 0.4 }}

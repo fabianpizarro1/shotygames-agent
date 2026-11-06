@@ -43,7 +43,7 @@ export function Musica({ url, titulo, apiRef }: { url: string; titulo: string; a
         type="button"
         onClick={() => (suena ? audio.current?.pause() : audio.current?.play().catch(() => {}))}
         aria-label={suena ? 'Pausar música' : 'Reproducir música'}
-        className="boton fixed bottom-4 right-4 z-40 flex items-center gap-2.5 rounded-full py-2 pl-3 pr-4 text-xs shadow-lg"
+        className="boton fixed bottom-4 right-4 z-40 flex items-center gap-2.5 rounded-full py-2 pl-3 pr-4 text-[13.5px] shadow-lg"
         style={{ background: 'var(--papel)', color: 'var(--texto)', boxShadow: '0 8px 20px rgb(0 0 0 / 0.35)' }}
       >
         <span className="flex h-4 items-end gap-[3px]" aria-hidden>
