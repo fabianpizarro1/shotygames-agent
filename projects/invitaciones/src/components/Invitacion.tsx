@@ -7,12 +7,15 @@ import { piezasFecha } from '@/lib/fechas';
 import { Cuenta } from './Cuenta';
 import { BolaDisco, Brillo, Globo, Humo, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
-import { Sobre } from './Sobre';
 import { Rsvp } from './Rsvp';
+import { Sobre } from './Sobre';
 import { Polaroid } from './Stickers';
 
 // Invitación en capítulos tipo historia (blanco, negro y plata), inspirada en la plantilla
-// "RIP 20s": cada capítulo ocupa la pantalla y sus textos se escriben al entrar.
+// "RIP 20s". Cada capítulo tiene su propio "protagonista" para que no se vea repetido:
+//   1 invitación + RIP 20s (globos, bola disco)   2 esquela (fondo negro, rosas)
+//   3 bienvenida a los 30 (corona)                4 fecha y lugar (lentes, foto)
+//   5 vestimenta (tacones, fondo rosado)          6 confirmación (globos y bola, cierre)
 
 interface InvitadoVista {
   token: string;
@@ -75,23 +78,52 @@ function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { childre
   );
 }
 
-function Capitulo({ children, humoAbajo = true, className = '' }: { children: ReactNode; humoAbajo?: boolean; className?: string }) {
+function Capitulo({ children, humoAbajo = true, oscuro = false, fondo, className = '' }: { children: ReactNode; humoAbajo?: boolean; oscuro?: boolean; fondo?: string; className?: string }) {
   return (
-    <section className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-hidden px-8 py-24 text-center ${className}`}>
-      <Humo />
-      {humoAbajo && <Humo lado="abajo" />}
+    <section
+      className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-hidden px-8 py-24 text-center ${className}`}
+      style={oscuro ? { background: 'var(--fondo2)', color: '#f4f4f4' } : fondo ? { background: fondo } : undefined}
+    >
+      <Humo claro={oscuro} />
+      {humoAbajo && <Humo lado="abajo" claro={oscuro} />}
       {children}
     </section>
   );
 }
 
-// Foto de la festejada en arco, en blanco y negro, que se funde con el papel por abajo.
-function FotoArco({ src, bn }: { src: string; bn: boolean }) {
+// Cinta de texto que se desplaza, a todo el ancho de la pantalla (separa los capítulos).
+function Cinta({ texto }: { texto: string }) {
+  if (!texto.trim()) return null;
+  const mitad = Array.from({ length: 5 }, (_, i) => (
+    <span key={i} className="px-5">{texto}<span className="pl-5 opacity-60">✦</span></span>
+  ));
   return (
-    <div className="relative mt-8 h-[270px] w-[225px] overflow-hidden rounded-t-[112px]" style={{ boxShadow: '0 0 0 1px rgb(0 0 0 / 0.85)' }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" loading="lazy" decoding="async" className="size-full object-cover" style={{ filter: bn ? 'grayscale(1) contrast(1.08)' : undefined }} />
-      <div className="absolute inset-x-0 bottom-0 h-24" style={{ background: 'linear-gradient(to top, var(--fondo), transparent)' }} />
+    <div aria-hidden className="relative z-[3] -my-2 w-full -rotate-1 overflow-hidden bg-black py-2.5 shadow-[0_6px_14px_-6px_rgb(0_0_0/0.6)]">
+      <div className="marquesina f-cond flex w-max whitespace-nowrap text-[13px] font-bold tracking-[0.35em] text-white">
+        <div className="flex">{mitad}</div>
+        <div className="flex">{mitad}</div>
+      </div>
+    </div>
+  );
+}
+
+// Lápida: arco oscuro con la foto en blanco y negro (si hay) y "RIP 20s" grabado abajo.
+function Lapida({ foto, bn, base, sufijo, fechas }: { foto: string; bn: boolean; base: string; sufijo: string; fechas: string }) {
+  return (
+    <div className="relative mx-auto h-[390px] w-[255px] overflow-hidden rounded-t-[128px]" style={{ background: 'linear-gradient(#242424, #060606)', boxShadow: '0 0 0 1px rgb(255 255 255 / 0.55), 0 0 0 7px #0d0d0d, 0 0 0 8px rgb(255 255 255 / 0.25)' }}>
+      {foto && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={foto} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover opacity-85" style={{ filter: bn ? 'grayscale(1) contrast(1.1)' : undefined }} />
+      )}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #000 6%, rgb(0 0 0 / 0.55) 38%, transparent 70%)' }} />
+      <div className="absolute inset-x-0 bottom-7 text-center">
+        <p className="f-serif text-[2.2rem] font-black leading-none tracking-wide text-white">RIP</p>
+        <p className="num-plata mt-1 flex items-end justify-center text-[4.6rem]">
+          <span>{base}</span>
+          {sufijo && <span className="f-serif mb-2 ml-1 text-lg font-bold text-white">{sufijo}</span>}
+        </p>
+        {fechas && <p className="f-cond mt-2 text-[11px] tracking-[0.45em] text-white/80">{fechas}</p>}
+      </div>
     </div>
   );
 }
@@ -141,84 +173,76 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
   const telVisible = wa.startsWith('593') ? `0${wa.slice(3)}` : wa;
   const alterno = c.fotos_activas.trim().toLowerCase() !== 'no';
   const lista = c.playlist_activa.trim().toLowerCase() !== 'no';
+  // El capítulo del código de vestimenta se tiñe del primer color del código (rosa, en este caso).
+  const fondoVestimenta = colores[0] ? `color-mix(in srgb, ${colores[0]} 50%, var(--fondo))` : undefined;
 
   return (
     <Listo.Provider value={!portada}>
-      <div style={tema} className="rayas min-h-dvh">
+      <div style={tema} className="rayas min-h-dvh overflow-x-hidden">
         <AnimatePresence>
           {portada && (
             <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => musica.current?.reproducir()} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
-        {/* 1 · Te invito a celebrar */}
+        {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
         <Capitulo>
-          <Globo ancho={64} className="left-3 top-8" />
-          <Globo ancho={52} className="left-0 top-28" retraso={1.2} />
-          <BolaDisco tam={210} className="-right-16 top-4" />
-          <Sticker nombre="mono" tono="negro" ancho={70} rot={14} className="right-4 top-[19%]" anim="balanceo" />
-          <Sticker nombre="corona" tono="plata" ancho={96} rot={-4} className="left-1/2 top-[19%] -ml-12" anim="flota" />
-          <Sticker nombre="martini" tono="plata" ancho={58} rot={8} className="right-5 top-[40%]" anim="flota" retraso={0.8} />
-          <Sticker nombre="labios" tono="negro" ancho={50} rot={-16} className="left-6 top-[48%]" />
-          <Sticker nombre="labios" tono="negro" ancho={42} rot={12} className="right-8 top-[66%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={78} rot={-8} className="bottom-6 left-[34%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={78} rot={6} espejo className="bottom-5 left-[48%]" />
-          <BolaDisco tam={170} className="-left-12 bottom-0" />
-          <Sticker nombre="rosa" tono="gris" ancho={46} rot={10} className="bottom-24 left-[18%]" />
-          <Brillo tam={24} className="text-black" style={{ left: '14%', top: '30%' }} />
-          <Brillo tam={16} className="text-black/70" style={{ right: '30%', top: '57%' }} retraso={1} />
+          <Globo ancho={60} className="left-3 top-6" />
+          <Globo ancho={48} className="left-0 top-24" retraso={1.2} />
+          <BolaDisco tam={200} className="-right-14 top-2" />
+          <Sticker nombre="mono" tono="negro" ancho={66} rot={14} className="right-5 top-[17%]" anim="balanceo" />
+          <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
+          <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
+          <Brillo tam={18} className="text-black/80" style={{ left: '8%', bottom: '22%' }} retraso={0.5} />
 
           <Entra>
             <p className="f-cond text-[11px] font-medium tracking-[0.4em] opacity-60">Para</p>
             <p className="f-cond mt-1 text-sm font-bold tracking-[0.2em]">{invitado.nombre}</p>
           </Entra>
-          <div className="mt-24 flex flex-col items-center">
-            <Escribe className="f-script text-[2rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
-            <Escribe className="f-firma -mt-1 text-[5.8rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>
+          <div className="mt-16 flex flex-col items-center">
+            <Escribe className="f-script text-[1.9rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
+            <Escribe className="f-firma -mt-1 text-[5.4rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>
           </div>
+          <Entra retraso={0.3} className="mt-9">
+            <div className="flex items-end justify-center gap-1">
+              <span className="f-serif pb-3 text-[3rem] font-black leading-none tracking-wide">RIP</span>
+              <span className="globo-num text-[8.4rem]" data-t={ripBase}>{ripBase}</span>
+              {ripSufijo && <span className="f-serif mb-4 text-xl font-bold">{ripSufijo}</span>}
+            </div>
+            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.3rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
+          </Entra>
         </Capitulo>
 
-        {/* 2 · RIP 20s */}
-        <Capitulo>
-          <Globo ancho={60} className="left-3 top-6" />
-          <Globo ancho={48} className="left-2 top-[18%]" retraso={0.9} />
-          <BolaDisco tam={185} className="-right-14 top-2" />
-          <Sticker nombre="mono" tono="negro" ancho={64} rot={10} className="right-6 top-[20%]" anim="balanceo" />
-          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-4 top-[43%]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-4 top-[50%]" />
-          <Brillo tam={20} className="text-black" style={{ left: '12%', top: '38%' }} />
-          <Entra className="relative">
-            <div className="flex items-end justify-center gap-1">
-              <span className="f-serif pb-4 text-[3.4rem] font-black leading-none tracking-wide">RIP</span>
-              <Brillo tam={16} className="text-black" style={{ left: '-4px', top: '-4px' }} />
-            </div>
-            <div className="-mt-2 flex items-end justify-center">
-              <span className="globo-num text-[9.5rem]" data-t={ripBase}>{ripBase}</span>
-              {ripSufijo && <span className="f-serif mb-5 ml-1 text-xl font-bold">{ripSufijo}</span>}
-            </div>
+        {/* 2 · Esquela (fondo negro, rosas) */}
+        <Capitulo oscuro>
+          <Brillo tam={20} className="text-white" style={{ left: '12%', top: '10%' }} />
+          <Brillo tam={14} className="text-white/80" style={{ right: '14%', top: '16%' }} retraso={1.2} />
+          <Brillo tam={18} className="text-white/90" style={{ right: '10%', top: '48%' }} retraso={0.6} />
+          <Brillo tam={12} className="text-white/70" style={{ left: '9%', top: '58%' }} retraso={1.8} />
+          <Sticker nombre="rosa" tono="claro" ancho={62} rot={-12} className="bottom-8 left-6" anim="flota" />
+          <Sticker nombre="rosa" tono="claro" ancho={50} rot={14} espejo className="bottom-12 right-7" anim="flota" retraso={1} />
+          <Entra>
+            <p className="f-cond text-[0.8rem] font-medium tracking-[0.5em] text-white/70">{c.esquela_titulo}</p>
           </Entra>
-          <Entra retraso={0.2}>
-            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.35rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
+          <Entra retraso={0.2} className="mt-7">
+            <Lapida foto={c.portada_url} bn={bn} base={ripBase} sufijo={ripSufijo} fechas={c.esquela_fechas} />
           </Entra>
-          {c.portada_url ? <Entra retraso={0.3}><FotoArco src={c.portada_url} bn={bn} /></Entra> : (
-            <div className="relative mt-8 h-24 w-full" aria-hidden>
-              <Sticker nombre="copas" tono="plata" ancho={80} rot={-6} className="left-1/2 -ml-10" anim="flota" />
-            </div>
+          {c.esquela_texto && (
+            <Entra retraso={0.4} className="mt-9">
+              <p className="f-serif mx-auto max-w-[17rem] text-[0.98rem] italic leading-relaxed text-white/85">{c.esquela_texto}</p>
+            </Entra>
           )}
         </Capitulo>
 
-        {/* 3 · Bienvenida a los 30 */}
+        {/* 3 · Bienvenida a los 30 (corona) */}
         <Capitulo>
-          <Globo ancho={60} className="left-3 top-6" />
-          <Globo ancho={50} className="left-1 top-[17%]" retraso={1.1} />
-          <BolaDisco tam={200} className="-right-16 top-0" />
-          <Sticker nombre="mono" tono="negro" ancho={62} rot={12} className="right-5 top-[19%]" anim="balanceo" />
-          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[45%]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={44} rot={-10} className="left-5 top-[58%]" />
-          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-12 left-1/2 -ml-[75px]" anim="flota" />
-          <BolaDisco tam={170} className="-right-10 bottom-0" />
-          <Sticker nombre="rosa" tono="gris" ancho={52} rot={-8} className="bottom-4 left-5" />
-          <Brillo tam={22} className="text-black" style={{ left: '20%', bottom: '30%' }} />
+          <Sticker nombre="copas" tono="plata" ancho={72} rot={-10} className="left-5 top-[9%]" anim="flota" />
+          <Sticker nombre="labios" tono="negro" ancho={46} rot={14} className="right-6 top-[17%]" />
+          <Sticker nombre="corona" tono="plata" ancho={170} rot={-3} className="bottom-10 left-1/2 -ml-[85px]" anim="flota" />
+          <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
+          <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '46%' }} retraso={0.9} />
+          <Brillo tam={20} className="text-black" style={{ left: '14%', bottom: '24%' }} retraso={1.5} />
+          <Brillo tam={14} className="text-black/70" style={{ right: '12%', bottom: '30%' }} retraso={0.3} />
           <Entra>
             <p className="f-serif mx-auto max-w-[13rem] text-[1.05rem] leading-snug">{c.bienvenida_linea}</p>
           </Entra>
@@ -234,14 +258,14 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </Entra>
         </Capitulo>
 
-        {/* 4 · Fecha y lugar */}
+        <Cinta texto={c.cinta_texto} />
+
+        {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
         <Capitulo>
           <Sticker nombre="lentes" tono="negro" ancho={84} rot={-3} className="right-6 top-[3.5%]" anim="flota" />
-          <Globo ancho={56} className="left-3 top-6" />
-          <Sticker nombre="labios" tono="negro" ancho={46} rot={-14} className="left-4 top-[36%]" />
-          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[28%]" anim="flota" />
-          <BolaDisco tam={160} className="-right-10 bottom-4" />
-          <Brillo tam={20} className="text-black" style={{ left: '16%', top: '20%' }} />
+          <Sticker nombre="martini" tono="plata" ancho={52} rot={8} className="left-4 top-[7%]" anim="flota" retraso={0.7} />
+          <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
+          <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
           <Entra>
             <p className="f-cond mx-auto max-w-[14rem] text-[0.95rem] font-medium leading-snug opacity-80">{c.fecha_linea}</p>
           </Entra>
@@ -281,31 +305,22 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </Entra>
         </Capitulo>
 
-        {/* 5 · Código de vestimenta */}
-        <Capitulo>
-          <Globo ancho={58} className="left-3 top-6" />
-          <Globo ancho={48} className="left-1 top-[17%]" retraso={0.8} />
-          <BolaDisco tam={185} className="-right-12 top-2" />
-          <Sticker nombre="mono" tono="negro" ancho={60} rot={12} className="right-6 top-[20%]" anim="balanceo" />
-          <Sticker nombre="martini" tono="plata" ancho={54} rot={8} className="right-3 top-[47%]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={44} rot={-12} className="left-5 top-[46%]" />
-          <BolaDisco tam={170} className="-left-12 bottom-0" />
-          <Sticker nombre="tacon" tono="negro" ancho={84} rot={-6} className="bottom-6 right-[26%]" />
-          <Sticker nombre="tacon" tono="negro" ancho={84} rot={8} espejo className="bottom-5 right-[10%]" />
-          <Brillo tam={22} className="text-black" style={{ left: '18%', top: '36%' }} />
-          <Entra className="flex items-end justify-center gap-1">
-            <span className="f-serif pb-2 text-3xl font-black leading-none">RIP</span>
-            <span className="globo-num text-[5.2rem]" data-t={ripBase}>{ripBase}</span>
-            {ripSufijo && <span className="f-serif mb-3 text-base font-bold">{ripSufijo}</span>}
-          </Entra>
-          <Entra retraso={0.15} className="mt-6">
+        {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
+        <Capitulo fondo={fondoVestimenta}>
+          <Sticker nombre="mono" tono="negro" ancho={74} rot={-14} className="left-5 top-[8%]" anim="balanceo" />
+          <Sticker nombre="tacon" tono="negro" ancho={116} rot={-6} className="bottom-[5.5rem] left-[14%]" />
+          <Sticker nombre="tacon" tono="negro" ancho={116} rot={6} espejo className="bottom-20 right-[12%]" />
+          <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
+          <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
+          <Brillo tam={18} className="text-black/80" style={{ right: '9%', bottom: '34%' }} retraso={0.5} />
+          <Entra>
             <p className="f-cond text-[0.95rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
-            <p className="f-cond mx-auto mt-1 max-w-[16rem] text-[2.1rem] font-bold leading-[1.05]">{c.dresscode_titulo}</p>
-            {c.dresscode_detalle && <p className="mx-auto mt-3 max-w-[15rem] text-sm leading-snug opacity-80">({c.dresscode_detalle})</p>}
+            <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.6rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
+            {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-sm leading-snug opacity-80">({c.dresscode_detalle})</p>}
             {colores.length > 0 && (
-              <div className="mt-6 flex justify-center gap-3" aria-hidden>
+              <div className="mt-8 flex justify-center gap-3" aria-hidden>
                 {colores.map((col) => (
-                  <span key={col} className="size-10 rounded-full" style={{ background: col, boxShadow: '0 0 0 1.5px #111, 0 6px 8px -3px rgb(0 0 0 / 0.4)' }} />
+                  <span key={col} className="size-12 rounded-full" style={{ background: col, boxShadow: '0 0 0 1.5px #111, 0 8px 10px -4px rgb(0 0 0 / 0.4)' }} />
                 ))}
               </div>
             )}
@@ -341,37 +356,26 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
           </Capitulo>
         )}
 
-        {/* 6 · La festejada invita */}
-        <Capitulo>
-          <Globo ancho={58} className="left-3 top-6" />
-          <BolaDisco tam={190} className="-right-14 top-0" />
-          <Sticker nombre="martini" tono="plata" ancho={58} rot={8} className="right-4 top-[40%]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-5 top-[40%]" />
-          <Sticker nombre="mono" tono="negro" ancho={64} rot={12} className="left-8 bottom-[18%]" anim="balanceo" />
-          <BolaDisco tam={170} className="-right-10 bottom-0" />
-          <Sticker nombre="corona" tono="plata" ancho={92} rot={-4} className="bottom-16 left-1/2 -ml-24" anim="flota" />
-          <Brillo tam={22} className="text-black" style={{ left: '20%', top: '24%' }} />
-          <Escribe className="f-script text-[3.4rem] leading-[0.95]">{c.invita_titulo}</Escribe>
-          {c.regalos_texto && (
-            <Entra retraso={0.3}>
-              <p className="f-cond mx-auto mt-6 max-w-[16rem] text-[1.5rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
-            </Entra>
-          )}
-          {c.mensaje && (
-            <Entra retraso={0.45}>
-              <p className="mx-auto mt-4 max-w-[15rem] text-sm leading-snug opacity-80">{c.mensaje}</p>
-            </Entra>
-          )}
-        </Capitulo>
-
-        {/* 7 · Te espero + confirmación */}
+        {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
         <Capitulo className="!justify-start">
-          <Globo ancho={56} className="left-3 top-6" />
-          <BolaDisco tam={170} className="-right-12 top-0" />
-          <Sticker nombre="corona" tono="plata" ancho={84} rot={-4} className="left-1/2 top-6 -ml-[42px]" anim="flota" />
-          <Sticker nombre="labios" tono="negro" ancho={42} rot={14} className="right-6 top-[17%]" />
-          <Brillo tam={20} className="text-black" style={{ left: '16%', top: '14%' }} />
-          <div className="mt-20">
+          <Globo ancho={54} className="left-3 top-5" />
+          <Globo ancho={44} className="left-1 top-24" retraso={1} />
+          <BolaDisco tam={150} className="-right-10 top-2" />
+          <Brillo tam={18} className="text-black" style={{ left: '30%', top: '9%' }} />
+          <div className="mt-16 flex flex-col items-center">
+            {c.invita_titulo && <Escribe className="f-script text-[3rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
+            {c.regalos_texto && (
+              <Entra retraso={0.3}>
+                <p className="f-cond mx-auto mt-5 max-w-[16rem] text-[1.4rem] font-bold leading-[1.1]">{c.regalos_texto}</p>
+              </Entra>
+            )}
+            {c.mensaje && (
+              <Entra retraso={0.45}>
+                <p className="mx-auto mt-3 max-w-[15rem] text-sm leading-snug opacity-80">{c.mensaje}</p>
+              </Entra>
+            )}
+          </div>
+          <div className="mt-12">
             <Escribe className="f-script text-[4rem] leading-none">{c.final_titulo}</Escribe>
             <Entra retraso={0.3}>
               <p className="f-cond mx-auto mt-3 max-w-[14rem] text-[1.3rem] font-bold leading-tight">{c.final_texto}</p>
@@ -416,9 +420,9 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
               <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-sm underline underline-offset-4">¿Dudas? Escríbeme al {telVisible}</a>
             </Entra>
           )}
-          <div className="relative mt-16 h-28 w-full" aria-hidden>
-            <Sticker nombre="tacon" tono="negro" ancho={84} rot={-6} className="left-[26%] top-2" />
-            <Sticker nombre="tacon" tono="negro" ancho={84} rot={8} espejo className="left-[46%] top-1" />
+          <div className="relative mt-14 h-24 w-full" aria-hidden>
+            <Sticker nombre="labios" tono="negro" ancho={46} rot={-12} className="left-[24%] top-2" />
+            <Sticker nombre="martini" tono="plata" ancho={52} rot={8} className="left-[52%] top-0" anim="flota" />
           </div>
         </Capitulo>
 

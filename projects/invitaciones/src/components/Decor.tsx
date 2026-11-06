@@ -6,12 +6,14 @@ import { useMemo, type CSSProperties } from 'react';
 // (licencia libre) convertidos a blanco y negro con filtros; la bola disco y los globos se
 // dibujan aquí para controlar el brillo y las animaciones.
 
-export type Tono = 'plata' | 'negro' | 'gris';
+export type Tono = 'plata' | 'negro' | 'gris' | 'claro';
 
 const FILTROS: Record<Tono, string> = {
   plata: 'grayscale(1) contrast(1.08) drop-shadow(0 5px 6px rgb(0 0 0 / 0.28))',
   negro: 'grayscale(1) brightness(0.16) contrast(1.25) drop-shadow(0 4px 5px rgb(0 0 0 / 0.25))',
   gris: 'grayscale(1) brightness(0.55) contrast(1.15) drop-shadow(0 4px 5px rgb(0 0 0 / 0.25))',
+  // para fondos negros
+  claro: 'grayscale(1) brightness(1.7) contrast(1.05) drop-shadow(0 0 8px rgb(255 255 255 / 0.25))',
 };
 
 export type NombreSticker = 'labios' | 'martini' | 'corona' | 'tacon' | 'lentes' | 'mono' | 'rosa' | 'destello' | 'disco' | 'globo' | 'copas';
@@ -145,18 +147,18 @@ export function BolaDisco({ tam = 160, className = '', cuerda = 0, style }: { ta
 }
 
 // Humo / bokeh oscuro del borde superior e inferior de cada capítulo.
-export function Humo({ lado = 'arriba', className = '' }: { lado?: 'arriba' | 'abajo'; className?: string }) {
+export function Humo({ lado = 'arriba', className = '', claro = false }: { lado?: 'arriba' | 'abajo'; className?: string; claro?: boolean }) {
   const arriba = lado === 'arriba';
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-x-0 z-0 ${arriba ? 'top-0' : 'bottom-0'} h-40 ${className}`}>
-      <div
+      {!claro && <div
         className="absolute inset-x-[-10%] h-full"
         style={{
           [arriba ? 'top' : 'bottom']: '-34px',
           background: `radial-gradient(ellipse 45% 70% at 18% ${arriba ? '0%' : '100%'}, rgb(0 0 0 / 0.78), transparent 70%), radial-gradient(ellipse 40% 60% at 62% ${arriba ? '-10%' : '110%'}, rgb(0 0 0 / 0.6), transparent 70%), radial-gradient(ellipse 35% 60% at 95% ${arriba ? '0%' : '100%'}, rgb(0 0 0 / 0.7), transparent 70%)`,
           filter: 'blur(16px)',
         }}
-      />
+      />}
       {[8, 24, 41, 58, 73, 88].map((x, i) => (
         <span
           key={x}

@@ -49,7 +49,6 @@ export function Sobre({ nombre, inicial, numero, onAbrir, onListo }: Props) {
       <Globo ancho={44} className="bottom-14 left-14" retraso={1.3} />
       <Globo ancho={50} className="bottom-16 right-4" retraso={0.7} />
       <Sticker nombre="martini" tono="plata" ancho={46} rot={10} className="right-5 top-[14%]" anim="flota" retraso={0.5} />
-      <Sticker nombre="labios" tono="negro" ancho={40} rot={-14} className="left-5 top-[16%]" />
       <Brillo tam={20} className="text-black" style={{ left: '24%', top: '10%' }} />
       <Brillo tam={15} className="text-black/70" style={{ right: '22%', bottom: '30%' }} retraso={1} />
 
