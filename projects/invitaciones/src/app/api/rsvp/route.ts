@@ -33,7 +33,6 @@ export async function POST(req: Request) {
     const inv = await confirmarAsistencia(token, {
       estado,
       asistentes: Number(b.asistentes) || 1,
-      restricciones: String(b.restricciones ?? '').trim(),
       mensaje: String(b.mensaje ?? '').trim(),
     });
     if (!inv) return NextResponse.json({ ok: false, error: 'Invitación no encontrada' }, { status: 404 });

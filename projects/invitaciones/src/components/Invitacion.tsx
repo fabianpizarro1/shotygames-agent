@@ -24,7 +24,6 @@ interface InvitadoVista {
   cupos: number;
   estado: 'pendiente' | 'confirmado' | 'no_asiste';
   asistentes: number;
-  restricciones: string;
   mensaje: string;
 }
 
@@ -151,8 +150,6 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
   const limite = c.fecha_limite_rsvp && !Number.isNaN(new Date(c.fecha_limite_rsvp).getTime())
     ? new Intl.DateTimeFormat('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }).format(new Date(c.fecha_limite_rsvp))
     : '';
-  const wa = c.contacto_whatsapp.replace(/\D/g, '');
-  const telVisible = wa.startsWith('593') ? `0${wa.slice(3)}` : wa;
   const alterno = c.fotos_activas.trim().toLowerCase() !== 'no';
   const lista = c.playlist_activa.trim().toLowerCase() !== 'no';
   // El capítulo del código de vestimenta se tiñe del primer color del código (rosa, en este caso).
@@ -388,7 +385,7 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
                   token={invitado.token}
                   cupos={invitado.cupos}
                   limite={limite}
-                  inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, restricciones: invitado.restricciones, mensaje: invitado.mensaje }}
+                  inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, mensaje: invitado.mensaje }}
                 />
               </div>
             </div>
@@ -410,12 +407,6 @@ export function Invitacion({ config: c, invitado }: { config: Config; invitado: 
                   <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[13.5px] font-bold tracking-[0.3em] text-white">Ir a las fotos</span>
                 </a>
               )}
-            </Entra>
-          )}
-
-          {wa && (
-            <Entra className="mt-8">
-              <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer" className="text-[15.5px] underline underline-offset-4">¿Dudas? Escríbeme al {telVisible}</a>
             </Entra>
           )}
           <div className="h-56 w-full" aria-hidden />

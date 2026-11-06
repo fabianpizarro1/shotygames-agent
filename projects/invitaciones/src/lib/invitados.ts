@@ -12,7 +12,6 @@ export interface Invitado {
   cupos: number;
   estado: Estado;
   asistentes: number;
-  restricciones: string;
   mensaje: string;
 }
 
@@ -27,7 +26,6 @@ function aInvitado(f: Fila): Invitado {
     cupos: Math.max(1, parseInt(f['cupos'] || '1', 10) || 1),
     estado: estado === 'confirmado' || estado === 'no_asiste' ? estado : 'pendiente',
     asistentes: parseInt(f['asistentes'] || '0', 10) || 0,
-    restricciones: f['restricciones'] ?? '',
     mensaje: f['mensaje'] ?? '',
   };
 }
@@ -52,7 +50,7 @@ export async function invitadoPorToken(token: string): Promise<Invitado | null> 
 // Para escribir se lee fresco (sin caché): la fila pudo moverse desde la última lectura.
 export async function confirmarAsistencia(
   token: string,
-  d: { estado: Estado; asistentes: number; restricciones: string; mensaje: string },
+  d: { estado: Estado; asistentes: number; mensaje: string },
 ): Promise<Invitado | null> {
   const { encabezados, filas } = await leerTabla('INVITADOS');
   const f = filas.find((x) => x['token'] === token);
@@ -62,11 +60,10 @@ export async function confirmarAsistencia(
   await actualizarCeldas('INVITADOS', encabezados, f._fila, {
     estado: d.estado,
     asistentes: String(asistentes),
-    restricciones: d.restricciones.slice(0, 300),
     mensaje: d.mensaje.slice(0, 500),
     confirmado_at: new Date().toISOString(),
   });
-  return { ...inv, estado: d.estado, asistentes, restricciones: d.restricciones, mensaje: d.mensaje };
+  return { ...inv, estado: d.estado, asistentes, mensaje: d.mensaje };
 }
 
 export async function marcarAbierto(token: string): Promise<void> {

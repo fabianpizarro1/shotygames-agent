@@ -228,9 +228,8 @@ export function TabInvitados({ invitados, campos, recargar }: { invitados: Invit
                   {i.abierto_at && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-violet-900">Vista</span>}
                 </div>
               </div>
-              {(i.restricciones || i.mensaje || i.notas) && (
+              {(i.mensaje || i.notas) && (
                 <p className="mt-2 text-xs text-stone-600">
-                  {i.restricciones && <span className="mr-3">Restricciones: {i.restricciones}</span>}
                   {i.mensaje && <span className="mr-3">“{i.mensaje}”</span>}
                   {i.notas && <span className="italic">{i.notas}</span>}
                 </p>

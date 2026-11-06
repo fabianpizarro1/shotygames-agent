@@ -31,7 +31,6 @@ export default async function Pagina({ params }: Props) {
         cupos: inv.cupos,
         estado: inv.estado,
         asistentes: inv.asistentes,
-        restricciones: inv.restricciones,
         mensaje: inv.mensaje,
       }}
     />

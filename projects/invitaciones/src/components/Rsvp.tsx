@@ -8,7 +8,7 @@ type Estado = 'pendiente' | 'confirmado' | 'no_asiste';
 interface Props {
   token: string;
   cupos: number;
-  inicial: { estado: Estado; asistentes: number; restricciones: string; mensaje: string };
+  inicial: { estado: Estado; asistentes: number; mensaje: string };
   limite: string;
 }
 
@@ -21,7 +21,6 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
     inicial.estado === 'pendiente' ? null : inicial.estado,
   );
   const [asistentes, setAsistentes] = useState(Math.max(1, inicial.asistentes || 1));
-  const [restricciones, setRestricciones] = useState(inicial.restricciones);
   const [mensaje, setMensaje] = useState(inicial.mensaje);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
@@ -34,7 +33,7 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
       const r = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, estado: elegido, asistentes, restricciones, mensaje }),
+        body: JSON.stringify({ token, estado: elegido, asistentes, mensaje }),
       });
       const j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error || 'No se pudo guardar');
@@ -113,13 +112,6 @@ export function Rsvp({ token, cupos, inicial, limite }: Props) {
                   <span className="f-serif w-6 text-center text-2xl font-semibold">{asistentes}</span>
                   <button type="button" onClick={() => setAsistentes((n) => Math.min(cupos, n + 1))} className="boton size-10 rounded-full border-2 text-lg" style={{ borderColor: 'var(--texto)' }} aria-label="Más">+</button>
                 </div>
-              </label>
-            )}
-
-            {elegido === 'confirmado' && (
-              <label className="block text-[15.5px]">
-                <span className="mb-1.5 block text-[13.5px] font-semibold uppercase tracking-widest opacity-70">Alergias o restricciones (opcional)</span>
-                <input value={restricciones} onChange={(e) => setRestricciones(e.target.value)} maxLength={300} className={campo} style={{ borderColor: 'color-mix(in srgb, var(--texto) 35%, transparent)' }} />
               </label>
             )}
 
