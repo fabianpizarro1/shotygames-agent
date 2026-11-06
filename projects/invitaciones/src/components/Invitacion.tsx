@@ -224,7 +224,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 <Cinta texto={c.cinta_texto} />
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
-        <Capitulo nombre="fecha">
+        <Capitulo nombre="fecha" className="!pb-14">
           <Sticker nombre="martini" tono="plata" ancho={68} rot={8} className="left-3 top-[6%]" />
           <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
           <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
@@ -272,15 +272,15 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo nombre="vestimenta" fondo={fondoVestimenta}>
-          <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-[5%]" />
-          <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[14%]" />
+        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-[780px] !justify-start !pt-10">
+          <Pegatina nombre="nena-corona" ancho={170} rot={5} className="right-2 top-3" />
+          <Pegatina nombre="treinta-brillando" ancho={118} rot={-8} className="left-2 top-[110px]" />
           <Pegatina nombre="mono-globos" ancho={200} className="bottom-0 right-0" />
           <Sticker nombre="tacon" tono="negro" ancho={104} rot={-6} className="bottom-24 left-[4%]" />
           <Sticker nombre="tacon" tono="negro" ancho={104} rot={6} espejo className="bottom-20 left-[28%]" />
           <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
-          <Entra>
+          <Entra className="mt-44">
             <p className="f-cond text-[1.064rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
             <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.912rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
             {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-[17.36px] leading-snug opacity-80">({c.dresscode_detalle})</p>}
