@@ -5,7 +5,7 @@ import { getConfig } from '@/lib/config';
 import { invitadoPorToken } from '@/lib/invitados';
 import { Invitacion } from '@/components/Invitacion';
 
-type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ vista?: string }> };
+type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ vista?: string; volver?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Pagina({ params, searchParams }: Props) {
   const { token } = await params;
-  const { vista } = await searchParams;
+  const { vista, volver } = await searchParams;
   // ?vista=1 (vista previa del panel) solo funciona con la sesión del admin.
   const vistaPrevia = vista === '1' && (await esAdmin());
   const [config, inv] = await Promise.all([getConfig(), invitadoPorToken(token)]);
@@ -28,6 +28,7 @@ export default async function Pagina({ params, searchParams }: Props) {
   return (
     <Invitacion
       vistaPrevia={vistaPrevia}
+      volver={volver === '1'}
       config={config}
       invitado={{
         token: inv.token,

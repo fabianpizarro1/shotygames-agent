@@ -55,11 +55,12 @@ const LETRAS_PALABRA: Record<string, [string, boolean, number, number, number]> 
 };
 const TONOS_CORONA: Record<string, 'plata' | 'color' | 'rosa' | 'negro' | 'gris'> = { plata: 'plata', dorado: 'color', rosa: 'rosa', negro: 'negro', gris: 'gris' };
 
-export function Invitacion({ config, invitado, vistaPrevia = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean }) {
+export function Invitacion({ config, invitado, vistaPrevia = false, volver = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean; volver?: boolean }) {
   // En la vista previa del panel, `c` se actualiza en vivo con lo que se está editando (sin guardar).
   const [c, setC] = useState(config);
   useEffect(() => setC(config), [config]);
-  const [portada, setPortada] = useState(!vistaPrevia);
+  // `volver`: se llega desde la playlist/fotos con el botón «Volver a la invitación»; no se pide abrir el sobre otra vez
+  const [portada, setPortada] = useState(!vistaPrevia && !volver);
   const musica = useRef<MusicaApi>(null);
 
   // Siempre desde el principio: sin esto el navegador restaura el scroll anterior (al recargar o volver
@@ -68,14 +69,24 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
     try {
       history.scrollRestoration = 'manual';
     } catch {}
-    window.scrollTo(0, 0);
-  }, []);
+    if (!volver) window.scrollTo(0, 0);
+  }, [volver]);
   useEffect(() => {
     if (portada) return;
     window.scrollTo(0, 0);
-    const id = requestAnimationFrame(() => window.scrollTo(0, 0));
-    return () => cancelAnimationFrame(id);
-  }, [portada]);
+    // al volver desde la playlist/fotos se aterriza en las tarjetas (con un segundo intento cuando ya cargaron las imágenes)
+    const ir = () => {
+      const extras = volver ? document.getElementById('extras') : null;
+      if (extras) extras.scrollIntoView({ block: 'center' });
+      else window.scrollTo(0, 0);
+    };
+    const id = requestAnimationFrame(ir);
+    const t = volver ? window.setTimeout(ir, 500) : 0;
+    return () => {
+      cancelAnimationFrame(id);
+      if (t) clearTimeout(t);
+    };
+  }, [portada, volver]);
 
   // La portada bloquea el scroll mientras está abierta.
   useEffect(() => {
@@ -445,7 +456,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           </Entra>
 
           {(lista || alterno) && (
-            <Entra retraso={0.1} className="mt-8 grid w-full gap-3">
+            <Entra retraso={0.1} className="mt-8 grid w-full gap-3" id="extras">
               {lista && (
                 <a href={`/playlist?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
                   <span className="f-cond block text-[1.12rem] font-bold tracking-[0.2em]">{c.playlist_titulo}</span>

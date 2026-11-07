@@ -10,10 +10,11 @@ export const Listo = createContext(true);
 
 export const SUAVE = [0.22, 1, 0.36, 1] as const;
 
-export function Entra({ children, retraso = 0, className = '' }: { children: ReactNode; retraso?: number; className?: string }) {
+export function Entra({ children, retraso = 0, className = '', id }: { children: ReactNode; retraso?: number; className?: string; id?: string }) {
   const listo = useContext(Listo);
   return (
     <motion.div
+      id={id}
       className={`relative z-[2] ${className}`}
       initial="off"
       animate={listo ? undefined : 'off'}

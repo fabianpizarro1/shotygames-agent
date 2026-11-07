@@ -27,6 +27,7 @@ export default async function PaginaFotos({ searchParams }: { searchParams: Prom
       }}
       inicial={{ subida: e.subida, galeriaAbierta: e.galeriaAbierta, max: e.maxPorPersona }}
       nombreInicial={inv?.nombre ?? ''}
+      token={inv?.token}
     />
   );
 }

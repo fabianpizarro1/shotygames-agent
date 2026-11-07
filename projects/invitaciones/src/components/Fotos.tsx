@@ -1,5 +1,6 @@
 'use client';
 
+import { VolverInvitacion } from './VolverInvitacion';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { enviarFoto, prepararFoto } from '@/lib/cliente-subida';
@@ -17,6 +18,7 @@ interface Props {
   };
   inicial: { subida: Ventana; galeriaAbierta: boolean; max: number };
   nombreInicial: string;
+  token?: string;
 }
 
 interface Item {
@@ -50,7 +52,7 @@ function guardar(k: string, v: string) {
   } catch {}
 }
 
-export function Fotos({ config: c, inicial, nombreInicial }: Props) {
+export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
   const [subida, setSubida] = useState<Ventana>(inicial.subida);
   const [galeriaAbierta, setGaleriaAbierta] = useState(inicial.galeriaAbierta);
   const [max, setMax] = useState(inicial.max);
@@ -142,7 +144,8 @@ export function Fotos({ config: c, inicial, nombreInicial }: Props) {
 
   return (
     <div style={tema} className="rayas min-h-dvh">
-      <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-10">
+      <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-5">
+        <VolverInvitacion token={token} />
         <motion.header initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: 'easeOut' }} className="text-center" style={{ color: 'var(--texto)' }}>
           <p className="f-serif text-[15.12px] uppercase tracking-[0.3em] opacity-80">{c.evento}</p>
           <h1 className="f-script mt-2 text-[3.36rem] leading-none">{c.titulo}</h1>
@@ -219,6 +222,7 @@ export function Fotos({ config: c, inicial, nombreInicial }: Props) {
             </div>
           )}
         </section>
+        <VolverInvitacion token={token} abajo />
       </main>
 
       <AnimatePresence>

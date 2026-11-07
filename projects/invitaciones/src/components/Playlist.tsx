@@ -1,5 +1,6 @@
 'use client';
 
+import { VolverInvitacion } from './VolverInvitacion';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 
 interface Resultado {
@@ -152,7 +153,8 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
 
   return (
     <div style={tema} className="rayas min-h-dvh">
-      <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-10">
+      <main className="mx-auto w-full max-w-[430px] space-y-8 px-5 pb-16 pt-5">
+        <VolverInvitacion token={invitado?.token} />
         <header className="text-center" style={{ color: 'var(--texto)' }}>
           <p className="f-serif text-[15.12px] uppercase tracking-[0.3em] opacity-80">{c.evento}</p>
           <h1 className="f-script mt-2 text-[3.36rem] leading-none">{c.titulo}</h1>
@@ -263,6 +265,7 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
             </a>
           </p>
         )}
+        <VolverInvitacion token={invitado?.token} abajo />
       </main>
     </div>
   );
