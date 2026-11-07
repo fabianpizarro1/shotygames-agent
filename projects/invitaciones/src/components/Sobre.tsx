@@ -113,7 +113,7 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
           type="button"
           onClick={abrir}
           aria-label="Abrir invitación"
-          className="absolute left-1/2 top-[56%] z-[4] grid size-[96px] -translate-x-1/2 -translate-y-1/2 place-items-center"
+          className="absolute left-1/2 top-[56%] z-[4] grid size-[80px] -translate-x-1/2 -translate-y-1/2 place-items-center"
           animate={abierto ? { scale: [1, 1.2, 0], opacity: [1, 1, 0] } : { scale: [1, 1.07, 1] }}
           transition={abierto ? { duration: 0.28, ease: 'easeOut' } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
