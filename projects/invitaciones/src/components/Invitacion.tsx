@@ -160,21 +160,45 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
             <p className="f-cond text-[16.8px] font-medium tracking-[0.4em] opacity-70">Para</p>
             <p className="f-cond mt-1 text-[1.792rem] font-bold leading-none tracking-[0.12em]">{invitado.nombre}</p>
           </Entra>
-          <div className="mt-10 flex flex-col items-center">
-            <Escribe className="f-script text-[2.128rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>
-            <Escribe className="f-firma -mt-1 text-[5.4rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>
-          </div>
-          <Entra retraso={0.3} className="mt-9">
-            <div className="flex items-end justify-center gap-1">
+          {(c.intro_linea.trim() || c.intro_titulo.trim()) && (
+            <div className="mt-10 flex flex-col items-center">
+              {c.intro_linea.trim() && <Escribe className="f-script text-[2.128rem] leading-tight" retraso={0.2}>{c.intro_linea}</Escribe>}
+              {c.intro_titulo.trim() && <Escribe className="f-firma -mt-1 text-[5.4rem] leading-[0.95]" retraso={0.9} dur={1.8}>{c.intro_titulo}</Escribe>}
+            </div>
+          )}
+          <Entra retraso={0.3} className="mt-16">
+            <p className="f-cond mx-auto max-w-[16rem] text-[1.456rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
+            <div className="mt-6 flex items-end justify-center gap-1">
               <span className="f-serif pb-3 text-[3.36rem] font-black leading-none tracking-wide">RIP</span>
               <span className="globo-num text-[8.4rem]" data-t={ripBase} style={{ '--num': colorOk(c.numero_color_inicio) } as CSSProperties}>{ripBase}</span>
               {ripSufijo && <span className="f-serif mb-4 text-[1.4rem] font-bold">{ripSufijo}</span>}
             </div>
-            <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.456rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
           </Entra>
         </Capitulo>
 
-        {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
+        {/* 2 · Bienvenida a los 30 (corona) */}
+        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-14 !pb-60">
+          <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
+          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-10 left-3" />
+          <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
+          <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
+          <Entra>
+            <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
+          </Entra>
+          <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
+          <Entra retraso={0.4}>
+            <p className="f-serif mt-1 text-[1.176rem]">a los</p>
+          </Entra>
+          <Entra retraso={0.5} className="relative mt-1">
+            <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
+            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
+            <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
+              <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
+            </Escribe>
+          </Entra>
+        </Capitulo>
+
+        {/* 3 · Brindis (foto con cinta, confeti: alegre) */}
         <Capitulo nombre="brindis" texto={colorOk(c.texto_color_brindis)} className="!pt-12 !pb-48">
           <Confeti cantidad={6} />
           <Pegatina nombre="going-on-30" ancho={150} rot={-6} className="bottom-12 left-3" />
@@ -197,28 +221,6 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               <p className="f-cond mx-auto max-w-[16rem] text-[1.344rem] font-bold leading-[1.2]">{c.brindis_texto}</p>
             </Entra>
           )}
-        </Capitulo>
-
-        {/* 3 · Bienvenida a los 30 (corona) */}
-        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-14 !pb-60">
-          <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
-          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-10 left-3" />
-          <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
-          <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
-          <Entra>
-            <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
-          </Entra>
-          <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
-          <Entra retraso={0.4}>
-            <p className="f-serif mt-1 text-[1.176rem]">a los</p>
-          </Entra>
-          <Entra retraso={0.5} className="relative mt-1">
-            <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
-            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
-            <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
-              <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
-            </Escribe>
-          </Entra>
         </Capitulo>
 
                 <Cinta texto={c.cinta_texto} />

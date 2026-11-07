@@ -30,16 +30,6 @@ const SECCIONES: Seccion[] = [
     ],
   },
   {
-    id: 'brindis', titulo: 'Brindis y tu foto', desc: 'La foto en polaroid con confeti', cap: 'brindis',
-    campos: [
-      ['texto_color_brindis', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
-      ['portada_url', 'Tu foto', 'imagen', 'Se ve mejor una foto vertical.'],
-      ['foto_bn', 'Foto en blanco y negro', 'sino'],
-      ['brindis_titulo', 'Título', 'texto'],
-      ['brindis_texto', 'Texto bajo la foto', 'largo'],
-    ],
-  },
-  {
     id: 'bienvenida', titulo: 'Bienvenida a los 30', desc: 'El número grande con tu nombre', cap: 'bienvenida',
     campos: [
       ['texto_color_bienvenida', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
@@ -47,6 +37,16 @@ const SECCIONES: Seccion[] = [
       ['bienvenida_palabra', 'Palabra grande', 'texto'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
       ['numero_color_bienvenida', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
+    ],
+  },
+  {
+    id: 'brindis', titulo: 'Brindis y tu foto', desc: 'La foto en polaroid con confeti', cap: 'brindis',
+    campos: [
+      ['texto_color_brindis', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
+      ['portada_url', 'Tu foto', 'imagen', 'Se ve mejor una foto vertical.'],
+      ['foto_bn', 'Foto en blanco y negro', 'sino'],
+      ['brindis_titulo', 'Título', 'texto'],
+      ['brindis_texto', 'Texto bajo la foto', 'largo'],
     ],
   },
   {
