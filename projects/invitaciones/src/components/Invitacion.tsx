@@ -1,5 +1,6 @@
 'use client';
 
+import { tamNombre } from '@/lib/nombre';
 import { AnimatePresence } from 'motion/react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Config } from '@/lib/config';
@@ -176,7 +177,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
           <Entra className="mt-2">
             <p className="f-cond text-[16.8px] font-medium tracking-[0.4em] opacity-70">Para</p>
-            <p className="f-cond mt-1 text-[1.792rem] font-bold leading-none tracking-[0.12em]">{invitado.nombre}</p>
+            <p className="f-cond mt-1 break-words font-bold leading-none tracking-[0.12em]" style={{ fontSize: tamNombre(invitado.nombre, 0.62, 28.7, 20, 290) }}>{invitado.nombre}</p>
           </Entra>
           {(c.intro_linea.trim() || c.intro_titulo.trim()) && (
             <div className="mt-10 flex flex-col items-center">
@@ -394,7 +395,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
           <Entra retraso={0.15} className="mt-8 w-full">
             <div id="confirmar" className="papel scroll-mt-6 rounded-sm p-6 text-left">
-              <p className="f-script text-center text-[2.912rem] leading-none">{invitado.nombre}</p>
+              <p className="f-cond break-words text-center font-bold leading-tight tracking-[0.08em]" style={{ fontSize: tamNombre(invitado.nombre, 0.58, 40, 22, 255) }}>{invitado.nombre}</p>
               <div className="mt-5">
                 <Rsvp
                   deshabilitado={vistaPrevia}

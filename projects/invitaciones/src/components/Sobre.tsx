@@ -1,5 +1,6 @@
 'use client';
 
+import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Brillo, Humo, Pegatina, Sticker } from './Decor';
@@ -60,7 +61,7 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, on
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <span className="f-cond block text-[16.8px] tracking-[0.4em] opacity-70">Para</span>
-        <span className="f-firma block text-[3.4rem] leading-tight">{nombre}</span>
+        <span className="f-script mx-auto block max-w-[19rem] break-words leading-tight" style={{ fontSize: tamNombre(nombreBonito(nombre), 0.46, 56, 28, 290) }}>{nombreBonito(nombre)}</span>
       </motion.p>
 
       <motion.div
