@@ -41,7 +41,7 @@ const SECCIONES: Seccion[] = [
       ['firma_mostrar', 'Mostrar el nombre sobre el 30', 'sino'],
       ['corona_color', 'Color de la corona', 'corona'],
       ['firma_color', 'Color del nombre sobre el 30', 'colorfirma', 'El borde se ajusta solo para que siempre se lea.'],
-      ['numero_color_bienvenida', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
+      ['numero_color_bienvenida', 'Color del número 30', 'colornumero', 'Vacío (Negro) = el color de los textos del capítulo.'],
     ],
   },
   {
@@ -385,8 +385,8 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <EditorColorTexto valor={v || '#ffffff'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_FIRMA} />
         ) : tipo === 'letra' ? (
           <div className="mt-2 flex flex-wrap gap-2">
-            {([['serif', 'Elegante', 'f-serif font-black uppercase'], ['impacto', 'Impacto', 'f-impact uppercase'], ['condensada', 'Condensada', 'f-cond font-bold'], ['cursiva', 'Cursiva', 'f-script'], ['firma', 'Firma', 'f-firma'], ['sans', 'Moderna', 'font-black uppercase']] as const).map(([val, nombre, cls]) => {
-              const on = (v.trim().toLowerCase() || 'serif') === val;
+            {([['elegante', 'Elegante', 'f-elegante'], ['serif', 'Clásica', 'f-serif font-black uppercase'], ['impacto', 'Impacto', 'f-impact uppercase'], ['condensada', 'Condensada', 'f-cond font-bold'], ['cursiva', 'Cursiva', 'f-script'], ['firma', 'Firma', 'f-firma'], ['sans', 'Moderna', 'font-black uppercase']] as const).map(([val, nombre, cls]) => {
+              const on = (v.trim().toLowerCase() || 'elegante') === val;
               return (
                 <button key={val} type="button" onClick={() => set(clave, val)} aria-pressed={on} className={`flex min-w-[6.5rem] flex-col items-center rounded-xl border px-3 py-2 ${on ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white'}`}>
                   <span className={`${cls} text-2xl leading-tight`}>Hello</span>

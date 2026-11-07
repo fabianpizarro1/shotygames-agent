@@ -25,6 +25,7 @@ body {
 }
 
 .f-script { font-family: var(--f-sacramento), cursive; font-weight: 400; }
+.f-elegante { font-family: var(--f-elegante), cursive; font-weight: 400; }
 .f-firma { font-family: var(--f-delafield), cursive; font-weight: 400; }
 .f-serif { font-family: var(--f-serif), Georgia, serif; }
 .f-impact { font-family: var(--f-bowlby), Impact, sans-serif; font-weight: 400; }

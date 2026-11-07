@@ -45,6 +45,7 @@ function limpiarValores(v: unknown, base: Config): Partial<Config> {
 
 // Tipos de letra de la palabra grande de Bienvenida: [clase, mayúsculas, ancho por letra (em), tamaño máximo, tamaño mínimo]
 const LETRAS_PALABRA: Record<string, [string, boolean, number, number, number]> = {
+  elegante: ['f-elegante', false, 0.42, 108, 46],
   serif: ['f-serif font-black tracking-[0.04em]', true, 0.69, 76, 34],
   impacto: ['f-impact tracking-[0.02em]', true, 0.8, 68, 30],
   condensada: ['f-cond font-bold tracking-[0.06em]', true, 0.56, 84, 36],
@@ -211,21 +212,21 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
           <Escribe className="mt-1 leading-none" retraso={0.3}>
             <span
-              className={`block leading-[0.95] ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.serif[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.serif)[1] ? 'uppercase' : ''}`}
+              className={`block leading-[0.95] ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
               style={{
                 fontSize: (() => {
-                  const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.serif;
+                  const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante;
                   return Math.round(Math.min(max, Math.max(min, 300 / (em * Math.max(1, ...c.bienvenida_palabra.trim().split(/\s+/).map((w) => w.length))))));
                 })(),
-                textShadow: '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)',
+                textShadow: c.bienvenida_letra.trim().toLowerCase() === 'elegante' || !c.bienvenida_letra.trim() ? undefined : '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)',
               }}
             >
               {c.bienvenida_palabra}
             </span>
           </Escribe>
-          <Entra retraso={0.5} className="relative mt-[104px]">
-            <Pegatina nombre="gorro-rojo" ancho={104} rot={24} className="-top-[104px] -right-[5px] z-[3]" />
-            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
+          <Entra retraso={0.5} className="relative mt-[70px]">
+            <Pegatina nombre="gorro-rojo" ancho={76} rot={22} className="-top-[78px] -right-[6px] z-[3]" />
+            <span className="f-serif block text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color: colorOk(c.numero_color_bienvenida) }}>{c.bienvenida_numero}</span>
             {c.firma_mostrar.trim().toLowerCase() !== 'no' && (
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               {(() => {
