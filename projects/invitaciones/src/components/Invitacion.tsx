@@ -402,11 +402,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo nombre="final" texto={colorOk(c.texto_color_final)} className="!justify-start !pt-6">
+        <Capitulo nombre="final" texto={colorOk(c.texto_color_final)} className="!justify-start !pt-6 !pb-[84px]">
           {/* Ocultos a pedido (se pueden volver a poner): mono-globos y disco-estrellas */}
-          <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
-          <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
-          <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
           <Brillo tam={18} className="text-(--texto)" style={{ left: '30%', top: '40px' }} />
           <div className="mt-2 flex flex-col items-center">
@@ -465,7 +462,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               )}
             </Entra>
           )}
-          <div className="h-56 w-full" aria-hidden />
+
+          {/* cierre: los tres stickers en una fila propia, con aire arriba y abajo (no pegados al final de la página) */}
+          <div aria-hidden className="relative -mx-6 mt-24 h-[210px] w-[calc(100%+3rem)]">
+            <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-4 left-1" />
+            <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-8 right-1" />
+            <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
+          </div>
         </Capitulo>
 
         <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} visible={!portada} />
