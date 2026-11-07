@@ -435,9 +435,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo nombre="final" texto={colorOk(c.texto_color_final)} className="!justify-start !pt-6 !pb-[84px]">
+        <Capitulo nombre="final" texto={colorOk(c.texto_color_final)} className="!justify-start !pt-6 !pb-[72px]">
           {/* Ocultos a pedido (se pueden volver a poner): mono-globos y disco-estrellas */}
-          <Humo lado="abajo" />
           <Brillo tam={18} className="text-(--texto)" style={{ left: '30%', top: '40px' }} />
           <div className="mt-2 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
