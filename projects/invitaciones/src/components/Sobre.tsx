@@ -25,6 +25,8 @@ interface Props {
 
 export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, colorSello, onAbrir, onListo }: Props) {
   const clave = (colorSello ?? '').trim().toLowerCase() in SELLOS ? (colorSello as string).trim().toLowerCase() : 'vino';
+  // Tinta de la portada: el rojo del sello, un poco más oscuro, para que todo combine
+  const tinta = `color-mix(in srgb, ${SELLOS[clave]} 80%, #1a0508)`;
   const [abierto, setAbierto] = useState(false);
   const [solapaAtras, setSolapaAtras] = useState(false);
   const timers = useRef<number[]>([]);
@@ -55,12 +57,13 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
       {humo && <Humo lado="abajo" />}
       <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
       <Pegatina nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
-      <Sticker nombre="martini" tono="plata" ancho={46} rot={10} className="right-5 top-[14%]" anim="flota" retraso={0.5} />
-      <Brillo tam={20} className="text-black" style={{ left: '24%', top: '10%' }} />
-      <Brillo tam={15} className="text-black/70" style={{ right: '22%', bottom: '30%' }} retraso={1} />
+      <Sticker nombre="martini" tono="plata" ancho={72} rot={10} className="right-4 top-[8%]" anim="flota" retraso={0.5} />
+      <Brillo tam={20} style={{ left: '24%', top: '10%', color: tinta, opacity: 0.8 }} />
+      <Brillo tam={15} style={{ right: '22%', bottom: '30%', color: tinta }} retraso={1} />
 
       <motion.p
         className="relative z-[2] text-center"
+        style={{ color: tinta }}
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: abierto ? 0 : 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -128,6 +131,7 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
 
       <motion.p
         className="f-cond relative z-[2] text-[15.12px] tracking-[0.3em]"
+        style={{ color: tinta }}
         initial={{ opacity: 0 }}
         animate={{ opacity: abierto ? 0 : 0.75 }}
         transition={{ delay: abierto ? 0 : 0.8, duration: 0.4 }}
