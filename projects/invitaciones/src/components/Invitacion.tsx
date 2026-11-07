@@ -161,7 +161,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           <Humo />
           <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
           <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
-          <Pegatina nombre="treinta-29" ancho={200} rot={-3} className="bottom-3 left-1/2 -ml-[100px]" />
+          <Pegatina nombre="treinta-29" ancho={200} rot={-3} className="bottom-6 left-1/2 -ml-[100px]" />
           <Brillo tam={22} className="text-(--texto)" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
@@ -185,8 +185,10 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           </Entra>
         </Capitulo>
 
+        <Cinta texto={c.cinta_texto} />
+
         {/* 2 · Bienvenida a los 30 (corona) */}
-        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-14 !pb-60">
+        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-10 !pb-60">
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
           <Sticker nombre="corona" tono={TONOS_CORONA[c.corona_color.trim().toLowerCase()] ?? 'plata'} ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
@@ -234,7 +236,6 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           )}
         </Capitulo>
 
-                <Cinta texto={c.cinta_texto} />
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
         <Capitulo nombre="fecha" texto={colorOk(c.texto_color_fecha)} className="!pb-10">
