@@ -212,12 +212,16 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
           <Escribe className="mt-1 leading-none" retraso={0.3}>
             <span
-              className={`block leading-[0.95] ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
+              className={`block ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'leading-[0.95]' : 'leading-[1.12]'} ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
               style={{
                 fontSize: (() => {
                   const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante;
-                  return Math.round(Math.min(max, Math.max(min, 300 / (em * Math.max(1, ...c.bienvenida_palabra.trim().split(/\s+/).map((w) => w.length))))));
+                  const palabras = c.bienvenida_palabra.trim().split(/\s+/);
+                  // Una sola palabra: cabe en una línea. Varias: hasta dos líneas parejas (text-wrap: balance).
+                  const cols = Math.max(1, ...palabras.map((w) => w.length), palabras.length > 1 ? Math.ceil(c.bienvenida_palabra.trim().length / 2) : 0);
+                  return Math.round(Math.min(max, Math.max(min, 300 / (em * cols))));
                 })(),
+                textWrap: 'balance',
                 textShadow: c.bienvenida_letra.trim().toLowerCase() === 'elegante' || !c.bienvenida_letra.trim() ? undefined : '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)',
               }}
             >
