@@ -42,6 +42,8 @@ function limpiarValores(v: unknown, base: Config): Partial<Config> {
   return out;
 }
 
+const TONOS_CORONA: Record<string, 'plata' | 'color' | 'rosa' | 'negro' | 'gris'> = { plata: 'plata', dorado: 'color', rosa: 'rosa', negro: 'negro', gris: 'gris' };
+
 export function Invitacion({ config, invitado, vistaPrevia = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean }) {
   // En la vista previa del panel, `c` se actualiza en vivo con lo que se está editando (sin guardar).
   const [c, setC] = useState(config);
@@ -186,7 +188,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         {/* 2 · Bienvenida a los 30 (corona) */}
         <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-14 !pb-60">
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
-          <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-10 left-3" />
+          <Sticker nombre="corona" tono={TONOS_CORONA[c.corona_color.trim().toLowerCase()] ?? 'plata'} ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
           <Entra>

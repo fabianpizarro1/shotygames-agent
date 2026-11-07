@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero' | 'colorfirma';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero' | 'colorfirma' | 'corona';
 type Campo = [clave: string, etiqueta: string, tipo: Tipo, ayuda?: string];
 interface Seccion {
   id: string;
@@ -36,6 +36,7 @@ const SECCIONES: Seccion[] = [
       ['bienvenida_linea', 'Línea de arriba', 'texto'],
       ['bienvenida_palabra', 'Palabra grande', 'texto'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
+      ['corona_color', 'Color de la corona', 'corona'],
       ['firma_color', 'Color del nombre sobre el 30', 'colorfirma', 'El borde se ajusta solo para que siempre se lea.'],
       ['numero_color_bienvenida', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
     ],
@@ -379,6 +380,18 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral paleta={COLORES_NUMERO} vacio="Negro" />
         ) : tipo === 'colorfirma' ? (
           <EditorColorTexto valor={v || '#ffffff'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_FIRMA} />
+        ) : tipo === 'corona' ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2.5">
+            {([['plata', 'Plata', '#bdbdbd'], ['dorado', 'Dorado', '#f2b632'], ['rosa', 'Rosa', '#f06ea0'], ['gris', 'Gris', '#6b6b6b'], ['negro', 'Negro', '#111111']] as const).map(([val, nombre, col]) => {
+              const on = (v.trim().toLowerCase() || 'plata') === val;
+              return (
+                <button key={val} type="button" onClick={() => set(clave, val)} aria-pressed={on} className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-semibold ${on ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white'}`}>
+                  <span className="size-7 rounded-full ring-1 ring-black/20" style={{ background: col }} />
+                  {nombre}
+                </button>
+              );
+            })}
+          </div>
         ) : tipo === 'programa' ? (
           <EditorPrograma valor={v} onChange={(x) => set(clave, x)} />
         ) : tipo === 'sino' ? (

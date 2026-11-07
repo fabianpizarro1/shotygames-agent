@@ -67,6 +67,7 @@ export const CONFIG_DEFAULTS = {
   texto_color_programa: { valor: '', descripcion: 'Color de los textos del capítulo programa (vacío = el color general)' },
   texto_color_final: { valor: '', descripcion: 'Color de los textos del capítulo final (vacío = el color general)' },
   firma_color: { valor: '#ffffff', descripcion: 'Color de la firma (nombre de la cumpleañera) sobre el número 30' },
+  corona_color: { valor: 'plata', descripcion: 'Color de la corona del capítulo Bienvenida: plata, dorado, rosa, negro o gris' },
   numero_color_inicio: { valor: '', descripcion: 'Color del número grande 20 (vacío = negro metalizado)' },
   numero_color_bienvenida: { valor: '', descripcion: 'Color del número grande 30 (vacío = negro metalizado)' },
   color_acento: { valor: '#9a9a9a', descripcion: 'Plata' },
