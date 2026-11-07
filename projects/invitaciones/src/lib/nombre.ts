@@ -5,7 +5,9 @@ export function nombreBonito(n: string): string {
   return n
     .trim()
     .toLowerCase()
-    .replace(/(^|[\s'’-])(\p{L})/gu, (_, sep: string, l: string) => sep + l.toUpperCase());
+    .replace(/(^|[\s'’-])(\p{L})/gu, (_, sep: string, l: string) => sep + l.toUpperCase())
+    // partículas en minúscula ("de", "del", "la", "los", "y"), salvo al inicio
+    .replace(/(?<=\s)(De|Del|La|Las|Los|Y|E)(?=\s)/g, (m) => m.toLowerCase());
 }
 
 /** Tamaño de letra (px) para que `texto` quepa en una sola línea de `disponible` px; nunca baja de `min`. */

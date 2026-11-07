@@ -4,6 +4,7 @@ import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Brillo, Humo, Pegatina, Sticker } from './Decor';
+import { SelloCera } from './SelloCera';
 
 // Portada tipo sobre: sobre plateado con sello de cera negro. Al tocar el sello: el sello salta,
 // la solapa se abre, la tarjeta sube y todo se desvanece hacia la invitación (~1,4 s).
@@ -15,11 +16,12 @@ interface Props {
   nombre: string;
   inicial: string;
   texto: string;
+  colorSello?: string;
   onAbrir: () => void;
   onListo: () => void;
 }
 
-export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, onAbrir, onListo }: Props) {
+export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, colorSello, onAbrir, onListo }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [solapaAtras, setSolapaAtras] = useState(false);
   const timers = useRef<number[]>([]);
@@ -61,7 +63,7 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, on
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <span className="f-cond block text-[16.8px] tracking-[0.4em] opacity-70">Para</span>
-        <span className="f-script mx-auto block max-w-[19rem] break-words leading-tight" style={{ fontSize: tamNombre(nombreBonito(nombre), 0.46, 56, 28, 290) }}>{nombreBonito(nombre)}</span>
+        <span className="f-cormorant mx-auto block max-w-[19rem] break-words leading-tight tracking-[0.01em]" style={{ fontSize: tamNombre(nombreBonito(nombre), 0.42, 46, 26, 290) }}>{nombreBonito(nombre)}</span>
       </motion.p>
 
       <motion.div
@@ -108,16 +110,11 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, on
           type="button"
           onClick={abrir}
           aria-label="Abrir invitación"
-          className="absolute left-1/2 top-[56%] z-[4] grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full"
-          style={{
-            background: 'radial-gradient(circle at 35% 30%, #5b5b5b, #0b0b0b 70%)',
-            boxShadow: '0 4px 10px rgb(0 0 0 / 0.5), inset 0 0 0 3px rgb(255 255 255 / 0.14)',
-            color: '#f2f2f2',
-          }}
+          className="absolute left-1/2 top-[56%] z-[4] grid size-[112px] -translate-x-1/2 -translate-y-1/2 place-items-center"
           animate={abierto ? { scale: [1, 1.2, 0], opacity: [1, 1, 0] } : { scale: [1, 1.07, 1] }}
           transition={abierto ? { duration: 0.28, ease: 'easeOut' } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <span className="f-firma text-[2.52rem] leading-none">{inicial}</span>
+          <SelloCera inicial={inicial} color={colorSello} className="size-full" />
         </motion.button>
       </motion.div>
 

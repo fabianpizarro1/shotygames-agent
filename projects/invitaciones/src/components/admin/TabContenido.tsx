@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero' | 'colorfirma' | 'corona' | 'letra';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero' | 'colorfirma' | 'corona' | 'letra' | 'sello';
 type Campo = [clave: string, etiqueta: string, tipo: Tipo, ayuda?: string];
 interface Seccion {
   id: string;
@@ -24,6 +24,7 @@ const SECCIONES: Seccion[] = [
       ['intro_linea', 'Línea pequeña de arriba', 'texto'],
       ['intro_titulo', 'Título grande', 'texto', 'Ej: Mi Cumple'],
       ['rip_numero', 'Número del globo', 'texto', 'Ej: 20s'],
+      ['sello_color', 'Color del sello de cera del sobre', 'sello'],
       ['sobre_texto', 'Texto que sale del sobre', 'texto', 'Es la tarjeta que sube al abrir el sobre. {festejado} se cambia por el nombre de la cumpleañera.'],
       ['numero_color_inicio', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
       ['rip_texto', 'Frase de invitación', 'largo', 'Escribe {invitada} y se cambia solo a «invitada» o «invitado» según la persona.'],
@@ -178,6 +179,10 @@ function EditorPaleta({ valor, onChange }: { valor: string; onChange: (v: string
 const COLORES_TEXTO: [string, string][] = [
   ['#111111', 'Negro'], ['#3b3b3b', 'Gris oscuro'], ['#6d1a36', 'Vino'], ['#b8325f', 'Rosa fuerte'],
   ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
+];
+
+const COLORES_SELLO: [string, string][] = [
+  ['#8b1424', 'Vino'], ['#b3202f', 'Rojo'], ['#c9a24a', 'Dorado'], ['#e0527f', 'Rosa'], ['#1f2a44', 'Azul marino'], ['#111111', 'Negro'],
 ];
 
 const COLORES_FIRMA: [string, string][] = [
@@ -384,6 +389,8 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral paleta={COLORES_NUMERO} vacio="Negro" />
         ) : tipo === 'colorfirma' ? (
           <EditorColorTexto valor={v || '#ffffff'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_FIRMA} />
+        ) : tipo === 'sello' ? (
+          <EditorColorTexto valor={v || '#8b1424'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_SELLO} />
         ) : tipo === 'letra' ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {([['elegante', 'Elegante', 'f-elegante'], ['serif', 'Clásica', 'f-serif font-black uppercase'], ['impacto', 'Impacto', 'f-impact uppercase'], ['condensada', 'Condensada', 'f-cond font-bold'], ['cursiva', 'Cursiva', 'f-script'], ['firma', 'Firma', 'f-firma'], ['sans', 'Moderna', 'font-black uppercase']] as const).map(([val, nombre, cls]) => {
