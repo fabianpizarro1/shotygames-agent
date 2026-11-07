@@ -39,6 +39,7 @@ const SECCIONES: Seccion[] = [
       ['bienvenida_letra', 'Letra de la palabra grande', 'letra', 'El tamaño se ajusta solo a la palabra.'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
       ['firma_mostrar', 'Mostrar el nombre sobre el 30', 'sino'],
+      ['gorro_mostrar', 'Gorro de fiesta sobre el 30', 'sino', 'Es el sombrerito rojo que sale sobre el número.'],
       ['corona_color', 'Color de la corona', 'corona'],
       ['firma_color', 'Color del nombre sobre el 30', 'colorfirma', 'El borde se ajusta solo para que siempre se lea.'],
       ['numero_color_bienvenida', 'Color del número 30', 'colornumero', 'Vacío (Negro) = el color de los textos del capítulo.'],

@@ -69,6 +69,7 @@ export const CONFIG_DEFAULTS = {
   firma_color: { valor: '#ffffff', descripcion: 'Color de la firma (nombre de la cumpleañera) sobre el número 30' },
   corona_color: { valor: 'plata', descripcion: 'Color de la corona del capítulo Bienvenida: plata, dorado, rosa, negro o gris' },
   sobre_texto: { valor: '{festejado} Birthday', descripcion: 'Texto de la tarjeta que sale del sobre al abrirlo ({festejado} = nombre de la cumpleañera)' },
+  gorro_mostrar: { valor: 'no', descripcion: 'Mostrar el gorro de fiesta sobre el 30 (si/no)' },
   firma_mostrar: { valor: 'no', descripcion: 'Mostrar el nombre de la cumpleañera sobre el número 30 (si/no)' },
   bienvenida_letra: { valor: 'elegante', descripcion: 'Tipo de letra de la palabra grande de Bienvenida: elegante, serif, impacto, condensada, cursiva, firma o sans' },
   numero_color_inicio: { valor: '', descripcion: 'Color del número grande 20 (vacío = negro metalizado)' },

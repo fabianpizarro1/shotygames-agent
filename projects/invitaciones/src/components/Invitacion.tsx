@@ -209,51 +209,73 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
             </Entra>
           )}
-          {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
-          <Escribe className="mt-1 leading-none" retraso={0.3}>
-            <span
-              className={`block ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'leading-[0.95]' : 'leading-[1.0]'} ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
-              style={{
-                fontSize: (() => {
-                  const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante;
-                  const palabras = c.bienvenida_palabra.trim().split(/\s+/);
-                  // Una sola palabra: cabe en una línea. Varias: hasta dos líneas parejas (text-wrap: balance).
-                  const cols = Math.max(1, ...palabras.map((w) => w.length), palabras.length > 1 ? Math.ceil(c.bienvenida_palabra.trim().length / 2) : 0);
-                  return Math.round(Math.min(max, Math.max(min, 300 / (em * cols))));
-                })(),
-                textWrap: 'balance',
-                textShadow: c.bienvenida_letra.trim().toLowerCase() === 'elegante' || !c.bienvenida_letra.trim() ? undefined : '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)',
-              }}
-            >
-              {c.bienvenida_palabra}
-            </span>
-          </Escribe>
-          <Entra retraso={0.5} className="relative mt-[62px]">
-            <Pegatina nombre="gorro-rojo" ancho={76} rot={22} className="-top-[78px] -right-[6px] z-[3]" />
-            {(() => {
-              // "30's": el número grande y, si trae sufijo ('s, s...), pequeño abajo a la derecha como en "RIP 20s"
-              const m = c.bienvenida_numero.trim().match(/^(\d+)(.*)$/);
-              const base = m ? m[1] : c.bienvenida_numero;
-              const suf = m ? m[2] : '';
-              const color = colorOk(c.numero_color_bienvenida);
-              return (
-                <span className="relative inline-block">
-                  <span className="f-serif block text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color }}>{base}</span>
-                  {suf && <span className="f-serif absolute bottom-3 left-full pl-1 text-[2.2rem] font-medium leading-none" style={{ color }}>{suf}</span>}
-                </span>
-              );
-            })()}
-            {c.firma_mostrar.trim().toLowerCase() !== 'no' && (
-            <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
-              {(() => {
-                const col = colorOk(c.firma_color) ?? '#ffffff';
-                const borde = esClaro(col) ? '#000' : '#fff';
-                const halo = esClaro(col) ? 'rgb(0 0 0 / 0.75)' : 'rgb(255 255 255 / 0.8)';
-                return <span style={{ color: col, textShadow: `0 2px 0 ${borde}, 0 0 14px ${halo}` }}>{c.festejado}</span>;
-              })()}
-            </Escribe>
-            )}
-          </Entra>
+          {/* Bienvenida: la primera palabra grande, el resto entre dos filetes finos, y el número con un eco de contorno, anillos y brillo */}
+          {(() => {
+            const clave = c.bienvenida_letra.trim().toLowerCase();
+            const [cls, mayus, em, max, min] = LETRAS_PALABRA[clave] ?? LETRAS_PALABRA.elegante;
+            const palabras = c.bienvenida_palabra.trim().split(/\s+/).filter(Boolean);
+            const primera = palabras[0] ?? '';
+            const resto = palabras.slice(1).join(' ');
+            const fsP = Math.round(Math.min(max, Math.max(min, 300 / (em * Math.max(1, primera.length)))));
+            const fsR = Math.round(Math.max(34, Math.min(fsP * 0.55, 300 / (em * Math.max(1, resto.length) + 2.2))));
+            const sombra = clave === 'elegante' || !clave ? undefined : '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)';
+            const m = c.bienvenida_numero.trim().match(/^(\d+)(.*)$/);
+            const base = m ? m[1] : c.bienvenida_numero;
+            const suf = m ? m[2] : '';
+            const colorNum = colorOk(c.numero_color_bienvenida);
+            const tinta = colorNum ?? 'var(--texto)';
+            const claseLetra = `${cls} ${mayus ? 'uppercase' : ''}`;
+            return (
+              <div className="relative w-full">
+                <Escribe className="mt-1 leading-none" retraso={0.3}>
+                  <span className={`block leading-[1.0] ${claseLetra}`} style={{ fontSize: fsP, textShadow: sombra }}>{primera}</span>
+                </Escribe>
+                {resto && (
+                  <Entra retraso={0.45} className="mx-auto mt-0.5 flex items-center justify-center gap-4">
+                    <span aria-hidden className="h-px w-12 opacity-60" style={{ background: 'linear-gradient(to right, transparent, currentColor)' }} />
+                    <span className={`leading-none ${claseLetra}`} style={{ fontSize: fsR, textShadow: sombra }}>{resto}</span>
+                    <span aria-hidden className="h-px w-12 opacity-60" style={{ background: 'linear-gradient(to left, transparent, currentColor)' }} />
+                  </Entra>
+                )}
+
+                <Entra retraso={0.6} className="relative mt-12">
+                  {/* resplandor suave y anillos finos detrás del número */}
+                  <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -z-0 size-[360px] -translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(closest-side, color-mix(in srgb, var(--papel) 62%, transparent), transparent)' }} />
+                  <svg aria-hidden viewBox="0 0 320 320" className="pointer-events-none absolute left-1/2 top-1/2 size-[292px] -translate-x-1/2 -translate-y-1/2" fill="none" stroke="currentColor">
+                    <circle cx="160" cy="160" r="152" strokeWidth="0.8" opacity="0.32" />
+                    <circle cx="160" cy="160" r="126" strokeWidth="1" strokeDasharray="1 7" strokeLinecap="round" opacity="0.5" />
+                    <circle cx="30" cy="232" r="2.6" fill="currentColor" stroke="none" opacity="0.55" />
+                  </svg>
+                  <span className="relative inline-block">
+                    {/* eco de contorno desplazado: da profundidad sin sombras pesadas */}
+                    <span aria-hidden className="f-serif pointer-events-none absolute inset-0 block translate-x-[7px] translate-y-[7px] select-none text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color: 'transparent', WebkitTextStroke: `1.2px ${tinta}`, opacity: 0.42 }}>{base}</span>
+                    <span className="f-serif relative block text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color: colorNum }}>{base}</span>
+                    {suf && <span className="f-serif absolute bottom-3 left-full pl-2 text-[2.2rem] font-medium leading-none" style={{ color: colorNum }}>{suf}</span>}
+                  </span>
+                  {c.gorro_mostrar.trim().toLowerCase() === 'si' && (
+                    <Pegatina nombre="gorro-rojo" ancho={76} rot={22} className="-top-[60px] right-[50px] z-[3]" />
+                  )}
+                  {c.firma_mostrar.trim().toLowerCase() === 'si' && (
+                    <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
+                      {(() => {
+                        const col = colorOk(c.firma_color) ?? '#ffffff';
+                        const borde = esClaro(col) ? '#000' : '#fff';
+                        const halo = esClaro(col) ? 'rgb(0 0 0 / 0.75)' : 'rgb(255 255 255 / 0.8)';
+                        return <span style={{ color: col, textShadow: `0 2px 0 ${borde}, 0 0 14px ${halo}` }}>{c.festejado}</span>;
+                      })()}
+                    </Escribe>
+                  )}
+                </Entra>
+
+                {/* filete con estrella, cierra la composición */}
+                <Entra retraso={0.8} className="mx-auto mt-7 flex items-center justify-center gap-3 opacity-80" aria-hidden>
+                  <span className="h-px w-16" style={{ background: 'linear-gradient(to right, transparent, currentColor)' }} />
+                  <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M12 0C13 7 17 11 24 12C17 13 13 17 12 24C11 17 7 13 0 12C7 11 11 7 12 0Z" /></svg>
+                  <span className="h-px w-16" style={{ background: 'linear-gradient(to left, transparent, currentColor)' }} />
+                </Entra>
+              </div>
+            );
+          })()}
         </Capitulo>
 
         {/* 3 · Brindis (foto con cinta, confeti: alegre) */}
