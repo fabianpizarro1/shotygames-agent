@@ -105,8 +105,9 @@ const SECCIONES: Seccion[] = [
   {
     id: 'musica', titulo: 'Música', desc: 'La canción del botón «Escuchar música»', cap: 'inicio',
     campos: [
-      ['musica_url', 'Canción', 'audio', 'Suena solo cuando el invitado toca el botón.'],
+      ['musica_url', 'Canción', 'audio', 'Suena al abrir el sobre (si está activado) o cuando el invitado toca el botón.'],
       ['musica_titulo', 'Nombre que se muestra', 'texto'],
+      ['musica_autoplay', 'Empezar sola al abrir el sobre', 'sino', 'Suena cuando el invitado toca el sello. Si lo apagas, solo suena con el botón.'],
     ],
   },
   {

@@ -177,7 +177,10 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
       <div style={tema} className={`rayas min-h-dvh overflow-x-clip ${vistaPrevia ? 'vista-previa' : ''}`}>
         <AnimatePresence>
           {portada && (
-            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} colorSello={c.sello_color} texto={(/birthday/i.test(c.festejado) && /^\{festejado\}\s*birthday$/i.test(c.sobre_texto.trim()) ? c.festejado : c.sobre_texto.replace('{festejado}', c.festejado)).trim()} onAbrir={() => {}} onListo={() => setPortada(false)} />
+            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} colorSello={c.sello_color} texto={(/birthday/i.test(c.festejado) && /^\{festejado\}\s*birthday$/i.test(c.sobre_texto.trim()) ? c.festejado : c.sobre_texto.replace('{festejado}', c.festejado)).trim()} onAbrir={() => {
+              // El toque en el sello es un gesto del usuario: el navegador permite iniciar la música aquí (y solo aquí)
+              if (c.musica_autoplay.trim().toLowerCase() !== 'no' && !vistaPrevia) musica.current?.reproducir();
+            }} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
