@@ -62,6 +62,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
   // `volver`: se llega desde la playlist/fotos con el botón «Volver a la invitación»; no se pide abrir el sobre otra vez
   const [portada, setPortada] = useState(!vistaPrevia && !volver);
   const musica = useRef<MusicaApi>(null);
+  // Estado de la confirmación (cambia en vivo cuando el invitado confirma en esta misma pantalla)
+  const [estadoRsvp, setEstadoRsvp] = useState(invitado.estado);
 
   // Siempre desde el principio: sin esto el navegador restaura el scroll anterior (al recargar o volver
   // atrás) y la invitación arranca "a la mitad" al abrir el sobre.
@@ -76,7 +78,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
     window.scrollTo(0, 0);
     // al volver desde la playlist/fotos se aterriza en las tarjetas (con un segundo intento cuando ya cargaron las imágenes)
     const ir = () => {
-      const extras = volver ? document.getElementById('extras') : null;
+      const extras = volver ? document.getElementById('extras') ?? document.getElementById('confirmar') : null;
       if (extras) extras.scrollIntoView({ block: 'center' });
       else window.scrollTo(0, 0);
     };
@@ -165,6 +167,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
     : '';
   const alterno = c.fotos_activas.trim().toLowerCase() !== 'no';
   const lista = c.playlist_activa.trim().toLowerCase() !== 'no';
+  const soloConfirmados = c.extras_solo_confirmados.trim().toLowerCase() !== 'no';
   // El capítulo del código de vestimenta se tiñe del primer color del código (rosa, en este caso).
   const tinte = colores[0] ? `color-mix(in srgb, ${colores[0]} 50%, var(--fondo))` : '';
   const fondoVestimenta = tinte ? `linear-gradient(to bottom, transparent 0%, ${tinte} 18%, ${tinte} 82%, transparent 100%)` : undefined;
@@ -464,12 +467,20 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
                   cupos={invitado.cupos}
                   limite={limite}
                   inicial={{ estado: invitado.estado, asistentes: invitado.asistentes, mensaje: invitado.mensaje }}
+                  onEstado={setEstadoRsvp}
                 />
               </div>
             </div>
           </Entra>
 
-          {(lista || alterno) && (
+          {(lista || alterno) && soloConfirmados && !vistaPrevia && estadoRsvp === 'pendiente' && (
+            <Entra retraso={0.1} className="mt-8 w-full" id="extras">
+              <p className="f-cormorant mx-auto max-w-[17rem] text-[1.35rem] leading-snug opacity-80 [text-wrap:balance]">
+                Confirma tu asistencia y aquí aparecerán {lista && alterno ? 'la playlist y las fotos' : lista ? 'la playlist' : 'las fotos'} de la fiesta.
+              </p>
+            </Entra>
+          )}
+          {(lista || alterno) && (!soloConfirmados || vistaPrevia || estadoRsvp === 'confirmado') && (
             <Entra retraso={0.1} className="mt-8 grid w-full gap-3" id="extras">
               {lista && (
                 <a href={`/playlist?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">

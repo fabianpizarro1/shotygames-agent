@@ -35,6 +35,7 @@ interface Props {
     colores: { fondo: string; fondo2: string; papel: string; texto: string; acento: string };
   };
   invitado: { token: string; nombre: string } | null;
+  sinConfirmar?: boolean;
   inicial: { activa: boolean; abierta: boolean; max: number };
 }
 
@@ -43,7 +44,7 @@ const limite = (iso: string) => {
   return Number.isNaN(d.getTime()) ? '' : new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }).format(d);
 };
 
-export function Playlist({ config: c, invitado, inicial }: Props) {
+export function Playlist({ config: c, invitado, inicial, sinConfirmar = false }: Props) {
   const [q, setQ] = useState('');
   const [resultados, setResultados] = useState<Resultado[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -148,7 +149,7 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
   }
 
   const yaPedidas = new Set(lista.map((x) => `${x.titulo}|${x.artista}`));
-  const puede = !!invitado && abierta && inicial.activa;
+  const puede = !!invitado && abierta && inicial.activa && !sinConfirmar;
   const llegoAlTope = mias.length >= max;
 
   return (
@@ -166,7 +167,13 @@ export function Playlist({ config: c, invitado, inicial }: Props) {
 
           {!inicial.activa && <p className="text-center text-[17.36px]">Los pedidos de canciones no están habilitados.</p>}
           {inicial.activa && !invitado && <p className="text-center text-[17.36px]">Abre esta página desde el enlace de tu invitación para poder pedir canciones.</p>}
-          {inicial.activa && invitado && !abierta && <p className="text-center text-[17.36px]">Ya se cerraron los pedidos de canciones. ¡Gracias por participar!</p>}
+          {inicial.activa && invitado && sinConfirmar && (
+            <div className="text-center">
+              <p className="text-[17.36px]">Confirma tu asistencia en la invitación para poder pedir canciones.</p>
+              <a href={`/i/${invitado.token}?volver=1`} className="boton f-cond mt-4 inline-block rounded-full px-6 py-2.5 text-[15.12px] font-bold tracking-[0.25em]" style={{ background: 'var(--texto)', color: 'var(--papel)' }}>Ir a confirmar</a>
+            </div>
+          )}
+          {inicial.activa && invitado && !sinConfirmar && !abierta && <p className="text-center text-[17.36px]">Ya se cerraron los pedidos de canciones. ¡Gracias por participar!</p>}
 
           {puede && (
             <div className="space-y-4">

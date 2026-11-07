@@ -11,11 +11,12 @@ interface Props {
   inicial: { estado: Estado; asistentes: number; mensaje: string };
   limite: string;
   deshabilitado?: boolean;
+  onEstado?: (e: Estado) => void;
 }
 
 const campo = 'w-full rounded-md border bg-white/70 px-3 py-2.5 text-[1.12rem] outline-none transition-colors focus:bg-white';
 
-export function Rsvp({ token, cupos, inicial, limite, deshabilitado = false }: Props) {
+export function Rsvp({ token, cupos, inicial, limite, deshabilitado = false, onEstado }: Props) {
   const [estado, setEstado] = useState<Estado>(inicial.estado);
   const [editando, setEditando] = useState(inicial.estado === 'pendiente');
   const [elegido, setElegido] = useState<'confirmado' | 'no_asiste' | null>(
@@ -39,6 +40,7 @@ export function Rsvp({ token, cupos, inicial, limite, deshabilitado = false }: P
       const j = await r.json();
       if (!r.ok || !j.ok) throw new Error(j.error || 'No se pudo guardar');
       setEstado(j.estado);
+      onEstado?.(j.estado);
       setEditando(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo guardar');

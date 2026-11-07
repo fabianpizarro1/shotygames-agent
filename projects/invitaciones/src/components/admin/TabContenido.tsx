@@ -99,6 +99,7 @@ const SECCIONES: Seccion[] = [
       ['final_titulo', 'Título final', 'texto'],
       ['final_texto', 'Texto sobre la confirmación', 'texto'],
       ['fecha_limite_rsvp', 'Fecha límite para confirmar (opcional)', 'fecha'],
+      ['extras_solo_confirmados', 'Playlist y fotos solo para quien confirma', 'sino', 'Si lo apagas, todos ven las tarjetas de playlist y fotos.'],
     ],
   },
   {

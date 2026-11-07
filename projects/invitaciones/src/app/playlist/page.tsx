@@ -26,6 +26,7 @@ export default async function PaginaPlaylist({ searchParams }: { searchParams: P
         colores: { fondo: c.color_fondo, fondo2: c.color_fondo_2, papel: c.color_papel, texto: c.color_texto, acento: c.color_acento },
       }}
       invitado={inv ? { token: inv.token, nombre: inv.nombre } : null}
+      sinConfirmar={c.extras_solo_confirmados.trim().toLowerCase() !== 'no' && !!inv && inv.estado !== 'confirmado'}
       inicial={{ activa: e.activa, abierta: e.abierta, max: e.max }}
     />
   );
