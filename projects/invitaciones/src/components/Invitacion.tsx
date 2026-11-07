@@ -199,7 +199,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         <Cinta texto={c.cinta_texto} />
 
         {/* 2 · Bienvenida a los 30 (corona) */}
-        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-10 !pb-60">
+        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-[72px] !pb-60">
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
           <Sticker nombre="corona" tono={TONOS_CORONA[c.corona_color.trim().toLowerCase()] ?? 'plata'} ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
@@ -217,7 +217,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
             const primera = palabras[0] ?? '';
             const resto = palabras.slice(1).join(' ');
             const fsP = Math.round(Math.min(max, Math.max(min, 300 / (em * Math.max(1, primera.length)))));
-            const fsR = Math.round(Math.max(34, Math.min(fsP * 0.55, 300 / (em * Math.max(1, resto.length) + 2.2))));
+            const fsR = Math.round(Math.max(26, Math.min(48, 156 / (em * Math.max(1, resto.length)))));
             const sombra = clave === 'elegante' || !clave ? undefined : '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)';
             const m = c.bienvenida_numero.trim().match(/^(\d+)(.*)$/);
             const base = m ? m[1] : c.bienvenida_numero;
@@ -230,21 +230,21 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 <Escribe className="mt-1 leading-none" retraso={0.3}>
                   <span className={`block leading-[1.0] ${claseLetra}`} style={{ fontSize: fsP, textShadow: sombra }}>{primera}</span>
                 </Escribe>
-                {resto && (
-                  <Entra retraso={0.45} className="mx-auto mt-0.5 flex items-center justify-center gap-4">
-                    <span aria-hidden className="h-px w-12 opacity-60" style={{ background: 'linear-gradient(to right, transparent, currentColor)' }} />
-                    <span className={`leading-none ${claseLetra}`} style={{ fontSize: fsR, textShadow: sombra }}>{resto}</span>
-                    <span aria-hidden className="h-px w-12 opacity-60" style={{ background: 'linear-gradient(to left, transparent, currentColor)' }} />
-                  </Entra>
-                )}
-
-                <Entra retraso={0.6} className="relative mt-12">
+                <Entra retraso={0.6} className="relative mt-[84px]">
                   {/* resplandor suave y anillos finos detrás del número */}
                   <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -z-0 size-[360px] -translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(closest-side, color-mix(in srgb, var(--papel) 62%, transparent), transparent)' }} />
-                  <svg aria-hidden viewBox="0 0 320 320" className="pointer-events-none absolute left-1/2 top-1/2 size-[292px] -translate-x-1/2 -translate-y-1/2" fill="none" stroke="currentColor">
-                    <circle cx="160" cy="160" r="152" strokeWidth="0.8" opacity="0.32" />
-                    <circle cx="160" cy="160" r="126" strokeWidth="1" strokeDasharray="1 7" strokeLinecap="round" opacity="0.5" />
-                    <circle cx="30" cy="232" r="2.6" fill="currentColor" stroke="none" opacity="0.55" />
+                  <svg viewBox="0 0 360 360" role={resto ? 'img' : undefined} aria-label={resto || undefined} aria-hidden={resto ? undefined : true} className="pointer-events-none absolute left-1/2 top-1/2 size-[330px] -translate-x-1/2 -translate-y-1/2 overflow-visible" fill="none" stroke="currentColor">
+                    <defs>
+                      <path id="arco-bienvenida" d="M 50 180 A 130 130 0 0 1 310 180" />
+                    </defs>
+                    <circle cx="180" cy="180" r="170" strokeWidth="0.8" opacity="0.34" />
+                    <circle cx="180" cy="180" r="118" strokeWidth="1" strokeDasharray="1 7" strokeLinecap="round" opacity="0.5" />
+                    <circle cx="36" cy="262" r="2.8" fill="currentColor" stroke="none" opacity="0.55" />
+                    {resto && (
+                      <text className={claseLetra} fontSize={Math.round(fsR / 0.9167)} fill="currentColor" stroke="none" textAnchor="middle">
+                        <textPath href="#arco-bienvenida" startOffset="50%">{resto}</textPath>
+                      </text>
+                    )}
                   </svg>
                   <span className="relative inline-block">
                     {/* eco de contorno desplazado: da profundidad sin sombras pesadas */}
