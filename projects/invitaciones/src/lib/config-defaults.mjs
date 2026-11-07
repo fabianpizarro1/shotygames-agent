@@ -59,5 +59,12 @@ export const CONFIG_DEFAULTS = {
   color_fondo_2: { valor: '#0d0d0d', descripcion: 'Negro de los adornos' },
   color_papel: { valor: '#f7f5f1', descripcion: 'Tarjetas' },
   color_texto: { valor: '#111111', descripcion: 'Tinta (textos y botones)' },
+  texto_color_inicio: { valor: '', descripcion: 'Color de los textos del capítulo inicio (vacío = el color general)' },
+  texto_color_brindis: { valor: '', descripcion: 'Color de los textos del capítulo brindis (vacío = el color general)' },
+  texto_color_bienvenida: { valor: '', descripcion: 'Color de los textos del capítulo bienvenida (vacío = el color general)' },
+  texto_color_fecha: { valor: '', descripcion: 'Color de los textos del capítulo fecha (vacío = el color general)' },
+  texto_color_vestimenta: { valor: '', descripcion: 'Color de los textos del capítulo vestimenta (vacío = el color general)' },
+  texto_color_programa: { valor: '', descripcion: 'Color de los textos del capítulo programa (vacío = el color general)' },
+  texto_color_final: { valor: '', descripcion: 'Color de los textos del capítulo final (vacío = el color general)' },
   color_acento: { valor: '#9a9a9a', descripcion: 'Plata' },
 };

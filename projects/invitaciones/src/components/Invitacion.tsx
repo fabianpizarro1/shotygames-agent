@@ -112,7 +112,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
     fetch('/api/abierto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invitado.token }) }).catch(() => {});
   }, [invitado.token, vistaPrevia]);
 
-  const tema = { '--fondo': c.color_fondo, '--fondo2': c.color_fondo_2, '--papel': c.color_papel, '--texto': c.color_texto, '--acento': c.color_acento } as CSSProperties;
+  const colorOk = (v: string) => (/^#[0-9a-f]{3,8}$/i.test(v.trim()) ? v.trim() : undefined);
+  const tema = { '--fondo': c.color_fondo, '--fondo2': c.color_fondo_2, '--papel': c.color_papel, '--texto': c.color_texto, '--texto-base': c.color_texto, '--acento': c.color_acento } as CSSProperties;
 
   const invitada = invitado.genero === 'M' ? 'invitado' : 'invitada';
   const f = piezasFecha(c.fecha_hora);
@@ -147,13 +148,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </AnimatePresence>
 
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
-        <Capitulo nombre="inicio" className="!min-h-0 !justify-start !pt-48 !pb-52">
+        <Capitulo nombre="inicio" texto={colorOk(c.texto_color_inicio)} className="!min-h-0 !justify-start !pt-48 !pb-52">
           <Humo />
           <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
           <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
           <Pegatina nombre="treinta-29" ancho={200} rot={-3} className="bottom-3 left-1/2 -ml-[100px]" />
-          <Brillo tam={22} className="text-black" style={{ left: '16%', top: '32%' }} />
-          <Brillo tam={15} className="text-black/70" style={{ right: '18%', bottom: '16%' }} retraso={1} />
+          <Brillo tam={22} className="text-(--texto)" style={{ left: '16%', top: '32%' }} />
+          <Brillo tam={15} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
           <Entra className="mt-2">
             <p className="f-cond text-[16.8px] font-medium tracking-[0.4em] opacity-70">Para</p>
@@ -174,11 +175,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 2 · Brindis (foto con cinta, confeti: alegre) */}
-        <Capitulo nombre="brindis" className="!pt-12 !pb-48">
+        <Capitulo nombre="brindis" texto={colorOk(c.texto_color_brindis)} className="!pt-12 !pb-48">
           <Confeti cantidad={6} />
           <Pegatina nombre="going-on-30" ancho={150} rot={-6} className="bottom-12 left-3" />
           <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
-          <Brillo tam={18} className="text-black" style={{ right: '14%', top: '30%' }} />
+          <Brillo tam={18} className="text-(--texto)" style={{ right: '14%', top: '30%' }} />
           <div className="mt-6">
             <Escribe className="f-script text-[3.6rem] leading-none">{c.brindis_titulo}</Escribe>
           </div>
@@ -199,11 +200,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 3 · Bienvenida a los 30 (corona) */}
-        <Capitulo nombre="bienvenida" className="!min-h-0 !pt-14 !pb-60">
+        <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-14 !pb-60">
           <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
           <Sticker nombre="corona" tono="plata" ancho={150} rot={-3} className="bottom-10 left-3" />
-          <Brillo tam={22} className="text-black" style={{ right: '14%', top: '36%' }} />
-          <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '46%' }} retraso={0.9} />
+          <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
+          <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
           <Entra>
             <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
           </Entra>
@@ -223,10 +224,10 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 <Cinta texto={c.cinta_texto} />
 
         {/* 4 · Fecha y lugar (lentes, foto del sitio) */}
-        <Capitulo nombre="fecha" className="!pb-10">
+        <Capitulo nombre="fecha" texto={colorOk(c.texto_color_fecha)} className="!pb-10">
           <Sticker nombre="martini" tono="plata" ancho={68} rot={8} className="left-3 top-[6%]" />
-          <Brillo tam={20} className="text-black" style={{ left: '18%', top: '22%' }} />
-          <Brillo tam={14} className="text-black/70" style={{ right: '8%', top: '44%' }} retraso={1} />
+          <Brillo tam={20} className="text-(--texto)" style={{ left: '18%', top: '22%' }} />
+          <Brillo tam={14} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ right: '8%', top: '44%' }} retraso={1} />
           <Entra>
             <p className="f-cond mx-auto max-w-[14rem] text-[1.064rem] font-medium leading-snug opacity-80">{c.fecha_linea}</p>
           </Entra>
@@ -239,7 +240,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 </div>
                 <span className="f-serif text-[6.2rem] font-black leading-none" style={{ fontVariantNumeric: 'lining-nums' }}>{f.numero}</span>
               </div>
-              <div className="mx-auto mt-4 w-64 border-y border-black py-1.5">
+              <div className="mx-auto mt-4 w-64 border-y border-(--texto) py-1.5">
                 <span className="f-serif text-[1.68rem] tracking-[0.35em]" style={{ fontVariantNumeric: 'lining-nums' }}>{f.hora}</span>
               </div>
               {c.hora_fin_texto && <p className="mt-2 text-[15.12px] opacity-70">{c.hora_fin_texto}</p>}
@@ -256,8 +257,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               </a>
             )}
             <div className="mt-5 flex flex-col items-center gap-2.5">
-              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-black px-7 py-3 text-[15.12px] font-bold tracking-[0.3em] text-white">Cómo llegar</a>
-              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-black px-6 py-2.5 text-[15.12px] font-bold tracking-[0.3em]">Abrir en Waze</a>}
+              <a href={maps} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full bg-(--texto-base) px-7 py-3 text-[15.12px] font-bold tracking-[0.3em] text-(--papel)">Cómo llegar</a>
+              {c.waze_url && <a href={c.waze_url} target="_blank" rel="noopener noreferrer" className="boton f-cond rounded-full border border-(--texto) px-6 py-2.5 text-[15.12px] font-bold tracking-[0.3em]">Abrir en Waze</a>}
             </div>
           </Entra>
           <Entra retraso={0.15} className="mt-32 w-full">
@@ -271,11 +272,11 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         </Capitulo>
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
-        <Capitulo nombre="vestimenta" fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-4">
+        <Capitulo nombre="vestimenta" texto={colorOk(c.texto_color_vestimenta)} fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-4">
           <Pegatina nombre="nena-corona" ancho={150} rot={5} className="right-3 top-2" />
           <Pegatina nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
-          <Brillo tam={22} className="text-black" style={{ right: '12%', top: '14%' }} />
-          <Brillo tam={16} className="text-black/70" style={{ left: '12%', top: '44%' }} retraso={1} />
+          <Brillo tam={22} className="text-(--texto)" style={{ right: '12%', top: '14%' }} />
+          <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Entra className="mt-[140px]">
             <p className="f-cond text-[1.064rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
             <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.912rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
@@ -292,13 +293,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
 
         {/* Programa y momentos (solo si hay) */}
         {(itinerario.length > 0 || fotos.length > 0) && (
-          <Capitulo nombre="programa">
+          <Capitulo nombre="programa" texto={colorOk(c.texto_color_programa)}>
             {itinerario.length > 0 && (
               <Entra className="w-full">
                 <p className="f-script mb-5 text-[3.36rem] leading-none">Programa</p>
                 <ul className="mx-auto max-w-[17rem] space-y-3 text-left">
                   {itinerario.map(([hora, texto]) => (
-                    <li key={hora + texto} className="flex items-baseline gap-4 border-b border-black/20 pb-2">
+                    <li key={hora + texto} className="flex items-baseline gap-4 border-b border-[color-mix(in_srgb,var(--texto)_20%,transparent)] pb-2">
                       <span className="f-serif w-16 shrink-0 text-right text-[1.26rem] font-bold tabular-nums">{hora}</span>
                       <span className="f-cond text-[17.36px] font-medium">{texto}</span>
                     </li>
@@ -320,13 +321,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
         )}
 
         {/* 6 · Invita, te espero y confirmación (globos y bola: cierra como abrió) */}
-        <Capitulo nombre="final" className="!justify-start !pt-6">
+        <Capitulo nombre="final" texto={colorOk(c.texto_color_final)} className="!justify-start !pt-6">
           {/* Ocultos a pedido (se pueden volver a poner): mono-globos y disco-estrellas */}
           <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-6 left-1" />
           <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-10 right-1" />
           <Humo lado="abajo" />
-          <Brillo tam={18} className="text-black" style={{ left: '30%', top: '40px' }} />
+          <Brillo tam={18} className="text-(--texto)" style={{ left: '30%', top: '40px' }} />
           <div className="mt-2 flex flex-col items-center">
             {c.invita_titulo && <Escribe className="f-script text-[3.36rem] leading-[0.95]">{c.invita_titulo}</Escribe>}
             {c.regalos_texto && (
@@ -371,14 +372,14 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 <a href={`/playlist?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
                   <span className="f-cond block text-[1.12rem] font-bold tracking-[0.2em]">{c.playlist_titulo}</span>
                   <span className="mt-1 block text-[15.12px] opacity-70">{c.playlist_mensaje}</span>
-                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-white">Pedir mis canciones</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-(--texto) px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-(--papel)">Pedir mis canciones</span>
                 </a>
               )}
               {alterno && (
                 <a href={`/fotos?t=${invitado.token}`} className="boton papel block rounded-sm p-5 text-center">
                   <span className="f-cond block text-[1.12rem] font-bold tracking-[0.2em]">{c.fotos_titulo}</span>
                   <span className="mt-1 block text-[15.12px] opacity-70">{c.fotos_mensaje}</span>
-                  <span className="f-cond mt-3 inline-block rounded-full bg-black px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-white">Ir a las fotos</span>
+                  <span className="f-cond mt-3 inline-block rounded-full bg-(--texto) px-5 py-2 text-[15.12px] font-bold tracking-[0.3em] text-(--papel)">Ir a las fotos</span>
                 </a>
               )}
             </Entra>

@@ -139,3 +139,9 @@ section[data-vis="0"] * { animation: none !important; }
   .confeti { animation: none; display: none; }
   * { scroll-behavior: auto !important; }
 }
+
+/* Las tarjetas (papel) siempre usan el color de texto general, aunque un capítulo tenga otro color de texto. */
+[style*="--texto-base"] .papel {
+  --texto: var(--texto-base);
+  color: var(--texto-base);
+}

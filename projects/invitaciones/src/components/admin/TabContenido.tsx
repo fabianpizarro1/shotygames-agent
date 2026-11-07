@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto';
 type Campo = [clave: string, etiqueta: string, tipo: Tipo, ayuda?: string];
 interface Seccion {
   id: string;
@@ -19,6 +19,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'inicio', titulo: 'Portada y saludo', desc: 'Lo primero que se ve al abrir el sobre', cap: 'inicio',
     campos: [
+      ['texto_color_inicio', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['festejado', 'Nombre de la cumpleañera', 'texto', 'Sale como firma sobre el número 30.'],
       ['intro_linea', 'Línea pequeña de arriba', 'texto'],
       ['intro_titulo', 'Título grande', 'texto', 'Ej: Mi Cumple'],
@@ -30,6 +31,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'brindis', titulo: 'Brindis y tu foto', desc: 'La foto en polaroid con confeti', cap: 'brindis',
     campos: [
+      ['texto_color_brindis', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['portada_url', 'Tu foto', 'imagen', 'Se ve mejor una foto vertical.'],
       ['foto_bn', 'Foto en blanco y negro', 'sino'],
       ['brindis_titulo', 'Título', 'texto'],
@@ -39,6 +41,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'bienvenida', titulo: 'Bienvenida a los 30', desc: 'El número grande con tu nombre', cap: 'bienvenida',
     campos: [
+      ['texto_color_bienvenida', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['bienvenida_linea', 'Línea de arriba', 'texto'],
       ['bienvenida_palabra', 'Palabra grande', 'texto'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
@@ -47,6 +50,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'fecha', titulo: 'Fecha y lugar', desc: 'Día, hora, mapa y cuenta regresiva', cap: 'fecha',
     campos: [
+      ['texto_color_fecha', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['fecha_linea', 'Frase sobre la fecha', 'texto'],
       ['fecha_hora', 'Fecha y hora de inicio', 'fechahora'],
       ['hora_fin_texto', 'Hora de fin (opcional)', 'texto', 'Ej: hasta las 21:00'],
@@ -60,6 +64,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'vestimenta', titulo: 'Código de vestimenta', desc: 'Cómo deben ir vestidos', cap: 'vestimenta',
     campos: [
+      ['texto_color_vestimenta', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['vestimenta_titulo', 'Título', 'texto'],
       ['dresscode_titulo', 'Colores o estilo', 'texto', 'Ej: Rosa bebé – rosa claro'],
       ['dresscode_detalle', 'Detalle (va entre paréntesis)', 'largo'],
@@ -69,6 +74,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'programa', titulo: 'Programa y galería', desc: 'Se ocultan solas si están vacías', cap: 'programa',
     campos: [
+      ['texto_color_programa', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['itinerario', 'Programa del día', 'programa'],
       ['galeria_titulo', 'Título de la galería', 'texto'],
       ['galeria_fotos', 'Galería de fotos', 'galeria'],
@@ -77,6 +83,7 @@ const SECCIONES: Seccion[] = [
   {
     id: 'final', titulo: 'Obsequio y confirmación', desc: 'El sobre del regalo y el botón de confirmar', cap: 'final',
     campos: [
+      ['texto_color_final', 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'],
       ['regalos_texto', 'Texto del obsequio', 'largo', 'Sale con el dibujo del sobre. Déjalo vacío para quitar el sobre.'],
       ['invita_titulo', 'Título sobre el obsequio (opcional)', 'texto'],
       ['mensaje', 'Texto pequeño (opcional)', 'largo'],
@@ -97,7 +104,7 @@ const SECCIONES: Seccion[] = [
     campos: [
       ['color_fondo', 'Papel de fondo', 'color'],
       ['color_papel', 'Tarjetas', 'color'],
-      ['color_texto', 'Textos y botones', 'color'],
+      ['color_texto', 'Color general de los textos', 'colortexto', 'Es el de toda la invitación; cada capítulo puede tener el suyo.'],
       ['color_acento', 'Plata (sobre y detalles)', 'color'],
       ['color_fondo_2', 'Negro de los adornos', 'color'],
     ],
@@ -156,6 +163,34 @@ function EditorPaleta({ valor, onChange }: { valor: string; onChange: (v: string
         </span>
       ))}
       <button type="button" onClick={() => poner([...colores, '#f4b6c2'])} className={btnSec}>+ Agregar color</button>
+    </div>
+  );
+}
+
+const COLORES_TEXTO: [string, string][] = [
+  ['#111111', 'Negro'], ['#3b3b3b', 'Gris oscuro'], ['#6d1a36', 'Vino'], ['#b8325f', 'Rosa fuerte'],
+  ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
+];
+
+function EditorColorTexto({ valor, onChange, conGeneral }: { valor: string; onChange: (v: string) => void; conGeneral: boolean }) {
+  const v = valor.trim().toLowerCase();
+  const esPreset = COLORES_TEXTO.some(([c]) => c === v);
+  const personalizado = !!v && !esPreset;
+  const aro = (on: boolean) => (on ? 'ring-2 ring-offset-2 ring-stone-900' : 'ring-1 ring-stone-300');
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2.5">
+      {conGeneral && (
+        <button type="button" onClick={() => onChange('')} aria-pressed={!v} className={`rounded-full px-4 py-2 text-sm font-semibold ${!v ? 'bg-stone-900 text-white' : 'border border-stone-300 bg-white'}`}>
+          General
+        </button>
+      )}
+      {COLORES_TEXTO.map(([c, nombre]) => (
+        <button key={c} type="button" title={nombre} aria-label={nombre} aria-pressed={v === c} onClick={() => onChange(c)} className={`size-10 rounded-full active:scale-95 ${aro(v === c)}`} style={{ background: c }} />
+      ))}
+      <label title="Elegir otro color" className={`relative grid size-10 cursor-pointer place-items-center overflow-hidden rounded-full active:scale-95 ${aro(personalizado)}`} style={{ background: personalizado ? v : 'conic-gradient(#f87171, #fbbf24, #4ade80, #38bdf8, #a78bfa, #f472b6, #f87171)' }}>
+        <span className="sr-only">Elegir otro color</span>
+        <input type="color" value={/^#[0-9a-f]{6}$/i.test(v) ? v : '#111111'} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 size-full cursor-pointer opacity-0" />
+      </label>
     </div>
   );
 }
@@ -327,6 +362,8 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <div className="mt-2"><Subidor tipo="audio" valor={v} onChange={(x) => set(clave, x)} /></div>
         ) : tipo === 'paleta' ? (
           <EditorPaleta valor={v} onChange={(x) => set(clave, x)} />
+        ) : tipo === 'colortexto' ? (
+          <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral={clave !== 'color_texto'} />
         ) : tipo === 'programa' ? (
           <EditorPrograma valor={v} onChange={(x) => set(clave, x)} />
         ) : tipo === 'sino' ? (

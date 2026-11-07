@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useInView } from 'motion/react';
-import { createContext, useContext, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useRef, type CSSProperties, type ReactNode } from 'react';
 
 // Piezas de animación compartidas por las dos versiones de la invitación (plata y collage).
 
@@ -55,7 +55,7 @@ export function Escribe({ children, className = '', retraso = 0, dur = 1.4 }: { 
   );
 }
 
-export function Capitulo({ children, fondo, className = '', nombre }: { children: ReactNode; fondo?: string; className?: string; nombre?: string }) {
+export function Capitulo({ children, fondo, className = '', nombre, texto }: { children: ReactNode; fondo?: string; className?: string; nombre?: string; texto?: string }) {
   const ref = useRef<HTMLElement>(null);
   // Cuando el capítulo está lejos de la pantalla sus animaciones se pausan (ver globals.css).
   const visible = useInView(ref, { margin: '100px 0px 100px 0px' });
@@ -65,7 +65,7 @@ export function Capitulo({ children, fondo, className = '', nombre }: { children
       data-vis={visible ? '1' : '0'}
       data-cap={nombre}
       className={`relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col items-center justify-center overflow-x-clip px-8 py-24 text-center ${className}`}
-      style={fondo ? { background: fondo } : undefined}
+      style={{ ...(fondo ? { background: fondo } : {}), ...(texto ? ({ '--texto': texto, color: 'var(--texto)' } as CSSProperties) : {}) }}
     >
       {children}
     </section>
