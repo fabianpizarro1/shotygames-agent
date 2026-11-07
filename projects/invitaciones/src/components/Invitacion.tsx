@@ -193,11 +193,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
             <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
           </Entra>
           <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
-          <Entra retraso={0.4}>
-            <p className="f-serif mt-1 text-[1.176rem]">a los</p>
-          </Entra>
-          <Entra retraso={0.5} className="relative mt-1">
-            <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
+          <Entra retraso={0.5} className="relative mt-[88px]">
+            <Pegatina nombre="gorro-rojo" ancho={72} rot={9} className="-top-[96px] right-[50px] z-[3]" />
             <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               {(() => {
