@@ -10,6 +10,8 @@ import { SelloCera } from './SelloCera';
 // la solapa se abre, la tarjeta sube y todo se desvanece hacia la invitación (~1,4 s).
 // Solo se animan transform y opacity.
 
+const SELLOS: Record<string, string> = { vino: '#800e1e', rojo: '#ac1826', dorado: '#be963e', rosa: '#d66086', azul: '#243460', negro: '#1c1a1c' };
+
 interface Props {
   fondo?: string;
   humo?: boolean;
@@ -22,6 +24,7 @@ interface Props {
 }
 
 export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, colorSello, onAbrir, onListo }: Props) {
+  const clave = (colorSello ?? '').trim().toLowerCase() in SELLOS ? (colorSello as string).trim().toLowerCase() : 'vino';
   const [abierto, setAbierto] = useState(false);
   const [solapaAtras, setSolapaAtras] = useState(false);
   const timers = useRef<number[]>([]);
@@ -110,11 +113,16 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
           type="button"
           onClick={abrir}
           aria-label="Abrir invitación"
-          className="absolute left-1/2 top-[56%] z-[4] grid size-[112px] -translate-x-1/2 -translate-y-1/2 place-items-center"
+          className="absolute left-1/2 top-[56%] z-[4] grid size-[96px] -translate-x-1/2 -translate-y-1/2 place-items-center"
           animate={abierto ? { scale: [1, 1.2, 0], opacity: [1, 1, 0] } : { scale: [1, 1.07, 1] }}
           transition={abierto ? { duration: 0.28, ease: 'easeOut' } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <SelloCera inicial={inicial} color={colorSello} className="size-full" />
+          {inicial.toUpperCase() === 'J' ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/sello/${clave}.webp`} alt="" width={340} height={335} draggable={false} className="size-full object-contain" />
+          ) : (
+            <SelloCera inicial={inicial} color={SELLOS[clave]} className="size-full" />
+          )}
         </motion.button>
       </motion.div>
 

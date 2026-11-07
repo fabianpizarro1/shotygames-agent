@@ -1,0 +1,15 @@
+import { writeFileSync } from 'node:fs';
+const [url, out, port] = [process.argv[2], process.argv[3], process.argv[4]];
+const t = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: 'PUT' })).json();
+const ws = new WebSocket(t.webSocketDebuggerUrl); await new Promise((r) => (ws.onopen = r));
+let id = 0; const pend = new Map();
+ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.id && pend.has(d.id)) { pend.get(d.id)(d); pend.delete(d.id); } };
+const send = (method, params = {}) => new Promise((r) => { const i = ++id; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+await send('Page.enable'); await send('Runtime.enable');
+await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+await send('Emulation.setDeviceMetricsOverride', { width: 1000, height: 1000, deviceScaleFactor: 1, mobile: false });
+await send('Page.navigate', { url }); await sleep(4000);
+await send('Runtime.evaluate', { expression: 'document.fonts.ready.then(()=>document.fonts.check("520px Great Vibes"))', awaitPromise: true });
+writeFileSync(out, Buffer.from((await send('Page.captureScreenshot', { format: 'png', fromSurface: true })).result.data, 'base64'));
+ws.close(); process.exit(0);

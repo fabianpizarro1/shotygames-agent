@@ -181,10 +181,6 @@ const COLORES_TEXTO: [string, string][] = [
   ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
 ];
 
-const COLORES_SELLO: [string, string][] = [
-  ['#8b1424', 'Vino'], ['#b3202f', 'Rojo'], ['#c9a24a', 'Dorado'], ['#e0527f', 'Rosa'], ['#1f2a44', 'Azul marino'], ['#111111', 'Negro'],
-];
-
 const COLORES_FIRMA: [string, string][] = [
   ['#ffffff', 'Blanco'], ['#111111', 'Negro'], ['#f48fb1', 'Rosa'], ['#e0527f', 'Rosa fuerte'], ['#c9a24a', 'Dorado'], ['#6d1a36', 'Vino'],
 ];
@@ -390,7 +386,17 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
         ) : tipo === 'colorfirma' ? (
           <EditorColorTexto valor={v || '#ffffff'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_FIRMA} />
         ) : tipo === 'sello' ? (
-          <EditorColorTexto valor={v || '#8b1424'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_SELLO} />
+          <div className="mt-2 flex flex-wrap items-center gap-2.5">
+            {([['vino', 'Vino', '#800e1e'], ['rojo', 'Rojo', '#ac1826'], ['dorado', 'Dorado', '#be963e'], ['rosa', 'Rosa', '#d66086'], ['azul', 'Azul', '#243460'], ['negro', 'Negro', '#1c1a1c']] as const).map(([val, nombre, col]) => {
+              const on = (v.trim().toLowerCase() || 'vino') === val;
+              return (
+                <button key={val} type="button" onClick={() => set(clave, val)} aria-pressed={on} className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm font-semibold ${on ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white'}`}>
+                  <span className="size-7 rounded-full ring-1 ring-black/20" style={{ background: col }} />
+                  {nombre}
+                </button>
+              );
+            })}
+          </div>
         ) : tipo === 'letra' ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {([['elegante', 'Elegante', 'f-elegante'], ['serif', 'Clásica', 'f-serif font-black uppercase'], ['impacto', 'Impacto', 'f-impact uppercase'], ['condensada', 'Condensada', 'f-cond font-bold'], ['cursiva', 'Cursiva', 'f-script'], ['firma', 'Firma', 'f-firma'], ['sans', 'Moderna', 'font-black uppercase']] as const).map(([val, nombre, cls]) => {
