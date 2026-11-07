@@ -40,9 +40,9 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
   }
 
   // Plata (--acento) en tres tonos para el cuerpo, el frente y la solapa del sobre.
-  const cuerpo = 'color-mix(in srgb, var(--acento) 78%, #000)';
-  const frente = 'color-mix(in srgb, var(--acento) 92%, #fff)';
-  const solapa = 'color-mix(in srgb, var(--acento) 55%, #fff)';
+  const cuerpo = 'color-mix(in srgb, var(--acento) 66%, #fff)';
+  const frente = 'color-mix(in srgb, var(--acento) 51%, #fff)';
+  const solapa = 'color-mix(in srgb, var(--acento) 35%, #fff)';
   const V = 'polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%)';
 
   return (
