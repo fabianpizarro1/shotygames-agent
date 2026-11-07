@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero';
 type Campo = [clave: string, etiqueta: string, tipo: Tipo, ayuda?: string];
 interface Seccion {
   id: string;
@@ -24,6 +24,7 @@ const SECCIONES: Seccion[] = [
       ['intro_linea', 'Línea pequeña de arriba', 'texto'],
       ['intro_titulo', 'Título grande', 'texto', 'Ej: Mi Cumple'],
       ['rip_numero', 'Número del globo', 'texto', 'Ej: 20s'],
+      ['numero_color_inicio', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
       ['rip_texto', 'Frase de invitación', 'largo', 'Escribe {invitada} y se cambia solo a «invitada» o «invitado» según la persona.'],
       ['cinta_texto', 'Cinta que se desplaza', 'texto', 'Déjala vacía para quitarla.'],
     ],
@@ -45,6 +46,7 @@ const SECCIONES: Seccion[] = [
       ['bienvenida_linea', 'Línea de arriba', 'texto'],
       ['bienvenida_palabra', 'Palabra grande', 'texto'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
+      ['numero_color_bienvenida', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
     ],
   },
   {
@@ -172,19 +174,23 @@ const COLORES_TEXTO: [string, string][] = [
   ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
 ];
 
-function EditorColorTexto({ valor, onChange, conGeneral }: { valor: string; onChange: (v: string) => void; conGeneral: boolean }) {
+const COLORES_NUMERO: [string, string][] = [
+  ['#e0527f', 'Rosa'], ['#c9a24a', 'Dorado'], ['#9a9a9a', 'Plata'], ['#6d1a36', 'Vino'], ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
+];
+
+function EditorColorTexto({ valor, onChange, conGeneral, paleta = COLORES_TEXTO, vacio = 'General' }: { valor: string; onChange: (v: string) => void; conGeneral: boolean; paleta?: [string, string][]; vacio?: string }) {
   const v = valor.trim().toLowerCase();
-  const esPreset = COLORES_TEXTO.some(([c]) => c === v);
+  const esPreset = paleta.some(([c]) => c === v);
   const personalizado = !!v && !esPreset;
   const aro = (on: boolean) => (on ? 'ring-2 ring-offset-2 ring-stone-900' : 'ring-1 ring-stone-300');
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2.5">
       {conGeneral && (
         <button type="button" onClick={() => onChange('')} aria-pressed={!v} className={`rounded-full px-4 py-2 text-sm font-semibold ${!v ? 'bg-stone-900 text-white' : 'border border-stone-300 bg-white'}`}>
-          General
+          {vacio}
         </button>
       )}
-      {COLORES_TEXTO.map(([c, nombre]) => (
+      {paleta.map(([c, nombre]) => (
         <button key={c} type="button" title={nombre} aria-label={nombre} aria-pressed={v === c} onClick={() => onChange(c)} className={`size-10 rounded-full active:scale-95 ${aro(v === c)}`} style={{ background: c }} />
       ))}
       <label title="Elegir otro color" className={`relative grid size-10 cursor-pointer place-items-center overflow-hidden rounded-full active:scale-95 ${aro(personalizado)}`} style={{ background: personalizado ? v : 'conic-gradient(#f87171, #fbbf24, #4ade80, #38bdf8, #a78bfa, #f472b6, #f87171)' }}>
@@ -364,6 +370,8 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <EditorPaleta valor={v} onChange={(x) => set(clave, x)} />
         ) : tipo === 'colortexto' ? (
           <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral={clave !== 'color_texto'} />
+        ) : tipo === 'colornumero' ? (
+          <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral paleta={COLORES_NUMERO} vacio="Negro" />
         ) : tipo === 'programa' ? (
           <EditorPrograma valor={v} onChange={(x) => set(clave, x)} />
         ) : tipo === 'sino' ? (

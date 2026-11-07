@@ -66,5 +66,7 @@ export const CONFIG_DEFAULTS = {
   texto_color_vestimenta: { valor: '', descripcion: 'Color de los textos del capítulo vestimenta (vacío = el color general)' },
   texto_color_programa: { valor: '', descripcion: 'Color de los textos del capítulo programa (vacío = el color general)' },
   texto_color_final: { valor: '', descripcion: 'Color de los textos del capítulo final (vacío = el color general)' },
+  numero_color_inicio: { valor: '', descripcion: 'Color del número grande 20 (vacío = negro metalizado)' },
+  numero_color_bienvenida: { valor: '', descripcion: 'Color del número grande 30 (vacío = negro metalizado)' },
   color_acento: { valor: '#9a9a9a', descripcion: 'Plata' },
 };

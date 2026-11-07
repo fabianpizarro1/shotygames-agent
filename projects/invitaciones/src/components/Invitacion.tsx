@@ -143,7 +143,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
       <div style={tema} className={`rayas min-h-dvh overflow-x-clip ${vistaPrevia ? 'vista-previa' : ''}`}>
         <AnimatePresence>
           {portada && (
-            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} onAbrir={() => {}} onListo={() => setPortada(false)} />
+            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} colorNumero={colorOk(c.numero_color_inicio)} onAbrir={() => {}} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
@@ -167,7 +167,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           <Entra retraso={0.3} className="mt-9">
             <div className="flex items-end justify-center gap-1">
               <span className="f-serif pb-3 text-[3.36rem] font-black leading-none tracking-wide">RIP</span>
-              <span className="globo-num text-[8.4rem]" data-t={ripBase}>{ripBase}</span>
+              <span className="globo-num text-[8.4rem]" data-t={ripBase} style={{ '--num': colorOk(c.numero_color_inicio) } as CSSProperties}>{ripBase}</span>
               {ripSufijo && <span className="f-serif mb-4 text-[1.4rem] font-bold">{ripSufijo}</span>}
             </div>
             <p className="f-cond mx-auto mt-4 max-w-[16rem] text-[1.456rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
@@ -214,7 +214,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           </Entra>
           <Entra retraso={0.5} className="relative mt-1">
             <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
-            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero}>{c.bienvenida_numero}</span>
+            <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
             </Escribe>

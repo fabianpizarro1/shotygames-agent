@@ -53,6 +53,11 @@ body {
   color: transparent;
   filter: drop-shadow(0 9px 7px rgb(0 0 0 / 0.32));
 }
+.globo-num[style*="--num:"] {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--num) 60%, white) 0%, color-mix(in srgb, var(--num) 88%, black) 26%, var(--num) 58%, color-mix(in srgb, var(--num) 82%, black) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
 .globo-num::after {
   content: attr(data-t);
   position: absolute;
