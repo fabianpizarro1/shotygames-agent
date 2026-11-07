@@ -369,17 +369,31 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
           <Pegatina nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '44%' }} retraso={1} />
-          <Entra className="mt-[140px]">
-            <p className="f-cond text-[1.064rem] font-medium opacity-80">{c.vestimenta_titulo}</p>
-            <p className="f-cond mx-auto mt-2 max-w-[17rem] text-[2.912rem] font-bold leading-[1.02]">{c.dresscode_titulo}</p>
-            {c.dresscode_detalle && <p className="mx-auto mt-4 max-w-[15rem] text-[17.36px] leading-snug opacity-80">({c.dresscode_detalle})</p>}
+          <Entra className="mt-[154px] w-full">
+            {/* rótulo pequeño entre filetes */}
+            <div className="mx-auto flex items-center justify-center gap-3 opacity-80" aria-hidden={false}>
+              <span aria-hidden className="h-px w-9" style={{ background: 'linear-gradient(to right, transparent, currentColor)' }} />
+              <p className="f-cond text-[0.95rem] font-medium tracking-[0.34em]">{c.vestimenta_titulo}</p>
+              <span aria-hidden className="h-px w-9" style={{ background: 'linear-gradient(to left, transparent, currentColor)' }} />
+            </div>
+            {/* el código: cursiva serif, en frase (no en mayúsculas gigantes) */}
+            <p className="f-cormorant mx-auto mt-5 max-w-[17rem] leading-[1.12] [text-wrap:balance]" style={{ fontSize: c.dresscode_titulo.trim().length <= 22 ? 46 : c.dresscode_titulo.trim().length <= 40 ? 36 : 30 }}>
+              {c.dresscode_titulo}
+            </p>
+            {c.dresscode_detalle && <p className="mx-auto mt-3 max-w-[15rem] text-[15px] leading-snug opacity-75 [text-wrap:balance]">{c.dresscode_detalle}</p>}
             {colores.length > 0 && (
-              <div className="mt-8 flex justify-center gap-3" aria-hidden>
-                {colores.map((col) => (
-                  <span key={col} className="size-12 rounded-full" style={{ background: col, boxShadow: '0 0 0 1.5px #111, 0 8px 10px -4px rgb(0 0 0 / 0.4)' }} />
+              <div className="mt-9 flex justify-center" aria-hidden>
+                {colores.map((col, k) => (
+                  <span key={col} className="relative size-[54px] rounded-full" style={{ background: col, marginLeft: k ? -13 : 0, zIndex: colores.length - k, boxShadow: '0 0 0 3px var(--papel), 0 10px 16px -8px rgb(0 0 0 / 0.35)' }} />
                 ))}
               </div>
             )}
+            {/* filete con estrella, como en Bienvenida */}
+            <div aria-hidden className="mx-auto mt-9 flex items-center justify-center gap-3 opacity-70">
+              <span className="h-px w-14" style={{ background: 'linear-gradient(to right, transparent, currentColor)' }} />
+              <svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M12 0C13 7 17 11 24 12C17 13 13 17 12 24C11 17 7 13 0 12C7 11 11 7 12 0Z" /></svg>
+              <span className="h-px w-14" style={{ background: 'linear-gradient(to left, transparent, currentColor)' }} />
+            </div>
           </Entra>
         </Capitulo>
 
