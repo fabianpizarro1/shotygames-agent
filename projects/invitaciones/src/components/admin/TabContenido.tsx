@@ -24,6 +24,7 @@ const SECCIONES: Seccion[] = [
       ['intro_linea', 'Línea pequeña de arriba', 'texto'],
       ['intro_titulo', 'Título grande', 'texto', 'Ej: Mi Cumple'],
       ['rip_numero', 'Número del globo', 'texto', 'Ej: 20s'],
+      ['sobre_texto', 'Texto que sale del sobre', 'texto', 'Es la tarjeta que sube al abrir el sobre. {festejado} se cambia por el nombre de la cumpleañera.'],
       ['numero_color_inicio', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
       ['rip_texto', 'Frase de invitación', 'largo', 'Escribe {invitada} y se cambia solo a «invitada» o «invitado» según la persona.'],
       ['cinta_texto', 'Cinta que se desplaza', 'texto', 'Déjala vacía para quitarla.'],

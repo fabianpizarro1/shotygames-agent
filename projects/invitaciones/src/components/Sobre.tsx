@@ -13,13 +13,12 @@ interface Props {
   humo?: boolean;
   nombre: string;
   inicial: string;
-  numero: string;
-  colorNumero?: string;
+  texto: string;
   onAbrir: () => void;
   onListo: () => void;
 }
 
-export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, colorNumero, onAbrir, onListo }: Props) {
+export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, onAbrir, onListo }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [solapaAtras, setSolapaAtras] = useState(false);
   const timers = useRef<number[]>([]);
@@ -81,9 +80,8 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, numero, c
           animate={{ y: abierto ? '-46%' : '0%' }}
           transition={{ duration: 0.55, ease: 'easeOut', delay: abierto ? 0.4 : 0 }}
         >
-          <span className="flex items-end gap-1 pt-2">
-            <span className="f-serif pb-1 text-[1.26rem] font-black">RIP</span>
-            <span className="globo-num text-[2.912rem]" data-t={numero} style={colorNumero ? ({ '--num': colorNumero } as React.CSSProperties) : undefined}>{numero}</span>
+          <span className="f-firma block px-3 text-center leading-[1.05] whitespace-nowrap" style={{ fontSize: Math.round(Math.min(56, 215 / (Math.max(1, texto.length) * 0.3))) }}>
+            {texto}
           </span>
         </motion.div>
 

@@ -152,7 +152,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
       <div style={tema} className={`rayas min-h-dvh overflow-x-clip ${vistaPrevia ? 'vista-previa' : ''}`}>
         <AnimatePresence>
           {portada && (
-            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} numero={c.rip_numero} colorNumero={colorOk(c.numero_color_inicio)} onAbrir={() => {}} onListo={() => setPortada(false)} />
+            <Sobre nombre={invitado.nombre} inicial={(c.festejado.trim()[0] ?? 'J').toUpperCase()} texto={(/birthday/i.test(c.festejado) && /^\{festejado\}\s*birthday$/i.test(c.sobre_texto.trim()) ? c.festejado : c.sobre_texto.replace('{festejado}', c.festejado)).trim()} onAbrir={() => {}} onListo={() => setPortada(false)} />
           )}
         </AnimatePresence>
 
