@@ -42,6 +42,15 @@ function limpiarValores(v: unknown, base: Config): Partial<Config> {
   return out;
 }
 
+// Tipos de letra de la palabra grande de Bienvenida: [clase, mayúsculas, ancho por letra (em), tamaño máximo, tamaño mínimo]
+const LETRAS_PALABRA: Record<string, [string, boolean, number, number, number]> = {
+  serif: ['f-serif font-black tracking-[0.04em]', true, 0.69, 76, 34],
+  impacto: ['f-impact tracking-[0.02em]', true, 0.8, 68, 30],
+  condensada: ['f-cond font-bold tracking-[0.06em]', true, 0.56, 84, 36],
+  cursiva: ['f-script', false, 0.42, 92, 40],
+  firma: ['f-firma', false, 0.35, 104, 44],
+  sans: ['font-black tracking-[0.02em]', true, 0.72, 72, 32],
+};
 const TONOS_CORONA: Record<string, 'plata' | 'color' | 'rosa' | 'negro' | 'gris'> = { plata: 'plata', dorado: 'color', rosa: 'rosa', negro: 'negro', gris: 'gris' };
 
 export function Invitacion({ config, invitado, vistaPrevia = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean }) {
@@ -201,8 +210,14 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
           <Escribe className="mt-1 leading-none" retraso={0.3}>
             <span
-              className="f-serif block font-black uppercase leading-[0.95] tracking-[0.04em]"
-              style={{ fontSize: Math.round(Math.min(76, Math.max(34, 420 / Math.max(1, ...c.bienvenida_palabra.trim().split(/\s+/).map((w) => w.length))))), textShadow: '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)' }}
+              className={`block leading-[0.95] ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.serif[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.serif)[1] ? 'uppercase' : ''}`}
+              style={{
+                fontSize: (() => {
+                  const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.serif;
+                  return Math.round(Math.min(max, Math.max(min, 300 / (em * Math.max(1, ...c.bienvenida_palabra.trim().split(/\s+/).map((w) => w.length))))));
+                })(),
+                textShadow: '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)',
+              }}
             >
               {c.bienvenida_palabra}
             </span>
@@ -210,6 +225,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           <Entra retraso={0.5} className="relative mt-[104px]">
             <Pegatina nombre="gorro-rojo" ancho={104} rot={24} className="-top-[104px] -right-[5px] z-[3]" />
             <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
+            {c.firma_mostrar.trim().toLowerCase() !== 'no' && (
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               {(() => {
                 const col = colorOk(c.firma_color) ?? '#ffffff';
@@ -218,6 +234,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
                 return <span style={{ color: col, textShadow: `0 2px 0 ${borde}, 0 0 14px ${halo}` }}>{c.festejado}</span>;
               })()}
             </Escribe>
+            )}
           </Entra>
         </Capitulo>
 
