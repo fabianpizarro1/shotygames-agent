@@ -112,6 +112,13 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
     fetch('/api/abierto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invitado.token }) }).catch(() => {});
   }, [invitado.token, vistaPrevia]);
 
+  // Firma sobre el 30: el borde se oscurece o aclara solo para que siempre se lea.
+  const esClaro = (hex: string) => {
+    const h = hex.replace('#', '');
+    const f = h.length === 3 ? h.split('').map((x) => x + x).join('') : h.slice(0, 6);
+    const n = parseInt(f, 16);
+    return 0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255) > 150;
+  };
   const colorOk = (v: string) => (/^#[0-9a-f]{3,8}$/i.test(v.trim()) ? v.trim() : undefined);
   const tema = { '--fondo': c.color_fondo, '--fondo2': c.color_fondo_2, '--papel': c.color_papel, '--texto': c.color_texto, '--texto-base': c.color_texto, '--acento': c.color_acento } as CSSProperties;
 
@@ -193,7 +200,12 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
             <Pegatina nombre="gorro-rojo" ancho={92} rot={18} className="-top-9 right-5 z-[3]" />
             <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
-              <span style={{ color: '#fff', textShadow: '0 2px 0 #000, 0 0 14px rgb(0 0 0 / 0.75)' }}>{c.festejado}</span>
+              {(() => {
+                const col = colorOk(c.firma_color) ?? '#ffffff';
+                const borde = esClaro(col) ? '#000' : '#fff';
+                const halo = esClaro(col) ? 'rgb(0 0 0 / 0.75)' : 'rgb(255 255 255 / 0.8)';
+                return <span style={{ color: col, textShadow: `0 2px 0 ${borde}, 0 0 14px ${halo}` }}>{c.festejado}</span>;
+              })()}
             </Escribe>
           </Entra>
         </Capitulo>

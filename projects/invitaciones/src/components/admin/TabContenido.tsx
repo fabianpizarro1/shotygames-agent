@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero';
+type Tipo = 'sino' | 'texto' | 'largo' | 'fechahora' | 'fecha' | 'color' | 'imagen' | 'galeria' | 'audio' | 'paleta' | 'programa' | 'colortexto' | 'colornumero' | 'colorfirma';
 type Campo = [clave: string, etiqueta: string, tipo: Tipo, ayuda?: string];
 interface Seccion {
   id: string;
@@ -36,6 +36,7 @@ const SECCIONES: Seccion[] = [
       ['bienvenida_linea', 'Línea de arriba', 'texto'],
       ['bienvenida_palabra', 'Palabra grande', 'texto'],
       ['bienvenida_numero', 'Número del globo', 'texto'],
+      ['firma_color', 'Color del nombre sobre el 30', 'colorfirma', 'El borde se ajusta solo para que siempre se lea.'],
       ['numero_color_bienvenida', 'Color del número', 'colornumero', 'El número grande se ve metalizado en el color que elijas.'],
     ],
   },
@@ -172,6 +173,10 @@ function EditorPaleta({ valor, onChange }: { valor: string; onChange: (v: string
 const COLORES_TEXTO: [string, string][] = [
   ['#111111', 'Negro'], ['#3b3b3b', 'Gris oscuro'], ['#6d1a36', 'Vino'], ['#b8325f', 'Rosa fuerte'],
   ['#1f2a44', 'Azul marino'], ['#ffffff', 'Blanco'],
+];
+
+const COLORES_FIRMA: [string, string][] = [
+  ['#ffffff', 'Blanco'], ['#111111', 'Negro'], ['#f48fb1', 'Rosa'], ['#e0527f', 'Rosa fuerte'], ['#c9a24a', 'Dorado'], ['#6d1a36', 'Vino'],
 ];
 
 const COLORES_NUMERO: [string, string][] = [
@@ -372,6 +377,8 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
           <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral={clave !== 'color_texto'} />
         ) : tipo === 'colornumero' ? (
           <EditorColorTexto valor={v} onChange={(x) => set(clave, x)} conGeneral paleta={COLORES_NUMERO} vacio="Negro" />
+        ) : tipo === 'colorfirma' ? (
+          <EditorColorTexto valor={v || '#ffffff'} onChange={(x) => set(clave, x)} conGeneral={false} paleta={COLORES_FIRMA} />
         ) : tipo === 'programa' ? (
           <EditorPrograma valor={v} onChange={(x) => set(clave, x)} />
         ) : tipo === 'sino' ? (
