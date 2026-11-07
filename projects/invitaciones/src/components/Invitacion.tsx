@@ -212,7 +212,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
           <Escribe className="mt-1 leading-none" retraso={0.3}>
             <span
-              className={`block ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'leading-[0.95]' : 'leading-[1.12]'} ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
+              className={`block ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'leading-[0.95]' : 'leading-[1.0]'} ${LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()]?.[0] ?? LETRAS_PALABRA.elegante[0]} ${(LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante)[1] ? 'uppercase' : ''}`}
               style={{
                 fontSize: (() => {
                   const [, , em, max, min] = LETRAS_PALABRA[c.bienvenida_letra.trim().toLowerCase()] ?? LETRAS_PALABRA.elegante;
@@ -228,9 +228,21 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
               {c.bienvenida_palabra}
             </span>
           </Escribe>
-          <Entra retraso={0.5} className="relative mt-[70px]">
+          <Entra retraso={0.5} className="relative mt-[62px]">
             <Pegatina nombre="gorro-rojo" ancho={76} rot={22} className="-top-[78px] -right-[6px] z-[3]" />
-            <span className="f-serif block text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color: colorOk(c.numero_color_bienvenida) }}>{c.bienvenida_numero}</span>
+            {(() => {
+              // "30's": el número grande y, si trae sufijo ('s, s...), pequeño abajo a la derecha como en "RIP 20s"
+              const m = c.bienvenida_numero.trim().match(/^(\d+)(.*)$/);
+              const base = m ? m[1] : c.bienvenida_numero;
+              const suf = m ? m[2] : '';
+              const color = colorOk(c.numero_color_bienvenida);
+              return (
+                <span className="relative inline-block">
+                  <span className="f-serif block text-[9.5rem] font-medium leading-[0.9]" style={{ fontVariantNumeric: 'lining-nums', color }}>{base}</span>
+                  {suf && <span className="f-serif absolute bottom-3 left-full pl-1 text-[2.2rem] font-medium leading-none" style={{ color }}>{suf}</span>}
+                </span>
+              );
+            })()}
             {c.firma_mostrar.trim().toLowerCase() !== 'no' && (
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
               {(() => {
