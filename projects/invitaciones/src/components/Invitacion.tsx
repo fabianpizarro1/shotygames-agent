@@ -193,11 +193,21 @@ export function Invitacion({ config, invitado, vistaPrevia = false }: { config: 
           <Sticker nombre="corona" tono={TONOS_CORONA[c.corona_color.trim().toLowerCase()] ?? 'plata'} ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
-          <Entra>
-            <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
-          </Entra>
-          <Escribe className="f-script mt-1 text-[3.6rem] leading-none" retraso={0.3}>{c.bienvenida_palabra}</Escribe>
-          <Entra retraso={0.5} className="relative mt-[116px]">
+          {c.bienvenida_linea.trim() && (
+            <Entra>
+              <p className="f-serif mx-auto max-w-[13rem] text-[1.176rem] leading-snug">{c.bienvenida_linea}</p>
+            </Entra>
+          )}
+          {/* Palabra de bienvenida: grande y en mayúsculas; el tamaño se ajusta a la palabra más larga para que nunca se corte */}
+          <Escribe className="mt-1 leading-none" retraso={0.3}>
+            <span
+              className="f-serif block font-black uppercase leading-[0.95] tracking-[0.04em]"
+              style={{ fontSize: Math.round(Math.min(76, Math.max(34, 420 / Math.max(1, ...c.bienvenida_palabra.trim().split(/\s+/).map((w) => w.length))))), textShadow: '0 3px 0 color-mix(in srgb, currentColor 22%, transparent)' }}
+            >
+              {c.bienvenida_palabra}
+            </span>
+          </Escribe>
+          <Entra retraso={0.5} className="relative mt-[104px]">
             <Pegatina nombre="gorro-rojo" ancho={104} rot={24} className="-top-[104px] -right-[5px] z-[3]" />
             <span className="globo-num text-[12rem]" data-t={c.bienvenida_numero} style={{ '--num': colorOk(c.numero_color_bienvenida) } as CSSProperties}>{c.bienvenida_numero}</span>
             <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
