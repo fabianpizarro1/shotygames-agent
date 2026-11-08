@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { PanelIA } from './PanelIA';
 import { Subidor } from './Subidor';
 import { api, json, type CampoConfig, type InvitadoAdmin } from './tipos';
 
@@ -603,6 +604,8 @@ export function TabContenido({ campos, invitados, recargar, slug, plantilla }: {
           <p><b>Toca una parte para editarla.</b> Lo que cambies se ve al instante en la vista previa; no se guarda hasta que pulses <b>Guardar cambios</b>.</p>
           {!ancha && <button type="button" onClick={() => setMovil(true)} className="mt-3 w-full rounded-lg bg-stone-900 px-4 py-3 text-base font-medium text-white active:scale-[0.98]">Ver vista previa</button>}
         </div>
+
+        <PanelIA onAplicar={(cambios) => setValores((x) => ({ ...x, ...cambios }))} />
 
         {SECCIONES.map((s) => {
           const abierto = abierta === s.id;

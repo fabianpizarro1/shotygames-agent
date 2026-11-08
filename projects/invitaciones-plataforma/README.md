@@ -26,7 +26,11 @@ El código viejo de Sheets/Drive quedó archivado en `archives/plataforma-etapa2
 
 **Plantilla de quinceañera (2026-11-08)**: lila y dorado, corona y mariposas dibujadas, nombre con XV, historia con foto circular, capítulo de padres y padrinos (se oculta si está vacío), misa y fiesta como dos lugares, vestimenta, programa, regalos y confirmación. Comparte `InvitacionElegante.tsx` con la de boda (prop `variante`); `PorPlantilla.tsx` elige la composición según la plantilla del evento.
 
-**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, sello de cera realista para otras iniciales (hoy solo existe la J; las demás usan el sello dibujado), IA de plantillas y PayPhone.
+**Sellos realistas (2026-11-08)**: imágenes para A-Z, `XV` y `&` en 6 colores (`public/sello/<id>/<color>.webp`, generadas por lote con `scripts/sello`). La portada elige el sello según la inicial: cumpleaños = inicial del nombre, boda = «&», quinceañera = XV.
+
+**IA de diseño, nivel 1 (2026-11-08)**: «✨ Diseñar con IA» en el editor. El cliente describe lo que quiere (estilo, colores) y la IA propone VALORES de configuración (colores, textos, color del sello…) para la plantilla de su evento. `src/lib/ia.ts` valida todo (solo claves permitidas por plantilla, colores #rrggbb, textos sin emojis/enlaces/HTML y con largo máximo, contraste mínimo de 4,5:1, `{link}`/`{invitada}` obligatorios) y nunca toca fechas, lugares ni nombres. La propuesta se aplica a la vista previa SIN guardar (Guardar/Descartar), con límite de 8 propuestas por hora y usuario. Requiere `ANTHROPIC_API_KEY` en `.env.local` (modelo en `IA_MODELO`, por defecto `claude-sonnet-5-5`); sin clave responde «La IA todavía no está configurada».
+
+**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, probar la IA con una clave real (el flujo se probó con una respuesta simulada), IA nivel 2 (bloques) y PayPhone.
 
 ## Cómo correrlo
 `cp .env.example .env.local` (poner un `SESSION_SECRET` aleatorio), `npm install`, `npm run dev -- --port 3200`.
