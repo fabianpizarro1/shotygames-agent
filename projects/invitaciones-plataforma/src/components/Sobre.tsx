@@ -4,6 +4,7 @@ import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Adorno } from './Adorno';
+import { Rama } from './Boda';
 import { Brillo, Humo, Sticker } from './Decor';
 import { SelloCera } from './SelloCera';
 
@@ -20,11 +21,12 @@ interface Props {
   inicial: string;
   texto: string;
   colorSello?: string;
+  estilo?: 'fiesta' | 'boda';
   onAbrir: () => void;
   onListo: () => void;
 }
 
-export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, colorSello, onAbrir, onListo }: Props) {
+export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, colorSello, estilo = 'fiesta', onAbrir, onListo }: Props) {
   const clave = (colorSello ?? '').trim().toLowerCase() in SELLOS ? (colorSello as string).trim().toLowerCase() : 'vino';
   // Tinta de la portada: el rojo del sello, un poco más oscuro, para que todo combine
   const tinta = `color-mix(in srgb, ${SELLOS[clave]} 80%, #1a0508)`;
@@ -56,9 +58,18 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
     >
       {humo && <Humo />}
       {humo && <Humo lado="abajo" />}
-      <Adorno nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
-      <Adorno nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
-      <Sticker nombre="martini" tono="plata" ancho={72} rot={10} className="right-4 top-[8%]" anim="flota" retraso={0.5} />
+      {estilo === 'boda' ? (
+        <>
+          <Rama className="bottom-6 -left-4 w-[190px]" />
+          <Rama className="bottom-6 -right-4 w-[190px]" espejo />
+        </>
+      ) : (
+        <>
+          <Adorno nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
+          <Adorno nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
+          <Sticker nombre="martini" tono="plata" ancho={72} rot={10} className="right-4 top-[8%]" anim="flota" retraso={0.5} />
+        </>
+      )}
       <Brillo tam={20} style={{ left: '24%', top: '10%', color: tinta, opacity: 0.8 }} />
       <Brillo tam={15} style={{ right: '22%', bottom: '30%', color: tinta }} retraso={1} />
 

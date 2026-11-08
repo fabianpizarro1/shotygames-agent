@@ -16,6 +16,7 @@ interface Meta {
   estado: string;
   plan: string;
   expira_at: string;
+  plantilla: string;
 }
 
 export function Dashboard({ eventoId, nombre }: { eventoId: string; nombre: string }) {
@@ -36,7 +37,7 @@ export function Dashboard({ eventoId, nombre }: { eventoId: string; nombre: stri
     const r = await api<{ campos: CampoConfig[] } & Meta>('/api/admin/config');
     if (r.ok) {
       setCampos(r.campos);
-      setMeta({ slug: r.slug, estado: r.estado, plan: r.plan, expira_at: r.expira_at });
+      setMeta({ slug: r.slug, estado: r.estado, plan: r.plan, expira_at: r.expira_at, plantilla: r.plantilla });
     } else setError(r.error || 'No se pudo leer la configuración');
   }, []);
 
@@ -90,7 +91,7 @@ export function Dashboard({ eventoId, nombre }: { eventoId: string; nombre: stri
         ) : tab === 'publicar' ? (
           <TabPublicar slug={meta.slug} inicial={{ estado: meta.estado, plan: meta.plan, expira_at: meta.expira_at }} recargar={cargarConfig} />
         ) : (
-          <TabContenido campos={campos} invitados={invitados} recargar={cargarConfig} slug={meta.slug} />
+          <TabContenido campos={campos} invitados={invitados} recargar={cargarConfig} slug={meta.slug} plantilla={meta.plantilla} />
         )}
       </main>
     </div>

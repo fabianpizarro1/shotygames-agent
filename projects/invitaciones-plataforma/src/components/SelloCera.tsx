@@ -70,8 +70,8 @@ export function SelloCera({ inicial, color = '#8b1424', className = '' }: { inic
         ))}
       </g>
       {/* inicial con relieve */}
-      <text x={C + 1.5} y={C + 24.5} textAnchor="middle" className="f-elegante" fontSize="76" fill={mezcla(40, '#000')} opacity="0.75">{inicial}</text>
-      <text x={C} y={C + 23} textAnchor="middle" className="f-elegante" fontSize="76" style={{ fill: mezcla(58, '#fff') }}>{inicial}</text>
+      <text x={C + 1.5} y={C + (inicial.length > 1 ? 14 : 24.5)} textAnchor="middle" className="f-elegante" fontSize={inicial.length > 1 ? 46 : 76} fill={mezcla(40, '#000')} opacity="0.75">{inicial}</text>
+      <text x={C} y={C + (inicial.length > 1 ? 12.5 : 23)} textAnchor="middle" className="f-elegante" fontSize={inicial.length > 1 ? 46 : 76} style={{ fill: mezcla(58, '#fff') }}>{inicial}</text>
       {/* brillo de cera */}
       <path d="M38 62 C 46 40 70 26 96 24" fill="none" stroke="#fff" strokeWidth="5" strokeLinecap="round" opacity="0.28" />
       <ellipse cx="58" cy="44" rx="9" ry="5" transform="rotate(-38 58 44)" fill="#fff" opacity="0.32" />

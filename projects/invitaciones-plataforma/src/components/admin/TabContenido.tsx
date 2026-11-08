@@ -14,8 +14,9 @@ interface Seccion {
   campos: Campo[];
 }
 
-// Las secciones siguen el orden en que el invitado ve la invitación.
-const SECCIONES: Seccion[] = [
+// Las secciones siguen el orden en que el invitado ve la invitación. Cada plantilla tiene las suyas;
+// las comunes (música, colores, fotos, playlist, general) se comparten.
+const SECCIONES_CUMPLE_PROPIAS: Seccion[] = [
   {
     id: 'inicio', titulo: 'Portada y saludo', desc: 'Lo primero que se ve al abrir el sobre', cap: 'inicio',
     campos: [
@@ -102,6 +103,9 @@ const SECCIONES: Seccion[] = [
       ['extras_solo_confirmados', 'Playlist y fotos solo para quien confirma', 'sino', 'Si lo apagas, todos ven las tarjetas de playlist y fotos.'],
     ],
   },
+];
+
+const COMUNES_BASE: Seccion[] = [
   {
     id: 'musica', titulo: 'Música', desc: 'La canción del botón «Escuchar música»', cap: 'inicio',
     campos: [
@@ -151,8 +155,79 @@ const SECCIONES: Seccion[] = [
       ['wa_mensaje', 'Mensaje de WhatsApp', 'largo', '{nombre} y {link} se reemplazan solos. Sin emojis.'],
       ['url_base', 'Dominio de la invitación (opcional)', 'texto', 'Déjalo vacío para usar el actual.'],
     ],
+  },];
+
+const colorTexto = (cap: string): Campo => [`texto_color_${cap}`, 'Color de los textos', 'colortexto', 'Solo cambia este capítulo. «General» usa el color de la sección Colores.'];
+const deCumple = (id: string) => SECCIONES_CUMPLE_PROPIAS.find((x) => x.id === id) as Seccion;
+
+const SECCIONES_BODA_PROPIAS: Seccion[] = [
+  {
+    id: 'inicio', titulo: 'Pareja y portada', desc: 'Nombres, frase y sello del sobre', cap: 'inicio',
+    campos: [
+      colorTexto('inicio'),
+      ['novia', 'Nombre de la novia', 'texto'],
+      ['novio', 'Nombre del novio', 'texto'],
+      ['boda_frase', 'Frase de invitación', 'largo'],
+      ['sobre_texto', 'Texto que sale del sobre', 'texto', '{novia} y {novio} se cambian solos por sus nombres.'],
+      ['sello_color', 'Color del sello de cera del sobre', 'sello'],
+    ],
+  },
+  {
+    id: 'historia', titulo: 'Nuestra historia', desc: 'La foto en arco y su texto', cap: 'historia',
+    campos: [
+      colorTexto('historia'),
+      ['historia_titulo', 'Título', 'texto'],
+      ['portada_url', 'Foto de la pareja', 'imagen', 'Se ve mejor una foto vertical.'],
+      ['historia_texto', 'Texto', 'largo'],
+    ],
+  },
+  {
+    id: 'fecha', titulo: 'Fecha, ceremonia y recepción', desc: 'Día, hora, lugares y mapas', cap: 'fecha',
+    campos: [
+      colorTexto('fecha'),
+      ['fecha_linea', 'Frase sobre la fecha', 'texto'],
+      ['fecha_hora', 'Fecha y hora de la ceremonia', 'fechahora'],
+      ['ceremonia_titulo', 'Título del primer lugar', 'texto', 'Ej: Ceremonia'],
+      ['lugar_nombre', 'Lugar de la ceremonia', 'texto'],
+      ['lugar_direccion', 'Dirección o ciudad', 'texto'],
+      ['lugar_foto_url', 'Foto del lugar', 'imagen', 'Al tocarla se abre el mapa.'],
+      ['maps_url', 'Link de Google Maps', 'texto', 'En Google Maps: Compartir → Copiar enlace.'],
+      ['waze_url', 'Link de Waze (opcional)', 'texto'],
+      ['recepcion_activa', 'Mostrar la recepción', 'sino'],
+      ['recepcion_hora', 'Hora de la recepción', 'texto', 'Ej: 19:00'],
+      ['recepcion_lugar', 'Lugar de la recepción', 'texto'],
+      ['recepcion_direccion', 'Dirección de la recepción', 'texto'],
+      ['recepcion_maps_url', 'Google Maps de la recepción', 'texto'],
+    ],
+  },
+  deCumple('vestimenta'),
+  deCumple('programa'),
+  {
+    id: 'final', titulo: 'Regalos y confirmación', desc: 'Mesa de regalos, confirmar asistencia y cierre', cap: 'final',
+    campos: [
+      colorTexto('final'),
+      ['regalos_titulo', 'Título de regalos', 'texto'],
+      ['regalos_texto', 'Texto de regalos', 'largo', 'Déjalo vacío para quitar este bloque.'],
+      ['regalos_url', 'Enlace a la mesa de regalos (opcional)', 'texto'],
+      ['final_titulo', 'Título final', 'texto'],
+      ['final_texto', 'Texto sobre la confirmación', 'texto'],
+      ['hashtag', 'Hashtag (opcional)', 'texto', 'Ej: #AnaYLuis'],
+      ['fecha_limite_rsvp', 'Fecha límite para confirmar (opcional)', 'fecha'],
+      ['extras_solo_confirmados', 'Playlist y fotos solo para quien confirma', 'sino', 'Si lo apagas, todos ven las tarjetas de playlist y fotos.'],
+    ],
   },
 ];
+
+// Las secciones del editor según la plantilla del evento.
+export function seccionesDe(plantilla: string): Seccion[] {
+  if (plantilla !== 'boda') return [...SECCIONES_CUMPLE_PROPIAS, ...COMUNES_BASE];
+  const comunes = COMUNES_BASE.map((sec) =>
+    sec.id === 'colores'
+      ? { ...sec, campos: sec.campos.map((c): Campo => (c[0] === 'color_acento' ? [c[0], 'Dorado (sobre y detalles)', c[2]] : c[0] === 'color_fondo_2' ? [c[0], 'Segundo tono (detalles)', c[2]] : c)) }
+      : sec,
+  );
+  return [...SECCIONES_BODA_PROPIAS, ...comunes];
+}
 
 const campoCls = 'mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-base outline-none focus:border-stone-900';
 const btnSec = 'rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium active:scale-[0.97] disabled:opacity-50';
@@ -303,7 +378,8 @@ function Vista({ slug, valores, capActivo, completa, onEditar, nombre }: { slug:
 
 // ---------- pestaña ----------
 
-export function TabContenido({ campos, invitados, recargar, slug }: { campos: CampoConfig[] | null; invitados: InvitadoAdmin[] | null; recargar: () => Promise<void>; slug: string }) {
+export function TabContenido({ campos, invitados, recargar, slug, plantilla }: { campos: CampoConfig[] | null; invitados: InvitadoAdmin[] | null; recargar: () => Promise<void>; slug: string; plantilla: string }) {
+  const SECCIONES = useMemo(() => seccionesDe(plantilla), [plantilla]);
   const original = useMemo(() => Object.fromEntries((campos ?? []).map((c) => [c.clave, c.valor])), [campos]);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState(false);
@@ -333,7 +409,7 @@ export function TabContenido({ campos, invitados, recargar, slug }: { campos: Ca
     return () => window.removeEventListener('beforeunload', f);
   }, [cambios.length]);
 
-  const seccionDeCap = useCallback((cap: string) => SECCIONES.find((s) => s.cap === cap)?.id ?? null, []);
+  const seccionDeCap = useCallback((cap: string) => SECCIONES.find((s) => s.cap === cap)?.id ?? null, [SECCIONES]);
   // tocar un capítulo en la vista previa abre su sección para editarla
   const alEditar = useCallback(
     (cap: string) => {

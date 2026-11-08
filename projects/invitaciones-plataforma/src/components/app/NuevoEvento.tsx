@@ -7,6 +7,8 @@ const campo = 'w-full rounded-lg border border-stone-300 bg-white px-3 py-3 text
 export function NuevoEvento({ plantillas }: { plantillas: { slug: string; nombre: string; descripcion: string }[] }) {
   const [nombre, setNombre] = useState('');
   const [festejado, setFestejado] = useState('');
+  const [novia, setNovia] = useState('');
+  const [novio, setNovio] = useState('');
   const [plantilla, setPlantilla] = useState(plantillas[0]?.slug ?? 'cumple');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -16,7 +18,7 @@ export function NuevoEvento({ plantillas }: { plantillas: { slug: string; nombre
     setEnviando(true);
     setError('');
     try {
-      const r = await fetch('/api/app/eventos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre, festejado, plantilla }) });
+      const r = await fetch('/api/app/eventos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre, festejado, novia, novio, plantilla }) });
       const j = await r.json();
       if (!j.ok) throw new Error(j.error || 'No se pudo crear');
       window.location.href = `/app/${j.id}`;
@@ -29,8 +31,15 @@ export function NuevoEvento({ plantillas }: { plantillas: { slug: string; nombre
   return (
     <form onSubmit={crear} className="space-y-3 rounded-xl bg-white p-5 ring-1 ring-stone-200">
       <h2 className="font-semibold">Nuevo evento</h2>
-      <input className={campo} placeholder="Nombre del evento (ej: Cumpleaños de Ana)" required value={nombre} onChange={(e) => setNombre(e.target.value)} />
-      <input className={campo} placeholder="Nombre de quien cumple (ej: Ana)" value={festejado} onChange={(e) => setFestejado(e.target.value)} />
+      <input className={campo} placeholder={plantilla === 'boda' ? 'Nombre del evento (ej: Boda de Ana y Luis)' : 'Nombre del evento (ej: Cumpleaños de Ana)'} required value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      {plantilla === 'boda' ? (
+        <div className="grid grid-cols-2 gap-3">
+          <input className={campo} placeholder="Novia (ej: Ana)" value={novia} onChange={(e) => setNovia(e.target.value)} />
+          <input className={campo} placeholder="Novio (ej: Luis)" value={novio} onChange={(e) => setNovio(e.target.value)} />
+        </div>
+      ) : (
+        <input className={campo} placeholder="Nombre de quien cumple (ej: Ana)" value={festejado} onChange={(e) => setFestejado(e.target.value)} />
+      )}
       <div className="space-y-2">
         {plantillas.map((p) => (
           <label key={p.slug} className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${plantilla === p.slug ? 'border-stone-900 bg-stone-50' : 'border-stone-200'}`}>

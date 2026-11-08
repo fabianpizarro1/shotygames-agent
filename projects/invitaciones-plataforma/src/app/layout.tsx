@@ -6,6 +6,7 @@ const sacramento = Sacramento({ weight: '400', subsets: ['latin'], variable: '--
 const delafield = Mrs_Saint_Delafield({ weight: '400', subsets: ['latin'], variable: '--f-delafield', display: 'swap' });
 const vibes = Great_Vibes({ weight: '400', subsets: ['latin'], variable: '--f-elegante', display: 'swap' });
 const cormorant = Cormorant_Garamond({ weight: ['500', '600'], style: 'italic', subsets: ['latin'], variable: '--f-cormorant', display: 'swap' });
+const garamond = Cormorant_Garamond({ weight: ['400', '500', '600'], style: 'normal', subsets: ['latin'], variable: '--f-garamond', display: 'swap' });
 const bowlby = Bowlby_One({ weight: '400', subsets: ['latin'], variable: '--f-bowlby', display: 'swap' });
 const oswald = Oswald({ weight: ['500', '700'], subsets: ['latin'], variable: '--f-oswald', display: 'swap' });
 const serif = Playfair_Display({ weight: ['500', '700', '900'], subsets: ['latin'], variable: '--f-serif', display: 'swap' });
@@ -24,7 +25,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${sacramento.variable} ${cormorant.variable} ${vibes.variable} ${delafield.variable} ${bowlby.variable} ${oswald.variable} ${serif.variable} ${sans.variable}`}>
+    <html lang="es" className={`${sacramento.variable} ${cormorant.variable} ${garamond.variable} ${vibes.variable} ${delafield.variable} ${bowlby.variable} ${oswald.variable} ${serif.variable} ${sans.variable}`}>
       <body>{children}</body>
     </html>
   );

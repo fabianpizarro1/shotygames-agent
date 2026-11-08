@@ -25,6 +25,7 @@ body {
 }
 
 .f-script { font-family: var(--f-sacramento), cursive; font-weight: 400; }
+.f-garamond { font-family: var(--f-garamond), Georgia, serif; font-weight: 500; }
 .f-cormorant { font-family: var(--f-cormorant), Georgia, serif; font-style: italic; font-weight: 600; }
 .f-elegante { font-family: var(--f-elegante), cursive; font-weight: 400; }
 .f-firma { font-family: var(--f-delafield), cursive; font-weight: 400; }

@@ -8,7 +8,7 @@ const no = () => NextResponse.json({ ok: false, error: 'No autorizado' }, { stat
 export async function GET(_req: Request, { params }: Ctx) {
   const p = await eventoDelUsuario((await params).eventoId);
   if (!p) return no();
-  return NextResponse.json({ ok: true, campos: camposDeEvento(p.evento), slug: p.evento.slug, estado: p.evento.estado, plan: p.evento.plan, expira_at: p.evento.expira_at });
+  return NextResponse.json({ ok: true, campos: camposDeEvento(p.evento), slug: p.evento.slug, estado: p.evento.estado, plan: p.evento.plan, expira_at: p.evento.expira_at, plantilla: p.evento.plantilla });
 }
 
 export async function PUT(req: Request, { params }: Ctx) {

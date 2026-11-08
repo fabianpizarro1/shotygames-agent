@@ -11,12 +11,19 @@ const limpiarSlug = (s: string) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'evento';
 
-export async function crearEvento(u: Usuario, d: { nombre: string; plantilla: string; festejado?: string }): Promise<Evento> {
+export async function crearEvento(u: Usuario, d: { nombre: string; plantilla: string; festejado?: string; novia?: string; novio?: string }): Promise<Evento> {
   const nombre = d.nombre.trim().slice(0, 80);
   if (!nombre) throw new Error('Ponle un nombre a tu evento');
   const plantilla = plantillaPorSlug(d.plantilla);
   const config: Record<string, string> = { nombre_evento: nombre };
   if (d.festejado?.trim()) config.festejado = d.festejado.trim().slice(0, 60);
+  if (plantilla.slug === 'boda') {
+    const nv = d.novia?.trim().slice(0, 40);
+    const no = d.novio?.trim().slice(0, 40);
+    if (nv) config.novia = nv;
+    if (no) config.novio = no;
+    if (nv || no) config.festejado = `${nv || 'Novia'} y ${no || 'Novio'}`;
+  }
   // Fechas de ejemplo (en hora de Ecuador) para que la cuenta regresiva y la vista previa se vean bien desde el primer momento.
   const en = (dias: number, hora: number) => {
     const d = new Date(Date.now() + dias * 86400_000 - 5 * 3600_000);
