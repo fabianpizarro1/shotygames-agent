@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/* Tema "RIP 20s": papel gris, negro y plata. Los nombres de las variables se mantienen
+   (fondo, papel, texto, acento) para que el panel de Contenido siga controlando los colores. */
+:root {
+  --fondo: #e9e6e1;   /* papel de la página */
+  --fondo2: #0d0d0d;  /* negro de adornos */
+  --papel: #f7f5f1;   /* tarjetas */
+  --texto: #111111;   /* tinta */
+  --acento: #9a9a9a;  /* plata */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--f-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* clip (no hidden): hidden crea un contenedor de scroll y en iPhone se siente trabado */
+  overflow-x: clip;
+}
+
+.f-script { font-family: var(--f-sacramento), cursive; font-weight: 400; }
+.f-cormorant { font-family: var(--f-cormorant), Georgia, serif; font-style: italic; font-weight: 600; }
+.f-elegante { font-family: var(--f-elegante), cursive; font-weight: 400; }
+.f-firma { font-family: var(--f-delafield), cursive; font-weight: 400; }
+.f-serif { font-family: var(--f-serif), Georgia, serif; }
+.f-impact { font-family: var(--f-bowlby), Impact, sans-serif; font-weight: 400; }
+.f-cond { font-family: var(--f-oswald), 'Arial Narrow', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Papel con grano fino */
+.rayas {
+  background-color: var(--fondo);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.papel {
+  background: var(--papel);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--texto) 88%, transparent), 0 20px 34px -16px rgb(0 0 0 / 0.4);
+}
+
+/* Número de globo metalizado (RIP 20s / 30) */
+.globo-num {
+  font-family: var(--f-bowlby), Impact, sans-serif;
+  line-height: 0.9;
+  position: relative;
+  display: inline-block;
+  background: linear-gradient(150deg, #8a8a8a 0%, #1c1c1c 24%, #000 58%, #2a2a2a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 9px 7px rgb(0 0 0 / 0.32));
+}
+.globo-num[style*="--num:"] {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--num) 60%, white) 0%, color-mix(in srgb, var(--num) 88%, black) 26%, var(--num) 58%, color-mix(in srgb, var(--num) 82%, black) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.globo-num::after {
+  content: attr(data-t);
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 24% 18%, rgb(255 255 255 / 0.7), transparent 26%), radial-gradient(circle at 70% 78%, rgb(255 255 255 / 0.18), transparent 22%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes flota {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-9px) rotate(calc(var(--r, 0deg) + 1.5deg)); }
+}
+.flota { animation: flota 5.5s ease-in-out infinite; }
+
+@keyframes balanceo {
+  0%, 100% { transform: rotate(calc(var(--r, 0deg) - 4deg)); }
+  50% { transform: rotate(calc(var(--r, 0deg) + 4deg)); }
+}
+.balanceo { animation: balanceo 4.5s ease-in-out infinite; transform-origin: 50% 20%; }
+
+@keyframes columpio {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+.columpio { animation: columpio 5s ease-in-out infinite; transform-origin: 50% 0; }
+
+@keyframes titila {
+  0%, 100% { opacity: 0.15; transform: scale(0.6) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(18deg); }
+}
+.titila { animation: titila 2.8s ease-in-out infinite; }
+
+@keyframes barrido {
+  0% { transform: translateX(-60px); opacity: 0; }
+  35% { opacity: 1; }
+  70%, 100% { transform: translateX(300px); opacity: 0; }
+}
+.barrido { animation: barrido 4.2s ease-in-out infinite; }
+
+@keyframes caer {
+  0% { transform: translate3d(0, -30px, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  50% { transform: translate3d(14px, 55dvh, 0) rotate(260deg); }
+  88% { opacity: 1; }
+  100% { transform: translate3d(-10px, 105dvh, 0) rotate(560deg); opacity: 0; }
+}
+/* Una animación solo existe mientras su capítulo está (casi) en pantalla. Pausarla no basta: medido, seguían
+   66 capas de composición; quitándola fuera de pantalla bajan a ~18 (menos memoria de GPU en el celular). */
+.confeti { animation: caer 12s linear infinite; }
+section[data-vis="0"] * { animation: none !important; }
+
+@keyframes marquesina {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquesina { animation: marquesina 22s linear infinite; }
+
+/* Vista previa del panel: cada capítulo se resalta al pasar el mouse y se puede tocar para editarlo */
+.vista-previa section[data-cap] { cursor: pointer; }
+@media (hover: hover) {
+  .vista-previa section[data-cap]:hover { outline: 3px dashed rgb(224 98 159 / 0.8); outline-offset: -6px; }
+}
+
+@keyframes aparece {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.aparece { animation: aparece 0.5s ease-out both; }
+
+@keyframes barra {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.boton {
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+.boton:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flota, .balanceo, .columpio, .titila, .barrido, .marquesina, .aparece { animation: none; }
+  .confeti { animation: none; display: none; }
+  * { scroll-behavior: auto !important; }
+}
+
+/* Las tarjetas (papel) siempre usan el color de texto general, aunque un capítulo tenga otro color de texto. */
+[style*="--texto-base"] .papel {
+  --texto: var(--texto-base);
+  color: var(--texto-base);
+}
