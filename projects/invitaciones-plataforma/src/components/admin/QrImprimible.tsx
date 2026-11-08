@@ -5,6 +5,8 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { BolaDisco, Brillo, Globo, Humo, Sticker } from '../Decor';
 
 interface Props {
+  eventoId: string;
+  slug: string;
   urlBase: string;
   titulo: string;
   evento: string;
@@ -12,23 +14,23 @@ interface Props {
 }
 
 // Tarjeta lista para imprimir (o para mandar como imagen): QR grande que lleva a /fotos.
-export function QrImprimible({ urlBase, titulo, evento, colores }: Props) {
+export function QrImprimible({ eventoId, slug, urlBase, titulo, evento, colores }: Props) {
   const [url, setUrl] = useState('');
   const [png, setPng] = useState('');
 
   useEffect(() => {
-    const u = `${(urlBase || window.location.origin).replace(/\/$/, '')}/fotos`;
+    const u = `${(urlBase || window.location.origin).replace(/\/$/, '')}/fotos?e=${slug}`;
     setUrl(u);
     // Oscuro sobre blanco: el contraste es lo que hace que el QR escanee bien con poca luz.
     QRCode.toDataURL(u, { width: 900, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } }).then(setPng);
-  }, [urlBase]);
+  }, [urlBase, slug]);
 
   const tema = { '--fondo': colores.fondo, '--fondo2': colores.fondo2, '--papel': colores.papel, '--texto': colores.texto, '--acento': colores.acento } as CSSProperties;
 
   return (
     <div className="min-h-dvh bg-stone-100 p-4 text-stone-900 print:bg-white print:p-0">
       <div className="mx-auto mb-4 flex max-w-md items-center justify-between gap-3 print:hidden">
-        <a href="/admin" className="text-sm underline underline-offset-4">← Volver al panel</a>
+        <a href={`/app/${eventoId}`} className="text-sm underline underline-offset-4">← Volver al panel</a>
         <div className="flex gap-2">
           {png && (
             <a href={png} download="qr-fotos.png" className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium">Descargar PNG</a>

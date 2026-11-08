@@ -37,8 +37,13 @@ export const PLANTILLAS: Plantilla[] = [
       lugar_nombre: 'Nombre del lugar',
       lugar_direccion: 'Ciudad',
       fecha_limite_rsvp: '',
-      playlist_activa: 'no',
-      fotos_activas: 'no',
+      playlist_activa: 'si',
+      fotos_activas: 'si',
+      // las ventanas de fecha las elige el cliente; vacías = subida abierta y galería cerrada
+      fotos_subida_desde: '',
+      fotos_subida_hasta: '',
+      fotos_galeria_desde: '',
+      playlist_hasta: '',
     }),
   },
 ];

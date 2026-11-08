@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { TabContenido } from './TabContenido';
 import { TabEstadisticas } from './TabEstadisticas';
+import { TabFotos } from './TabFotos';
+import { TabPlaylist } from './TabPlaylist';
 import { TabInvitados } from './TabInvitados';
 import { TabPublicar } from './TabPublicar';
 import { api, usarEvento, type CampoConfig, type InvitadoAdmin } from './tipos';
 
-type Tab = 'invitados' | 'contenido' | 'estadisticas' | 'publicar';
+type Tab = 'invitados' | 'contenido' | 'fotos' | 'playlist' | 'estadisticas' | 'publicar';
 interface Meta {
   slug: string;
   estado: string;
@@ -49,7 +51,7 @@ export function Dashboard({ eventoId, nombre }: { eventoId: string; nombre: stri
   };
 
   const ancho = tab === 'contenido' ? 'max-w-6xl' : 'max-w-3xl';
-  const pestanas: [Tab, string][] = [['contenido', 'Contenido'], ['invitados', 'Invitados'], ['estadisticas', 'Estadísticas'], ['publicar', 'Publicar']];
+  const pestanas: [Tab, string][] = [['contenido', 'Contenido'], ['invitados', 'Invitados'], ['fotos', 'Fotos'], ['playlist', 'Playlist'], ['estadisticas', 'Estadísticas'], ['publicar', 'Publicar']];
 
   return (
     <div className="min-h-dvh bg-stone-100 text-stone-900">
@@ -79,6 +81,10 @@ export function Dashboard({ eventoId, nombre }: { eventoId: string; nombre: stri
           <p className="py-10 text-center text-sm text-stone-500">Cargando…</p>
         ) : tab === 'invitados' ? (
           <TabInvitados invitados={invitados} campos={campos} recargar={cargarInvitados} />
+        ) : tab === 'fotos' ? (
+          <TabFotos campos={campos} eventoId={eventoId} slug={meta.slug} />
+        ) : tab === 'playlist' ? (
+          <TabPlaylist campos={campos} />
         ) : tab === 'estadisticas' ? (
           <TabEstadisticas invitados={invitados?.length ?? 0} />
         ) : tab === 'publicar' ? (

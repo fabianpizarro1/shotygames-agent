@@ -54,6 +54,41 @@ export interface LogDb {
   at: string;
 }
 
+export interface FotoDb {
+  id: string;
+  evento_id: string;
+  archivo_id: string;
+  mini_id: string;
+  autor: string;
+  uploader: string;
+  visible: boolean;
+  creada_at: string;
+}
+
+export type EstadoCancion = 'pendiente' | 'aprobada' | 'rechazada' | 'en_spotify';
+
+export interface CancionDb {
+  id: string;
+  evento_id: string;
+  token: string;
+  titulo: string;
+  artista: string;
+  pedida_por: string;
+  estado: EstadoCancion;
+  creada_at: string;
+  deezer_id: string;
+  isrc: string;
+  portada: string;
+  spotify_uri: string;
+}
+
+export interface Archivo {
+  id: string;
+  evento_id: string;
+  mime: string;
+  bytes: Uint8Array;
+}
+
 export interface Db {
   usuarioPorEmail(email: string): Promise<Usuario | null>;
   usuarioPorId(id: string): Promise<Usuario | null>;
@@ -70,6 +105,20 @@ export interface Db {
   crearInvitados(lista: InvitadoDb[]): Promise<void>;
   parchearInvitado(token: string, parche: Partial<InvitadoDb>): Promise<InvitadoDb | null>;
   borrarInvitado(token: string): Promise<boolean>;
+
+  fotosDe(eventoId: string): Promise<FotoDb[]>;
+  crearFoto(f: FotoDb): Promise<void>;
+  parchearFoto(id: string, parche: Partial<FotoDb>): Promise<boolean>;
+  borrarFoto(id: string): Promise<FotoDb | null>;
+
+  cancionesDe(eventoId: string): Promise<CancionDb[]>;
+  crearCancion(c: CancionDb): Promise<void>;
+  parchearCancion(id: string, parche: Partial<CancionDb>): Promise<boolean>;
+  borrarCancion(id: string): Promise<boolean>;
+
+  guardarArchivo(a: Archivo): Promise<void>;
+  leerArchivo(id: string): Promise<Archivo | null>;
+  borrarArchivo(id: string): Promise<void>;
 
   registrar(l: LogDb): Promise<void>;
   logsDe(eventoId: string): Promise<LogDb[]>;

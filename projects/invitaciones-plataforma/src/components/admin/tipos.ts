@@ -3,11 +3,12 @@ export type { CampoConfig } from '@/lib/config';
 
 // Los componentes del panel llaman a /api/admin/...; aquí se reescribe a /api/app/<evento>/...
 // para que cada pantalla trabaje siempre sobre el evento abierto (y el servidor lo verifica).
-let eventoActual = '';
+let evento = '';
 export const usarEvento = (id: string) => {
-  eventoActual = id;
+  evento = id;
 };
-const aRutaDelEvento = (url: string) => (eventoActual ? url.replace('/api/admin/', `/api/app/${eventoActual}/`) : url);
+export const eventoActual = () => evento;
+const aRutaDelEvento = (url: string) => (evento ? url.replace('/api/admin/', `/api/app/${evento}/`) : url);
 
 export async function api<T = Record<string, unknown>>(url: string, init?: RequestInit): Promise<T & { ok: boolean; error?: string }> {
   const r = await fetch(aRutaDelEvento(url), init);

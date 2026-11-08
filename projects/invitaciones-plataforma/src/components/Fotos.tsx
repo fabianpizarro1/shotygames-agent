@@ -19,6 +19,7 @@ interface Props {
   inicial: { subida: Ventana; galeriaAbierta: boolean; max: number };
   nombreInicial: string;
   token?: string;
+  ctx: string; // "e=<slug>" (QR general) o "t=<token>" (enlace personal)
 }
 
 interface Item {
@@ -52,7 +53,7 @@ function guardar(k: string, v: string) {
   } catch {}
 }
 
-export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
+export function Fotos({ config: c, inicial, nombreInicial, token, ctx }: Props) {
   const [subida, setSubida] = useState<Ventana>(inicial.subida);
   const [galeriaAbierta, setGaleriaAbierta] = useState(inicial.galeriaAbierta);
   const [max, setMax] = useState(inicial.max);
@@ -69,7 +70,7 @@ export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
 
   const refrescarEstado = useCallback(async (u: string) => {
     try {
-      const j = await (await fetch(`/api/fotos/estado?u=${encodeURIComponent(u)}`, { cache: 'no-store' })).json();
+      const j = await (await fetch(`/api/fotos/estado?${ctx}&u=${encodeURIComponent(u)}`, { cache: 'no-store' })).json();
       if (j.ok) {
         setSubida(j.subida);
         setGaleriaAbierta(j.galeriaAbierta);
@@ -77,7 +78,7 @@ export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
         setSubidas(j.subidas);
       }
     } catch {}
-  }, []);
+  }, [ctx]);
 
   useEffect(() => {
     let id = guardado('fotos-uid');
@@ -92,11 +93,11 @@ export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
 
   useEffect(() => {
     if (!galeriaAbierta) return;
-    fetch('/api/fotos/lista', { cache: 'no-store' })
+    fetch(`/api/fotos/lista?${ctx}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((j) => j.ok && setGaleria(j.fotos))
       .catch(() => setGaleria([]));
-  }, [galeriaAbierta]);
+  }, [galeriaAbierta, ctx]);
 
   const cambiarItem = (id: number, cambios: Partial<Item>) => setItems((l) => l.map((x) => (x.id === id ? { ...x, ...cambios } : x)));
 
@@ -116,7 +117,7 @@ export function Fotos({ config: c, inicial, nombreInicial, token }: Props) {
       for (let n = cola.shift(); n; n = cola.shift()) {
         cambiarItem(n.item.id, { estado: 'subiendo' });
         try {
-          await enviarFoto(await prepararFoto(n.file), uid, nombre.trim());
+          await enviarFoto(await prepararFoto(n.file), uid, nombre.trim(), ctx);
           cambiarItem(n.item.id, { estado: 'ok' });
           setSubidas((s) => s + 1);
         } catch (e) {

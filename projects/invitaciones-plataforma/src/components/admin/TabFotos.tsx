@@ -15,17 +15,15 @@ interface FotoAdmin {
 const btn = 'rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium active:scale-[0.97] disabled:opacity-50';
 const fmt = new Intl.DateTimeFormat('es-EC', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' });
 
-export function TabFotos({ campos }: { campos: CampoConfig[] | null }) {
+export function TabFotos({ campos, eventoId, slug }: { campos: CampoConfig[] | null; eventoId: string; slug: string }) {
   const [fotos, setFotos] = useState<FotoAdmin[] | null>(null);
-  const [carpetaUrl, setCarpetaUrl] = useState('');
   const [error, setError] = useState('');
   const [verOcultas, setVerOcultas] = useState(true);
 
   const cargar = useCallback(async () => {
-    const r = await api<{ fotos: FotoAdmin[]; carpetaUrl: string }>('/api/admin/fotos');
+    const r = await api<{ fotos: FotoAdmin[] }>('/api/admin/fotos');
     if (!r.ok) return setError(r.error || 'No se pudieron leer las fotos');
     setFotos(r.fotos);
-    setCarpetaUrl(r.carpetaUrl);
   }, []);
 
   useEffect(() => {
@@ -45,7 +43,7 @@ export function TabFotos({ campos }: { campos: CampoConfig[] | null }) {
   }
 
   async function eliminar(x: FotoAdmin) {
-    if (!confirm('¿Eliminar esta foto? Va a la papelera de Drive y sale de la galería.')) return;
+    if (!confirm('¿Eliminar esta foto? Se borra y sale de la galería.')) return;
     const r = await api('/api/admin/fotos?id=' + x.id, { method: 'DELETE' });
     if (!r.ok) setError(r.error || 'No se pudo eliminar');
     cargar();
@@ -71,11 +69,10 @@ export function TabFotos({ campos }: { campos: CampoConfig[] | null }) {
         </dl>
         <p className="mt-3 text-xs text-stone-500">Las fechas y el máximo por persona se cambian en la pestaña Contenido, sección “Fotos de la fiesta”.</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a href="/admin/qr" className="rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white">QR para imprimir</a>
-          <a href="/fotos" target="_blank" rel="noopener noreferrer" className={btn}>Ver página de fotos</a>
-          {carpetaUrl && <a href={carpetaUrl} target="_blank" rel="noopener noreferrer" className={btn}>Abrir carpeta en Drive</a>}
+          <a href={`/app/${eventoId}/qr`} className="rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white">QR para imprimir</a>
+          <a href={`/fotos?e=${slug}`} target="_blank" rel="noopener noreferrer" className={btn}>Ver página de fotos</a>
         </div>
-        <p className="mt-2 text-xs text-stone-500">Para descargar todas las fotos juntas: abre la carpeta en Drive y usa “Descargar” (arma un ZIP).</p>
+        <p className="mt-2 text-xs text-stone-500">La página de fotos solo funciona cuando la invitación está publicada. Cada foto se descarga desde la galería.</p>
       </section>
 
       <div className="grid grid-cols-3 gap-3">

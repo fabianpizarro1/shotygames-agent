@@ -1,6 +1,6 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { Db, Evento, InvitadoDb, LogDb, Usuario } from './types';
+import type { Archivo, CancionDb, Db, Evento, FotoDb, InvitadoDb, LogDb, Usuario } from './types';
 
 // Adaptador local: un archivo JSON en .data/ (fuera de git). Sirve para desarrollar y probar sin
 // cuentas externas. Escrituras en cola (una a la vez) y con renombrado atómico.
@@ -10,10 +10,14 @@ interface Datos {
   eventos: Evento[];
   invitados: InvitadoDb[];
   logs: LogDb[];
+  fotos: FotoDb[];
+  canciones: CancionDb[];
 }
 
-const VACIO = (): Datos => ({ usuarios: [], eventos: [], invitados: [], logs: [] });
+const VACIO = (): Datos => ({ usuarios: [], eventos: [], invitados: [], logs: [], fotos: [], canciones: [] });
 const ARCHIVO = path.join(process.cwd(), '.data', 'db.json');
+const CARPETA_ARCHIVOS = path.join(process.cwd(), '.data', 'files');
+const ID_ARCHIVO = /^[A-Za-z0-9-]{8,60}$/;
 
 export function crearAdaptadorLocal(): Db {
   let cache: Datos | null = null;
@@ -104,6 +108,71 @@ export function crearAdaptadorLocal(): Db {
         d.invitados = d.invitados.filter((i) => i.token !== token);
         return d.invitados.length < n;
       });
+    },
+
+    async fotosDe(eventoId) {
+      return copia((await cargar()).fotos.filter((f) => f.evento_id === eventoId));
+    },
+    async crearFoto(f) {
+      await mutar((d) => void d.fotos.push(f));
+    },
+    async parchearFoto(id, parche) {
+      return mutar((d) => {
+        const f = d.fotos.find((x) => x.id === id);
+        if (!f) return false;
+        Object.assign(f, parche);
+        return true;
+      });
+    },
+    async borrarFoto(id) {
+      return mutar((d) => {
+        const f = d.fotos.find((x) => x.id === id) ?? null;
+        if (f) d.fotos = d.fotos.filter((x) => x.id !== id);
+        return f ? copia(f) : null;
+      });
+    },
+
+    async cancionesDe(eventoId) {
+      return copia((await cargar()).canciones.filter((c) => c.evento_id === eventoId));
+    },
+    async crearCancion(c) {
+      await mutar((d) => void d.canciones.push(c));
+    },
+    async parchearCancion(id, parche) {
+      return mutar((d) => {
+        const c = d.canciones.find((x) => x.id === id);
+        if (!c) return false;
+        Object.assign(c, parche);
+        return true;
+      });
+    },
+    async borrarCancion(id) {
+      return mutar((d) => {
+        const n = d.canciones.length;
+        d.canciones = d.canciones.filter((c) => c.id !== id);
+        return d.canciones.length < n;
+      });
+    },
+
+    async guardarArchivo(a: Archivo) {
+      if (!ID_ARCHIVO.test(a.id)) throw new Error('Id de archivo inválido');
+      await mkdir(CARPETA_ARCHIVOS, { recursive: true });
+      await writeFile(path.join(CARPETA_ARCHIVOS, `${a.id}.bin`), a.bytes);
+      await writeFile(path.join(CARPETA_ARCHIVOS, `${a.id}.json`), JSON.stringify({ evento_id: a.evento_id, mime: a.mime }));
+    },
+    async leerArchivo(id) {
+      if (!ID_ARCHIVO.test(id)) return null;
+      try {
+        const meta = JSON.parse(await readFile(path.join(CARPETA_ARCHIVOS, `${id}.json`), 'utf8')) as { evento_id: string; mime: string };
+        return { id, evento_id: meta.evento_id, mime: meta.mime, bytes: new Uint8Array(await readFile(path.join(CARPETA_ARCHIVOS, `${id}.bin`))) };
+      } catch {
+        return null;
+      }
+    },
+    async borrarArchivo(id) {
+      if (!ID_ARCHIVO.test(id)) return;
+      await rm(path.join(CARPETA_ARCHIVOS, `${id}.bin`), { force: true });
+      await rm(path.join(CARPETA_ARCHIVOS, `${id}.json`), { force: true });
     },
 
     async registrar(l) {
