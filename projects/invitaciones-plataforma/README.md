@@ -9,6 +9,16 @@ Copia de `projects/invitaciones` (la invitación de Joselin) para convertirla en
 - La invitación de Joselin sigue en `projects/invitaciones` y se toca solo para arreglos hasta después del 21-nov-2026.
 - Plan y decisiones: `PLAN.md`. Esquema de base de datos (borrador): `supabase/schema.sql`.
 
-## Estado
-Código copiado tal cual; todavía usa Google Sheets/Drive. Falta la fase 1 (Supabase, auth y multi-evento).
-No se instaló `node_modules`.
+## Estado (2026-11-08)
+**Etapa 1 lista y probada en local** (puerto 3200: `preview_start plataforma`, usa `.data/db.json`, sin cuentas externas):
+- Cuentas (correo + contraseña, cookie firmada), mis eventos, crear evento desde plantilla.
+- Panel por evento: Contenido (editor con vista previa en vivo), Invitados (alta, importar, WhatsApp), Estadísticas, Publicar.
+- Invitación por enlace personal (`/i/<token>`) y general (`/e/<slug>`), confirmación (RSVP), aperturas registradas.
+- Borrador = solo el dueño la ve; publicada = la ven los invitados. Cobro todavía NO conectado (publicar es gratis).
+- Aislamiento: cada usuario solo ve y edita sus eventos.
+
+**Etapa 2 (pendiente)**: fotos por QR, playlist y subida de archivos. El código viejo (Sheets/Drive) está apartado en `src/_etapa2/` (excluido de `tsconfig`) y hay que reescribirlo contra Supabase Storage.
+**Después**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth), plantillas de boda y quinceañera, pulir la plantilla de cumpleaños, PayPhone.
+
+## Cómo correrlo
+`cp .env.example .env.local` (poner un `SESSION_SECRET` aleatorio), `npm install`, `npm run dev -- --port 3200`.

@@ -1,45 +1,19 @@
-import { unstable_cache } from 'next/cache';
-import { actualizarCeldas, agregarFilas, leerTabla } from './sheets';
+import { db, type Evento } from './db';
 import { CONFIG_DEFAULTS } from './config-defaults.mjs';
+import { plantillaPorSlug } from './plantillas';
 
 export { CONFIG_DEFAULTS };
 
-// Todo lo que se ve en la invitación vive en la hoja CONFIG (clave | valor |
-// descripcion). El dashboard la edita; la página solo lee.
-
+// Todo lo que se ve en la invitación vive en evento.config (clave → valor). Las claves que el
+// cliente no tocó salen de la plantilla y, si la plantilla no las trae, de los valores base.
 
 export type Config = Record<keyof typeof CONFIG_DEFAULTS, string>;
 
-const porDefecto = () =>
-  Object.fromEntries(Object.entries(CONFIG_DEFAULTS).map(([k, v]) => [k, v.valor])) as Config;
+const base = () => Object.fromEntries(Object.entries(CONFIG_DEFAULTS).map(([k, v]) => [k, v.valor])) as Config;
 
-// Lanza si el Sheet falla: unstable_cache no guarda los errores, así que un fallo no deja
-// "la configuración por defecto" cacheada un minuto pisando lo que se editó en el panel.
-async function leerConfig(): Promise<Config> {
-  const base = porDefecto();
-  const { filas } = await leerTabla('CONFIG');
-  for (const f of filas) {
-    const clave = (f['clave'] ?? '').trim();
-    if (clave in base) (base as Record<string, string>)[clave] = f['valor'] ?? '';
-  }
-  return base;
+export function configDeEvento(e: Pick<Evento, 'plantilla' | 'config'>): Config {
+  return { ...base(), ...plantillaPorSlug(e.plantilla).defaults, ...e.config } as Config;
 }
-
-const configCacheada = unstable_cache(leerConfig, ['config'], { tags: ['config'], revalidate: 60 });
-
-// La caché de datos de Next SOBREVIVE a los deploys: tras publicar, la primera petición puede
-// recibir la configuración guardada por la versión anterior, sin las claves nuevas
-// (undefined.trim() → 500). Por eso el resultado siempre se mezcla sobre los valores por defecto.
-export async function getConfig(): Promise<Config> {
-  try {
-    return { ...porDefecto(), ...(await configCacheada()) };
-  } catch (e) {
-    console.error('[config] no se pudo leer CONFIG, uso valores por defecto (sin cachear)', e);
-    return porDefecto();
-  }
-}
-
-// ---- Escritura (solo dashboard) ----
 
 export interface CampoConfig {
   clave: string;
@@ -47,29 +21,19 @@ export interface CampoConfig {
   descripcion: string;
 }
 
-// Lista completa para el editor: valores del Sheet; si falta una clave, el valor por defecto.
-export async function configCompleta(): Promise<CampoConfig[]> {
-  const { filas } = await leerTabla('CONFIG');
-  const enSheet = new Map(filas.map((f) => [(f['clave'] ?? '').trim(), f['valor'] ?? '']));
-  return Object.entries(CONFIG_DEFAULTS).map(([clave, d]) => ({
-    clave,
-    valor: enSheet.has(clave) ? (enSheet.get(clave) as string) : d.valor,
-    descripcion: d.descripcion,
-  }));
+// Lista completa para el editor: valor efectivo de cada clave conocida.
+export function camposDeEvento(e: Evento): CampoConfig[] {
+  const c = configDeEvento(e);
+  return Object.entries(CONFIG_DEFAULTS).map(([clave, d]) => ({ clave, valor: c[clave as keyof Config], descripcion: d.descripcion }));
 }
 
-// Guarda solo las claves conocidas: actualiza la celda si existe y agrega la fila si falta.
-export async function guardarConfig(cambios: Record<string, string>): Promise<number> {
-  const claves = Object.keys(cambios).filter((k) => k in CONFIG_DEFAULTS);
-  if (!claves.length) return 0;
-  const { encabezados, filas } = await leerTabla('CONFIG');
-  const fila = new Map(filas.map((f) => [(f['clave'] ?? '').trim(), f._fila]));
-  const nuevas: Record<string, string>[] = [];
-  for (const k of claves) {
-    const v = String(cambios[k]).slice(0, 4000);
-    if (fila.has(k)) await actualizarCeldas('CONFIG', encabezados, fila.get(k) as number, { valor: v });
-    else nuevas.push({ clave: k, valor: v, descripcion: CONFIG_DEFAULTS[k as keyof typeof CONFIG_DEFAULTS].descripcion });
-  }
-  await agregarFilas('CONFIG', nuevas);
-  return claves.length;
+// Guarda solo claves conocidas, con tope de largo.
+export async function guardarConfigEvento(eventoId: string, cambios: Record<string, string>): Promise<number> {
+  const e = await db().eventoPorId(eventoId);
+  if (!e) return 0;
+  const limpios: Record<string, string> = {};
+  for (const [k, v] of Object.entries(cambios)) if (k in CONFIG_DEFAULTS) limpios[k] = String(v).slice(0, 4000);
+  const n = Object.keys(limpios).length;
+  if (n) await db().parchearEvento(eventoId, { config: { ...e.config, ...limpios } });
+  return n;
 }

@@ -1,19 +1,28 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { esAdmin } from '@/lib/admin-auth';
-import { getConfig } from '@/lib/config';
+import { usuarioActual } from '@/lib/auth';
+import { configDeEvento } from '@/lib/config';
+import { db } from '@/lib/db';
 import { invitadoPorToken } from '@/lib/invitados';
 import { Invitacion } from '@/components/Invitacion';
+import { NoDisponible } from '@/components/NoDisponible';
 
 type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ vista?: string; volver?: string }> };
 
+async function cargar(token: string) {
+  const inv = await invitadoPorToken(token);
+  if (!inv) return null;
+  const evento = await db().eventoPorId(inv.evento_id);
+  return evento ? { inv, evento } : null;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { token } = await params;
-  const [c, inv] = await Promise.all([getConfig(), invitadoPorToken(token)]);
-  if (!inv) return { title: 'Invitación' };
+  const x = await cargar((await params).token);
+  if (!x || x.evento.estado !== 'publicado') return { title: 'Invitación', robots: { index: false, follow: false } };
+  const c = configDeEvento(x.evento);
   return {
     title: c.nombre_evento,
-    description: `${inv.nombre}: ${c.titulo.replace('{invitada}', inv.genero === 'M' ? 'invitado' : 'invitada')} ${c.nombre_evento}`,
+    description: `${x.inv.nombre}: ${c.titulo.replace('{invitada}', x.inv.genero === 'M' ? 'invitado' : 'invitada')} ${c.nombre_evento}`,
     robots: { index: false, follow: false },
   };
 }
@@ -21,24 +30,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Pagina({ params, searchParams }: Props) {
   const { token } = await params;
   const { vista, volver } = await searchParams;
-  // ?vista=1 (vista previa del panel) solo funciona con la sesión del admin.
-  const vistaPrevia = vista === '1' && (await esAdmin());
-  const [config, inv] = await Promise.all([getConfig(), invitadoPorToken(token)]);
-  if (!inv) notFound();
+  const x = await cargar(token);
+  if (!x) notFound();
+  // ?vista=1 (vista previa del panel) solo funciona con la sesión del dueño del evento.
+  const u = vista === '1' ? await usuarioActual() : null;
+  const esDueno = !!u && (u.id === x.evento.dueno_id || u.es_admin);
+  if (x.evento.estado !== 'publicado' && !esDueno) return <NoDisponible />;
   return (
     <Invitacion
-      vistaPrevia={vistaPrevia}
+      vistaPrevia={vista === '1' && esDueno}
       volver={volver === '1'}
-      config={config}
-      invitado={{
-        token: inv.token,
-        nombre: inv.nombre,
-        genero: inv.genero,
-        cupos: inv.cupos,
-        estado: inv.estado,
-        asistentes: inv.asistentes,
-        mensaje: inv.mensaje,
-      }}
+      config={configDeEvento(x.evento)}
+      invitado={{ token: x.inv.token, nombre: x.inv.nombre, genero: x.inv.genero, cupos: x.inv.cupos, estado: x.inv.estado, asistentes: x.inv.asistentes, mensaje: x.inv.mensaje }}
     />
   );
 }

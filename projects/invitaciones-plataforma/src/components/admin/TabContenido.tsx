@@ -234,7 +234,7 @@ function EditorPrograma({ valor, onChange }: { valor: string; onChange: (v: stri
 
 // ---------- vista previa en vivo ----------
 
-function Vista({ token, valores, capActivo, completa, onEditar, nombre }: { token: string; valores: Record<string, string>; capActivo: string | null; completa: boolean; onEditar: (cap: string) => void; nombre: string }) {
+function Vista({ slug, valores, capActivo, completa, onEditar, nombre }: { slug: string; valores: Record<string, string>; capActivo: string | null; completa: boolean; onEditar: (cap: string) => void; nombre: string }) {
   const marco = useRef<HTMLIFrameElement>(null);
   const caja = useRef<HTMLDivElement>(null);
   const listo = useRef(false);
@@ -260,7 +260,7 @@ function Vista({ token, valores, capActivo, completa, onEditar, nombre }: { toke
 
   useEffect(() => {
     listo.current = false;
-  }, [token]);
+  }, [slug, nombre]);
 
   // cada cambio se refleja casi al instante (sin guardar)
   useEffect(() => {
@@ -286,15 +286,15 @@ function Vista({ token, valores, capActivo, completa, onEditar, nombre }: { toke
     };
   }, [completa]);
 
-  const src = `/i/${token}?vista=1`;
+  const src = `/e/${slug}?vista=1&n=${encodeURIComponent(nombre)}`;
   if (completa) {
-    return <iframe ref={marco} key={token} src={src} title={`Vista previa para ${nombre}`} className="size-full border-0 bg-white" />;
+    return <iframe ref={marco} key={nombre} src={src} title={`Vista previa para ${nombre}`} className="size-full border-0 bg-white" />;
   }
   return (
     <div ref={caja} className="w-full">
       <div className="mx-auto overflow-hidden rounded-[28px] bg-stone-900 p-2 shadow-xl" style={{ width: 375 * k + 16 }}>
         <div className="overflow-hidden rounded-[20px] bg-white" style={{ width: 375 * k, height: 812 * k }}>
-          <iframe ref={marco} key={token} src={src} title={`Vista previa para ${nombre}`} className="border-0 bg-white" style={{ width: 375, height: 812, transform: `scale(${k})`, transformOrigin: 'top left' }} />
+          <iframe ref={marco} key={nombre} src={src} title={`Vista previa para ${nombre}`} className="border-0 bg-white" style={{ width: 375, height: 812, transform: `scale(${k})`, transformOrigin: 'top left' }} />
         </div>
       </div>
     </div>
@@ -303,7 +303,7 @@ function Vista({ token, valores, capActivo, completa, onEditar, nombre }: { toke
 
 // ---------- pestaña ----------
 
-export function TabContenido({ campos, invitados, recargar }: { campos: CampoConfig[] | null; invitados: InvitadoAdmin[] | null; recargar: () => Promise<void> }) {
+export function TabContenido({ campos, invitados, recargar, slug }: { campos: CampoConfig[] | null; invitados: InvitadoAdmin[] | null; recargar: () => Promise<void>; slug: string }) {
   const original = useMemo(() => Object.fromEntries((campos ?? []).map((c) => [c.clave, c.valor])), [campos]);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState(false);
@@ -350,6 +350,7 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
 
   const set = (k: string, v: string) => setValores((x) => ({ ...x, [k]: v }));
   const invitadoVista = invitados?.find((i) => i.token === token) ?? invitados?.[0];
+  const nombreVista = invitadoVista?.nombre ?? 'Tu invitado';
   const capActivo = SECCIONES.find((s) => s.id === abierta)?.cap ?? null;
 
   async function guardar() {
@@ -458,7 +459,7 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
       <div className="space-y-3">
         <div className="rounded-xl bg-white p-4 text-[15px] text-stone-700 ring-1 ring-stone-200">
           <p><b>Toca una parte para editarla.</b> Lo que cambies se ve al instante en la vista previa; no se guarda hasta que pulses <b>Guardar cambios</b>.</p>
-          {!ancha && invitadoVista && <button type="button" onClick={() => setMovil(true)} className="mt-3 w-full rounded-lg bg-stone-900 px-4 py-3 text-base font-medium text-white active:scale-[0.98]">Ver vista previa</button>}
+          {!ancha && <button type="button" onClick={() => setMovil(true)} className="mt-3 w-full rounded-lg bg-stone-900 px-4 py-3 text-base font-medium text-white active:scale-[0.98]">Ver vista previa</button>}
         </div>
 
         {SECCIONES.map((s) => {
@@ -487,28 +488,24 @@ export function TabContenido({ campos, invitados, recargar }: { campos: CampoCon
       {ancha && (
         <aside className="sticky top-20 mt-0 space-y-3 self-start" aria-label="Vista previa">
           {selector}
-          {invitadoVista ? (
-            <Vista token={invitadoVista.token} valores={valores} capActivo={capActivo} completa={false} onEditar={alEditar} nombre={invitadoVista.nombre} />
-          ) : (
-            <p className="rounded-xl bg-white p-4 text-sm text-stone-600 ring-1 ring-stone-200">Agrega un invitado para ver la vista previa.</p>
-          )}
+          <Vista slug={slug} valores={valores} capActivo={capActivo} completa={false} onEditar={alEditar} nombre={nombreVista} />
           <p className="text-center text-sm text-stone-500">Toca cualquier parte de la invitación para editarla.</p>
-          <a href={invitadoVista ? `/i/${invitadoVista.token}` : '#'} target="_blank" rel="noopener noreferrer" className="block text-center text-sm underline underline-offset-4">Abrir la invitación en otra pestaña</a>
+           <a href={`/e/${slug}?vista=1&n=${encodeURIComponent(nombreVista)}`} target="_blank" rel="noopener noreferrer" className="block text-center text-sm underline underline-offset-4">Abrir la invitación en otra pestaña</a>
         </aside>
       )}
 
-      {movil && invitadoVista && (
+      {movil && (
         <div className="fixed inset-0 z-50 flex flex-col bg-stone-900" role="dialog" aria-label="Vista previa">
           <div className="flex items-center justify-between gap-3 bg-white px-4 py-3">
             <div className="min-w-0">
               <p className="font-semibold">Vista previa</p>
-              <p className="truncate text-sm text-stone-500">Toca una parte para editarla · {invitadoVista.nombre}</p>
+              <p className="truncate text-sm text-stone-500">Toca una parte para editarla · {nombreVista}</p>
             </div>
             <button type="button" onClick={() => setMovil(false)} className="shrink-0 rounded-lg bg-stone-900 px-4 py-2.5 text-base font-medium text-white">Cerrar</button>
           </div>
           {invitados && invitados.length > 1 && <div className="bg-white px-4 pb-3">{selector}</div>}
           <div className="min-h-0 flex-1">
-            <Vista token={invitadoVista.token} valores={valores} capActivo={capActivo} completa onEditar={alEditar} nombre={invitadoVista.nombre} />
+            <Vista slug={slug} valores={valores} capActivo={capActivo} completa onEditar={alEditar} nombre={nombreVista} />
           </div>
         </div>
       )}

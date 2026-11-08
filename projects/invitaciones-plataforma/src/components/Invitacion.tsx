@@ -55,7 +55,7 @@ const LETRAS_PALABRA: Record<string, [string, boolean, number, number, number]> 
 };
 const TONOS_CORONA: Record<string, 'plata' | 'color' | 'rosa' | 'negro' | 'gris'> = { plata: 'plata', dorado: 'color', rosa: 'rosa', negro: 'negro', gris: 'gris' };
 
-export function Invitacion({ config, invitado, vistaPrevia = false, volver = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean; volver?: boolean }) {
+export function Invitacion({ config, invitado, vistaPrevia = false, volver = false, soloLectura = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean; volver?: boolean; soloLectura?: boolean }) {
   // En la vista previa del panel, `c` se actualiza en vivo con lo que se está editando (sin guardar).
   const [c, setC] = useState(config);
   useEffect(() => setC(config), [config]);
@@ -135,8 +135,9 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
       if (sessionStorage.getItem(k)) return;
       sessionStorage.setItem(k, '1');
     } catch {}
+    if (soloLectura) return;
     fetch('/api/abierto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: invitado.token }) }).catch(() => {});
-  }, [invitado.token, vistaPrevia]);
+  }, [invitado.token, vistaPrevia, soloLectura]);
 
   // Firma sobre el 30: el borde se oscurece o aclara solo para que siempre se lea.
   const esClaro = (hex: string) => {
@@ -466,7 +467,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
               <p className="f-cond break-words text-center font-bold leading-tight tracking-[0.08em]" style={{ fontSize: tamNombre(invitado.nombre, 0.58, 40, 22, 255) }}>{invitado.nombre}</p>
               <div className="mt-5">
                 <Rsvp
-                  deshabilitado={vistaPrevia}
+                  deshabilitado={vistaPrevia || soloLectura}
                   token={invitado.token}
                   cupos={invitado.cupos}
                   limite={limite}

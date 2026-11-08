@@ -1,4 +1,4 @@
-import { actualizarCeldas, agregarFila, agregarFilas, eliminarFila, leerTabla } from './sheets';
+import { db, type InvitadoDb } from './db';
 import { nuevoToken } from './tokens';
 
 export interface InvitadoAdmin {
@@ -20,29 +20,25 @@ export interface InvitadoAdmin {
 
 const EDITABLES = ['nombre', 'telefono', 'grupo', 'genero', 'cupos', 'estado', 'asistentes', 'restricciones', 'mensaje', 'notas', 'enviado_at'] as const;
 
-function aAdmin(f: Record<string, string>): InvitadoAdmin {
-  const estado = (f['estado'] || 'pendiente').trim().toLowerCase();
-  return {
-    token: f['token'] ?? '',
-    nombre: f['nombre'] ?? '',
-    telefono: f['telefono'] ?? '',
-    grupo: f['grupo'] ?? '',
-    genero: (f['genero'] ?? '').trim().toUpperCase() === 'M' ? 'M' : 'F',
-    cupos: Math.max(1, parseInt(f['cupos'] || '1', 10) || 1),
-    estado: estado === 'confirmado' || estado === 'no_asiste' ? estado : 'pendiente',
-    asistentes: parseInt(f['asistentes'] || '0', 10) || 0,
-    restricciones: f['restricciones'] ?? '',
-    mensaje: f['mensaje'] ?? '',
-    notas: f['notas'] ?? '',
-    enviado_at: f['enviado_at'] ?? '',
-    abierto_at: f['abierto_at'] ?? '',
-    confirmado_at: f['confirmado_at'] ?? '',
-  };
-}
+const aAdmin = (i: InvitadoDb): InvitadoAdmin => ({
+  token: i.token,
+  nombre: i.nombre,
+  telefono: i.telefono,
+  grupo: i.grupo,
+  genero: i.genero,
+  cupos: i.cupos,
+  estado: i.estado,
+  asistentes: i.asistentes,
+  restricciones: i.restricciones,
+  mensaje: i.mensaje,
+  notas: i.notas,
+  enviado_at: i.enviado_at,
+  abierto_at: i.abierto_at,
+  confirmado_at: i.confirmado_at,
+});
 
-export async function listarInvitados(): Promise<InvitadoAdmin[]> {
-  const { filas } = await leerTabla('INVITADOS');
-  return filas.filter((f) => (f['token'] ?? '').trim()).map(aAdmin);
+export async function listarInvitados(eventoId: string): Promise<InvitadoAdmin[]> {
+  return (await db().invitadosDe(eventoId)).map(aAdmin);
 }
 
 // Teléfono a formato wa.me de Ecuador: 0967600303 -> 593967600303.
@@ -55,30 +51,36 @@ export function normalizarTelefono(t: string): string {
   return d;
 }
 
-function datosNuevos(d: Partial<InvitadoAdmin>): Record<string, string> {
+function nuevo(eventoId: string, d: Partial<InvitadoAdmin>): InvitadoDb {
   return {
+    evento_id: eventoId,
     token: nuevoToken(),
     nombre: String(d.nombre ?? '').trim().slice(0, 120),
     telefono: normalizarTelefono(String(d.telefono ?? '')),
     grupo: String(d.grupo ?? '').trim().slice(0, 60),
-    cupos: String(Math.min(20, Math.max(1, Number(d.cupos) || 1))),
-    estado: 'pendiente',
-    asistentes: '0',
     genero: d.genero === 'M' ? 'M' : 'F',
+    cupos: Math.min(20, Math.max(1, Number(d.cupos) || 1)),
+    estado: 'pendiente',
+    asistentes: 0,
+    restricciones: '',
+    mensaje: '',
     notas: String(d.notas ?? '').slice(0, 300),
+    enviado_at: '',
+    abierto_at: '',
+    confirmado_at: '',
   };
 }
 
-export async function crearInvitado(d: Partial<InvitadoAdmin>): Promise<string> {
-  const fila = datosNuevos(d);
-  if (!fila.nombre) throw new Error('El nombre es obligatorio');
-  await agregarFila('INVITADOS', fila);
-  return fila.token;
+export async function crearInvitado(eventoId: string, d: Partial<InvitadoAdmin>): Promise<string> {
+  const i = nuevo(eventoId, d);
+  if (!i.nombre) throw new Error('El nombre es obligatorio');
+  await db().crearInvitados([i]);
+  return i.token;
 }
 
 // Importación masiva: una persona por línea → nombre, teléfono, cupos, grupo (coma, ; o tabulador).
-export async function importarInvitados(texto: string): Promise<{ creados: number; omitidas: string[] }> {
-  const filas: Record<string, string>[] = [];
+export async function importarInvitados(eventoId: string, texto: string): Promise<{ creados: number; omitidas: string[] }> {
+  const lista: InvitadoDb[] = [];
   const omitidas: string[] = [];
   for (const linea of texto.split('\n').map((l) => l.trim()).filter(Boolean)) {
     const [nombre, telefono, cupos, grupo] = linea.split(/[,;\t]/).map((x) => x.trim());
@@ -86,35 +88,38 @@ export async function importarInvitados(texto: string): Promise<{ creados: numbe
       omitidas.push(linea);
       continue;
     }
-    filas.push(datosNuevos({ nombre, telefono, cupos: Number(cupos) || 1, grupo }));
+    lista.push(nuevo(eventoId, { nombre, telefono, cupos: Number(cupos) || 1, grupo }));
   }
-  if (filas.length > 300) throw new Error('Máximo 300 invitados por importación');
-  await agregarFilas('INVITADOS', filas);
-  return { creados: filas.length, omitidas };
+  if (lista.length > 300) throw new Error('Máximo 300 invitados por importación');
+  await db().crearInvitados(lista);
+  return { creados: lista.length, omitidas };
 }
 
-export async function actualizarInvitado(token: string, cambios: Record<string, unknown>): Promise<boolean> {
-  const { encabezados, filas } = await leerTabla('INVITADOS');
-  const f = filas.find((x) => x['token'] === token);
-  if (!f) return false;
-  const out: Record<string, string> = {};
+// Solo se toca un invitado que pertenezca al evento (nunca por token suelto).
+async function delEvento(eventoId: string, token: string): Promise<InvitadoDb | null> {
+  const i = await db().invitadoPorToken(token);
+  return i && i.evento_id === eventoId ? i : null;
+}
+
+export async function actualizarInvitado(eventoId: string, token: string, cambios: Record<string, unknown>): Promise<boolean> {
+  if (!(await delEvento(eventoId, token))) return false;
+  const out: Record<string, string | number> = {};
   for (const k of EDITABLES) {
     if (!(k in cambios)) continue;
     let v = String(cambios[k] ?? '');
     if (k === 'telefono') v = normalizarTelefono(v);
-    if (k === 'cupos') v = String(Math.min(20, Math.max(1, Number(v) || 1)));
-    if (k === 'genero') v = v === 'M' ? 'M' : 'F';
-    if (k === 'estado' && !['pendiente', 'confirmado', 'no_asiste'].includes(v)) continue;
-    out[k] = v.slice(0, 500);
+    if (k === 'cupos') out[k] = Math.min(20, Math.max(1, Number(v) || 1));
+    else if (k === 'asistentes') out[k] = Math.max(0, parseInt(v, 10) || 0);
+    else if (k === 'genero') out[k] = v === 'M' ? 'M' : 'F';
+    else if (k === 'estado') {
+      if (['pendiente', 'confirmado', 'no_asiste'].includes(v)) out[k] = v;
+    } else out[k] = v.slice(0, 500);
   }
-  await actualizarCeldas('INVITADOS', encabezados, f._fila, out);
+  await db().parchearInvitado(token, out as Partial<InvitadoDb>);
   return true;
 }
 
-export async function borrarInvitado(token: string): Promise<boolean> {
-  const { filas } = await leerTabla('INVITADOS');
-  const f = filas.find((x) => x['token'] === token);
-  if (!f) return false;
-  await eliminarFila('INVITADOS', f._fila);
-  return true;
+export async function borrarInvitado(eventoId: string, token: string): Promise<boolean> {
+  if (!(await delEvento(eventoId, token))) return false;
+  return db().borrarInvitado(token);
 }
