@@ -14,6 +14,14 @@ import { SelloCera } from './SelloCera';
 
 const SELLOS: Record<string, string> = { vino: '#800e1e', rojo: '#ac1826', dorado: '#be963e', rosa: '#d66086', azul: '#243460', negro: '#1c1a1c' };
 
+// Sello realista disponible para una inicial A-Z, para «XV» y para «&» (boda); otra cosa usa el sello dibujado.
+function idSello(inicial: string): string | null {
+  const t = inicial.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (t === 'XV') return 'XV';
+  if (t === '&') return 'AMP';
+  return /^[A-Z]$/.test(t) ? t : null;
+}
+
 interface Props {
   fondo?: string;
   humo?: boolean;
@@ -138,9 +146,9 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
           animate={abierto ? { scale: [1, 1.2, 0], opacity: [1, 1, 0] } : { scale: [1, 1.07, 1] }}
           transition={abierto ? { duration: 0.28, ease: 'easeOut' } : { duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          {inicial.toUpperCase() === 'J' ? (
+          {idSello(inicial) ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/sello/${clave}.webp`} alt="" width={340} height={335} draggable={false} className="size-full object-contain" />
+            <img src={`/sello/${idSello(inicial)}/${clave}.webp`} alt="" width={300} height={296} draggable={false} className="size-full object-contain" />
           ) : (
             <SelloCera inicial={inicial} color={SELLOS[clave]} className="size-full" />
           )}

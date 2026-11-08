@@ -39,7 +39,8 @@ function InvitacionElegante({ config, invitado, vistaPrevia = false, volver = fa
   const novia = c.novia.trim();
   const novio = c.novio.trim();
   const festejada = c.festejado.trim();
-  const iniciales = quince ? 'XV' : `${(novia[0] ?? 'A').toUpperCase()}&${(novio[0] ?? 'B').toUpperCase()}`;
+  const iniciales = quince ? 'XV' : `${(novia[0] ?? 'A').toUpperCase()}&${(novio[0] ?? 'B').toUpperCase()}`; // monograma del arco y la historia
+  const inicialSello = quince ? 'XV' : '&'; // el sello de la boda lleva el «&»: sirve para cualquier pareja
   const firma = quince ? festejada : `${novia} & ${novio}`;
   const p = partes(c.fecha_hora);
   const f = piezasFecha(c.fecha_hora);
@@ -81,7 +82,7 @@ function InvitacionElegante({ config, invitado, vistaPrevia = false, volver = fa
               estilo={variante}
               humo={false}
               nombre={invitado.nombre}
-              inicial={iniciales}
+              inicial={inicialSello}
               colorSello={c.sello_color}
               texto={sobre}
               onAbrir={() => {
