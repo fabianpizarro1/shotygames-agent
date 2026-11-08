@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type CSSProperties } from 'react';
+import { useId, useMemo, type CSSProperties } from 'react';
 
 // Decoración del tema "RIP 20s": negro, plata y papel. Los stickers pequeños son Noto Emoji
 // (licencia libre) convertidos a blanco y negro con filtros; la bola disco y los globos se
@@ -60,7 +60,7 @@ export function Brillo({ tam = 18, className = '', retraso = 0, style }: { tam?:
 
 // Globo negro brillante con nudo y cinta.
 export function Globo({ ancho = 64, className = '', retraso = 0, style, cinta = true }: { ancho?: number; className?: string; retraso?: number; style?: CSSProperties; cinta?: boolean }) {
-  const id = useMemo(() => `g${Math.random().toString(36).slice(2, 8)}`, []);
+  const id = `g${useId().replace(/:/g, '')}`;
   return (
     <svg viewBox="0 0 60 170" width={ancho} aria-hidden className={`flota pointer-events-none absolute ${className}`} style={{ animationDelay: `${retraso}s`, ...style }}>
       <defs>
@@ -117,7 +117,7 @@ function teselas(): Tesela[] {
 
 export function BolaDisco({ tam = 160, className = '', cuerda = 0, style }: { tam?: number; className?: string; cuerda?: number; style?: CSSProperties }) {
   const t = useMemo(teselas, []);
-  const id = useMemo(() => `d${Math.random().toString(36).slice(2, 8)}`, []);
+  const id = `d${useId().replace(/:/g, '')}`;
   return (
     <div className={`pointer-events-none absolute ${className}`} style={{ width: tam, ...style }} aria-hidden>
       {cuerda > 0 && <div className="mx-auto bg-black/80" style={{ width: 1.5, height: cuerda }} />}

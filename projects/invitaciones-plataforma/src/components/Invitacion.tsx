@@ -7,7 +7,8 @@ import type { Config } from '@/lib/config';
 import { piezasFecha } from '@/lib/fechas';
 import { Capitulo, Cinta, Entra, Escribe, Listo } from './anim';
 import { Cuenta } from './Cuenta';
-import { Brillo, Confeti, Humo, Pegatina, Sticker } from './Decor';
+import { Adorno, StickersPropios } from './Adorno';
+import { Brillo, Confeti, Humo, Sticker } from './Decor';
 import { Musica, type MusicaApi } from './Musica';
 import { Rsvp } from './Rsvp';
 import { SobreRegalo } from './SobreRegalo';
@@ -176,6 +177,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
   const fondoVestimenta = tinte ? `linear-gradient(to bottom, transparent 0%, ${tinte} 18%, ${tinte} 82%, transparent 100%)` : undefined;
 
   return (
+    <StickersPropios.Provider value={c.stickers_propios.trim().toLowerCase() === 'si'}>
     <Listo.Provider value={!portada}>
       <div style={tema} className={`rayas min-h-dvh overflow-x-clip ${vistaPrevia ? 'vista-previa' : ''}`}>
         <AnimatePresence>
@@ -190,9 +192,9 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
         {/* 1 · Invitación + RIP 20s (globos y bola disco) */}
         <Capitulo nombre="inicio" texto={colorOk(c.texto_color_inicio)} className="!min-h-0 !justify-start !pt-48 !pb-52">
           <Humo />
-          <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
-          <Pegatina nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
-          <Pegatina nombre="treinta-29" ancho={200} rot={-3} className="bottom-6 left-1/2 -ml-[100px]" />
+          <Adorno nombre="globos-rosa" ancho={150} rot={-6} className="-left-3 top-4" anim="flota" />
+          <Adorno nombre="disco-estrellas" ancho={215} rot={6} className="-right-14 -top-6" anim="flota" retraso={0.6} />
+          <Adorno nombre="treinta-29" ancho={200} rot={-3} className="bottom-6 left-1/2 -ml-[100px]" />
           <Brillo tam={22} className="text-(--texto)" style={{ left: '16%', top: '32%' }} />
           <Brillo tam={15} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ right: '18%', bottom: '16%' }} retraso={1} />
 
@@ -209,7 +211,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
           <Entra retraso={0.3} className="mt-16">
             <p className="f-cond mx-auto max-w-[16rem] text-[1.456rem] font-bold leading-[1.15]">{c.rip_texto.replace('{invitada}', invitada)}</p>
             <div className="mt-6 flex items-end justify-center gap-1">
-              <span className="f-serif pb-3 text-[3.36rem] font-black leading-none tracking-wide">RIP</span>
+              {c.rip_prefijo.trim() && <span className="f-serif pb-3 text-[3.36rem] font-black leading-none tracking-wide">{c.rip_prefijo.trim()}</span>}
               <span className="globo-num text-[8.4rem]" data-t={ripBase} style={{ '--num': colorOk(c.numero_color_inicio) } as CSSProperties}>{ripBase}</span>
               {ripSufijo && <span className="f-serif mb-4 text-[1.4rem] font-bold">{ripSufijo}</span>}
             </div>
@@ -220,7 +222,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
 
         {/* 2 · Bienvenida a los 30 (corona) */}
         <Capitulo nombre="bienvenida" texto={colorOk(c.texto_color_bienvenida)} className="!min-h-0 !pt-[72px] !pb-60">
-          <Pegatina nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
+          <Adorno nombre="garner-susto" ancho={190} className="bottom-0 right-0" />
           <Sticker nombre="corona" tono={TONOS_CORONA[c.corona_color.trim().toLowerCase()] ?? 'plata'} ancho={150} rot={-3} className="bottom-10 left-3" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '14%', top: '36%' }} />
           <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '46%' }} retraso={0.9} />
@@ -273,7 +275,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
                     {suf && <span className="f-serif absolute bottom-3 left-full pl-2 text-[2.2rem] font-medium leading-none" style={{ color: colorNum }}>{suf}</span>}
                   </span>
                   {c.gorro_mostrar.trim().toLowerCase() === 'si' && (
-                    <Pegatina nombre="gorro-rojo" ancho={76} rot={22} className="-top-[60px] right-[50px] z-[3]" />
+                    <Adorno nombre="gorro-rojo" ancho={76} rot={22} className="-top-[60px] right-[50px] z-[3]" />
                   )}
                   {c.firma_mostrar.trim().toLowerCase() === 'si' && (
                     <Escribe className="f-firma absolute inset-x-0 bottom-1 text-[4.2rem] leading-none" retraso={1.1} dur={1.6}>
@@ -301,8 +303,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
         {/* 3 · Brindis (foto con cinta, confeti: alegre) */}
         <Capitulo nombre="brindis" texto={colorOk(c.texto_color_brindis)} className="!pt-12 !pb-48">
           <Confeti cantidad={6} />
-          <Pegatina nombre="going-on-30" ancho={150} rot={-6} className="bottom-12 left-3" />
-          <Pegatina nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
+          <Adorno nombre="going-on-30" ancho={150} rot={-6} className="bottom-12 left-3" />
+          <Adorno nombre="nena-brindis" ancho={172} className="bottom-0 right-2" />
           <Brillo tam={18} className="text-(--texto)" style={{ right: '14%', top: '30%' }} />
           <div className="mt-6">
             <Escribe className="f-script text-[3.6rem] leading-none">{c.brindis_titulo}</Escribe>
@@ -353,7 +355,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
             {c.lugar_direccion && <p className="mt-1 text-[17.36px] opacity-75">{c.lugar_direccion}</p>}
             {c.lugar_foto_url && (
               <a href={maps} target="_blank" rel="noopener noreferrer" aria-label="Ver el lugar en el mapa" className="relative mt-32 block">
-                <Pegatina nombre="perro-lentes" ancho={120} rot={7} className="-top-[7rem] right-3" />
+                <Adorno nombre="perro-lentes" ancho={120} rot={7} className="-top-[7rem] right-3" />
                 <Polaroid src={c.lugar_foto_url} giro={-1.5} ancha className="relative mx-auto w-[92%]" />
               </a>
             )}
@@ -364,7 +366,7 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
           </Entra>
           <Entra retraso={0.15} className="mt-32 w-full">
             <div className="relative">
-              <Pegatina nombre="mujer-copa" ancho={150} rot={-4} className="-top-[6.8rem] left-4" />
+              <Adorno nombre="mujer-copa" ancho={150} rot={-4} className="-top-[6.8rem] left-4" />
               <div className="papel relative rounded-sm p-5">
                 <Cuenta fechaHora={c.fecha_hora} />
               </div>
@@ -374,8 +376,8 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
 
         {/* 5 · Código de vestimenta (tacones, fondo rosado) */}
         <Capitulo nombre="vestimenta" texto={colorOk(c.texto_color_vestimenta)} fondo={fondoVestimenta} className="!min-h-0 !justify-start !pt-8 !pb-4">
-          <Pegatina nombre="nena-corona" ancho={150} rot={5} className="right-3 top-2" />
-          <Pegatina nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
+          <Adorno nombre="nena-corona" ancho={150} rot={5} className="right-3 top-2" />
+          <Adorno nombre="treinta-brillando" ancho={130} rot={-8} className="left-3 top-[34px]" />
           <Brillo tam={22} className="text-(--texto)" style={{ right: '12%', top: '14%' }} />
           <Brillo tam={16} className="text-[color-mix(in_srgb,var(--texto)_70%,transparent)]" style={{ left: '12%', top: '44%' }} retraso={1} />
           <Entra className="mt-[154px] w-full">
@@ -499,14 +501,15 @@ export function Invitacion({ config, invitado, vistaPrevia = false, volver = fal
 
           {/* cierre: los tres stickers en una fila propia, con aire arriba y abajo (no pegados al final de la página) */}
           <div aria-hidden className="relative -mx-6 mt-24 h-[210px] w-[calc(100%+3rem)]">
-            <Pegatina nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-4 left-1" />
-            <Pegatina nombre="hecha-90s" ancho={132} rot={5} className="bottom-8 right-1" />
-            <Pegatina nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
+            <Adorno nombre="treinta-coqueta" ancho={132} rot={-6} className="bottom-4 left-1" />
+            <Adorno nombre="hecha-90s" ancho={132} rot={5} className="bottom-8 right-1" />
+            <Adorno nombre="hamster-pastel" ancho={140} className="bottom-0 left-1/2 -ml-[70px]" />
           </div>
         </Capitulo>
 
         <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} visible={!portada} />
       </div>
     </Listo.Provider>
+    </StickersPropios.Provider>
   );
 }

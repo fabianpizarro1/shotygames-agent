@@ -20,7 +20,9 @@ Copia de `projects/invitaciones` (la invitación de Joselin) para convertirla en
 **Etapa 2 hecha (2026-11-08)**: fotos por QR (`/fotos?e=<slug>` general o `?t=<token>` personal, con ventanas de tiempo, galería y moderación en el panel), QR imprimible (`/app/<id>/qr`), playlist (búsqueda Deezer, pedidos por invitado, revisión en el panel) y subida de imágenes desde el editor (`/media/<id>`). Playlist y fotos solo para quien confirmó (la regla la hace cumplir el servidor al pedir canciones). El almacenamiento de archivos hoy es local (`.data/files`); con Supabase pasa a Storage.
 El código viejo de Sheets/Drive quedó archivado en `archives/plataforma-etapa2-codigo-sheets-2026-11-08/`.
 
-**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, pulir la plantilla de cumpleaños (colores/estilo actual), plantillas de boda y quinceañera, assets propios o licenciados (los stickers de memes no se pueden vender), IA de plantillas y PayPhone.
+**Plantilla de cumpleaños al día (2026-11-08)**: estilo rosa elegante de la invitación actual, con textos genéricos, fechas de ejemplo al crear el evento y **adornos propios** (globos y bola disco dibujados en código + stickers Noto Emoji; sin memes ni fotos de internet). El modo se activa con `stickers_propios: 'si'` (`src/components/Adorno.tsx`).
+
+**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, plantillas de boda y quinceañera, sello de cera realista para otras iniciales (hoy solo existe la J; las demás usan el sello dibujado), IA de plantillas y PayPhone.
 
 ## Cómo correrlo
 `cp .env.example .env.local` (poner un `SESSION_SECRET` aleatorio), `npm install`, `npm run dev -- --port 3200`.

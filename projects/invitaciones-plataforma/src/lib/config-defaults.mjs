@@ -71,6 +71,8 @@ export const CONFIG_DEFAULTS = {
   sobre_texto: { valor: '{festejado} Birthday', descripcion: 'Texto de la tarjeta que sale del sobre al abrirlo ({festejado} = nombre de la cumpleañera)' },
   extras_solo_confirmados: { valor: 'si', descripcion: 'La playlist y las fotos solo aparecen a quien confirmó asistencia (si/no)' },
   musica_autoplay: { valor: 'si', descripcion: 'La canción empieza sola al tocar el sello y abrir la invitación (si/no)' },
+  stickers_propios: { valor: 'no', descripcion: 'Usar solo adornos propios (sin memes ni fotos de internet): si/no' },
+  rip_prefijo: { valor: 'RIP', descripcion: 'Palabra antes del número grande de la portada (vacío = sin palabra)' },
   gorro_mostrar: { valor: 'no', descripcion: 'Mostrar el gorro de fiesta sobre el 30 (si/no)' },
   sello_color: { valor: 'vino', descripcion: 'Color del sello de cera del sobre de portada: vino, rojo, dorado, rosa, azul o negro' },
   firma_mostrar: { valor: 'no', descripcion: 'Mostrar el nombre de la cumpleañera sobre el número 30 (si/no)' },

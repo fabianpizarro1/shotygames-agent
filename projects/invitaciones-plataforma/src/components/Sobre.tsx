@@ -3,7 +3,8 @@
 import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
-import { Brillo, Humo, Pegatina, Sticker } from './Decor';
+import { Adorno } from './Adorno';
+import { Brillo, Humo, Sticker } from './Decor';
 import { SelloCera } from './SelloCera';
 
 // Portada tipo sobre: sobre plateado con sello de cera negro. Al tocar el sello: el sello salta,
@@ -55,8 +56,8 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
     >
       {humo && <Humo />}
       {humo && <Humo lado="abajo" />}
-      <Pegatina nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
-      <Pegatina nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
+      <Adorno nombre="globos-rosa" ancho={150} rot={-6} className="bottom-4 -left-1" anim="flota" />
+      <Adorno nombre="globos-rosa" ancho={124} rot={8} espejo className="bottom-8 -right-1" anim="flota" retraso={0.9} />
       <Sticker nombre="martini" tono="plata" ancho={72} rot={10} className="right-4 top-[8%]" anim="flota" retraso={0.5} />
       <Brillo tam={20} style={{ left: '24%', top: '10%', color: tinta, opacity: 0.8 }} />
       <Brillo tam={15} style={{ right: '22%', bottom: '30%', color: tinta }} retraso={1} />

@@ -17,6 +17,13 @@ export async function crearEvento(u: Usuario, d: { nombre: string; plantilla: st
   const plantilla = plantillaPorSlug(d.plantilla);
   const config: Record<string, string> = { nombre_evento: nombre };
   if (d.festejado?.trim()) config.festejado = d.festejado.trim().slice(0, 60);
+  // Fechas de ejemplo (en hora de Ecuador) para que la cuenta regresiva y la vista previa se vean bien desde el primer momento.
+  const en = (dias: number, hora: number) => {
+    const d = new Date(Date.now() + dias * 86400_000 - 5 * 3600_000);
+    return `${d.toISOString().slice(0, 10)}T${String(hora).padStart(2, '0')}:00:00-05:00`;
+  };
+  config.fecha_hora = en(30, 15);
+  config.fecha_limite_rsvp = en(24, 23);
   // El enlace público lleva un sufijo corto para que no choquen dos "cumple-de-ana".
   const slug = `${limpiarSlug(nombre)}-${randomUUID().slice(0, 4)}`;
   const e: Evento = {
