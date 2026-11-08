@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import { usuarioActual } from '@/lib/auth';
 import { configDeEvento } from '@/lib/config';
 import { db } from '@/lib/db';
-import { Invitacion } from '@/components/Invitacion';
-import { InvitacionBoda } from '@/components/InvitacionBoda';
+import { InvitacionPorPlantilla } from '@/components/PorPlantilla';
 import { NoDisponible } from '@/components/NoDisponible';
 
 // Enlace general del evento. Con ?vista=1 el dueño ve la vista previa del editor (con un invitado de ejemplo);
@@ -25,9 +24,9 @@ export default async function Pagina({ params, searchParams }: Props) {
   const esDueno = !!u && (u.id === e.dueno_id || u.es_admin);
   if (e.estado !== 'publicado' && !esDueno) return <NoDisponible />;
   const preview = vista === '1' && esDueno;
-  const Plantilla = e.plantilla === 'boda' ? InvitacionBoda : Invitacion;
   return (
-    <Plantilla
+    <InvitacionPorPlantilla
+      plantilla={e.plantilla}
       vistaPrevia={preview}
       soloLectura={!preview}
       config={configDeEvento(e)}

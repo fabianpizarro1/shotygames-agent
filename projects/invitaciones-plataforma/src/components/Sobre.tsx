@@ -4,7 +4,7 @@ import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Adorno } from './Adorno';
-import { Rama } from './Boda';
+import { Corona, Mariposa, Rama } from './Boda';
 import { Brillo, Humo, Sticker } from './Decor';
 import { SelloCera } from './SelloCera';
 
@@ -21,7 +21,7 @@ interface Props {
   inicial: string;
   texto: string;
   colorSello?: string;
-  estilo?: 'fiesta' | 'boda';
+  estilo?: 'fiesta' | 'boda' | 'quince';
   onAbrir: () => void;
   onListo: () => void;
 }
@@ -58,7 +58,13 @@ export function Sobre({ fondo = 'rayas', humo = true, nombre, inicial, texto, co
     >
       {humo && <Humo />}
       {humo && <Humo lado="abajo" />}
-      {estilo === 'boda' ? (
+      {estilo === 'quince' ? (
+        <>
+          <Corona className="left-1/2 top-[7%] w-[70px] -translate-x-1/2" />
+          <Mariposa className="bottom-10 left-4 w-[52px] -rotate-12" />
+          <Mariposa className="bottom-16 right-5 w-[42px] rotate-12" espejo />
+        </>
+      ) : estilo === 'boda' ? (
         <>
           <Rama className="bottom-6 -left-4 w-[190px]" />
           <Rama className="bottom-6 -right-4 w-[190px]" espejo />

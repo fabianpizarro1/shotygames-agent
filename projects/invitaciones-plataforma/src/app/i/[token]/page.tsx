@@ -4,8 +4,7 @@ import { usuarioActual } from '@/lib/auth';
 import { configDeEvento } from '@/lib/config';
 import { db } from '@/lib/db';
 import { invitadoPorToken } from '@/lib/invitados';
-import { Invitacion } from '@/components/Invitacion';
-import { InvitacionBoda } from '@/components/InvitacionBoda';
+import { InvitacionPorPlantilla } from '@/components/PorPlantilla';
 import { NoDisponible } from '@/components/NoDisponible';
 
 type Props = { params: Promise<{ token: string }>; searchParams: Promise<{ vista?: string; volver?: string }> };
@@ -37,9 +36,9 @@ export default async function Pagina({ params, searchParams }: Props) {
   const u = vista === '1' ? await usuarioActual() : null;
   const esDueno = !!u && (u.id === x.evento.dueno_id || u.es_admin);
   if (x.evento.estado !== 'publicado' && !esDueno) return <NoDisponible />;
-  const Plantilla = x.evento.plantilla === 'boda' ? InvitacionBoda : Invitacion;
   return (
-    <Plantilla
+    <InvitacionPorPlantilla
+      plantilla={x.evento.plantilla}
       vistaPrevia={vista === '1' && esDueno}
       volver={volver === '1'}
       config={configDeEvento(x.evento)}

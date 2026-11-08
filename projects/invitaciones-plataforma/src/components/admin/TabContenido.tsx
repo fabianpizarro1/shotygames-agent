@@ -218,15 +218,81 @@ const SECCIONES_BODA_PROPIAS: Seccion[] = [
   },
 ];
 
+const SECCIONES_QUINCE_PROPIAS: Seccion[] = [
+  {
+    id: 'inicio', titulo: 'Quinceañera y portada', desc: 'Nombre, frase y sello del sobre', cap: 'inicio',
+    campos: [
+      colorTexto('inicio'),
+      ['festejado', 'Nombre de la quinceañera', 'texto'],
+      ['boda_frase', 'Frase de invitación', 'largo'],
+      ['sobre_texto', 'Texto que sale del sobre', 'texto', '{festejado} se cambia solo por el nombre.'],
+      ['sello_color', 'Color del sello de cera del sobre', 'sello'],
+    ],
+  },
+  {
+    id: 'historia', titulo: 'Mis XV años', desc: 'La foto circular y tu mensaje', cap: 'historia',
+    campos: [
+      colorTexto('historia'),
+      ['historia_titulo', 'Título', 'texto'],
+      ['portada_url', 'Tu foto', 'imagen', 'Se ve mejor una foto con la cara centrada.'],
+      ['historia_texto', 'Mensaje', 'largo'],
+    ],
+  },
+  {
+    id: 'padres', titulo: 'Padres y padrinos', desc: 'Se oculta sola si está vacía', cap: 'padres',
+    campos: [
+      colorTexto('padres'),
+      ['padres_titulo', 'Título', 'texto'],
+      ['padres_texto', 'Nombres', 'largo', 'Una línea por nombre. Una línea que termine en «:» es un subtítulo (ej: Mis padres:).'],
+    ],
+  },
+  {
+    id: 'fecha', titulo: 'Fecha, misa y fiesta', desc: 'Día, hora, lugares y mapas', cap: 'fecha',
+    campos: [
+      colorTexto('fecha'),
+      ['fecha_linea', 'Frase sobre la fecha', 'texto'],
+      ['fecha_hora', 'Fecha y hora de la misa o ceremonia', 'fechahora'],
+      ['ceremonia_titulo', 'Título del primer lugar', 'texto', 'Ej: Misa de acción de gracias'],
+      ['lugar_nombre', 'Nombre del lugar', 'texto'],
+      ['lugar_direccion', 'Dirección o ciudad', 'texto'],
+      ['lugar_foto_url', 'Foto del lugar', 'imagen', 'Al tocarla se abre el mapa.'],
+      ['maps_url', 'Link de Google Maps', 'texto', 'En Google Maps: Compartir → Copiar enlace.'],
+      ['waze_url', 'Link de Waze (opcional)', 'texto'],
+      ['recepcion_activa', 'Mostrar el segundo lugar (la fiesta)', 'sino'],
+      ['recepcion_titulo', 'Título del segundo lugar', 'texto', 'Ej: Mi fiesta'],
+      ['recepcion_hora', 'Hora de la fiesta', 'texto', 'Ej: 19:00'],
+      ['recepcion_lugar', 'Lugar de la fiesta', 'texto'],
+      ['recepcion_direccion', 'Dirección de la fiesta', 'texto'],
+      ['recepcion_maps_url', 'Google Maps de la fiesta', 'texto'],
+    ],
+  },
+  deCumple('vestimenta'),
+  deCumple('programa'),
+  {
+    id: 'final', titulo: 'Regalos y confirmación', desc: 'Lluvia de sobres, confirmar asistencia y cierre', cap: 'final',
+    campos: [
+      colorTexto('final'),
+      ['regalos_titulo', 'Título de regalos', 'texto'],
+      ['regalos_texto', 'Texto de regalos', 'largo', 'Déjalo vacío para quitar este bloque.'],
+      ['regalos_url', 'Enlace a la mesa de regalos (opcional)', 'texto'],
+      ['final_titulo', 'Título final', 'texto'],
+      ['final_texto', 'Texto sobre la confirmación', 'texto'],
+      ['hashtag', 'Hashtag (opcional)', 'texto', 'Ej: #XVdeValentina'],
+      ['fecha_limite_rsvp', 'Fecha límite para confirmar (opcional)', 'fecha'],
+      ['extras_solo_confirmados', 'Playlist y fotos solo para quien confirma', 'sino', 'Si lo apagas, todos ven las tarjetas de playlist y fotos.'],
+    ],
+  },
+];
+
 // Las secciones del editor según la plantilla del evento.
 export function seccionesDe(plantilla: string): Seccion[] {
-  if (plantilla !== 'boda') return [...SECCIONES_CUMPLE_PROPIAS, ...COMUNES_BASE];
+  if (plantilla !== 'boda' && plantilla !== 'quince') return [...SECCIONES_CUMPLE_PROPIAS, ...COMUNES_BASE];
   const comunes = COMUNES_BASE.map((sec) =>
     sec.id === 'colores'
       ? { ...sec, campos: sec.campos.map((c): Campo => (c[0] === 'color_acento' ? [c[0], 'Dorado (sobre y detalles)', c[2]] : c[0] === 'color_fondo_2' ? [c[0], 'Segundo tono (detalles)', c[2]] : c)) }
       : sec,
   );
-  return [...SECCIONES_BODA_PROPIAS, ...comunes];
+  return [...(plantilla === 'quince' ? SECCIONES_QUINCE_PROPIAS : SECCIONES_BODA_PROPIAS), ...comunes];
 }
 
 const campoCls = 'mt-1.5 w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-base outline-none focus:border-stone-900';

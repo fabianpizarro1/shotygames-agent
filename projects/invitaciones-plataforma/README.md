@@ -24,7 +24,9 @@ El código viejo de Sheets/Drive quedó archivado en `archives/plataforma-etapa2
 
 **Plantilla de boda (2026-11-08)**: marfil y dorado, nombres en letra elegante, historia con foto en arco, ceremonia y recepción (dos lugares), vestimenta, programa en línea de tiempo, regalos, hashtag y confirmación. Mismo motor (`useInvitacionBase`: vista previa, sobre, música, RSVP) con otra composición (`InvitacionBoda.tsx`); el editor muestra las secciones de la plantilla del evento (`seccionesDe(plantilla)` en `TabContenido.tsx`). Quedan boda de ejemplo y cumpleaños creables desde "Mis eventos".
 
-**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, plantilla de quinceañera, sello de cera realista para otras iniciales (hoy solo existe la J; las demás usan el sello dibujado), IA de plantillas y PayPhone.
+**Plantilla de quinceañera (2026-11-08)**: lila y dorado, corona y mariposas dibujadas, nombre con XV, historia con foto circular, capítulo de padres y padrinos (se oculta si está vacío), misa y fiesta como dos lugares, vestimenta, programa, regalos y confirmación. Comparte `InvitacionElegante.tsx` con la de boda (prop `variante`); `PorPlantilla.tsx` elige la composición según la plantilla del evento.
+
+**Falta**: Supabase (adaptador `src/lib/db/supabase.ts` + Auth + Storage) para producción, sello de cera realista para otras iniciales (hoy solo existe la J; las demás usan el sello dibujado), IA de plantillas y PayPhone.
 
 ## Cómo correrlo
 `cp .env.example .env.local` (poner un `SESSION_SECRET` aleatorio), `npm install`, `npm run dev -- --port 3200`.

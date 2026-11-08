@@ -6,7 +6,7 @@ import type { Config } from '@/lib/config';
 import { nombreBonito, tamNombre } from '@/lib/nombre';
 import { partes, piezasFecha } from '@/lib/fechas';
 import { Capitulo, Entra, Escribe, Listo } from './anim';
-import { Divisor, Rama } from './Boda';
+import { Corona, Divisor, Mariposa, Rama } from './Boda';
 import { Cuenta } from './Cuenta';
 import { Brillo } from './Decor';
 import { Musica } from './Musica';
@@ -15,7 +15,7 @@ import { Sobre } from './Sobre';
 import { Polaroid } from './Stickers';
 import { useInvitacionBase, type InvitadoVista } from './useInvitacionBase';
 
-// Plantilla de boda: marfil y dorado, nombres en letra elegante, historia con foto en arco, ceremonia y
+// Plantillas de boda y de quinceañera (misma composición base, distinto protagonista): marfil y dorado, nombres en letra elegante, historia con foto en arco, ceremonia y
 // recepción, código de vestimenta, programa, regalos y confirmación. Mismo motor que la de cumpleaños
 // (vista previa en vivo, sobre con sello, música, RSVP, fotos y playlist), distinta composición.
 
@@ -26,7 +26,11 @@ const Rotulo = ({ children }: { children: React.ReactNode }) => (
   <p className="f-garamond text-[0.95rem] font-semibold uppercase tracking-[0.34em] opacity-70">{children}</p>
 );
 
-export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver = false, soloLectura = false }: { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean; volver?: boolean; soloLectura?: boolean }) {
+type Props = { config: Config; invitado: InvitadoVista; vistaPrevia?: boolean; volver?: boolean; soloLectura?: boolean };
+type Variante = 'boda' | 'quince';
+
+function InvitacionElegante({ config, invitado, vistaPrevia = false, volver = false, soloLectura = false, variante }: Props & { variante: Variante }) {
+  const quince = variante === 'quince';
   const { c, portada, setPortada, musica, estadoRsvp, setEstadoRsvp } = useInvitacionBase({ config, invitado, vistaPrevia, volver, soloLectura });
 
   const colorOk = (v: string) => (/^#[0-9a-f]{3,8}$/i.test(v.trim()) ? v.trim() : undefined);
@@ -34,7 +38,9 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
 
   const novia = c.novia.trim();
   const novio = c.novio.trim();
-  const iniciales = `${(novia[0] ?? 'A').toUpperCase()}&${(novio[0] ?? 'B').toUpperCase()}`;
+  const festejada = c.festejado.trim();
+  const iniciales = quince ? 'XV' : `${(novia[0] ?? 'A').toUpperCase()}&${(novio[0] ?? 'B').toUpperCase()}`;
+  const firma = quince ? festejada : `${novia} & ${novio}`;
   const p = partes(c.fecha_hora);
   const f = piezasFecha(c.fecha_hora);
   const fechaCorta = p ? `${String(p.d).padStart(2, '0')} · ${MESES[p.mo - 1]} · ${p.y}` : '';
@@ -59,7 +65,9 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
   const fondoVestimenta = tinte ? `linear-gradient(to bottom, transparent 0%, ${tinte} 18%, ${tinte} 82%, transparent 100%)` : undefined;
   const nombreGuest = nombreBonito(invitado.nombre);
   const wa = c.contacto_whatsapp.replace(/\D/g, '');
-  const sobre = c.sobre_texto.replace('{novia}', novia).replace('{novio}', novio).replace('{festejado}', `${novia} & ${novio}`).trim();
+  const sobre = c.sobre_texto.replace('{novia}', novia).replace('{novio}', novio).replace('{festejado}', quince ? festejada : `${novia} & ${novio}`).trim();
+  const padres = c.padres_texto.split('\n').map((l) => l.trim());
+  const hayPadres = quince && padres.some(Boolean);
 
   const botonOscuro = 'boton f-garamond inline-block rounded-full px-7 py-3 text-[0.95rem] font-semibold uppercase tracking-[0.28em]';
   const estiloBoton: CSSProperties = { background: 'var(--texto-base)', color: 'var(--papel)' };
@@ -70,7 +78,7 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
         <AnimatePresence>
           {portada && (
             <Sobre
-              estilo="boda"
+              estilo={variante}
               humo={false}
               nombre={invitado.nombre}
               inicial={iniciales}
@@ -87,8 +95,16 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
 
         {/* 1 · Portada: los nombres */}
         <Capitulo nombre="inicio" texto={colorOk(c.texto_color_inicio)} className="!min-h-dvh !py-20">
-          <Rama className="left-1/2 top-4 w-[210px] -translate-x-1/2" />
-          <Brillo tam={16} className="text-(--acento)" style={{ left: '14%', top: '24%' }} />
+          {quince ? (
+            <>
+              <Corona className="left-1/2 top-8 w-[92px] -translate-x-1/2" />
+              <Mariposa className="left-[9%] top-[8%] w-[46px] -rotate-12" />
+              <Mariposa className="right-[10%] top-[13%] w-[36px] rotate-12" espejo />
+            </>
+          ) : (
+            <Rama className="left-1/2 top-4 w-[210px] -translate-x-1/2" />
+          )}
+          <Brillo tam={16} className="text-(--acento)" style={{ left: '8%', top: '36%' }} />
           <Brillo tam={12} className="text-(--acento)" style={{ right: '16%', bottom: '24%' }} retraso={1} />
           <Entra className="mt-10">
             <Rotulo>Con amor invitamos a</Rotulo>
@@ -97,7 +113,18 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
           <Entra retraso={0.2} className="mt-7">
             <p className="f-garamond mx-auto max-w-[17rem] text-[1.2rem] leading-snug opacity-85 [text-wrap:balance]">{c.boda_frase}</p>
           </Entra>
-          <div className="mt-8 flex flex-col items-center" style={{ color: dorado }}>
+          {quince ? (
+            <div className="mt-8 flex flex-col items-center" style={{ color: dorado }}>
+              <Escribe className="leading-none" retraso={0.3}>
+                <span className="f-elegante block leading-[1.1]" style={{ fontSize: tamNombre(festejada, 0.42, 96, 50, 300) }}>{festejada}</span>
+              </Escribe>
+              <Entra retraso={0.8}>
+                <p className="f-serif mt-2 text-[6rem] font-medium leading-none" style={{ fontVariantNumeric: 'lining-nums' }}>XV</p>
+                <p className="f-garamond -mt-1 pl-[0.5em] text-[1.05rem] font-semibold uppercase tracking-[0.5em]">Años</p>
+              </Entra>
+            </div>
+          ) : (
+            <div className="mt-8 flex flex-col items-center" style={{ color: dorado }}>
             <Escribe className="leading-none" retraso={0.3}>
               <span className="f-elegante block leading-[1.1]" style={{ fontSize: tamNombre(novia, 0.42, 92, 46, 300) }}>{novia}</span>
             </Escribe>
@@ -106,6 +133,7 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
               <span className="f-elegante block leading-[1.1]" style={{ fontSize: tamNombre(novio, 0.42, 92, 46, 300) }}>{novio}</span>
             </Escribe>
           </div>
+          )}
           {fechaCorta && (
             <Entra retraso={0.5} className="mt-9">
               <Divisor />
@@ -116,15 +144,15 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
 
         {/* 2 · Nuestra historia: foto en arco */}
         <Capitulo nombre="historia" texto={colorOk(c.texto_color_historia)} className="!min-h-0 !py-20">
-          <Escribe className="f-elegante text-[3.4rem] leading-none" retraso={0.1}>{c.historia_titulo}</Escribe>
+          <Escribe className="f-elegante text-[3.4rem] leading-none" retraso={0.1}><span style={{ color: dorado }}>{c.historia_titulo}</span></Escribe>
           <Entra retraso={0.2} className="mt-9 w-full">
             <div className="relative mx-auto w-[70%]">
-              <span aria-hidden className="absolute -inset-2 rounded-t-full border" style={{ borderColor: 'color-mix(in srgb, var(--acento) 65%, transparent)' }} />
+              <span aria-hidden className={`absolute -inset-2 border ${quince ? 'rounded-full' : 'rounded-t-full'}`} style={{ borderColor: 'color-mix(in srgb, var(--acento) 65%, transparent)' }} />
               {c.portada_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.portada_url} alt="" loading="lazy" decoding="async" className="aspect-[3/4] w-full rounded-t-full object-cover" />
+                <img src={c.portada_url} alt="" loading="lazy" decoding="async" className={`w-full object-cover ${quince ? 'aspect-square rounded-full' : 'aspect-[3/4] rounded-t-full'}`} />
               ) : (
-                <div className="grid aspect-[3/4] w-full place-items-center rounded-t-full" style={{ background: 'color-mix(in srgb, var(--acento) 14%, var(--papel))' }}>
+                <div className={`grid w-full place-items-center ${quince ? 'aspect-square rounded-full' : 'aspect-[3/4] rounded-t-full'}`} style={{ background: 'color-mix(in srgb, var(--acento) 14%, var(--papel))' }}>
                   <span className="f-elegante text-[4.4rem] leading-none" style={{ color: dorado }}>{iniciales.replace('&', ' & ')}</span>
                 </div>
               )}
@@ -136,6 +164,24 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
             </Entra>
           )}
         </Capitulo>
+
+        {/* 2b · Padres y padrinos (solo quinceañera, si hay texto) */}
+        {hayPadres && (
+          <Capitulo nombre="padres" texto={colorOk(c.texto_color_padres)} className="!min-h-0 !py-16">
+            <Entra className="w-full">
+              <p className="f-elegante text-[3rem] leading-none" style={{ color: dorado }}>{c.padres_titulo}</p>
+              <div className="mt-7 space-y-1.5">
+                {padres.map((l, i) =>
+                  l ? (
+                    <p key={i} className={l.endsWith(':') ? 'f-garamond mt-5 text-[0.9rem] font-semibold uppercase tracking-[0.3em] opacity-70' : 'f-cormorant text-[1.5rem] leading-snug'}>{l.replace(/:$/, '')}</p>
+                  ) : (
+                    <span key={i} className="block h-3" />
+                  ),
+                )}
+              </div>
+            </Entra>
+          </Capitulo>
+        )}
 
         {/* 3 · Fecha, ceremonia y recepción */}
         <Capitulo nombre="fecha" texto={colorOk(c.texto_color_fecha)} className="!min-h-0 !py-20">
@@ -175,7 +221,7 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
           {hayRecepcion && (
             <Entra retraso={0.2} className="mt-14 w-full">
               <Divisor />
-              <p className="f-elegante mt-4 text-[2.8rem] leading-none" style={{ color: dorado }}>Recepción</p>
+              <p className="f-elegante mt-4 text-[2.8rem] leading-none" style={{ color: dorado }}>{c.recepcion_titulo}</p>
               {c.recepcion_hora && <p className="f-garamond mt-2 text-[1.3rem] font-semibold tracking-[0.2em]">{c.recepcion_hora}</p>}
               <p className="f-serif mx-auto mt-3 max-w-[17rem] text-[1.3rem] font-medium leading-tight">{c.recepcion_lugar}</p>
               {c.recepcion_direccion && <p className="f-garamond mt-1 text-[1.1rem] opacity-80">{c.recepcion_direccion}</p>}
@@ -302,8 +348,8 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
           <Entra retraso={0.1} className="mt-16 w-full">
             {c.hashtag.trim() && <p className="f-elegante mb-5 text-[2.2rem] leading-none" style={{ color: dorado }}>{c.hashtag.trim()}</p>}
             <Divisor />
-            <p className="f-garamond mt-4 text-[1.1rem] italic opacity-80">Con todo nuestro cariño</p>
-            <p className="f-elegante mt-1 text-[2.8rem] leading-none" style={{ color: dorado }}>{novia} &amp; {novio}</p>
+            <p className="f-garamond mt-4 text-[1.1rem] italic opacity-80">{quince ? 'Con todo mi cariño' : 'Con todo nuestro cariño'}</p>
+            <p className="f-elegante mt-1 text-[2.8rem] leading-none" style={{ color: dorado }}>{firma}</p>
             {wa && (
               <p className="f-garamond mt-6 text-[1.05rem] opacity-80">
                 ¿Dudas?{' '}
@@ -311,7 +357,11 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
               </p>
             )}
           </Entra>
-          <Rama className="left-1/2 -ml-[95px] mt-10 w-[190px]" style={{ position: 'relative' }} espejo />
+          {quince ? (
+            <Corona className="mt-10 w-[70px]" style={{ position: 'relative' }} />
+          ) : (
+            <Rama className="left-1/2 -ml-[95px] mt-10 w-[190px]" style={{ position: 'relative' }} espejo />
+          )}
         </Capitulo>
 
         <Musica url={c.musica_url} titulo={c.musica_titulo} apiRef={musica} visible={!portada} />
@@ -319,3 +369,6 @@ export function InvitacionBoda({ config, invitado, vistaPrevia = false, volver =
     </Listo.Provider>
   );
 }
+
+export const InvitacionBoda = (p: Props) => <InvitacionElegante {...p} variante="boda" />;
+export const InvitacionQuince = (p: Props) => <InvitacionElegante {...p} variante="quince" />;

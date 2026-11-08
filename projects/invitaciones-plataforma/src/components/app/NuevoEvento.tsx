@@ -38,7 +38,7 @@ export function NuevoEvento({ plantillas }: { plantillas: { slug: string; nombre
           <input className={campo} placeholder="Novio (ej: Luis)" value={novio} onChange={(e) => setNovio(e.target.value)} />
         </div>
       ) : (
-        <input className={campo} placeholder="Nombre de quien cumple (ej: Ana)" value={festejado} onChange={(e) => setFestejado(e.target.value)} />
+        <input className={campo} placeholder={plantilla === 'quince' ? 'Nombre de la quinceañera (ej: Valentina)' : 'Nombre de quien cumple (ej: Ana)'} value={festejado} onChange={(e) => setFestejado(e.target.value)} />
       )}
       <div className="space-y-2">
         {plantillas.map((p) => (
