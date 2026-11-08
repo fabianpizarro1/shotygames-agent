@@ -53,7 +53,16 @@ Gratis: editar y previsualizar (con marca de agua). Pago: publicar y enviar.
 
 MVP vendible = fases 1 a 3 con la plantilla 1.
 
+## Plantillas con IA (idea de Fabián, 2026-11-08)
+Principio: la IA **arma una configuración validada**, no inventa código.
+1. **Nivel 1: IA → configuración.** El cliente responde 4-5 preguntas (tipo de evento, estilo, colores, nombres, tono). La IA devuelve paleta, textos en español natural, letra de la palabra grande, color del sello, capítulos visibles y su orden. Todo ya existe como `evento.config`. Vista previa en vivo y "otra versión" (intentos limitados por cliente).
+2. **Nivel 2: IA → bloques.** Convertir cada capítulo en un bloque con variantes (portada, brindis, fecha, vestimenta…); la IA elige y ordena. Necesario también para boda y quinceañera.
+3. **Nivel 3: IA → imágenes** (stickers, fondos). Solo si hay clientes que lo pidan.
+Guardas: validador automático (contraste mínimo, largos máximos, tamaños autoajustados), moderación de textos, límite de intentos, medir el costo real por generación antes de fijar precios.
+Orden recomendado: etapa 2 (fotos/playlist) → plantilla de cumpleaños al día → diseño por bloques → asistente de IA nivel 1 → imágenes.
+
 ## Riesgos (ver con calma)
+- **Stickers con derechos**: varios de la invitación de Joselin son memes/fotos de internet (actriz, mono, hámster…). Sirven para una fiesta privada, no para vender. La plataforma necesita assets propios, con licencia o generados con IA revisando sus condiciones.
 - **PayPhone**: necesita cuenta de negocio aprobada; el Access Token y el Store ID llegan después de la aprobación. Es lo que más puede demorar: empezar el trámite ya.
 - **Dominio propio**: obligatorio para la Cajita.
 - **Datos personales**: guardamos nombres y teléfonos de terceros (los invitados). Hace falta política de privacidad y cumplir la ley ecuatoriana de protección de datos personales.
