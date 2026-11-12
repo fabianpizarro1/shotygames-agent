@@ -48,10 +48,11 @@ import emparejadosPortadaThumb from "@/assets/thumbs/emparejados-portada.webp";
 // prerender de SEO lo referencian por ruta de archivo).
 // 2026-10-25: copy del documento "Reescribir landing de ventas" de la IA externa, filtrado con
 // las decisiones de Fabián (claims del producto, contador del regalo).
-// 2026-10-26: "hay mucho texto" → mínimo de palabras, imagen primero y enfocada al feriado del
-// sáb 31-oct al mar 3-nov (Difuntos + Cuenca: ROTAR el copy después del 3-nov). Hero = gráfico
+// 2026-10-26: "hay mucho texto" → mínimo de palabras, imagen primero. Salió enfocada al feriado del
+// sáb 31-oct al mar 3-nov; el 2026-11-11 se rotó el copy a uno sin fecha ("esta noche", "próxima
+// reunión") para que sirva todo el año. Hero = gráfico
 // de la torre con sus retos, sin "+3.500" arriba, tachado de la guía en $9.90 (suelta se vende
-// a $4.90 en Ebook25JuegosLanding), bloque "Que el feriado no se quede sin plan" con mosaico de
+// a $4.90 en Ebook25JuegosLanding), bloque de cierre con mosaico de
 // fotos, 4 TikToks de @shotygames_ec (con el reproductor de TikTok: Fabián prefirió dejarlo así
 // antes que alojar los videos) y reseñas sin las capturas de la Torre Parejas.
 // Fotos generadas: Descargas "LA PREVIA - GENERADAS LOTE1/LOTE2" (las de los
@@ -227,8 +228,8 @@ const TorreNormalV2Landing = () => {
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">
       <Seo
-        title="Torre La Previa: el juego del feriado | ShotyGames Ecuador"
-        description="Este feriado lleva La Previa: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
+        title="Torre La Previa: el juego para arrancar la noche | ShotyGames Ecuador"
+        description="Lleva La Previa a tu próxima reunión: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
         canonical="https://www.shotygames.com/landing/torre-normal"
         image={`https://www.shotygames.com${retoEx}`}
         type="product"
@@ -245,7 +246,7 @@ const TorreNormalV2Landing = () => {
         <div className="mx-auto max-w-5xl md:grid md:grid-cols-2 md:gap-x-12">
           <div className="md:col-start-1 md:row-start-1 md:self-end">
             <h1 className="text-balance text-[30px] leading-[1.1] md:text-5xl font-bold tracking-tight">
-              Este feriado, tú llevas la torre.
+              Esta noche, tú llevas la torre.
               <span className={`mt-1 block text-[22px] md:text-3xl ${GRADIENTE} bg-clip-text text-transparent`}>
                 El grupo pone las anécdotas.
               </span>
@@ -309,7 +310,7 @@ const TorreNormalV2Landing = () => {
       {/* ---------- EL PROBLEMA, EN UNA LÍNEA ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-3xl">
         <div className="space-y-2 text-center">
-          <H2>4 días de feriado. ¿Y nadie propone nada?</H2>
+          <H2>Reunión con amigos. ¿Y nadie propone nada?</H2>
           <p className={`text-xl font-bold md:text-2xl ${GRADIENTE} bg-clip-text text-transparent`}>La torre lo propone por ti.</p>
         </div>
       </Seccion>
@@ -345,7 +346,7 @@ const TorreNormalV2Landing = () => {
         </p>
       </Seccion>
 
-      {/* ---------- MOSAICO DE FOTOS + EL FERIADO ---------- */}
+      {/* ---------- MOSAICO DE FOTOS + CIERRE ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-xl">
         <div className="space-y-4 text-center">
           <div className="grid grid-cols-2 gap-2">
@@ -365,7 +366,7 @@ const TorreNormalV2Landing = () => {
               </div>
             ))}
           </div>
-          <H2>Que el feriado no se quede sin plan.</H2>
+          <H2>Que la próxima reunión no se quede sin plan.</H2>
           <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
           <p className="text-xs text-muted-foreground md:text-sm">
             💵 Pagas al recibir · 🚚 Envío gratis · Producto para adultos (+18)

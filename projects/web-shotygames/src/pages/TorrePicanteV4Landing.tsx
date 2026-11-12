@@ -60,15 +60,15 @@ import torreParejasImgThumb from "@/assets/thumbs/torre-parejas.webp";
 import dadosDelPlacerImgThumb from "@/assets/thumbs/dados-del-placer.webp";
 
 // PRINCIPAL de la Torre Picante desde 2026-10-26 (/landing/torre-picante, donde caen los anuncios).
-// Nació ese mismo día como versión aparte para el feriado (sáb 31-oct al mar 3-nov; ROTAR el copy
-// después del 3-nov) y Fabián ordenó promoverla; la anterior (el póster, TorrePicanteV2Landing)
+// Nació ese mismo día como versión aparte para el feriado (sáb 31-oct al mar 3-nov); el 2026-11-11
+// se rotó el copy a uno sin fecha ("esta noche", "reunión con amigos"). Fabián ordenó promoverla; la anterior (el póster, TorrePicanteV2Landing)
 // quedó en /landing/torre-picante-v4 (mismo cruce que La Previa; los archivos no se renombran).
 // Pedido de Fabián: "misma estructura que la normal", con el gráfico de la torre y sus retos como
 // imagen principal. Es la hermana de TorreNormalV2Landing (La Previa): misma estructura, mismos
 // componentes de compra (afuera del componente de la página a propósito) y el mismo contador del
 // regalo. Fotos: "Saca. Lee. Cumple." usa una de las generadas de Descargas "PICANTE - GENERADAS
 // LOTE1 BESO DE 3" (la caja que muestran sí es la real; las otras —1, 2 y 5— quedaron sin usar en
-// src/assets) y la zona del feriado lleva UNA sola foto, `life-grupo` (la fiesta con confeti), por
+// src/assets) y la zona de cierre lleva UNA sola foto, `life-grupo` (la fiesta con confeti), por
 // orden de Fabián (antes era un mosaico de 4). Los retos reales, las reseñas con foto y los 2
 // TikToks son los de la Picante del póster. El tachado de la guía en $9.90 es el mismo que Fabián
 // pidió para La Previa (suelta se vende a $4.90).
@@ -248,8 +248,8 @@ const TorrePicanteV4Landing = () => {
   return (
     <div className="min-h-screen bg-background pb-28 md:pb-0">
       <Seo
-        title="Torre de Shots Picante: el juego del feriado | ShotyGames Ecuador"
-        description="Este feriado sube la temperatura: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
+        title="Torre de Shots Picante: retos atrevidos para jugar en grupo | ShotyGames Ecuador"
+        description="Sube la temperatura en tu próxima reunión: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo."
         canonical="https://www.shotygames.com/landing/torre-picante"
         image={`https://www.shotygames.com${torrePicante1}`}
         type="product"
@@ -266,7 +266,7 @@ const TorrePicanteV4Landing = () => {
         <div className="mx-auto max-w-5xl md:grid md:grid-cols-2 md:gap-x-12">
           <div className="md:col-start-1 md:row-start-1 md:self-end">
             <h1 className="text-balance text-[30px] leading-[1.1] md:text-5xl font-bold tracking-tight">
-              Este feriado, sube la temperatura.
+              Esta noche, sube la temperatura.
               <span className={`mt-1 block text-[22px] md:text-3xl ${GRADIENTE} bg-clip-text text-transparent`}>
                 ¿Quién se atreve a sacar el primer bloque?
               </span>
@@ -332,7 +332,7 @@ const TorrePicanteV4Landing = () => {
       {/* ---------- EL PROBLEMA, EN UNA LÍNEA ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-3xl">
         <div className="space-y-2 text-center">
-          <H2>4 días de feriado. ¿Y nadie se atreve a nada?</H2>
+          <H2>Reunión con amigos. ¿Y nadie se atreve a nada?</H2>
           <p className={`text-xl font-bold md:text-2xl ${GRADIENTE} bg-clip-text text-transparent`}>La torre pone los retos.</p>
         </div>
       </Seccion>
@@ -368,7 +368,7 @@ const TorrePicanteV4Landing = () => {
         <p className="mt-4 text-center text-xs text-muted-foreground md:text-sm">Juego para adultos (+18)</p>
       </Seccion>
 
-      {/* ---------- FOTO DE LA FIESTA + EL FERIADO ---------- */}
+      {/* ---------- FOTO DE LA FIESTA + CIERRE ---------- */}
       <Seccion className="bg-muted/30" ancho="max-w-xl">
         <div className="space-y-4 text-center">
           <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-2xl">
@@ -384,7 +384,7 @@ const TorrePicanteV4Landing = () => {
               className="h-full w-full object-cover"
             />
           </div>
-          <H2>Que el feriado no se quede tibio.</H2>
+          <H2>Que la noche no se quede tibia.</H2>
           <CtaBoton texto="QUIERO MI TORRE + GUÍA GRATIS" onClick={handleBuyClick} />
           <p className="text-xs text-muted-foreground md:text-sm">
             💵 Pagas al recibir · 🚚 Envío gratis · Producto para adultos (+18)

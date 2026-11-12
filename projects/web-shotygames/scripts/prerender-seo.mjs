@@ -63,9 +63,9 @@ const pages = [
     chunk: "src/pages/TorreNormalV2Landing.tsx",
     // La principal desde 2026-10-26: el gráfico de la torre con sus retos arriba del pliegue (el LCP).
     hero: "src/assets/torre-normal-brillo.webp",
-    title: "Torre La Previa: el juego del feriado | ShotyGames Ecuador",
+    title: "Torre La Previa: el juego para arrancar la noche | ShotyGames Ecuador",
     description:
-      "Este feriado lleva La Previa: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
+      "Lleva La Previa a tu próxima reunión: 51 bloques con retos para jugar entre amigos. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
     image: resolveImage("src/assets/previa-reto-ex.webp"),
     type: "product",
   },
@@ -119,9 +119,9 @@ const pages = [
       ["src/assets/torre-picante-1.webp", "1080w"],
     ],
     heroSizes: "(min-width: 1024px) 488px, (min-width: 768px) calc(50vw - 40px), calc(100vw - 32px)", // = SIZES_HERO
-    title: "Torre de Shots Picante: el juego del feriado | ShotyGames Ecuador",
+    title: "Torre de Shots Picante: retos atrevidos para jugar en grupo | ShotyGames Ecuador",
     description:
-      "Este feriado sube la temperatura: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
+      "Sube la temperatura en tu próxima reunión: 51 bloques con retos atrevidos para jugar en grupo. $29.99, envío gratis y pago al recibir. Pide hoy y recibe una guía digital de regalo.",
     image: resolveImage("src/assets/torre-picante-1.webp"),
     type: "product",
   },
